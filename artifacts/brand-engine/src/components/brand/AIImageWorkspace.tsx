@@ -42,14 +42,17 @@ const PROMPT_SUGGESTIONS = [
 const ASPECT_RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:2"];
 const STYLE_PRESETS = ["Auto", "Photorealistic", "3D Render", "Illustration", "Cinematic", "Abstract"];
 
-const BASE = import.meta.env.BASE_URL;
+const API_BASE = "/api";
 
-const MOCK_RESULTS = [
-  { id: 1, image: `${BASE}assets/backgrounds-dark/Type=Core Gradient.png` },
-  { id: 2, image: `${BASE}assets/backgrounds-dark/Type=Centered Planet.png` },
-  { id: 3, image: `${BASE}assets/backgrounds-dark/Type=Radial Shine Bottom Left.png` },
-  { id: 4, image: `${BASE}assets/backgrounds-dark/Type=Planet Bottom Right.png` },
-];
+type GeneratedImage = { id: number; image: string };
+
+const ASPECT_TO_SIZE: Record<string, string> = {
+  "1:1": "1024x1024",
+  "16:9": "1536x1024",
+  "9:16": "1024x1536",
+  "4:3": "1024x1024",
+  "3:2": "1024x1024",
+};
 
 function FloatingParticles() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -129,20 +132,50 @@ export function AIImageWorkspace() {
   const [aspectRatio, setAspectRatio] = useState("1:1");
   const [style, setStyle] = useState("Auto");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [hasResults, setHasResults] = useState(false);
+  const [results, setResults] = useState<GeneratedImage[]>([]);
   const [selectedResult, setSelectedResult] = useState<number | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [outputCount, setOutputCount] = useState(4);
   const [creativity, setCreativity] = useState(70);
   const [isFocused, setIsFocused] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleGenerate = () => {
+  const hasResults = results.length > 0;
+
+  const handleGenerate = async () => {
     if (!prompt.trim()) return;
     setIsGenerating(true);
-    setTimeout(() => {
+    setError(null);
+    setSelectedResult(null);
+
+    const fullPrompt = buildFullPrompt(prompt);
+    const size = ASPECT_TO_SIZE[aspectRatio] || "1024x1024";
+
+    try {
+      const res = await fetch(`${API_BASE}/openai/generate-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: fullPrompt, size, count: outputCount }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Generation failed");
+      }
+
+      const data = await res.json();
+      const images: GeneratedImage[] = (data.images as string[]).map(
+        (b64: string, i: number) => ({
+          id: i + 1,
+          image: `data:image/png;base64,${b64}`,
+        })
+      );
+      setResults(images);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
       setIsGenerating(false);
-      setHasResults(true);
-    }, 3000);
+    }
   };
 
   return (
@@ -314,6 +347,16 @@ export function AIImageWorkspace() {
                   )}
                 </AnimatePresence>
 
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-[16px] px-[16px] py-[10px] rounded-[12px] border border-[rgba(255,80,80,0.2)] bg-[rgba(255,80,80,0.06)] text-[12px] text-[#FF6B6B] text-center"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
                 <motion.div
                   className="mt-[28px]"
                   initial={{ opacity: 0 }}
@@ -362,8 +405,8 @@ export function AIImageWorkspace() {
                   <Sparkles className="w-[20px] h-[20px] text-[#3DA4FF]" />
                 </div>
               </div>
-              <div className="text-[16px] font-semibold text-[#F1F5F9] mb-[6px]">Generating visuals...</div>
-              <div className="text-[12px] text-[#5A6B80]">This usually takes a few seconds</div>
+              <div className="text-[16px] font-semibold text-[#F1F5F9] mb-[6px]">Generating with AI...</div>
+              <div className="text-[12px] text-[#5A6B80]">Creating {outputCount} on-brand images — this may take 15-30 seconds</div>
 
               <div className="grid grid-cols-4 gap-[12px] mt-[40px] w-full max-w-[600px]">
                 {Array.from({ length: outputCount }).map((_, i) => (
@@ -430,7 +473,7 @@ export function AIImageWorkspace() {
 
               <div className="flex-1 flex gap-[12px]">
                 <div className="flex-1 grid grid-cols-2 gap-[12px] auto-rows-max">
-                  {MOCK_RESULTS.map((result, i) => (
+                  {results.map((result, i) => (
                     <motion.div
                       key={result.id}
                       initial={{ opacity: 0, scale: 0.9, y: 16 }}
@@ -466,7 +509,15 @@ export function AIImageWorkspace() {
                           ].map((action) => (
                             <motion.button
                               key={action.tip}
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (action.tip === "Download") {
+                                  const a = document.createElement("a");
+                                  a.href = result.image;
+                                  a.download = `highlevel-brand-${result.id}.png`;
+                                  a.click();
+                                }
+                              }}
                               whileHover={{ scale: 1.1, backgroundColor: "rgba(40,150,251,0.45)" }}
                               whileTap={{ scale: 0.92 }}
                               className="flex-1 h-[32px] rounded-[8px] border border-[rgba(255,255,255,0.14)] bg-[rgba(0,0,0,0.4)] backdrop-blur-[10px] flex items-center justify-center text-[rgba(255,255,255,0.75)] cursor-pointer transition-all duration-200 hover:text-white hover:border-[rgba(40,150,251,0.5)] hover:shadow-[0_0_14px_rgba(40,150,251,0.2)]"
@@ -504,7 +555,7 @@ export function AIImageWorkspace() {
                         </div>
 
                         <div className="aspect-square rounded-[14px] relative overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
-                          <img src={MOCK_RESULTS.find(r => r.id === selectedResult)?.image || ''} alt="" className="absolute inset-0 w-full h-full object-cover" />
+                          <img src={results.find(r => r.id === selectedResult)?.image || ''} alt="" className="absolute inset-0 w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(255,255,255,0.08)_0%,transparent_55%)]" />
                         </div>
 

@@ -284,7 +284,6 @@ export function TemplatesWorkspace() {
     setTextStyle(null);
     setHeadlineColor(null);
     setActiveToolbar(null);
-    setEditingField(null);
   };
 
   const filtered = TEMPLATES.filter(t => t.categories.includes(activeCategory.id));

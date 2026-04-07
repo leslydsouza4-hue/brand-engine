@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { UploadCloud, X, Eraser, Eye } from "lucide-react";
 
 const BG_URL = `${import.meta.env.BASE_URL}assets/backgrounds-dark/Type=Small Planet Bottom Right.png`;
-const LOGO_URL = `${import.meta.env.BASE_URL}assets/logos/Lockup=Full Horizontal, Color=Light.png`;
 
 export function ZoomWorkspace() {
   const [bgImage, setBgImage] = useState<string | null>(null);
@@ -279,16 +278,8 @@ export function ZoomWorkspace() {
               className="absolute inset-0 w-full h-full object-cover z-0"
             />
 
-            <div className="absolute top-[5%] left-[4%] z-[5]">
-              <img 
-                src={LOGO_URL} 
-                alt="HighLevel" 
-                className="w-[14%] max-w-[120px] h-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
-              />
-            </div>
-
             {(name || designation) && (
-              <div className="absolute top-[20%] left-[4%] z-[4]">
+              <div className="absolute top-[8%] left-[4%] z-[4]">
                 {name && (
                   <div className="font-['Poppins'] font-extrabold text-[clamp(18px,2.8vw,36px)] leading-[1.05] text-[#00B2A9] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] uppercase tracking-[-0.5px]">
                     {name}

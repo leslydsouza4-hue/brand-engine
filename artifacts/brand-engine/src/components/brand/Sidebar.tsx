@@ -22,7 +22,7 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
         <div className="w-[36px] h-[36px] rounded-[11px] flex items-center justify-center overflow-hidden shrink-0 relative
           after:content-[''] after:absolute after:inset-[-2px] after:rounded-[13px] after:bg-gradient-to-br after:from-[rgba(0,178,169,0.35)] after:to-[rgba(40,150,251,0.2)] after:-z-10 after:blur-[6px]
         ">
-          <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HighLevel" className="w-full h-full object-contain" />
+          <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HighLevel" className="w-[28px] h-[28px] object-contain" />
         </div>
         <div className="text-[17px] font-bold text-white tracking-[-0.4px]">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
       </div>

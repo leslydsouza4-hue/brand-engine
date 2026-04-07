@@ -42,11 +42,13 @@ const PROMPT_SUGGESTIONS = [
 const ASPECT_RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:2"];
 const STYLE_PRESETS = ["Auto", "Photorealistic", "3D Render", "Illustration", "Cinematic", "Abstract"];
 
+const BASE = import.meta.env.BASE_URL;
+
 const MOCK_RESULTS = [
-  { id: 1, gradient: "from-[#1070E0] via-[#0A4490] to-[#071A3A]" },
-  { id: 2, gradient: "from-[#00C9BF] via-[#1070E0] to-[#092D5A]" },
-  { id: 3, gradient: "from-[#3DA4FF] via-[#1070E0] to-[#071A3A]" },
-  { id: 4, gradient: "from-[#0D3870] via-[#00C9BF] to-[#1070E0]" },
+  { id: 1, image: `${BASE}assets/backgrounds-dark/Type=Core Gradient.png` },
+  { id: 2, image: `${BASE}assets/backgrounds-dark/Type=Centered Planet.png` },
+  { id: 3, image: `${BASE}assets/backgrounds-dark/Type=Radial Shine Bottom Left.png` },
+  { id: 4, image: `${BASE}assets/backgrounds-dark/Type=Planet Bottom Right.png` },
 ];
 
 function FloatingParticles() {
@@ -446,10 +448,10 @@ export function AIImageWorkspace() {
                           : ''
                         }`}
                     >
-                      <div className={`absolute inset-0 bg-gradient-to-br ${result.gradient}`} />
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(255,255,255,0.08)_0%,transparent_55%)]" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <ImageIcon className="w-[36px] h-[36px] text-[rgba(255,255,255,0.1)]" />
+                      <img src={result.image} alt="" className="absolute inset-0 w-full h-full object-cover z-0" />
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(255,255,255,0.08)_0%,transparent_55%)] z-[1]" />
+                      <div className="absolute inset-0 flex items-center justify-center z-[1]">
+                        <ImageIcon className="w-[36px] h-[36px] text-[rgba(255,255,255,0.06)]" />
                       </div>
 
                       <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.65)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -501,11 +503,9 @@ export function AIImageWorkspace() {
                           </motion.button>
                         </div>
 
-                        <div className={`aspect-square rounded-[14px] bg-gradient-to-br ${MOCK_RESULTS.find(r => r.id === selectedResult)?.gradient || ''} relative overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]`}>
+                        <div className="aspect-square rounded-[14px] relative overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]">
+                          <img src={MOCK_RESULTS.find(r => r.id === selectedResult)?.image || ''} alt="" className="absolute inset-0 w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(255,255,255,0.08)_0%,transparent_55%)]" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <ImageIcon className="w-[32px] h-[32px] text-[rgba(255,255,255,0.1)]" />
-                          </div>
                         </div>
 
                         <div>

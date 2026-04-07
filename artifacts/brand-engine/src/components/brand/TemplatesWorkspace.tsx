@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, type LucideIcon } from "lucide-react";
+import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
 const bg = (name: string) => `${BASE}assets/backgrounds-dark/${name}`;
@@ -285,6 +286,9 @@ export function TemplatesWorkspace() {
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
+  const [selectedHighly, setSelectedHighly] = useState<string | null>(null);
+
+  const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
 
   const handleCategoryChange = (cat: Category) => {
     setActiveCategory(cat);
@@ -315,12 +319,12 @@ export function TemplatesWorkspace() {
           <div className="absolute inset-0 z-[1]" style={{ backgroundColor: tpl.overlay }} />
         )}
 
-        {tpl.mascotSrc && (
+        {((!isCard && activeHighly) || tpl.mascotSrc) && (
           <img
-            src={tpl.mascotSrc}
+            src={!isCard && activeHighly ? activeHighly.image : tpl.mascotSrc!}
             alt=""
             className={`absolute z-[2] object-contain pointer-events-none ${
-              tpl.mascotPosition === "right"
+              tpl.mascotPosition === "right" || !tpl.mascotPosition
                 ? isCard ? "bottom-0 right-[4%] h-[65%]" : "bottom-0 right-[5%] h-[70%]"
                 : "bottom-0 left-[5%] h-[70%]"
             }`}
@@ -460,6 +464,59 @@ export function TemplatesWorkspace() {
                 maxLength={40}
                 className="w-full py-[10px] px-[14px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[10px] text-white font-inherit text-[13px] font-medium outline-none focus:border-[rgba(0,178,169,0.3)] placeholder:text-[#475569]"
               />
+            </div>
+          </motion.div>
+        )}
+
+        {activeTemplate && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex flex-col gap-[10px] mt-[16px] pt-[16px] border-t border-[rgba(255,255,255,0.04)]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-[6px]">
+                <Bot className="w-[12px] h-[12px] text-[#00B2A9]" />
+                <span className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Highly Mascot</span>
+              </div>
+              {selectedHighly && (
+                <motion.button
+                  onClick={() => setSelectedHighly(null)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="text-[9px] text-[#5A6B80] hover:text-[#FF6B6B] cursor-pointer transition-colors flex items-center gap-[3px]"
+                >
+                  <X className="w-[9px] h-[9px]" />
+                  Remove
+                </motion.button>
+              )}
+            </div>
+            <div className="grid grid-cols-5 gap-[6px]">
+              {HIGHLY_POSES.map((pose) => (
+                <motion.button
+                  key={pose.id}
+                  onClick={() => setSelectedHighly(selectedHighly === pose.id ? null : pose.id)}
+                  whileHover={{ scale: 1.08, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`relative aspect-square rounded-[10px] border overflow-hidden cursor-pointer transition-all duration-200 group
+                    ${selectedHighly === pose.id
+                      ? 'border-[#00B2A9] bg-[rgba(0,178,169,0.1)] ring-[2px] ring-[#00B2A9] ring-offset-[2px] ring-offset-[#0A1628]'
+                      : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] hover:border-[rgba(0,178,169,0.2)] hover:bg-[rgba(0,178,169,0.04)]'
+                    }`}
+                  title={pose.name}
+                >
+                  <img src={pose.image} alt={pose.name} className="w-full h-full object-contain p-[3px]" />
+                  {selectedHighly === pose.id && (
+                    <div className="absolute top-[1px] right-[1px] w-[12px] h-[12px] rounded-full bg-[#00B2A9] flex items-center justify-center">
+                      <Check className="w-[7px] h-[7px] text-white" />
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-[rgba(0,0,0,0.75)] py-[1px] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="text-[6px] text-white text-center truncate px-[2px]">{pose.name}</div>
+                  </div>
+                </motion.button>
+              ))}
             </div>
           </motion.div>
         )}

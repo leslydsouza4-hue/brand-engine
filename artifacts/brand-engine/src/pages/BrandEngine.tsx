@@ -86,7 +86,7 @@ export default function BrandEngine() {
       <Sidebar currentMode={currentMode} setMode={setCurrentMode} />
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">
-        <Toolbar currentMode={currentMode} onExport={handleExport} isExporting={isExporting} />
+        <Toolbar onExport={handleExport} isExporting={isExporting} />
         
         {currentMode === "templates" && <TemplatesWorkspace />}
         {currentMode === "shaun-thumbnails" && <ShaunWorkspace />}

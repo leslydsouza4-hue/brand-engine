@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Download, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 
 interface ToolbarProps {
-  currentMode: string;
   onExport?: (format: "png" | "jpeg") => void;
   isExporting?: boolean;
 }
 
-export function Toolbar({ currentMode, onExport, isExporting }: ToolbarProps) {
+export function Toolbar({ onExport, isExporting }: ToolbarProps) {
   const [exportOpen, setExportOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -27,18 +26,7 @@ export function Toolbar({ currentMode, onExport, isExporting }: ToolbarProps) {
   };
 
   return (
-    <div className="flex items-center justify-between py-[14px] px-[28px] relative z-50">
-      {currentMode === 'templates' ? (
-        <div className="flex items-center bg-[rgba(255,255,255,0.035)] backdrop-blur-[24px] saturate-[160%] rounded-[22px] p-[5px] border border-[rgba(255,255,255,0.06)] shadow-[0_8px_32px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.06)]">
-          <button className="flex items-center gap-[7px] py-[9px] px-[18px] border border-[rgba(40,150,251,0.2)] bg-gradient-to-br from-[#095DC3] to-[#2896FB] rounded-[16px] text-[13px] font-medium text-white cursor-pointer transition-all duration-250 whitespace-nowrap shadow-[0_2px_12px_rgba(0,178,169,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] hover:bg-gradient-to-br hover:from-[#0A6DD8] hover:to-[#3AA3FF] hover:-translate-y-[1px]">
-            <Play className="w-[16px] h-[16px] fill-white" />
-            Generate
-          </button>
-        </div>
-      ) : (
-        <div />
-      )}
-
+    <div className="flex items-center justify-end py-[14px] px-[28px] relative z-50">
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setExportOpen(!exportOpen)}

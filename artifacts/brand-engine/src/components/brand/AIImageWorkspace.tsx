@@ -7,6 +7,19 @@ import {
 } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
+const HIGHLY_CHARACTER_SHEET = `"Highly" is the official HighLevel mascot robot. Exact visual description:
+- BODY: Small, cute, chibi-proportioned 3D robot. The head is oversized compared to the body (about 60% of total height).
+- HEAD: Large smooth rounded white/light-silver capsule shape with a big glossy black visor covering the entire front face area. Dark navy-blue circular ear pieces on each side.
+- EYES: Two glowing soft teal/cyan eyes on the black visor. Default expression: two upright oval eyes. Happy expression: two curved arc eyes like happy anime eyes.
+- HEAD ANTENNA: Three small upward-pointing arrow icons sitting on top of the head — one yellow, one blue, one green (matching the HighLevel logo arrows). These are always present.
+- TORSO: Small compact rounded silver/white torso segment connected to the head by a short silver neck joint. A circular dark-blue emblem/button sits in the center of the chest.
+- ARMS & HANDS: Detached floating silver/white hands with dark navy-blue fingers (no visible arm connecting hand to body — they float nearby like Rayman). Hands have 4 fingers plus a thumb, with a white circle on the palm.
+- LEGS: No legs. Instead, a single metallic silver cone/jet thruster pointing downward from the bottom of the torso, tapering to a point. A soft blue energy glow emanates from the thruster tip.
+- MATERIAL: Smooth, glossy, polished plastic/metal look with subtle blue rim-lighting and soft blue ambient glow.
+- OVERALL VIBE: Friendly, approachable, futuristic, Pixar-quality 3D render style. NOT mechanical or industrial — cute and polished like a modern tech mascot.
+
+CRITICAL: Do NOT draw a generic robot. Highly must match EXACTLY the description above — oversized head with black visor, teal eyes, three colored arrows on top, floating detached hands, single jet-cone bottom, no legs.`;
+
 const BRAND_SYSTEM_PROMPT = `Create a premium marketing image in HighLevel brand style.
 
 Use a modern SaaS design aesthetic with clean composition, strong visual hierarchy, and minimal clutter.
@@ -20,8 +33,6 @@ Apply HighLevel visual identity:
 
 Keep the design clean, spacious, and campaign-ready.
 Avoid random colors, avoid clutter, avoid generic AI styles.
-
-If relevant, include a sleek 3D robot mascot (Highly) in a polished and modern way.
 
 User request:
 {{USER_PROMPT}}
@@ -154,7 +165,7 @@ export function AIImageWorkspace() {
 
     let userPromptWithHighly = prompt;
     if (activeHighly) {
-      userPromptWithHighly += `\n\nInclude the HighLevel mascot "Highly" — a sleek 3D robot character: ${activeHighly.description}. Place Highly prominently in the composition.`;
+      userPromptWithHighly += `\n\n${HIGHLY_CHARACTER_SHEET}\n\nPose: ${activeHighly.description}. Place this exact Highly mascot prominently in the composition. Do NOT use any other robot design.`;
     }
     const fullPrompt = buildFullPrompt(userPromptWithHighly);
     const size = ASPECT_TO_SIZE[aspectRatio] || "1024x1024";

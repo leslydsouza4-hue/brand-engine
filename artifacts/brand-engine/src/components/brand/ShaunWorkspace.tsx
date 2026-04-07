@@ -20,6 +20,7 @@ export function ShaunWorkspace() {
   const [position, setPosition] = useState<Position>("right");
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
+  const [stripText, setStripText] = useState("FEATURE UPDATES");
 
   const [screenshotImage, setScreenshotImage] = useState<string | null>(null);
   const [screenshotOpacity, setScreenshotOpacity] = useState(40);
@@ -138,6 +139,19 @@ export function ShaunWorkspace() {
               placeholder="Supporting text..."
               maxLength={40}
               className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-inherit text-[13.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
+            />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px] flex items-center justify-between">
+              Strip Banner
+            </label>
+            <input 
+              type="text"
+              value={stripText}
+              onChange={e => setStripText(e.target.value)}
+              placeholder="e.g. FEATURE UPDATES"
+              maxLength={30}
+              className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[13.5px] font-bold text-[#E2E8F0] uppercase outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] placeholder:normal-case placeholder:font-normal"
             />
           </div>
         </div>
@@ -266,6 +280,19 @@ export function ShaunWorkspace() {
                 alt="Background" 
                 className="absolute inset-0 w-full h-full object-cover z-0"
               />
+
+              {stripText && (
+                <div className="absolute top-[11%] left-0 z-[6] w-[55%]">
+                  <div className="relative">
+                    <div className="bg-[rgba(60,130,220,0.75)] backdrop-blur-[4px] py-[clamp(4px,1vw,10px)] px-[clamp(10px,2.5vw,28px)] rounded-r-[clamp(4px,0.8vw,8px)] border-l-0">
+                      <div className="font-['Poppins'] font-bold text-white text-[clamp(10px,1.6vw,20px)] uppercase tracking-[1px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]">
+                        {stripText}
+                      </div>
+                    </div>
+                    <div className="absolute top-0 right-[-8px] w-0 h-0 border-t-[clamp(4px,1vw,10px)] border-b-[clamp(4px,1vw,10px)] border-l-[8px] border-t-transparent border-b-transparent border-l-[rgba(60,130,220,0.75)]" style={{ top: '50%', transform: 'translateY(-50%)' }} />
+                  </div>
+                </div>
+              )}
 
               {screenshotImage && (
                 <div 

@@ -22,7 +22,7 @@ export function ZoomWorkspace() {
         <div className="text-[16px] font-bold text-white mb-[4px]">Zoom Background</div>
         <div className="text-[12px] text-[#64748B] mb-[20px] leading-[1.5]">Branded virtual background for Zoom, Meet & Teams. Pick a background, add your name, and export.</div>
 
-        <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[10px]">Choose Background</div>
+        <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[10px]">Background</div>
 
         <div className="flex gap-[10px] mb-[24px]">
           {BG_OPTIONS.map((bg) => {
@@ -38,9 +38,6 @@ export function ZoomWorkspace() {
                     : 'border-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.1)] hover:-translate-y-[3px] hover:scale-[1.02] hover:shadow-[0_12px_36px_rgba(0,0,0,0.35)]'}`}
               >
                 <img src={thumbUrl} alt={bg.name} className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute bottom-0 left-0 right-0 pt-[16px] px-[6px] pb-[5px] bg-gradient-to-t from-[rgba(0,0,0,0.6)] to-transparent text-[8px] font-semibold text-[rgba(255,255,255,0.7)] text-center uppercase z-10">
-                  {bg.name}
-                </div>
                 <div className={`absolute top-[5px] right-[5px] w-[20px] h-[20px] rounded-full bg-[#00B2A9] flex items-center justify-center transition-all duration-250 z-10
                   ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.6]'}`}>
                   <Check className="w-[11px] h-[11px] text-white stroke-[3px]" />
@@ -98,7 +95,7 @@ export function ZoomWorkspace() {
             {(name || designation) && (
               <div className="absolute top-[22%] left-[4%] z-[4]">
                 {name && (
-                  <div className="font-['Poppins'] font-extrabold text-[clamp(18px,2.8vw,36px)] leading-[1.05] text-[#00B2A9] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] uppercase tracking-[-0.5px]">
+                  <div className="font-['Poppins'] font-extrabold text-[clamp(14px,2.2vw,28px)] leading-[1.05] text-[#20EDF1] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] uppercase tracking-[-0.5px]">
                     {name}
                   </div>
                 )}
@@ -111,9 +108,13 @@ export function ZoomWorkspace() {
             )}
 
             {!name && !designation && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-[10] text-center gap-[8px]">
-                <p className="text-[14px] text-[rgba(255,255,255,0.35)] font-medium m-0">Add your name and title</p>
-                <span className="text-[11px] text-[rgba(255,255,255,0.2)]">They'll appear on the background</span>
+              <div className="absolute top-[22%] left-[4%] z-[4]">
+                <div className="font-['Poppins'] font-extrabold text-[clamp(14px,2.2vw,28px)] leading-[1.05] text-[rgba(32,237,241,0.2)] uppercase tracking-[-0.5px]">
+                  YOUR NAME
+                </div>
+                <div className="font-sans font-medium text-[clamp(9px,1.1vw,14px)] text-[rgba(255,255,255,0.15)] mt-[4px] tracking-[0.3px]">
+                  Your Title Here
+                </div>
               </div>
             )}
           </div>

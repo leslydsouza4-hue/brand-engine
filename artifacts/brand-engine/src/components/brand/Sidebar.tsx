@@ -19,8 +19,8 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
       after:content-[''] after:absolute after:top-0 after:right-0 after:w-[1px] after:h-full after:bg-[linear-gradient(to_bottom,rgba(0,178,169,0.2),rgba(40,150,251,0.08),transparent_80%)]
     ">
       <div className="pt-[26px] px-[20px] pb-[32px] flex items-center gap-[11px] relative">
-        <div className="w-[36px] h-[36px] rounded-[11px] flex items-center justify-center overflow-hidden shrink-0 relative shadow-[0_0_20px_rgba(0,178,169,0.4),0_0_40px_rgba(40,150,251,0.2)]
-          after:content-[''] after:absolute after:inset-[-3px] after:rounded-[14px] after:bg-gradient-to-br after:from-[rgba(0,178,169,0.4)] after:to-[rgba(40,150,251,0.25)] after:-z-10 after:blur-[8px]
+        <div className="w-[36px] h-[36px] rounded-[11px] flex items-center justify-center overflow-hidden shrink-0 relative shadow-[0_0_10px_rgba(0,178,169,0.2),0_0_20px_rgba(40,150,251,0.1)]
+          after:content-[''] after:absolute after:inset-[-3px] after:rounded-[14px] after:bg-gradient-to-br after:from-[rgba(0,178,169,0.2)] after:to-[rgba(40,150,251,0.12)] after:-z-10 after:blur-[8px]
         ">
           <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HighLevel" className="w-[24px] h-[24px] object-contain" />
         </div>

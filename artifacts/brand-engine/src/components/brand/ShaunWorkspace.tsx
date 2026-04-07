@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Check, Image as ImageIcon } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { Check, Image as ImageIcon, UploadCloud, X, Monitor } from "lucide-react";
 
 const SHAUN_IMAGES = [
   "ShaunClark_03057_StudioSura-Photoroom.png",
@@ -11,6 +11,7 @@ const SHAUN_IMAGES = [
 ];
 
 const BASE_URL = `${import.meta.env.BASE_URL}assets/shaun/`;
+const LOGO_URL = `${import.meta.env.BASE_URL}assets/logos/Lockup=Full Horizontal, Color=AllWhite.png`;
 
 type Position = "left" | "center" | "right";
 
@@ -20,15 +21,44 @@ export function ShaunWorkspace() {
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
 
+  const [screenshotImage, setScreenshotImage] = useState<string | null>(null);
+  const [screenshotOpacity, setScreenshotOpacity] = useState(40);
+  const [screenshotScale, setScreenshotScale] = useState(85);
+  const [screenshotRadius, setScreenshotRadius] = useState(16);
+  const [screenshotOffsetX, setScreenshotOffsetX] = useState(0);
+  const [screenshotOffsetY, setScreenshotOffsetY] = useState(0);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const wordCount = useMemo(() => {
     const words = headline.trim().split(/\s+/).filter(w => w.length > 0);
     return words.length;
   }, [headline]);
 
+  const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setScreenshotImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearScreenshot = () => {
+    setScreenshotImage(null);
+    setScreenshotOpacity(40);
+    setScreenshotScale(85);
+    setScreenshotRadius(16);
+    setScreenshotOffsetX(0);
+    setScreenshotOffsetY(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <div className="flex flex-1 overflow-hidden p-0 gap-0">
       
-      {/* Left Controls */}
       <div className="w-[380px] min-w-[380px] overflow-y-auto pt-[20px] px-[28px] pb-[28px] border-r border-[rgba(255,255,255,0.06)] flex flex-col">
         <div className="pt-[20px] pb-[16px]">
           <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[12px]">Select Shaun</div>
@@ -46,7 +76,7 @@ export function ShaunWorkspace() {
                       ? 'border-[#00B2A9] shadow-[0_0_0_2px_rgba(3,11,23,0.8),0_0_0_4px_rgba(0,178,169,0.4)]' 
                       : 'border-[rgba(255,255,255,0.06)] hover:border-[rgba(0,178,169,0.2)] hover:-translate-y-[2px]'}`}
                 >
-                  <img src={url} alt={`Shaun ${i+1}`} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                  <img src={url} alt={`Shaun ${i+1}`} className="w-full h-full object-cover" />
                   
                   <div className={`absolute top-[6px] right-[6px] w-[20px] h-[20px] rounded-full bg-[#00B2A9] flex items-center justify-center transition-all duration-250
                     ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.6]'}`}>
@@ -111,9 +141,114 @@ export function ShaunWorkspace() {
             />
           </div>
         </div>
+
+        <div className="border-t border-[rgba(255,255,255,0.04)] pt-[16px]">
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[12px]">Screenshot / Image</div>
+          
+          <input 
+            type="file" 
+            ref={fileInputRef}
+            onChange={handleScreenshotUpload}
+            accept="image/*" 
+            className="hidden" 
+          />
+
+          <div 
+            onClick={() => !screenshotImage && fileInputRef.current?.click()}
+            className={`flex items-center gap-[14px] py-[14px] px-[16px] rounded-[16px] transition-all duration-250 relative overflow-hidden mb-[14px]
+              ${screenshotImage 
+                ? 'border-solid border border-[rgba(0,178,169,0.15)] bg-[rgba(0,178,169,0.04)] cursor-default' 
+                : 'border-dashed border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(0,178,169,0.2)] hover:bg-[rgba(0,178,169,0.03)] cursor-pointer'}`}
+          >
+            <div className={`w-[36px] h-[36px] rounded-[10px] flex items-center justify-center shrink-0
+              ${screenshotImage ? 'bg-[rgba(0,178,169,0.1)]' : 'bg-[rgba(255,255,255,0.04)]'}`}>
+              {screenshotImage 
+                ? <Monitor className="w-[16px] h-[16px] text-[#00B2A9]" />
+                : <UploadCloud className="w-[16px] h-[16px] text-[#64748B]" />
+              }
+            </div>
+            <div className="text-[12.5px] font-medium text-[#94A3B8] flex-1">
+              {screenshotImage ? 'Image uploaded' : 'Upload screenshot or image'}
+              <span className="block text-[10.5px] text-[#64748B] mt-[2px]">
+                {screenshotImage ? 'Renders behind Shaun as a depth layer' : 'PNG, JPG — renders behind Shaun'}
+              </span>
+            </div>
+            {screenshotImage && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); clearScreenshot(); }}
+                className="ml-auto w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[6px] text-[#64748B] flex items-center justify-center cursor-pointer shrink-0 hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D]"
+              >
+                <X className="w-[12px] h-[12px]" />
+              </button>
+            )}
+          </div>
+
+          {screenshotImage && (
+            <div className="flex flex-col gap-[14px] animate-in fade-in duration-300">
+              <div className="flex gap-[14px]">
+                <div className="flex-1">
+                  <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
+                    Opacity <span className="font-semibold text-[#94A3B8]">{screenshotOpacity}%</span>
+                  </div>
+                  <input 
+                    type="range" min="10" max="100" value={screenshotOpacity}
+                    onChange={e => setScreenshotOpacity(Number(e.target.value))}
+                    className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
+                    Scale <span className="font-semibold text-[#94A3B8]">{screenshotScale}%</span>
+                  </div>
+                  <input 
+                    type="range" min="30" max="120" value={screenshotScale}
+                    onChange={e => setScreenshotScale(Number(e.target.value))}
+                    className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-[14px]">
+                <div className="flex-1">
+                  <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
+                    Radius <span className="font-semibold text-[#94A3B8]">{screenshotRadius}px</span>
+                  </div>
+                  <input 
+                    type="range" min="0" max="40" value={screenshotRadius}
+                    onChange={e => setScreenshotRadius(Number(e.target.value))}
+                    className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
+                    Offset X <span className="font-semibold text-[#94A3B8]">{screenshotOffsetX}</span>
+                  </div>
+                  <input 
+                    type="range" min="-40" max="40" value={screenshotOffsetX}
+                    onChange={e => setScreenshotOffsetX(Number(e.target.value))}
+                    className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-[14px]">
+                <div className="flex-1">
+                  <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
+                    Offset Y <span className="font-semibold text-[#94A3B8]">{screenshotOffsetY}</span>
+                  </div>
+                  <input 
+                    type="range" min="-30" max="30" value={screenshotOffsetY}
+                    onChange={e => setScreenshotOffsetY(Number(e.target.value))}
+                    className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                  />
+                </div>
+                <div className="flex-1"></div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Right Preview */}
       <div className="flex-1 flex flex-col min-w-0 pt-[20px] px-[24px] pb-[24px]">
         <div className="flex items-center justify-between pb-[14px]">
           <div className="text-[13px] font-medium text-[#64748B] flex items-center gap-[9px]">
@@ -127,11 +262,38 @@ export function ShaunWorkspace() {
             <div className="w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden bg-gradient-to-br from-[#07223D] via-[#0A3366] to-[#095DC3] shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
               
               <div className="absolute inset-0 z-0"></div>
+
+              <div className="absolute top-[4%] left-[4%] z-[5] flex items-center gap-[8px]">
+                <img 
+                  src={LOGO_URL} 
+                  alt="HighLevel" 
+                  className="h-[24px] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+                />
+              </div>
+
+              {screenshotImage && (
+                <div 
+                  className="absolute z-[1] transition-all duration-300"
+                  style={{
+                    top: `${50 + screenshotOffsetY}%`,
+                    left: `${50 + screenshotOffsetX}%`,
+                    transform: `translate(-50%, -50%) scale(${screenshotScale / 100})`,
+                    opacity: screenshotOpacity / 100,
+                    width: '80%',
+                  }}
+                >
+                  <img 
+                    src={screenshotImage} 
+                    alt="Screenshot" 
+                    className="w-full h-auto object-contain shadow-[0_8px_40px_rgba(0,0,0,0.5)]"
+                    style={{ borderRadius: `${screenshotRadius}px` }}
+                  />
+                </div>
+              )}
               
               {activeImage ? (
                 <img 
                   src={`${BASE_URL}${activeImage}`} 
-                  crossOrigin="anonymous"
                   alt="Shaun Cutout" 
                   className={`absolute z-[2] bottom-0 h-[95%] object-contain drop-shadow-[0_0_30px_rgba(0,178,169,0.3)] drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all duration-400 ease-out
                     ${position === 'right' ? 'right-[2%]' : position === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-[2%]'}`}
@@ -149,7 +311,7 @@ export function ShaunWorkspace() {
                 </div>
               ) : null}
 
-              {!activeImage && !headline && !subtext && (
+              {!activeImage && !headline && !subtext && !screenshotImage && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-[10] text-center gap-[8px]">
                   <ImageIcon className="w-[32px] h-[32px] text-[rgba(255,255,255,0.25)] mb-[4px]" />
                   <p className="text-[14px] text-[rgba(255,255,255,0.35)] font-medium m-0">Select a Shaun photo and type a headline</p>

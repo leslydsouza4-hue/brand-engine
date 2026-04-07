@@ -208,6 +208,7 @@ export function TemplatesWorkspace() {
         
         <div className="flex-1 flex items-center justify-center relative overflow-hidden rounded-[16px]">
           <div 
+            data-export-preview
             className="relative w-full max-w-[680px] mx-auto rounded-[14px] overflow-hidden bg-[rgba(255,255,255,0.01)] transition-all duration-500 z-[2]"
             style={{ 
               aspectRatio: activeSize.ratio,

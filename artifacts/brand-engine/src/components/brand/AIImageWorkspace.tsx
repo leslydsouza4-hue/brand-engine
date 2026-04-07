@@ -47,11 +47,13 @@ Make the final result look like a real HighLevel campaign asset, suitable for ad
 
 const ROBOT_KEYWORDS = /\b(highly|robot|mascot|bot|character)\b/i;
 
-const buildFullPrompt = (userPrompt: string, highlyDescription?: string) => {
+const buildFullPrompt = (userPrompt: string, highlyDescription?: string, hasReferenceImage?: boolean) => {
   let enrichedPrompt = userPrompt;
 
   const mentionsHighly = ROBOT_KEYWORDS.test(userPrompt);
-  if (highlyDescription) {
+  if (hasReferenceImage && highlyDescription) {
+    enrichedPrompt += `\n\nA reference image of the HighLevel robot mascot "Highly" is attached. Use this EXACT robot character in the composition — match its design, proportions, colors, and details precisely. The robot in the reference image is the ONLY robot design to use. Pose context: ${highlyDescription}. Place this exact Highly mascot prominently in the scene. Do NOT modify the robot's core design — keep the same head shape, visor, eyes, antenna arrows, floating hands, and jet thruster. You may adjust the pose/angle to fit the scene but the character must be visually identical to the reference.`;
+  } else if (highlyDescription) {
     enrichedPrompt += `\n\n${HIGHLY_CHARACTER_SHEET}\n\nPose: ${highlyDescription}. Place this exact Highly mascot prominently in the composition. Do NOT use any other robot design.`;
   } else if (mentionsHighly) {
     enrichedPrompt += `\n\n${HIGHLY_CHARACTER_SHEET}\n\nThe user mentioned a robot/mascot — they mean Highly, the HighLevel mascot described above. Render Highly exactly as described. Do NOT use any generic robot design.`;
@@ -181,14 +183,20 @@ export function AIImageWorkspace() {
     setError(null);
     setSelectedResult(null);
 
-    const fullPrompt = buildFullPrompt(prompt, activeHighly?.description);
+    const hasReference = !!activeHighly;
+    const fullPrompt = buildFullPrompt(prompt, activeHighly?.description, hasReference);
     const size = ASPECT_TO_SIZE[aspectRatio] || "1024x1024";
 
     try {
+      const body: Record<string, unknown> = { prompt: fullPrompt, size, count: outputCount };
+      if (activeHighly) {
+        body.highlyPoseId = activeHighly.id;
+      }
+
       const res = await fetch(`${API_BASE}/openai/generate-image`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: fullPrompt, size, count: outputCount }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {

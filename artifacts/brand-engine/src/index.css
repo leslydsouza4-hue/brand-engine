@@ -92,6 +92,89 @@ body {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes ai-bg-drift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes ai-orb-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.35; }
+  33%      { transform: translate(40px, -30px) scale(1.15); opacity: 0.5; }
+  66%      { transform: translate(-20px, 20px) scale(0.95); opacity: 0.3; }
+}
+
+@keyframes ai-orb-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+  40%      { transform: translate(-50px, 25px) scale(1.1); opacity: 0.4; }
+  70%      { transform: translate(30px, -15px) scale(0.9); opacity: 0.2; }
+}
+
+@keyframes ai-orb-float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+  50%      { transform: translate(25px, 35px) scale(1.2); opacity: 0.35; }
+}
+
+@keyframes ai-prompt-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 0.65; transform: scale(1.03); }
+}
+
+@keyframes ai-shimmer {
+  0%   { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+
+@keyframes ai-btn-glow {
+  0%, 100% { box-shadow: 0 4px 24px rgba(40,150,251,0.3), 0 0 40px rgba(40,150,251,0.08), inset 0 1px 0 rgba(255,255,255,0.18); }
+  50%      { box-shadow: 0 4px 32px rgba(40,150,251,0.45), 0 0 56px rgba(40,150,251,0.12), inset 0 1px 0 rgba(255,255,255,0.22); }
+}
+
+@keyframes ai-header-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-2px); }
+}
+
+.ai-bg-layer {
+  background: linear-gradient(270deg, #060B16, #071E3A, #0A3366, #07223D, #060B16);
+  background-size: 400% 400%;
+  animation: ai-bg-drift 20s ease infinite;
+}
+
+.ai-orb-1 {
+  animation: ai-orb-float-1 16s ease-in-out infinite;
+}
+
+.ai-orb-2 {
+  animation: ai-orb-float-2 22s ease-in-out infinite;
+}
+
+.ai-orb-3 {
+  animation: ai-orb-float-3 18s ease-in-out infinite;
+}
+
+.ai-prompt-glow-pulse {
+  animation: ai-prompt-glow 6s ease-in-out infinite;
+}
+
+.ai-shimmer-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 55%, transparent 60%);
+  animation: ai-shimmer 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.ai-btn-alive {
+  animation: ai-btn-glow 4s ease-in-out infinite;
+}
+
+.ai-header-float {
+  animation: ai-header-float 5s ease-in-out infinite;
+}
+
 /* Range slider styling */
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;

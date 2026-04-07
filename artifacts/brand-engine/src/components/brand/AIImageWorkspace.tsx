@@ -19,10 +19,10 @@ const ASPECT_RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:2"];
 const STYLE_PRESETS = ["Auto", "Photorealistic", "3D Render", "Illustration", "Cinematic", "Abstract"];
 
 const MOCK_RESULTS = [
-  { id: 1, title: "Generation 1", gradient: "from-[#1070E0] via-[#0A4490] to-[#071A3A]" },
-  { id: 2, title: "Generation 2", gradient: "from-[#00C9BF] via-[#1070E0] to-[#092D5A]" },
-  { id: 3, title: "Generation 3", gradient: "from-[#3DA4FF] via-[#1070E0] to-[#071A3A]" },
-  { id: 4, title: "Generation 4", gradient: "from-[#0D3870] via-[#00C9BF] to-[#1070E0]" },
+  { id: 1, gradient: "from-[#1070E0] via-[#0A4490] to-[#071A3A]" },
+  { id: 2, gradient: "from-[#00C9BF] via-[#1070E0] to-[#092D5A]" },
+  { id: 3, gradient: "from-[#3DA4FF] via-[#1070E0] to-[#071A3A]" },
+  { id: 4, gradient: "from-[#0D3870] via-[#00C9BF] to-[#1070E0]" },
 ];
 
 function FloatingParticles() {
@@ -35,50 +35,53 @@ function FloatingParticles() {
     if (!ctx) return;
 
     let animId: number;
-    const particles: { x: number; y: number; r: number; vx: number; vy: number; a: number; pulse: number }[] = [];
+    const particles: { x: number; y: number; r: number; vx: number; vy: number; a: number; phase: number }[] = [];
 
     const resize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = canvas.offsetWidth * dpr;
+      canvas.height = canvas.offsetHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     window.addEventListener("resize", resize);
 
-    for (let i = 0; i < 40; i++) {
+    const w = () => canvas.offsetWidth;
+    const h = () => canvas.offsetHeight;
+
+    for (let i = 0; i < 50; i++) {
       particles.push({
-        x: Math.random() * canvas.offsetWidth,
-        y: Math.random() * canvas.offsetHeight,
-        r: Math.random() * 1.8 + 0.4,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: (Math.random() - 0.5) * 0.12,
-        a: Math.random() * 0.35 + 0.05,
-        pulse: Math.random() * Math.PI * 2,
+        x: Math.random() * 1200,
+        y: Math.random() * 800,
+        r: Math.random() * 1.6 + 0.3,
+        vx: (Math.random() - 0.5) * 0.1,
+        vy: (Math.random() - 0.5) * 0.08,
+        a: Math.random() * 0.3 + 0.04,
+        phase: Math.random() * Math.PI * 2,
       });
     }
 
     const draw = () => {
-      ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-      const t = Date.now() * 0.001;
+      ctx.clearRect(0, 0, w(), h());
+      const t = Date.now() * 0.0008;
       for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
-        p.pulse += 0.008;
-        if (p.x < -10) p.x = canvas.offsetWidth + 10;
-        if (p.x > canvas.offsetWidth + 10) p.x = -10;
-        if (p.y < -10) p.y = canvas.offsetHeight + 10;
-        if (p.y > canvas.offsetHeight + 10) p.y = -10;
+        if (p.x < -10) p.x = w() + 10;
+        if (p.x > w() + 10) p.x = -10;
+        if (p.y < -10) p.y = h() + 10;
+        if (p.y > h() + 10) p.y = -10;
 
-        const alpha = p.a * (0.6 + 0.4 * Math.sin(p.pulse + t));
+        const alpha = p.a * (0.5 + 0.5 * Math.sin(p.phase + t));
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(100, 180, 255, ${alpha})`;
+        ctx.fillStyle = `rgba(120, 190, 255, ${alpha})`;
         ctx.fill();
 
-        if (p.r > 1) {
+        if (p.r > 0.8) {
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(40, 150, 251, ${alpha * 0.15})`;
+          ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(40, 150, 251, ${alpha * 0.08})`;
           ctx.fill();
         }
       }
@@ -95,37 +98,6 @@ function FloatingParticles() {
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-[1]" />;
 }
 
-function AnimatedBackground() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      <motion.div
-        animate={{
-          background: [
-            "radial-gradient(ellipse 80% 60% at 50% 45%, rgba(9,93,195,0.08) 0%, rgba(6,11,22,0) 70%)",
-            "radial-gradient(ellipse 70% 55% at 55% 50%, rgba(40,150,251,0.1) 0%, rgba(6,11,22,0) 70%)",
-            "radial-gradient(ellipse 85% 65% at 45% 40%, rgba(0,178,169,0.06) 0%, rgba(6,11,22,0) 70%)",
-            "radial-gradient(ellipse 80% 60% at 50% 45%, rgba(9,93,195,0.08) 0%, rgba(6,11,22,0) 70%)",
-          ],
-        }}
-        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-        className="absolute inset-0"
-      />
-      <motion.div
-        animate={{
-          background: [
-            "radial-gradient(circle 400px at 30% 70%, rgba(0,178,169,0.04) 0%, transparent 70%)",
-            "radial-gradient(circle 500px at 70% 30%, rgba(40,150,251,0.05) 0%, transparent 70%)",
-            "radial-gradient(circle 400px at 60% 60%, rgba(9,93,195,0.04) 0%, transparent 70%)",
-            "radial-gradient(circle 400px at 30% 70%, rgba(0,178,169,0.04) 0%, transparent 70%)",
-          ],
-        }}
-        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-        className="absolute inset-0"
-      />
-    </div>
-  );
-}
-
 export function AIImageWorkspace() {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("1:1");
@@ -136,6 +108,7 @@ export function AIImageWorkspace() {
   const [showSettings, setShowSettings] = useState(false);
   const [outputCount, setOutputCount] = useState(4);
   const [creativity, setCreativity] = useState(70);
+  const [isFocused, setIsFocused] = useState(false);
 
   const handleGenerate = () => {
     if (!prompt.trim()) return;
@@ -149,7 +122,13 @@ export function AIImageWorkspace() {
   return (
     <div className="flex flex-1 overflow-hidden">
       <div className="flex-1 flex flex-col overflow-y-auto relative">
-        <AnimatedBackground />
+
+        <div className="absolute inset-0 ai-bg-layer z-0" />
+
+        <div className="absolute top-[15%] left-[10%] w-[350px] h-[350px] rounded-full bg-[radial-gradient(circle,rgba(9,93,195,0.18)_0%,transparent_70%)] ai-orb-1 pointer-events-none z-0" />
+        <div className="absolute bottom-[10%] right-[8%] w-[280px] h-[280px] rounded-full bg-[radial-gradient(circle,rgba(40,150,251,0.12)_0%,transparent_70%)] ai-orb-2 pointer-events-none z-0" />
+        <div className="absolute top-[50%] left-[55%] w-[220px] h-[220px] rounded-full bg-[radial-gradient(circle,rgba(0,178,169,0.1)_0%,transparent_70%)] ai-orb-3 pointer-events-none z-0" />
+
         <FloatingParticles />
 
         <AnimatePresence mode="wait">
@@ -159,81 +138,93 @@ export function AIImageWorkspace() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               className="flex-1 flex flex-col items-center justify-center px-[32px] pb-[60px] relative z-[2]"
             >
-              <motion.div
-                className="flex items-center gap-[10px] mb-[8px]"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <div className="w-[40px] h-[40px] rounded-[14px] bg-gradient-to-br from-[#3DA4FF] to-[#095DC3] flex items-center justify-center shadow-[0_0_32px_rgba(40,150,251,0.4),0_0_12px_rgba(40,150,251,0.2)] relative">
-                  <div className="absolute inset-0 rounded-[14px] bg-gradient-to-br from-[rgba(255,255,255,0.15)] to-transparent" />
-                  <Sparkles className="w-[20px] h-[20px] text-white relative z-[1]" />
+              <div className="ai-header-float flex items-center gap-[10px] mb-[8px]">
+                <div className="relative">
+                  <div className="absolute inset-[-8px] rounded-[20px] bg-[radial-gradient(circle,rgba(40,150,251,0.35)_0%,transparent_70%)] blur-[6px]" />
+                  <div className="relative w-[40px] h-[40px] rounded-[14px] bg-gradient-to-br from-[#3DA4FF] via-[#2896FB] to-[#095DC3] flex items-center justify-center shadow-[0_0_28px_rgba(40,150,251,0.4)]">
+                    <div className="absolute inset-0 rounded-[14px] bg-gradient-to-br from-[rgba(255,255,255,0.2)] to-transparent" />
+                    <Sparkles className="w-[20px] h-[20px] text-white relative z-[1]" />
+                  </div>
                 </div>
-                <h1 className="text-[24px] font-bold text-white m-0 drop-shadow-[0_0_20px_rgba(255,255,255,0.05)]">AI Image</h1>
-              </motion.div>
+                <h1 className="text-[24px] font-bold text-white m-0">AI Image</h1>
+              </div>
+
               <motion.p
                 className="text-[13px] text-[#7B8BA5] mb-[40px]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.15 }}
               >
                 Generate on-brand visuals with AI
               </motion.p>
 
               <div className="w-full max-w-[680px]">
                 <div className="relative group">
-                  <div className="absolute -inset-[60px] rounded-[80px] bg-[radial-gradient(ellipse_at_center,rgba(40,150,251,0.06)_0%,transparent_70%)] pointer-events-none" />
-
-                  <div className="absolute -inset-[1px] rounded-[24px] opacity-0 group-focus-within:opacity-100 transition-opacity duration-700 blur-[3px]"
-                    style={{ background: 'linear-gradient(135deg, rgba(40,150,251,0.3), rgba(0,178,169,0.15), rgba(40,150,251,0.3))' }}
-                  />
-                  <div className="absolute -inset-[1px] rounded-[24px] opacity-0 group-focus-within:opacity-60 transition-opacity duration-700"
-                    style={{ background: 'linear-gradient(135deg, rgba(40,150,251,0.15), rgba(0,178,169,0.08), rgba(40,150,251,0.15))' }}
+                  <div className={`absolute -inset-[50px] rounded-[90px] pointer-events-none transition-opacity duration-1000 ai-prompt-glow-pulse ${isFocused ? 'opacity-100' : 'opacity-60'}`}
+                    style={{ background: 'radial-gradient(ellipse at center, rgba(40,150,251,0.08) 0%, rgba(9,93,195,0.04) 40%, transparent 70%)' }}
                   />
 
-                  <div className="relative rounded-[24px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.03)] backdrop-blur-[24px] group-focus-within:border-[rgba(40,150,251,0.2)] transition-all duration-500 shadow-[0_4px_40px_rgba(0,0,0,0.15)]">
-                    <textarea
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      placeholder="Describe the image you want to create..."
-                      rows={4}
-                      className="w-full bg-transparent border-none outline-none resize-none text-[16px] text-[#F1F5F9] placeholder:text-[rgba(255,255,255,0.22)] leading-[1.7] font-normal px-[28px] pt-[24px] pb-[8px]"
+                  <motion.div
+                    animate={isFocused ? { y: -2 } : { y: 0 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                    className="relative"
+                  >
+                    <div className={`absolute -inset-[1px] rounded-[24px] transition-opacity duration-700 blur-[3px] ${isFocused ? 'opacity-100' : 'opacity-0'}`}
+                      style={{ background: 'linear-gradient(135deg, rgba(40,150,251,0.35), rgba(0,178,169,0.15), rgba(40,150,251,0.35))' }}
                     />
-                    <div className="flex items-center justify-between px-[20px] pb-[16px] pt-[4px]">
-                      <div className="flex items-center gap-[6px]">
-                        <InlineSelect value={aspectRatio} options={ASPECT_RATIOS} onChange={setAspectRatio} />
-                        <InlineSelect value={style} options={STYLE_PRESETS} onChange={setStyle} />
-                        <button
-                          onClick={() => setShowSettings(!showSettings)}
-                          className={`flex items-center gap-[5px] py-[6px] px-[10px] rounded-[10px] border text-[11px] font-medium cursor-pointer transition-all duration-200
-                            ${showSettings
-                              ? 'border-[rgba(40,150,251,0.3)] bg-[rgba(40,150,251,0.1)] text-[#3DA4FF]'
-                              : 'border-[rgba(255,255,255,0.08)] bg-transparent text-[#5A6B80] hover:text-[#A0B0C4] hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.02)]'
-                            }`}
+
+                    <div className={`relative rounded-[24px] border bg-[rgba(255,255,255,0.03)] backdrop-blur-[24px] transition-all duration-500 overflow-hidden ai-shimmer-surface
+                      ${isFocused ? 'border-[rgba(40,150,251,0.22)] shadow-[0_8px_50px_rgba(0,0,0,0.2),0_0_40px_rgba(40,150,251,0.06)]' : 'border-[rgba(255,255,255,0.08)] shadow-[0_4px_40px_rgba(0,0,0,0.15)]'}`}
+                    >
+                      <textarea
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        onFocus={() => setIsFocused(true)}
+                        onBlur={() => setIsFocused(false)}
+                        placeholder="Describe the image you want to create..."
+                        rows={4}
+                        className="w-full bg-transparent border-none outline-none resize-none text-[16px] text-[#F1F5F9] placeholder:text-[rgba(255,255,255,0.2)] leading-[1.7] font-normal px-[28px] pt-[24px] pb-[8px] relative z-[1]"
+                      />
+                      <div className="flex items-center justify-between px-[20px] pb-[16px] pt-[4px] relative z-[1]">
+                        <div className="flex items-center gap-[6px]">
+                          <InlineSelect value={aspectRatio} options={ASPECT_RATIOS} onChange={setAspectRatio} />
+                          <InlineSelect value={style} options={STYLE_PRESETS} onChange={setStyle} />
+                          <motion.button
+                            onClick={() => setShowSettings(!showSettings)}
+                            whileHover={{ scale: 1.04 }}
+                            whileTap={{ scale: 0.97 }}
+                            className={`flex items-center gap-[5px] py-[6px] px-[10px] rounded-[10px] border text-[11px] font-medium cursor-pointer transition-all duration-200
+                              ${showSettings
+                                ? 'border-[rgba(40,150,251,0.3)] bg-[rgba(40,150,251,0.1)] text-[#3DA4FF]'
+                                : 'border-[rgba(255,255,255,0.08)] bg-transparent text-[#5A6B80] hover:text-[#A0B0C4] hover:border-[rgba(255,255,255,0.14)] hover:bg-[rgba(255,255,255,0.02)]'
+                              }`}
+                          >
+                            <Settings2 className="w-[12px] h-[12px]" />
+                            More
+                          </motion.button>
+                        </div>
+                        <motion.button
+                          onClick={handleGenerate}
+                          disabled={!prompt.trim()}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.96 }}
+                          className={`flex items-center gap-[8px] py-[10px] px-[22px] rounded-[12px] border-none text-[13px] font-semibold text-white cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed transition-all duration-300 ${prompt.trim() ? 'ai-btn-alive' : ''}`}
+                          style={{
+                            background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 50%, #3DA4FF 100%)',
+                            boxShadow: prompt.trim()
+                              ? '0 4px 24px rgba(40,150,251,0.35), 0 0 40px rgba(40,150,251,0.1), inset 0 1px 0 rgba(255,255,255,0.18)'
+                              : 'none',
+                          }}
                         >
-                          <Settings2 className="w-[12px] h-[12px]" />
-                          More
-                        </button>
+                          <Sparkles className="w-[14px] h-[14px]" />
+                          Generate
+                        </motion.button>
                       </div>
-                      <motion.button
-                        onClick={handleGenerate}
-                        disabled={!prompt.trim()}
-                        whileHover={{ scale: 1.04, boxShadow: "0 6px 36px rgba(40,150,251,0.5), 0 0 60px rgba(40,150,251,0.15), inset 0 1px 0 rgba(255,255,255,0.2)" }}
-                        whileTap={{ scale: 0.97 }}
-                        className="flex items-center gap-[8px] py-[10px] px-[22px] rounded-[12px] border-none text-[13px] font-semibold text-white cursor-pointer disabled:opacity-25 disabled:cursor-not-allowed transition-all duration-300"
-                        style={{
-                          background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 60%, #3DA4FF 100%)',
-                          boxShadow: '0 4px 24px rgba(40,150,251,0.35), 0 0 40px rgba(40,150,251,0.1), inset 0 1px 0 rgba(255,255,255,0.18)',
-                        }}
-                      >
-                        <Sparkles className="w-[14px] h-[14px]" />
-                        Generate
-                      </motion.button>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
                 <AnimatePresence>
@@ -242,7 +233,7 @@ export function AIImageWorkspace() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
                       className="overflow-hidden"
                     >
                       <div className="mt-[12px] rounded-[18px] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.025)] backdrop-blur-[20px] p-[20px]">
@@ -251,9 +242,11 @@ export function AIImageWorkspace() {
                             <div className="text-[10px] font-semibold text-[#5A6B80] mb-[6px] uppercase tracking-[1px]">Outputs</div>
                             <div className="flex gap-[4px]">
                               {[1, 2, 4].map((n) => (
-                                <button
+                                <motion.button
                                   key={n}
                                   onClick={() => setOutputCount(n)}
+                                  whileHover={{ scale: 1.06 }}
+                                  whileTap={{ scale: 0.95 }}
                                   className={`flex-1 py-[6px] rounded-[8px] text-[12px] font-semibold cursor-pointer transition-all duration-200 border
                                     ${outputCount === n
                                       ? 'bg-[rgba(40,150,251,0.12)] border-[rgba(40,150,251,0.25)] text-[#3DA4FF] shadow-[0_0_12px_rgba(40,150,251,0.1)]'
@@ -261,7 +254,7 @@ export function AIImageWorkspace() {
                                     }`}
                                 >
                                   {n}
-                                </button>
+                                </motion.button>
                               ))}
                             </div>
                           </div>
@@ -274,13 +267,14 @@ export function AIImageWorkspace() {
                             />
                             <div className="text-[10px] text-[#5A6B80] text-right mt-[2px]">{creativity}%</div>
                           </div>
-                          <div className="flex items-center gap-[8px]">
-                            <div className="flex-1">
-                              <div className="text-[10px] font-semibold text-[#5A6B80] mb-[6px] uppercase tracking-[1px]">Transparent BG</div>
-                              <button className="py-[6px] px-[12px] rounded-[8px] border border-[rgba(255,255,255,0.08)] text-[11px] text-[#5A6B80] font-medium cursor-pointer hover:text-[#A0B0C4] hover:border-[rgba(255,255,255,0.14)] transition-all duration-200 bg-transparent">
-                                Off
-                              </button>
-                            </div>
+                          <div>
+                            <div className="text-[10px] font-semibold text-[#5A6B80] mb-[6px] uppercase tracking-[1px]">Transparent BG</div>
+                            <motion.button
+                              whileHover={{ scale: 1.04 }}
+                              className="py-[6px] px-[12px] rounded-[8px] border border-[rgba(255,255,255,0.08)] text-[11px] text-[#5A6B80] font-medium cursor-pointer hover:text-[#A0B0C4] hover:border-[rgba(255,255,255,0.14)] transition-all duration-200 bg-transparent"
+                            >
+                              Off
+                            </motion.button>
                           </div>
                         </div>
                       </div>
@@ -292,7 +286,7 @@ export function AIImageWorkspace() {
                   className="mt-[28px]"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
+                  transition={{ delay: 0.25 }}
                 >
                   <div className="text-[10px] font-semibold text-[#3D4E63] uppercase tracking-[1.5px] mb-[10px]">Try something</div>
                   <div className="flex flex-wrap gap-[6px]">
@@ -300,11 +294,18 @@ export function AIImageWorkspace() {
                       <motion.button
                         key={s}
                         onClick={() => setPrompt(s)}
-                        initial={{ opacity: 0, y: 6 }}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.35 + i * 0.04 }}
-                        whileHover={{ y: -2, boxShadow: "0 4px 16px rgba(40,150,251,0.08)" }}
-                        className="py-[7px] px-[14px] rounded-[12px] border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] text-[12px] text-[#5A6B80] cursor-pointer transition-all duration-300 hover:bg-[rgba(40,150,251,0.07)] hover:text-[#A0B0C4] hover:border-[rgba(40,150,251,0.15)]"
+                        transition={{ delay: 0.3 + i * 0.05, duration: 0.4, ease: "easeOut" }}
+                        whileHover={{
+                          y: -3,
+                          boxShadow: "0 6px 20px rgba(40,150,251,0.1), 0 0 12px rgba(40,150,251,0.05)",
+                          backgroundColor: "rgba(40,150,251,0.07)",
+                          borderColor: "rgba(40,150,251,0.18)",
+                          color: "#A0B0C4",
+                          transition: { duration: 0.25 }
+                        }}
+                        className="py-[7px] px-[14px] rounded-[12px] border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] text-[12px] text-[#5A6B80] cursor-pointer transition-all duration-300"
                       >
                         {s}
                       </motion.button>
@@ -323,7 +324,7 @@ export function AIImageWorkspace() {
               className="flex-1 flex flex-col items-center justify-center px-[32px] relative z-[2]"
             >
               <div className="relative mb-[28px]">
-                <div className="absolute inset-[-20px] rounded-full bg-[radial-gradient(circle,rgba(40,150,251,0.12)_0%,transparent_70%)] animate-pulse" />
+                <div className="absolute inset-[-24px] rounded-full bg-[radial-gradient(circle,rgba(40,150,251,0.15)_0%,transparent_70%)] ai-prompt-glow-pulse" />
                 <div className="w-[64px] h-[64px] rounded-full border-[2px] border-[rgba(40,150,251,0.2)] border-t-[#3DA4FF] animate-spin shadow-[0_0_24px_rgba(40,150,251,0.15)]" />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Sparkles className="w-[20px] h-[20px] text-[#3DA4FF]" />
@@ -338,13 +339,13 @@ export function AIImageWorkspace() {
                     key={i}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.1 }}
+                    transition={{ delay: i * 0.1, duration: 0.4 }}
                     className="aspect-square rounded-[16px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] overflow-hidden"
                   >
                     <motion.div
-                      animate={{ opacity: [0.3, 0.6, 0.3] }}
-                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
-                      className="w-full h-full bg-gradient-to-br from-[rgba(40,150,251,0.06)] via-[rgba(0,178,169,0.03)] to-transparent"
+                      animate={{ opacity: [0.25, 0.55, 0.25] }}
+                      transition={{ duration: 2.5, repeat: Infinity, delay: i * 0.3, ease: "easeInOut" }}
+                      className="w-full h-full bg-gradient-to-br from-[rgba(40,150,251,0.07)] via-[rgba(0,178,169,0.04)] to-transparent"
                     />
                   </motion.div>
                 ))}
@@ -356,32 +357,33 @@ export function AIImageWorkspace() {
               key="results"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
               className="flex-1 flex flex-col px-[32px] pt-[20px] pb-[32px] relative z-[2]"
             >
               <div className="flex items-center gap-[16px] mb-[20px]">
                 <div className="flex-1 relative group">
                   <div className="absolute -inset-[1px] rounded-[16px] opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 blur-[2px]"
-                    style={{ background: 'linear-gradient(90deg, rgba(40,150,251,0.2), rgba(0,178,169,0.1), rgba(40,150,251,0.2))' }}
+                    style={{ background: 'linear-gradient(90deg, rgba(40,150,251,0.25), rgba(0,178,169,0.12), rgba(40,150,251,0.25))' }}
                   />
-                  <div className="relative flex items-center gap-[10px] rounded-[16px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] backdrop-blur-[16px] px-[16px] py-[10px] group-focus-within:border-[rgba(40,150,251,0.2)] transition-all duration-300 shadow-[0_2px_20px_rgba(0,0,0,0.1)]">
+                  <div className="relative flex items-center gap-[10px] rounded-[16px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] backdrop-blur-[16px] px-[16px] py-[10px] group-focus-within:border-[rgba(40,150,251,0.22)] transition-all duration-300 shadow-[0_2px_20px_rgba(0,0,0,0.1)] overflow-hidden ai-shimmer-surface">
                     <Sparkles className="w-[14px] h-[14px] text-[#5A6B80] shrink-0" />
                     <input
                       type="text"
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder="Refine your prompt..."
-                      className="flex-1 bg-transparent border-none outline-none text-[13px] text-[#F1F5F9] placeholder:text-[#5A6B80]"
+                      className="flex-1 bg-transparent border-none outline-none text-[13px] text-[#F1F5F9] placeholder:text-[#5A6B80] relative z-[1]"
                     />
-                    <div className="flex items-center gap-[4px] shrink-0">
+                    <div className="flex items-center gap-[4px] shrink-0 relative z-[1]">
                       <InlineSelect value={aspectRatio} options={ASPECT_RATIOS} onChange={setAspectRatio} />
                       <InlineSelect value={style} options={STYLE_PRESETS} onChange={setStyle} />
                     </div>
                     <motion.button
                       onClick={handleGenerate}
                       disabled={!prompt.trim() || isGenerating}
-                      whileHover={{ scale: 1.04, boxShadow: "0 4px 24px rgba(40,150,251,0.4), inset 0 1px 0 rgba(255,255,255,0.2)" }}
-                      whileTap={{ scale: 0.97 }}
-                      className="flex items-center gap-[6px] py-[7px] px-[16px] rounded-[10px] border-none text-[12px] font-semibold text-white cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0 transition-all duration-300"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.96 }}
+                      className="flex items-center gap-[6px] py-[7px] px-[16px] rounded-[10px] border-none text-[12px] font-semibold text-white cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed shrink-0 transition-all duration-300 relative z-[1]"
                       style={{
                         background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 60%, #3DA4FF 100%)',
                         boxShadow: '0 2px 16px rgba(40,150,251,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
@@ -399,19 +401,23 @@ export function AIImageWorkspace() {
                   {MOCK_RESULTS.map((result, i) => (
                     <motion.div
                       key={result.id}
-                      initial={{ opacity: 0, scale: 0.92, y: 12 }}
+                      initial={{ opacity: 0, scale: 0.9, y: 16 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ delay: i * 0.08, duration: 0.4, ease: "easeOut" }}
+                      transition={{ delay: i * 0.1, duration: 0.45, ease: "easeOut" }}
                       onClick={() => setSelectedResult(selectedResult === result.id ? null : result.id)}
-                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                      whileHover={{
+                        y: -5,
+                        boxShadow: "0 20px 50px rgba(0,0,0,0.45), 0 0 28px rgba(40,150,251,0.08)",
+                        transition: { duration: 0.3 }
+                      }}
                       className={`group aspect-square rounded-[18px] relative overflow-hidden cursor-pointer transition-shadow duration-300
                         ${selectedResult === result.id
                           ? 'ring-[2px] ring-[#3DA4FF] ring-offset-[3px] ring-offset-[#060B16] shadow-[0_0_36px_rgba(40,150,251,0.2)]'
-                          : 'hover:shadow-[0_16px_48px_rgba(0,0,0,0.4),0_0_24px_rgba(40,150,251,0.06)]'
+                          : ''
                         }`}
                     >
                       <div className={`absolute inset-0 bg-gradient-to-br ${result.gradient}`} />
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.06)_0%,transparent_60%)]" />
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(255,255,255,0.08)_0%,transparent_55%)]" />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <ImageIcon className="w-[36px] h-[36px] text-[rgba(255,255,255,0.1)]" />
                       </div>
@@ -429,9 +435,9 @@ export function AIImageWorkspace() {
                             <motion.button
                               key={action.tip}
                               onClick={(e) => e.stopPropagation()}
-                              whileHover={{ scale: 1.08 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="flex-1 h-[32px] rounded-[8px] border border-[rgba(255,255,255,0.14)] bg-[rgba(0,0,0,0.4)] backdrop-blur-[10px] flex items-center justify-center text-[rgba(255,255,255,0.75)] cursor-pointer transition-all duration-200 hover:bg-[rgba(40,150,251,0.4)] hover:text-white hover:border-[rgba(40,150,251,0.5)] hover:shadow-[0_0_12px_rgba(40,150,251,0.2)]"
+                              whileHover={{ scale: 1.1, backgroundColor: "rgba(40,150,251,0.45)" }}
+                              whileTap={{ scale: 0.92 }}
+                              className="flex-1 h-[32px] rounded-[8px] border border-[rgba(255,255,255,0.14)] bg-[rgba(0,0,0,0.4)] backdrop-blur-[10px] flex items-center justify-center text-[rgba(255,255,255,0.75)] cursor-pointer transition-all duration-200 hover:text-white hover:border-[rgba(40,150,251,0.5)] hover:shadow-[0_0_14px_rgba(40,150,251,0.2)]"
                               title={action.tip}
                             >
                               <action.icon className="w-[13px] h-[13px]" />
@@ -449,7 +455,7 @@ export function AIImageWorkspace() {
                       initial={{ width: 0, opacity: 0 }}
                       animate={{ width: 300, opacity: 1 }}
                       exit={{ width: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
                       className="shrink-0 overflow-hidden"
                     >
                       <div className="w-[300px] h-full rounded-[18px] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.025)] backdrop-blur-[20px] p-[16px] flex flex-col gap-[14px] overflow-y-auto shadow-[0_4px_30px_rgba(0,0,0,0.15)]">
@@ -457,15 +463,16 @@ export function AIImageWorkspace() {
                           <span className="text-[13px] font-semibold text-[#F1F5F9]">Details</span>
                           <motion.button
                             onClick={() => setSelectedResult(null)}
-                            whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.06)" }}
+                            whileHover={{ scale: 1.12, backgroundColor: "rgba(255,255,255,0.06)" }}
+                            whileTap={{ scale: 0.9 }}
                             className="w-[26px] h-[26px] rounded-[8px] border border-[rgba(255,255,255,0.08)] bg-transparent flex items-center justify-center text-[#7B8BA5] cursor-pointer transition-all duration-200"
                           >
                             <X className="w-[12px] h-[12px]" />
                           </motion.button>
                         </div>
 
-                        <div className={`aspect-square rounded-[14px] bg-gradient-to-br ${MOCK_RESULTS.find(r => r.id === selectedResult)?.gradient || ''} relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.2)]`}>
-                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,255,255,0.06)_0%,transparent_60%)]" />
+                        <div className={`aspect-square rounded-[14px] bg-gradient-to-br ${MOCK_RESULTS.find(r => r.id === selectedResult)?.gradient || ''} relative overflow-hidden shadow-[0_4px_24px_rgba(0,0,0,0.25)]`}>
+                          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(255,255,255,0.08)_0%,transparent_55%)]" />
                           <div className="absolute inset-0 flex items-center justify-center">
                             <ImageIcon className="w-[32px] h-[32px] text-[rgba(255,255,255,0.1)]" />
                           </div>
@@ -495,7 +502,7 @@ export function AIImageWorkspace() {
                           ].map((action) => (
                             <motion.button
                               key={action.label}
-                              whileHover={{ scale: 1.01, y: -1 }}
+                              whileHover={{ scale: 1.02, y: -1 }}
                               whileTap={{ scale: 0.98 }}
                               className={`flex items-center gap-[7px] py-[8px] px-[12px] rounded-[10px] text-[12px] font-semibold cursor-pointer transition-all duration-200 border
                                 ${action.primary

@@ -20,6 +20,8 @@ const HIGHLY_CHARACTER_SHEET = `"Highly" is the official HighLevel mascot robot.
 
 CRITICAL: Do NOT draw a generic robot. Highly must match EXACTLY the description above — oversized head with black visor, teal eyes, three colored arrows on top, floating detached hands, single jet-cone bottom, no legs.`;
 
+const HIGHLEVEL_LOGO_DESCRIPTION = `The HighLevel logo consists of exactly three upward-pointing arrow shapes side by side (yellow on the left, blue in the center, green on the right) followed by the word "HighLevel" in clean white bold sans-serif text. The arrows are simple filled chevron/arrow shapes pointing up, evenly spaced. Do NOT invent a different logo — use ONLY this exact design: three colored arrows (yellow, blue, green) + "HighLevel" wordmark.`;
+
 const BRAND_SYSTEM_PROMPT = `Create a premium marketing image in HighLevel brand style.
 
 Use a modern SaaS design aesthetic with clean composition, strong visual hierarchy, and minimal clutter.
@@ -31,6 +33,10 @@ Apply HighLevel visual identity:
 - smooth gradients and polished surfaces
 - futuristic, high-end, and professional look
 
+HighLevel logo rules:
+${HIGHLEVEL_LOGO_DESCRIPTION}
+If the image includes any logo, branding, or text that says "HighLevel", it MUST use the exact logo described above. Never generate a random or made-up logo.
+
 Keep the design clean, spacious, and campaign-ready.
 Avoid random colors, avoid clutter, avoid generic AI styles.
 
@@ -39,8 +45,20 @@ User request:
 
 Make the final result look like a real HighLevel campaign asset, suitable for ads, social media, or product marketing.`;
 
-const buildFullPrompt = (userPrompt: string) =>
-  BRAND_SYSTEM_PROMPT.replace("{{USER_PROMPT}}", userPrompt);
+const ROBOT_KEYWORDS = /\b(highly|robot|mascot|bot|character)\b/i;
+
+const buildFullPrompt = (userPrompt: string, highlyDescription?: string) => {
+  let enrichedPrompt = userPrompt;
+
+  const mentionsHighly = ROBOT_KEYWORDS.test(userPrompt);
+  if (highlyDescription) {
+    enrichedPrompt += `\n\n${HIGHLY_CHARACTER_SHEET}\n\nPose: ${highlyDescription}. Place this exact Highly mascot prominently in the composition. Do NOT use any other robot design.`;
+  } else if (mentionsHighly) {
+    enrichedPrompt += `\n\n${HIGHLY_CHARACTER_SHEET}\n\nThe user mentioned a robot/mascot — they mean Highly, the HighLevel mascot described above. Render Highly exactly as described. Do NOT use any generic robot design.`;
+  }
+
+  return BRAND_SYSTEM_PROMPT.replace("{{USER_PROMPT}}", enrichedPrompt);
+};
 
 const PROMPT_SUGGESTIONS = [
   "A futuristic city skyline at sunset with HighLevel branding",
@@ -163,11 +181,7 @@ export function AIImageWorkspace() {
     setError(null);
     setSelectedResult(null);
 
-    let userPromptWithHighly = prompt;
-    if (activeHighly) {
-      userPromptWithHighly += `\n\n${HIGHLY_CHARACTER_SHEET}\n\nPose: ${activeHighly.description}. Place this exact Highly mascot prominently in the composition. Do NOT use any other robot design.`;
-    }
-    const fullPrompt = buildFullPrompt(userPromptWithHighly);
+    const fullPrompt = buildFullPrompt(prompt, activeHighly?.description);
     const size = ASPECT_TO_SIZE[aspectRatio] || "1024x1024";
 
     try {
@@ -665,7 +679,7 @@ export function AIImageWorkspace() {
                             <div className="text-[10px] font-semibold text-[#00B2A9] uppercase tracking-[1px]">Full Brand Prompt</div>
                           </div>
                           <div className="text-[10px] text-[#7B8BA5] leading-[1.6] p-[10px] rounded-[10px] bg-[rgba(0,0,0,0.15)] border border-[rgba(0,178,169,0.06)] max-h-[120px] overflow-y-auto whitespace-pre-wrap">
-                            {prompt ? buildFullPrompt(prompt) : "\u2014"}
+                            {prompt ? buildFullPrompt(prompt, activeHighly?.description) : "\u2014"}
                           </div>
                         </div>
 

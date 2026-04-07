@@ -283,12 +283,12 @@ export function ZoomWorkspace() {
               <img 
                 src={LOGO_URL} 
                 alt="HighLevel" 
-                className="h-[28px] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+                className="w-[14%] max-w-[120px] h-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
               />
             </div>
 
             {(name || designation) && (
-              <div className="absolute top-[18%] left-[4%] z-[4]">
+              <div className="absolute top-[20%] left-[4%] z-[4]">
                 {name && (
                   <div className="font-['Poppins'] font-extrabold text-[clamp(18px,2.8vw,36px)] leading-[1.05] text-[#00B2A9] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] uppercase tracking-[-0.5px]">
                     {name}

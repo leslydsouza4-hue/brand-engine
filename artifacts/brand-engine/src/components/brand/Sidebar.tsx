@@ -19,10 +19,10 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
       after:content-[''] after:absolute after:top-0 after:right-0 after:w-[1px] after:h-full after:bg-[linear-gradient(to_bottom,rgba(0,178,169,0.2),rgba(40,150,251,0.08),transparent_80%)]
     ">
       <div className="pt-[26px] px-[20px] pb-[32px] flex items-center gap-[11px] relative">
-        <div className="w-[36px] h-[36px] rounded-[11px] flex items-center justify-center overflow-hidden shrink-0 relative
-          after:content-[''] after:absolute after:inset-[-2px] after:rounded-[13px] after:bg-gradient-to-br after:from-[rgba(0,178,169,0.35)] after:to-[rgba(40,150,251,0.2)] after:-z-10 after:blur-[6px]
+        <div className="w-[36px] h-[36px] rounded-[11px] flex items-center justify-center overflow-hidden shrink-0 relative shadow-[0_0_20px_rgba(0,178,169,0.4),0_0_40px_rgba(40,150,251,0.2)]
+          after:content-[''] after:absolute after:inset-[-3px] after:rounded-[14px] after:bg-gradient-to-br after:from-[rgba(0,178,169,0.4)] after:to-[rgba(40,150,251,0.25)] after:-z-10 after:blur-[8px]
         ">
-          <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HighLevel" className="w-[28px] h-[28px] object-contain" />
+          <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HighLevel" className="w-[24px] h-[24px] object-contain" />
         </div>
         <div className="text-[17px] font-bold text-white tracking-[-0.4px]">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
       </div>

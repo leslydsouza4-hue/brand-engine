@@ -100,7 +100,7 @@ export function ZoomWorkspace() {
                   </div>
                 )}
                 {designation && (
-                  <div className="font-sans font-medium text-[clamp(9px,1.1vw,14px)] text-[rgba(255,255,255,0.7)] mt-[4px] tracking-[0.3px]">
+                  <div className="font-['Poppins'] font-medium text-[clamp(9px,1.1vw,14px)] text-[rgba(255,255,255,0.7)] mt-[4px] tracking-[0.3px]">
                     {designation}
                   </div>
                 )}
@@ -112,7 +112,7 @@ export function ZoomWorkspace() {
                 <div className="font-['Poppins'] font-extrabold text-[clamp(14px,2.2vw,28px)] leading-[1.05] text-[rgba(32,237,241,0.2)] uppercase tracking-[-0.5px]">
                   YOUR NAME
                 </div>
-                <div className="font-sans font-medium text-[clamp(9px,1.1vw,14px)] text-[rgba(255,255,255,0.15)] mt-[4px] tracking-[0.3px]">
+                <div className="font-['Poppins'] font-medium text-[clamp(9px,1.1vw,14px)] text-[rgba(255,255,255,0.15)] mt-[4px] tracking-[0.3px]">
                   Your Title Here
                 </div>
               </div>

@@ -1,0 +1,225 @@
+Build the AI Image page inside BrandEngine as a futuristic, premium, prompt-first image generation interface inspired by the feel of Google Flow.
+
+Do not implement API logic yet.  
+For this step, focus only on the inner UI, layout, interactions, and visual polish.
+
+## Main goal
+Design and build a beautiful AI image generation workspace that feels:
+- futuristic
+- minimal
+- premium
+- highly visual
+- smooth and fast
+- dark-mode first
+- aligned with the existing BrandEngine aesthetic
+
+It should feel like a real creative product, not a placeholder.
+
+## Visual direction
+Use a design language inspired by Google Flow, but adapted to the HighLevel / BrandEngine visual identity:
+- deep dark blue and black background tones
+- subtle blue gradients
+- glassmorphism panels
+- soft glows
+- premium borders
+- elegant spacing
+- large prompt-first composition
+- modern rounded cards
+- refined hover and focus states
+- cinematic but clean
+
+The UI should feel like:
+- an AI creative studio
+- a premium internal design tool
+- sleek and advanced
+- very polished and presentable
+
+## Page structure
+Create a complete AI Image generation screen with these sections:
+
+### 1. Top toolbar
+At the top, create a premium floating toolbar with:
+- page title: AI Image
+- a short subtitle like: “Generate on-brand visuals with AI”
+- actions on the right:
+  - New Session
+  - History
+  - Settings
+
+Style it as a glass panel with subtle blur, blue glow, and refined iconography.
+
+### 2. Main prompt area
+This should be the centerpiece of the page.
+
+Build a large prompt composer with:
+- big multiline prompt input
+- placeholder text like:
+  “Describe the image you want to create...”
+- a glowing focused state
+- prompt suggestions shown below as clickable chips
+
+Suggested chips:
+- Summer campaign hero
+- Event background
+- Product promo visual
+- Highly mascot concept
+- Social ad creative
+- Branded wallpaper
+
+Also include a primary CTA button:
+- Generate
+Make it feel premium and futuristic
+
+### 3. Controls panel
+Under or beside the prompt area, create a clean controls section with:
+- aspect ratio dropdown
+- style preset dropdown
+- number of outputs selector
+- quality selector
+- creativity slider
+- brand adherence slider
+- reference strength slider
+- transparent background toggle
+- advanced options collapsible area
+
+These controls should feel elegant and compact, not cluttered.
+
+### 4. Reference assets tray
+Create a horizontally scrollable section for attached or selectable references.
+
+Each reference card should support:
+- image preview
+- file title
+- tag badge
+- toggle states such as:
+  - Style
+  - Identity
+  - Composition
+
+Mock this with sample cards based on HighLevel-like references such as:
+- Blue Gradient Background
+- Highly Robot
+- HighLevel Logo
+- Brand Pattern
+- Campaign Visual
+
+Include an Add Reference button card.
+
+### 5. Output presets
+Create a preset selection row with premium selectable cards:
+- Campaign Hero
+- Social Post
+- Ad Creative
+- Background Only
+- Highly Character Scene
+- Product Promo
+- Event Visual
+
+The selected state should glow subtly and feel high-end.
+
+### 6. Generated results area
+Build a polished results section showing a responsive gallery grid of generated image cards.
+
+For now use mock images / placeholders.
+
+Each card should include:
+- image preview
+- title or generation label
+- provider badge placeholder
+- small status label
+- hover overlay with actions:
+  - View
+  - Remix
+  - Variations
+  - Download
+
+Cards should feel elevated with blur, glow, depth, and motion.
+
+### 7. Right-side detail drawer
+When a result is selected, show a side panel with:
+- large preview
+- prompt used
+- references used
+- settings summary
+- action buttons:
+  - Regenerate
+  - Make Variations
+  - Duplicate Prompt
+  - Download
+
+Use a premium floating drawer style.
+
+### 8. Empty state and loading states
+Create polished empty and loading states.
+
+Empty state:
+- futuristic illustration block or glowing placeholder panel
+- message like:
+  “Create your first AI visual”
+- subtext encouraging prompt + references
+
+Loading state:
+- skeleton cards
+- shimmer effects
+- premium loader
+- loading message like:
+  “Generating visuals...”
+
+## Layout behavior
+The page should feel modern and spacious.
+
+Recommended layout:
+- top toolbar
+- prompt area near top center
+- references and presets below
+- results gallery below that
+- optional right-side drawer for selected result
+
+Make sure the page is:
+- responsive
+- smooth on large desktop screens
+- still usable on laptop widths
+
+## Interaction quality
+Even though this is UI only, make the experience feel alive:
+- hover animations
+- card lift
+- glow on focus
+- smooth transitions
+- subtle scale and shadow effects
+- polished toggles and sliders
+- beautiful button states
+
+Do not overdo motion. Keep it tasteful and premium.
+
+## Styling notes
+Use:
+- React + TypeScript
+- Tailwind if already available
+- modular reusable components
+- lucide-react icons if useful
+- Framer Motion for subtle animations if available
+
+Use design tokens consistent with BrandEngine:
+- dark blue surfaces
+- electric blue accents
+- white text
+- muted secondary text
+- subtle glass layers
+- premium border treatments
+
+## Important constraints
+- Build only the UI for now
+- No API integration yet
+- No backend logic yet
+- No fake provider code yet
+- No unfinished “coming soon” center state
+- This should look like a nearly launch-ready product shell
+
+## Desired outcome
+When I open the AI Image page, it should immediately feel like:
+- a futuristic image generation workspace
+- a premium product inspired by Google Flow
+- something real, sleek, and impressive enough to demo internally
+
+Make the page feel rich, modern, and visually excellent.

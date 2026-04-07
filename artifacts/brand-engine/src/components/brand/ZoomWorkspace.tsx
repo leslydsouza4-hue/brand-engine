@@ -279,7 +279,7 @@ export function ZoomWorkspace() {
             />
 
             {(name || designation) && (
-              <div className="absolute top-[8%] left-[4%] z-[4]">
+              <div className="absolute top-[22%] left-[4%] z-[4]">
                 {name && (
                   <div className="font-['Poppins'] font-extrabold text-[clamp(18px,2.8vw,36px)] leading-[1.05] text-[#00B2A9] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] uppercase tracking-[-0.5px]">
                     {name}

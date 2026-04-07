@@ -290,8 +290,8 @@ export function ShaunWorkspace() {
                     }}
                   >
                     <div className="absolute inset-0 bg-[rgba(255,255,255,0.05)]" />
-                    <div className="relative py-[clamp(3px,0.6vw,7px)] pl-[4%] pr-[clamp(12px,1.8vw,20px)]">
-                      <div className="font-['Poppins'] font-bold text-white text-[clamp(6px,0.85vw,10px)] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+                    <div className="relative py-[clamp(3px,0.6vw,7px)] pl-[4%] pr-[clamp(12px,1.8vw,20px)] whitespace-nowrap">
+                      <div className="font-['Poppins'] font-bold text-white text-[clamp(6px,0.85vw,10px)] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)] whitespace-nowrap">
                         {stripText}
                       </div>
                     </div>

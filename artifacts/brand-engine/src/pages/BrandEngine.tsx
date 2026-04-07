@@ -7,14 +7,15 @@ import { ShaunWorkspace } from "@/components/brand/ShaunWorkspace";
 import { ZoomWorkspace } from "@/components/brand/ZoomWorkspace";
 import { AIImageWorkspace } from "@/components/brand/AIImageWorkspace";
 import { BrandDirectoryWorkspace } from "@/components/brand/BrandDirectoryWorkspace";
+import { SettingsWorkspace } from "@/components/brand/SettingsWorkspace";
 
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    const valid = ["templates", "ai-image", "shaun-thumbnails", "zoom-backgrounds", "brand-directory"];
+    const valid = ["templates", "ai-image", "shaun-thumbnails", "zoom-backgrounds", "brand-directory", "settings"];
     return valid.includes(hash) ? hash : "templates";
   });
-  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "zoom-backgrounds", "brand-directory"];
+  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "zoom-backgrounds", "brand-directory", "settings"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -93,6 +94,7 @@ export default function BrandEngine() {
         
         {currentMode === "ai-image" && <AIImageWorkspace />}
         {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
+        {currentMode === "settings" && <SettingsWorkspace />}
       </div>
     </div>
   );

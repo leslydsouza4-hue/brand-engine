@@ -107,8 +107,15 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
       </div>
 
       <div className="mt-auto px-[12px] py-[16px] border-t border-white/5">
-        <button className="w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px] text-[13px] font-medium mb-[2px]">
-          <Settings className="w-[18px] h-[18px] shrink-0 opacity-60" />
+        <button 
+          onClick={() => setMode('settings')}
+          className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px]
+            ${currentMode === 'settings'
+              ? 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)]'
+              : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]'
+            }`}
+        >
+          <Settings className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'settings' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60'}`} />
           Settings
         </button>
         <button 

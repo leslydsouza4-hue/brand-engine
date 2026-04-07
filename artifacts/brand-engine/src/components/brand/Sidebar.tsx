@@ -7,9 +7,10 @@ import {
   Gift, 
   Settings, 
   FolderOpen,
-  Hexagon,
   MonitorPlay
 } from "lucide-react";
+
+const BASE = import.meta.env.BASE_URL;
 
 export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode: (mode: string) => void }) {
   return (
@@ -18,10 +19,10 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
       after:content-[''] after:absolute after:top-0 after:right-0 after:w-[1px] after:h-full after:bg-[linear-gradient(to_bottom,rgba(0,178,169,0.2),rgba(40,150,251,0.08),transparent_80%)]
     ">
       <div className="pt-[26px] px-[20px] pb-[32px] flex items-center gap-[11px] relative">
-        <div className="w-[36px] h-[36px] bg-gradient-to-br from-[#095DC3] via-[#2896FB] to-[#00B2A9] rounded-[11px] flex items-center justify-center shadow-[0_0_24px_rgba(0,178,169,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] relative
+        <div className="w-[36px] h-[36px] rounded-[11px] flex items-center justify-center overflow-hidden shrink-0 relative
           after:content-[''] after:absolute after:inset-[-2px] after:rounded-[13px] after:bg-gradient-to-br after:from-[rgba(0,178,169,0.35)] after:to-[rgba(40,150,251,0.2)] after:-z-10 after:blur-[6px]
         ">
-          <Hexagon className="w-[18px] h-[18px] text-white" />
+          <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HighLevel" className="w-full h-full object-contain" />
         </div>
         <div className="text-[17px] font-bold text-white tracking-[-0.4px]">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
       </div>

@@ -607,9 +607,6 @@ export function TemplatesWorkspace() {
                   boxShadow: '0 8px 50px rgba(0,0,0,0.3)',
                 }}
               >
-                <div className="absolute top-[12px] right-[12px] py-[4px] px-[10px] bg-[rgba(0,0,0,0.5)] backdrop-blur-[12px] border border-[rgba(255,255,255,0.08)] rounded-[6px] text-[9px] font-semibold text-[rgba(255,255,255,0.5)] z-[10] pointer-events-none">
-                  {activeSize.ratio > 1 ? `${Math.round(activeSize.ratio * 1080)}\u00d71080` : `1080\u00d7${Math.round(1080 / activeSize.ratio)}`}
-                </div>
                 {renderPreviewContent(
                   activeTemplate,
                   headline || activeTemplate.headline,

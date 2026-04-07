@@ -95,30 +95,6 @@ const TEMPLATES: Template[] = [
     headline: "BEYOND LIMITS",
     subtext: "Powered by HighLevel",
   },
-  {
-    id: "radial-shine",
-    name: "Radial Shine",
-    tag: "Event",
-    categories: ["social", "ads", "presentation"],
-    bgType: "image",
-    bgValue: bg("Type=Radial Shine Bottom Left.png"),
-    textLayout: "top-left",
-    textStyle: "clean",
-    headline: "SUMMIT 2025",
-    subtext: "Join the movement",
-  },
-  {
-    id: "gradient-wave",
-    name: "Gradient Wave",
-    tag: "Social",
-    categories: ["social", "ads", "presentation"],
-    bgType: "gradient",
-    bgValue: "linear-gradient(135deg, #095DC3 0%, #2896FB 50%, #00B2A9 100%)",
-    textLayout: "bottom-left",
-    textStyle: "bold",
-    headline: "SAY HI TO HIGHLY",
-    subtext: "Your new AI sidekick",
-  },
 ];
 
 const TEXT_LAYOUTS: Record<string, { container: string; headlineClass: string; subtextClass: string }> = {

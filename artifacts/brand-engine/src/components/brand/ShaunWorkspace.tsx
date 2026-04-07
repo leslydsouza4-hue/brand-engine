@@ -282,14 +282,11 @@ export function ShaunWorkspace() {
               />
 
               {stripText && (
-                <div className="absolute top-[11%] left-0 z-[6] w-[55%]">
-                  <div className="relative">
-                    <div className="bg-[rgba(60,130,220,0.75)] backdrop-blur-[4px] py-[clamp(4px,1vw,10px)] px-[clamp(10px,2.5vw,28px)] rounded-r-[clamp(4px,0.8vw,8px)] border-l-0">
-                      <div className="font-['Poppins'] font-bold text-white text-[clamp(10px,1.6vw,20px)] uppercase tracking-[1px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]">
-                        {stripText}
-                      </div>
+                <div className="absolute top-[10.5%] left-0 z-[6]">
+                  <div className="bg-[rgba(50,120,210,0.7)] backdrop-blur-[4px] py-[clamp(2px,0.5vw,5px)] pl-[4%] pr-[clamp(10px,2vw,22px)] rounded-r-[clamp(3px,0.5vw,5px)]">
+                    <div className="font-['Poppins'] font-bold text-white text-[clamp(6px,0.9vw,11px)] uppercase tracking-[1.5px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.3)]">
+                      {stripText}
                     </div>
-                    <div className="absolute top-0 right-[-8px] w-0 h-0 border-t-[clamp(4px,1vw,10px)] border-b-[clamp(4px,1vw,10px)] border-l-[8px] border-t-transparent border-b-transparent border-l-[rgba(60,130,220,0.75)]" style={{ top: '50%', transform: 'translateY(-50%)' }} />
                   </div>
                 </div>
               )}

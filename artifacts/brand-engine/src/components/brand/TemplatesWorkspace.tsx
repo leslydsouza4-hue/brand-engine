@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, Upload, Image as ImageIcon, Move, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Type, Palette, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
@@ -91,8 +91,8 @@ const TEMPLATES: Template[] = [
   {
     id: "planet-hero",
     name: "Planet Hero",
-    tag: "Social",
-    categories: ["social"],
+    tag: "Cinematic",
+    categories: ["social", "ads", "presentation"],
     bgType: "image",
     bgValue: bg("Type=Centered Planet.png"),
     textLayout: "center",
@@ -104,45 +104,19 @@ const TEMPLATES: Template[] = [
     id: "radial-shine",
     name: "Radial Shine",
     tag: "Event",
-    categories: ["social", "ads"],
+    categories: ["social", "ads", "presentation"],
     bgType: "image",
     bgValue: bg("Type=Radial Shine Bottom Left.png"),
     textLayout: "top-left",
     textStyle: "clean",
     headline: "SUMMIT 2025",
     subtext: "Join the movement",
-    logoSrc: logo("Lockup=Full Horizontal, Color=Light.png"),
-  },
-  {
-    id: "planet-promo",
-    name: "Planet Promo",
-    tag: "Product",
-    categories: ["social", "ads"],
-    bgType: "image",
-    bgValue: bg("Type=Planet Bottom Right.png"),
-    textLayout: "top-left",
-    textStyle: "bold",
-    headline: "NEW FEATURE DROP",
-    subtext: "Everything you need to grow",
-  },
-  {
-    id: "horizon-light",
-    name: "Horizon Light",
-    tag: "Minimal",
-    categories: ["presentation", "ads"],
-    bgType: "image",
-    bgValue: bgLight("Property 1=Centered Horizon.png"),
-    textLayout: "center",
-    textStyle: "minimal",
-    headline: "Clean. Simple. Powerful.",
-    subtext: "HighLevel",
-    overlay: "rgba(0,0,0,0.15)",
   },
   {
     id: "highly-wave",
     name: "Highly Wave",
     tag: "Social",
-    categories: ["social"],
+    categories: ["social", "ads", "presentation"],
     bgType: "gradient",
     bgValue: "linear-gradient(135deg, #095DC3 0%, #2896FB 50%, #00B2A9 100%)",
     textLayout: "bottom-left",
@@ -150,82 +124,6 @@ const TEMPLATES: Template[] = [
     headline: "SAY HI TO HIGHLY",
     subtext: "Your new AI sidekick",
     mascotSrc: highly("Highly_Hi 1.png"),
-    mascotPosition: "right",
-  },
-  {
-    id: "deep-space",
-    name: "Deep Space",
-    tag: "Cinematic",
-    categories: ["social", "presentation"],
-    bgType: "image",
-    bgValue: bg("Type=Large Planet Bottom Right.png"),
-    textLayout: "minimal-center",
-    textStyle: "futuristic",
-    headline: "THINK BIGGER",
-    subtext: "HighLevel Platform",
-  },
-  {
-    id: "neutral-canvas",
-    name: "Neutral Canvas",
-    tag: "Minimal",
-    categories: ["presentation", "ads"],
-    bgType: "image",
-    bgValue: bgLight("Property 1=Neutral.png"),
-    textLayout: "center",
-    textStyle: "minimal",
-    headline: "Less noise. More growth.",
-    subtext: "HighLevel",
-    overlay: "rgba(0,0,0,0.1)",
-  },
-  {
-    id: "ray-burst",
-    name: "Ray Burst",
-    tag: "Event",
-    categories: ["social", "ads"],
-    bgType: "image",
-    bgValue: bg("Type=Planet Ray Bottom Right.png"),
-    textLayout: "top-left",
-    textStyle: "bold",
-    headline: "LIVE EVENT",
-    subtext: "Register now \u2022 Free access",
-    logoSrc: logo("Lockup=Full Horizontal, Color=Light.png"),
-  },
-  {
-    id: "teal-gradient",
-    name: "Teal Flow",
-    tag: "Brand Core",
-    categories: ["social", "ads", "presentation"],
-    bgType: "image",
-    bgValue: bg("Type=Small Radial Shine Right.png"),
-    textLayout: "center",
-    textStyle: "clean",
-    headline: "GROW WITH US",
-    subtext: "HighLevel \u2022 All-in-one platform",
-  },
-  {
-    id: "small-planet",
-    name: "Orbit View",
-    tag: "Product",
-    categories: ["social"],
-    bgType: "image",
-    bgValue: bg("Type=Small Planet Bottom Right.png"),
-    textLayout: "bottom-left",
-    textStyle: "futuristic",
-    headline: "AUTOMATION ENGINE",
-    subtext: "Built for scale",
-  },
-  {
-    id: "highly-fly",
-    name: "Highly Launch",
-    tag: "Social",
-    categories: ["social", "ads"],
-    bgType: "gradient",
-    bgValue: "linear-gradient(160deg, #030B17 0%, #07223D 40%, #0A3366 70%, #07223D 100%)",
-    textLayout: "bottom-left",
-    textStyle: "bold",
-    headline: "TAKING OFF",
-    subtext: "New heights with HighLevel",
-    mascotSrc: highly("Highly_Flying 1.png"),
     mascotPosition: "right",
   },
 ];
@@ -287,6 +185,9 @@ export function TemplatesWorkspace() {
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
   const [selectedHighly, setSelectedHighly] = useState<string | null>(null);
+  const [textLayout, setTextLayout] = useState<string | null>(null);
+  const [textStyle, setTextStyle] = useState<string | null>(null);
+  const [headlineColor, setHeadlineColor] = useState<string | null>(null);
   const [mascotPos, setMascotPos] = useState({ x: 65, y: 30 });
   const [mascotScale, setMascotScale] = useState(60);
   const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
@@ -360,8 +261,11 @@ export function TemplatesWorkspace() {
 
   const handleTemplateSelect = (tpl: Template) => {
     setActiveTemplate(tpl);
-    if (!headline) setHeadline(tpl.headline);
-    if (!subtext) setSubtext(tpl.subtext);
+    setHeadline(tpl.headline);
+    setSubtext(tpl.subtext);
+    setTextLayout(null);
+    setTextStyle(null);
+    setHeadlineColor(null);
   };
 
   const filtered = TEMPLATES.filter(t => t.categories.includes(activeCategory.id));
@@ -369,8 +273,11 @@ export function TemplatesWorkspace() {
   const LOGO_LIGHT = logo("Lockup=Full Horizontal, Color=Light.png");
 
   const renderPreviewContent = (tpl: Template, headlineText: string, subtextText: string, isCard: boolean) => {
-    const layout = TEXT_LAYOUTS[tpl.textLayout];
-    const style = TEXT_STYLES[tpl.textStyle];
+    const effectiveLayout = isCard ? tpl.textLayout : (textLayout || tpl.textLayout);
+    const effectiveStyle = isCard ? tpl.textStyle : (textStyle || tpl.textStyle);
+    const layout = TEXT_LAYOUTS[effectiveLayout];
+    const style = TEXT_STYLES[effectiveStyle];
+    const effectiveHeadlineColor = !isCard && headlineColor ? headlineColor : style.headlineColor;
     const showDraggableMascot = !isCard && activeHighly;
     const showDraggablePhoto = !isCard && uploadedPhoto;
 
@@ -387,7 +294,7 @@ export function TemplatesWorkspace() {
         )}
 
         <div className={`${layout.container} pointer-events-none`}>
-          <div className={`${layout.headlineClass} ${isCard ? 'text-[clamp(7px,1.4vw,13px)]' : style.headlineSize} ${style.headlineColor}`}>
+          <div className={`${layout.headlineClass} ${isCard ? 'text-[clamp(7px,1.4vw,13px)]' : style.headlineSize} ${effectiveHeadlineColor}`}>
             {headlineText}
           </div>
           <div className={`${layout.subtextClass} ${isCard ? 'text-[clamp(5px,0.7vw,8px)]' : style.subtextSize} ${style.subtextColor}`}>
@@ -542,7 +449,10 @@ export function TemplatesWorkspace() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col gap-[12px] mt-[16px] pt-[16px] border-t border-[rgba(255,255,255,0.04)]"
           >
-            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[4px]">Text</div>
+            <div className="flex items-center gap-[6px] mb-[2px]">
+              <Type className="w-[12px] h-[12px] text-[#00B2A9]" />
+              <span className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Text</span>
+            </div>
             <div className="flex flex-col gap-[6px]">
               <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Headline</label>
               <input
@@ -564,6 +474,99 @@ export function TemplatesWorkspace() {
                 maxLength={40}
                 className="w-full py-[10px] px-[14px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[10px] text-white font-inherit text-[13px] font-medium outline-none focus:border-[rgba(0,178,169,0.3)] placeholder:text-[#475569]"
               />
+            </div>
+
+            <div className="flex flex-col gap-[6px]">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Position</label>
+              <div className="grid grid-cols-4 gap-[6px]">
+                {([
+                  { id: "center", label: "Center", Icon: AlignCenter },
+                  { id: "top-left", label: "Top Left", Icon: AlignVerticalJustifyStart },
+                  { id: "bottom-left", label: "Bottom Left", Icon: AlignVerticalJustifyEnd },
+                  { id: "minimal-center", label: "Minimal", Icon: AlignLeft },
+                ] as const).map(({ id, label, Icon }) => {
+                  const effectiveLayout = textLayout || activeTemplate.textLayout;
+                  const isActive = effectiveLayout === id;
+                  return (
+                    <motion.button
+                      key={id}
+                      onClick={() => setTextLayout(id === activeTemplate.textLayout ? null : id)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex flex-col items-center gap-[4px] py-[8px] rounded-[8px] border cursor-pointer transition-all text-center
+                        ${isActive
+                          ? 'border-[rgba(0,178,169,0.3)] bg-[rgba(0,178,169,0.08)] text-[#00B2A9]'
+                          : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(255,255,255,0.1)]'
+                        }`}
+                    >
+                      <Icon className="w-[14px] h-[14px]" />
+                      <span className="text-[8px] font-medium">{label}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-[6px]">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Style</label>
+              <div className="grid grid-cols-4 gap-[6px]">
+                {([
+                  { id: "bold", label: "Bold" },
+                  { id: "clean", label: "Clean" },
+                  { id: "futuristic", label: "Neon" },
+                  { id: "minimal", label: "Minimal" },
+                ] as const).map(({ id, label }) => {
+                  const effectiveStyle = textStyle || activeTemplate.textStyle;
+                  const isActive = effectiveStyle === id;
+                  return (
+                    <motion.button
+                      key={id}
+                      onClick={() => setTextStyle(id === activeTemplate.textStyle ? null : id)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`py-[8px] rounded-[8px] border cursor-pointer transition-all text-[9px] font-semibold
+                        ${isActive
+                          ? 'border-[rgba(0,178,169,0.3)] bg-[rgba(0,178,169,0.08)] text-[#00B2A9]'
+                          : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(255,255,255,0.1)]'
+                        }`}
+                    >
+                      {label}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-[6px]">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Headline Color</label>
+              <div className="flex gap-[6px]">
+                {([
+                  { id: null, label: "Default", color: "bg-gradient-to-r from-white to-[#20EDF1]" },
+                  { id: "text-white", label: "White", color: "bg-white" },
+                  { id: "text-[#20EDF1]", label: "Teal", color: "bg-[#20EDF1]" },
+                  { id: "text-[#2896FB]", label: "Blue", color: "bg-[#2896FB]" },
+                  { id: "text-[#00B2A9]", label: "Brand", color: "bg-[#00B2A9]" },
+                  { id: "text-[#FFD700]", label: "Gold", color: "bg-[#FFD700]" },
+                ] as const).map(({ id, label, color }) => {
+                  const isActive = headlineColor === id;
+                  return (
+                    <motion.button
+                      key={label}
+                      onClick={() => setHeadlineColor(id)}
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.9 }}
+                      title={label}
+                      className={`w-[28px] h-[28px] rounded-full border-[2px] cursor-pointer transition-all
+                        ${isActive
+                          ? 'border-[#00B2A9] ring-[2px] ring-[#00B2A9] ring-offset-[2px] ring-offset-[#0A1628]'
+                          : 'border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]'
+                        }`}
+                    >
+                      <div className={`w-full h-full rounded-full ${color}`} />
+                    </motion.button>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         )}

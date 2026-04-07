@@ -10,7 +10,7 @@ const SHAUN_IMAGES = [
   "ShaunClark_03269_StudioSura-Photoroom.png"
 ];
 
-const BASE_URL = "https://raw.githubusercontent.com/leslydsouza-ship-it/brand-engine-assets/main/brand-engine/%3Aassets%3Ashaun%3A/";
+const BASE_URL = `${import.meta.env.BASE_URL}assets/shaun/`;
 
 type Position = "left" | "center" | "right";
 

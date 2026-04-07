@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "8mRNEC_RSuGZZqqEgFBlx"
+uri = "file://artifacts/brand-engine/Design.md"
+type = "text"
+title = "HighLevel Brand Engine Design System"

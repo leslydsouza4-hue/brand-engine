@@ -282,7 +282,7 @@ export function ShaunWorkspace() {
               />
 
               {stripText && (
-                <div className="absolute top-[16%] left-0 z-[6] whitespace-nowrap rounded-r-[clamp(4px,0.7vw,8px)] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.12)]"
+                <div className="absolute top-[16%] left-0 z-[6] whitespace-nowrap rounded-r-[clamp(4px,0.7vw,8px)] overflow-hidden shadow-none"
                   style={{ background: 'linear-gradient(100deg, rgba(35,75,170,0.9) 0%, rgba(65,130,235,0.85) 100%)' }}
                 >
                   <div className="absolute inset-0 bg-[rgba(255,255,255,0.05)]" />

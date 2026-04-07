@@ -15,6 +15,10 @@ export default function BrandEngine() {
     if (!el) return;
 
     setIsExporting(true);
+    const origRadius = el.style.borderRadius;
+    const origOverflow = el.style.overflow;
+    el.style.borderRadius = "0";
+    el.style.overflow = "hidden";
     try {
       const canvas = await html2canvas(el, {
         scale: 1920 / el.offsetWidth,
@@ -48,6 +52,9 @@ export default function BrandEngine() {
     } catch (err) {
       console.error("Export failed:", err);
       setIsExporting(false);
+    } finally {
+      el.style.borderRadius = origRadius;
+      el.style.overflow = origOverflow;
     }
   }, []);
 

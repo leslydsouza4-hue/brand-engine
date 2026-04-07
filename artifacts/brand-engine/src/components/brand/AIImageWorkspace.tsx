@@ -3,8 +3,32 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, ChevronDown, Image as ImageIcon,
   Download, Eye, Shuffle, Copy, RefreshCw, X,
-  Settings2
+  Settings2, Shield
 } from "lucide-react";
+
+const BRAND_SYSTEM_PROMPT = `Create a premium marketing image in HighLevel brand style.
+
+Use a modern SaaS design aesthetic with clean composition, strong visual hierarchy, and minimal clutter.
+
+Apply HighLevel visual identity:
+- deep blue to electric blue gradients
+- subtle teal and green accents
+- soft glow lighting and radial highlights
+- smooth gradients and polished surfaces
+- futuristic, high-end, and professional look
+
+Keep the design clean, spacious, and campaign-ready.
+Avoid random colors, avoid clutter, avoid generic AI styles.
+
+If relevant, include a sleek 3D robot mascot (Highly) in a polished and modern way.
+
+User request:
+{{USER_PROMPT}}
+
+Make the final result look like a real HighLevel campaign asset, suitable for ads, social media, or product marketing.`;
+
+const buildFullPrompt = (userPrompt: string) =>
+  BRAND_SYSTEM_PROMPT.replace("{{USER_PROMPT}}", userPrompt);
 
 const PROMPT_SUGGESTIONS = [
   "A futuristic city skyline at sunset with HighLevel branding",
@@ -188,7 +212,13 @@ export function AIImageWorkspace() {
                         rows={4}
                         className="w-full bg-transparent border-none outline-none resize-none text-[16px] text-[#F1F5F9] placeholder:text-[rgba(255,255,255,0.2)] leading-[1.7] font-normal px-[28px] pt-[24px] pb-[8px] relative z-[1]"
                       />
-                      <div className="flex items-center justify-between px-[20px] pb-[16px] pt-[4px] relative z-[1]">
+                      <div className="flex items-center gap-[6px] px-[20px] pt-[2px] relative z-[1]">
+                        <div className="flex items-center gap-[5px] py-[3px] px-[8px] rounded-[8px] bg-[rgba(0,178,169,0.06)] border border-[rgba(0,178,169,0.12)]">
+                          <Shield className="w-[10px] h-[10px] text-[#00B2A9]" />
+                          <span className="text-[9px] font-semibold text-[#00B2A9] uppercase tracking-[0.5px]">HighLevel Brand Context Applied</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between px-[20px] pb-[16px] pt-[6px] relative z-[1]">
                         <div className="flex items-center gap-[6px]">
                           <InlineSelect value={aspectRatio} options={ASPECT_RATIOS} onChange={setAspectRatio} />
                           <InlineSelect value={style} options={STYLE_PRESETS} onChange={setStyle} />
@@ -479,9 +509,19 @@ export function AIImageWorkspace() {
                         </div>
 
                         <div>
-                          <div className="text-[10px] font-semibold text-[#5A6B80] uppercase tracking-[1px] mb-[4px]">Prompt</div>
+                          <div className="text-[10px] font-semibold text-[#5A6B80] uppercase tracking-[1px] mb-[4px]">Your Prompt</div>
                           <div className="text-[12px] text-[#A0B0C4] leading-[1.6] p-[10px] rounded-[10px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.03)]">
                             {prompt || "\u2014"}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex items-center gap-[5px] mb-[4px]">
+                            <Shield className="w-[9px] h-[9px] text-[#00B2A9]" />
+                            <div className="text-[10px] font-semibold text-[#00B2A9] uppercase tracking-[1px]">Full Brand Prompt</div>
+                          </div>
+                          <div className="text-[10px] text-[#7B8BA5] leading-[1.6] p-[10px] rounded-[10px] bg-[rgba(0,0,0,0.15)] border border-[rgba(0,178,169,0.06)] max-h-[120px] overflow-y-auto whitespace-pre-wrap">
+                            {prompt ? buildFullPrompt(prompt) : "\u2014"}
                           </div>
                         </div>
 

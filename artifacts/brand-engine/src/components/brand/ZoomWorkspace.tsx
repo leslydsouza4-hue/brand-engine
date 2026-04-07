@@ -1,21 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Check, UploadCloud, X, Eraser, Eye } from "lucide-react";
-import { Hexagon } from "lucide-react";
+import { UploadCloud, X, Eraser, Eye } from "lucide-react";
 
-// Background templates for Zoom
-const BG_TEMPLATES = [
-  { id: "core-gradient", name: "Core Gradient", bg: "linear-gradient(135deg, #07223D 0%, #0A3366 50%, #095DC3 100%)" },
-  { id: "deep-space", name: "Deep Space", bg: "linear-gradient(160deg, #030B17 0%, #07223D 40%, #0A3366 100%)" },
-  { id: "teal-glow", name: "Teal Glow", bg: "radial-gradient(ellipse at 25% 60%, rgba(0,178,169,0.35) 0%, #07223D 50%, #030B17 100%)" },
-  { id: "electric-horizon", name: "Electric Horizon", bg: "linear-gradient(180deg, #030B17 0%, #07223D 35%, #095DC3 65%, #2896FB 100%)" },
-  { id: "planet-glow", name: "Planet Glow", bg: "radial-gradient(ellipse at 70% 40%, rgba(9,93,195,0.5) 0%, #07223D 45%, #030B17 100%)" },
-  { id: "sunset-brand", name: "Sunset Brand", bg: "linear-gradient(135deg, #07223D 0%, #095DC3 40%, #2896FB 60%, rgba(255,208,0,0.15) 100%)" },
-  { id: "minimal-dark", name: "Minimal Dark", bg: "linear-gradient(135deg, #0A1628 0%, #0F2038 50%, #0A1628 100%)" },
-  { id: "aurora", name: "Aurora", bg: "linear-gradient(135deg, #030B17 0%, rgba(0,178,169,0.15) 30%, #07223D 50%, rgba(40,150,251,0.15) 70%, #030B17 100%)" }
-];
+const BG_URL = `${import.meta.env.BASE_URL}assets/backgrounds-dark/Type=Small Planet Bottom Right.png`;
+const LOGO_URL = `${import.meta.env.BASE_URL}assets/logos/Lockup=Full Horizontal, Color=Light.png`;
 
 export function ZoomWorkspace() {
-  const [activeBg, setActiveBg] = useState(BG_TEMPLATES[0]);
   const [bgImage, setBgImage] = useState<string | null>(null);
   const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
@@ -27,13 +16,12 @@ export function ZoomWorkspace() {
 
   const [scale, setScale] = useState(88);
   const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
   const [name, setName] = useState("");
   const [designation, setDesignation] = useState("");
-  const [showLogo, setShowLogo] = useState(true);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Dynamic import for background removal
   useEffect(() => {
     async function loadModel() {
       try {
@@ -95,16 +83,26 @@ export function ZoomWorkspace() {
     }
   };
 
+  const clearPhoto = () => {
+    setBgImage(null);
+    setBgRemovedImage(null);
+    setBgRemoveStatus('idle');
+    setBgRemoveProgress(0);
+    setScale(88);
+    setOffsetX(0);
+    setOffsetY(0);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const currentDisplayImage = showOriginal ? bgImage : (bgRemovedImage || bgImage);
 
   return (
     <div className="flex flex-1 overflow-hidden p-0 gap-0">
-      {/* Left Controls */}
       <div className="w-[400px] min-w-[400px] overflow-y-auto pt-[20px] px-[28px] pb-[28px] border-r border-[rgba(255,255,255,0.06)] flex flex-col">
-        <div className="text-[16px] font-bold text-white mb-[4px]">Zoom Backgrounds</div>
-        <div className="text-[12px] text-[#64748B] mb-[20px] leading-[1.5]">Branded virtual backgrounds for Zoom, Meet & Teams. Upload your photo, customize, and export.</div>
+        <div className="text-[16px] font-bold text-white mb-[4px]">Zoom Background</div>
+        <div className="text-[12px] text-[#64748B] mb-[20px] leading-[1.5]">Branded virtual background for Zoom, Meet & Teams. Upload your photo, remove the background, and customize.</div>
         
-        <div className={`inline-flex items-center gap-[6px] py-[5px] px-[10px] rounded-[8px] text-[10px] font-semibold mb-[14px] self-start transition-all duration-300
+        <div className={`inline-flex items-center gap-[6px] py-[5px] px-[10px] rounded-[8px] text-[10px] font-semibold mb-[18px] self-start transition-all duration-300
           ${modelStatus === 'loading' ? 'bg-[rgba(255,208,0,0.08)] border border-[rgba(255,208,0,0.15)] text-[rgba(255,208,0,0.7)]' : 
             modelStatus === 'ready' ? 'bg-[rgba(0,178,169,0.08)] border border-[rgba(0,178,169,0.15)] text-[rgba(0,178,169,0.8)]' : 
             'bg-[rgba(255,77,77,0.08)] border border-[rgba(255,77,77,0.15)] text-[rgba(255,77,77,0.7)]'}`}
@@ -115,36 +113,16 @@ export function ZoomWorkspace() {
           {modelStatus === 'loading' ? 'Loading AI model...' : modelStatus === 'ready' ? 'AI Background Removal Ready' : 'AI Model Failed to Load'}
         </div>
 
-        <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[10px]">Background Style</div>
-        
-        <div className="grid grid-cols-2 gap-[10px] mb-[20px]">
-          {BG_TEMPLATES.map((tpl, i) => {
-            const isActive = activeBg.id === tpl.id;
-            return (
-              <div 
-                key={tpl.id}
-                onClick={() => setActiveBg(tpl)}
-                style={{ animationDelay: `${i * 0.05}s` }}
-                className={`aspect-video rounded-[12px] overflow-hidden cursor-pointer relative border-[2px] transition-all duration-300 animate-[tplCardReveal_0.4s_ease_backwards]
-                  ${isActive 
-                    ? 'border-[#00B2A9] shadow-[0_0_0_2px_rgba(3,11,23,0.8),0_0_0_4px_rgba(0,178,169,0.4)]' 
-                    : 'border-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.1)] hover:-translate-y-[3px] hover:scale-[1.02] hover:shadow-[0_12px_36px_rgba(0,0,0,0.35)]'}`}
-              >
-                <div className="absolute inset-0" style={{ background: tpl.bg }}></div>
-                <div className="absolute bottom-0 left-0 right-0 pt-[16px] px-[8px] pb-[6px] bg-gradient-to-t from-[rgba(0,0,0,0.6)] to-transparent text-[9px] font-semibold text-[rgba(255,255,255,0.7)] text-center uppercase z-10">
-                  {tpl.name}
-                </div>
-                <div className={`absolute top-[6px] right-[6px] w-[22px] h-[22px] rounded-full bg-[#00B2A9] flex items-center justify-center transition-all duration-250 z-10
-                  ${isActive ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.6]'}`}>
-                  <Check className="w-[12px] h-[12px] text-white stroke-[3px]" />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
         <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[10px]">Your Photo</div>
         
+        <input 
+          type="file" 
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*" 
+          className="hidden" 
+        />
+
         <div 
           onClick={() => !bgImage && fileInputRef.current?.click()}
           className={`flex items-center gap-[14px] py-[14px] px-[16px] rounded-[16px] transition-all duration-250 relative overflow-hidden mb-[14px]
@@ -152,13 +130,6 @@ export function ZoomWorkspace() {
               ? 'border-solid border border-[rgba(0,178,169,0.15)] bg-[rgba(0,178,169,0.04)] cursor-default' 
               : 'border-dashed border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(0,178,169,0.2)] hover:bg-[rgba(0,178,169,0.03)] cursor-pointer'}`}
         >
-          <input 
-            type="file" 
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept="image/*" 
-            className="hidden" 
-          />
           <div className={`w-[36px] h-[36px] rounded-[10px] flex items-center justify-center shrink-0
             ${bgImage ? 'bg-[rgba(0,178,169,0.1)]' : 'bg-[rgba(255,255,255,0.04)]'}`}>
             <UploadCloud className={`w-[16px] h-[16px] ${bgImage ? 'text-[#00B2A9]' : 'text-[#64748B]'}`} />
@@ -169,13 +140,7 @@ export function ZoomWorkspace() {
           </div>
           {bgImage && (
             <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                setBgImage(null);
-                setBgRemovedImage(null);
-                setBgRemoveStatus('idle');
-                if (fileInputRef.current) fileInputRef.current.value = '';
-              }}
+              onClick={(e) => { e.stopPropagation(); clearPhoto(); }}
               className="ml-auto w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[6px] text-[#64748B] flex items-center justify-center cursor-pointer shrink-0 hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D]"
             >
               <X className="w-[12px] h-[12px]" />
@@ -236,8 +201,7 @@ export function ZoomWorkspace() {
                     Scale <span className="font-semibold text-[#94A3B8]">{scale}%</span>
                   </div>
                   <input 
-                    type="range" 
-                    min="30" max="150" value={scale}
+                    type="range" min="30" max="150" value={scale}
                     onChange={e => setScale(Number(e.target.value))}
                     className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
                   />
@@ -247,18 +211,30 @@ export function ZoomWorkspace() {
                     Offset X <span className="font-semibold text-[#94A3B8]">{offsetX}</span>
                   </div>
                   <input 
-                    type="range" 
-                    min="-50" max="50" value={offsetX}
+                    type="range" min="-50" max="50" value={offsetX}
                     onChange={e => setOffsetX(Number(e.target.value))}
                     className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
                   />
                 </div>
               </div>
+              <div className="flex gap-[14px]">
+                <div className="flex-1">
+                  <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
+                    Offset Y <span className="font-semibold text-[#94A3B8]">{offsetY}</span>
+                  </div>
+                  <input 
+                    type="range" min="-30" max="30" value={offsetY}
+                    onChange={e => setOffsetY(Number(e.target.value))}
+                    className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                  />
+                </div>
+                <div className="flex-1"></div>
+              </div>
             </div>
           </>
         )}
 
-        <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[10px] mt-[16px]">Details</div>
+        <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[10px] mt-[4px]">Details</div>
         
         <div className="flex flex-col gap-[12px] pb-[16px]">
           <div className="flex flex-col">
@@ -267,7 +243,7 @@ export function ZoomWorkspace() {
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="e.g. John Smith"
+              placeholder="e.g. Tyler Jorgenson"
               maxLength={30}
               className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[16px] font-bold text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
             />
@@ -278,26 +254,14 @@ export function ZoomWorkspace() {
               type="text"
               value={designation}
               onChange={e => setDesignation(e.target.value)}
-              placeholder="e.g. Agency Owner · HighLevel"
+              placeholder="e.g. Sr. Director of Integrated Marketing"
               maxLength={50}
               className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-inherit text-[13.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
             />
           </div>
         </div>
-
-        <div className="flex items-center justify-between py-[12px] border-t border-[rgba(255,255,255,0.04)]">
-          <div className="text-[12px] font-medium text-[#94A3B8]">Show HighLevel Logo</div>
-          <button 
-            onClick={() => setShowLogo(!showLogo)}
-            className={`w-[40px] h-[22px] rounded-[11px] border-none cursor-pointer relative transition-all duration-200 
-              ${showLogo ? 'bg-[rgba(0,178,169,0.4)]' : 'bg-[rgba(255,255,255,0.1)]'}
-              after:content-[""] after:absolute after:top-[3px] after:w-[16px] after:h-[16px] after:rounded-full after:transition-all after:duration-200
-              ${showLogo ? 'after:left-[21px] after:bg-[#00B2A9]' : 'after:left-[3px] after:bg-[#94A3B8]'}`}
-          ></button>
-        </div>
       </div>
 
-      {/* Right Preview */}
       <div className="flex-1 flex flex-col min-w-0 pt-[20px] px-[24px] pb-[24px]">
         <div className="flex items-center justify-between pb-[14px]">
           <div className="text-[13px] font-medium text-[#64748B] flex items-center gap-[9px]">
@@ -307,58 +271,55 @@ export function ZoomWorkspace() {
         </div>
         
         <div className="flex-1 flex justify-center items-center p-[32px]">
-          <div className="w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden bg-gradient-to-br from-[#07223D] via-[#0A3366] to-[#095DC3] shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
+          <div className="w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
             
-            {/* Background */}
-            <div className="absolute inset-0 transition-all duration-500 z-0" style={{ background: activeBg.bg }}></div>
-            
-            {/* Person Image */}
-            {currentDisplayImage && (
+            <img 
+              src={BG_URL} 
+              alt="Background" 
+              className="absolute inset-0 w-full h-full object-cover z-0"
+            />
+
+            <div className="absolute top-[5%] left-[4%] z-[5]">
               <img 
-                src={currentDisplayImage} 
-                alt="Person" 
-                className="absolute right-[4%] bottom-0 h-[88%] z-[3] object-contain transition-all duration-300 drop-shadow-[0_0_24px_rgba(0,178,169,0.3)] drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
-                style={{ 
-                  transform: `scale(${scale / 88}) translateX(${offsetX}%)`,
-                  transformOrigin: 'bottom center'
-                }}
+                src={LOGO_URL} 
+                alt="HighLevel" 
+                className="h-[28px] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
               />
-            )}
+            </div>
 
-            {/* Logo */}
-            {showLogo && (
-              <div className="absolute top-[5%] left-[5%] z-[5] flex items-center gap-[8px]">
-                <div className="w-[32px] h-[32px] rounded-[9px] bg-gradient-to-br from-[#095DC3] to-[#2896FB] flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-                  <Hexagon className="w-[15px] h-[15px] text-white" />
-                </div>
-                <div className="font-sans text-[13px] font-bold text-white tracking-[-0.3px]">
-                  High<span className="text-[#94A3B8] font-normal">Level</span>
-                </div>
-              </div>
-            )}
-
-            {/* Name/Info */}
             {(name || designation) && (
-              <div className="absolute bottom-[6%] left-[5%] z-[4]">
+              <div className="absolute top-[18%] left-[4%] z-[4]">
                 {name && (
-                  <div className="font-['Poppins'] font-extrabold text-[clamp(18px,2.8vw,36px)] leading-[1.05] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] uppercase tracking-[-0.5px]">
+                  <div className="font-['Poppins'] font-extrabold text-[clamp(18px,2.8vw,36px)] leading-[1.05] text-[#00B2A9] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] uppercase tracking-[-0.5px]">
                     {name}
                   </div>
                 )}
                 {designation && (
-                  <div className="font-sans font-medium text-[clamp(9px,1.1vw,14px)] text-[rgba(255,255,255,0.5)] mt-[4px] tracking-[0.5px]">
+                  <div className="font-sans font-medium text-[clamp(9px,1.1vw,14px)] text-[rgba(255,255,255,0.7)] mt-[4px] tracking-[0.3px]">
                     {designation}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Empty State */}
+            {currentDisplayImage && (
+              <img 
+                src={currentDisplayImage} 
+                alt="Person" 
+                className="absolute right-[4%] bottom-0 z-[3] object-contain transition-all duration-300 drop-shadow-[0_0_24px_rgba(0,178,169,0.2)] drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+                style={{ 
+                  height: `${scale}%`,
+                  transform: `translateX(${offsetX}%) translateY(${offsetY}%)`,
+                  transformOrigin: 'bottom center'
+                }}
+              />
+            )}
+
             {!currentDisplayImage && !name && !designation && (
               <div className="absolute inset-0 flex flex-col items-center justify-center z-[10] text-center gap-[8px]">
                 <UploadCloud className="w-[32px] h-[32px] text-[rgba(255,255,255,0.25)] mb-[4px]" />
-                <p className="text-[14px] text-[rgba(255,255,255,0.35)] font-medium m-0">Upload a photo to generate background</p>
-                <span className="text-[11px] text-[rgba(255,255,255,0.2)]">AI will automatically remove the original background</span>
+                <p className="text-[14px] text-[rgba(255,255,255,0.35)] font-medium m-0">Upload your photo to get started</p>
+                <span className="text-[11px] text-[rgba(255,255,255,0.2)]">AI will remove the background automatically</span>
               </div>
             )}
           </div>

@@ -282,16 +282,16 @@ export function ShaunWorkspace() {
               />
 
               {stripText && (
-                <div className="absolute top-[16%] left-[3.5%] z-[6]">
+                <div className="absolute top-[16%] left-0 z-[6] flex">
                   <div
-                    className="relative rounded-[clamp(3px,0.6vw,6px)] overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.15)]"
+                    className="relative rounded-r-[clamp(12px,2vw,22px)] overflow-hidden shadow-[0_2px_12px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.12)]"
                     style={{
-                      background: 'linear-gradient(100deg, rgba(30,80,180,0.85) 0%, rgba(60,140,240,0.8) 100%)',
+                      background: 'linear-gradient(100deg, rgba(35,75,170,0.9) 0%, rgba(65,130,235,0.85) 100%)',
                     }}
                   >
-                    <div className="absolute inset-0 bg-[rgba(255,255,255,0.06)]" />
-                    <div className="relative py-[clamp(3px,0.55vw,6px)] px-[clamp(8px,1.4vw,16px)]">
-                      <div className="font-['Poppins'] font-bold text-white text-[clamp(6px,0.85vw,10px)] uppercase tracking-[1.8px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+                    <div className="absolute inset-0 bg-[rgba(255,255,255,0.05)]" />
+                    <div className="relative py-[clamp(3px,0.6vw,7px)] pl-[4%] pr-[clamp(12px,1.8vw,20px)]">
+                      <div className="font-['Poppins'] font-bold text-white text-[clamp(6px,0.85vw,10px)] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
                         {stripText}
                       </div>
                     </div>

@@ -11,7 +11,7 @@ const SHAUN_IMAGES = [
 ];
 
 const BASE_URL = `${import.meta.env.BASE_URL}assets/shaun/`;
-const LOGO_URL = `${import.meta.env.BASE_URL}assets/logos/Lockup=Full Horizontal, Color=AllWhite.png`;
+const BG_URL = `${import.meta.env.BASE_URL}assets/backgrounds-dark/Type=Core Gradient.png`;
 
 type Position = "left" | "center" | "right";
 
@@ -259,17 +259,13 @@ export function ShaunWorkspace() {
         
         <div className="flex-1 flex items-center justify-center rounded-[28px] overflow-hidden bg-[rgba(255,255,255,0.015)] border border-[rgba(255,255,255,0.04)] relative">
           <div className="flex justify-center items-center w-full h-full p-[32px]">
-            <div data-export-preview className="w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden bg-gradient-to-br from-[#07223D] via-[#0A3366] to-[#095DC3] shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
+            <div data-export-preview className="w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
               
-              <div className="absolute inset-0 z-0"></div>
-
-              <div className="absolute top-[4%] left-[4%] z-[5] flex items-center gap-[8px]">
-                <img 
-                  src={LOGO_URL} 
-                  alt="HighLevel" 
-                  className="h-[24px] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
-                />
-              </div>
+              <img 
+                src={BG_URL} 
+                alt="Background" 
+                className="absolute inset-0 w-full h-full object-cover z-0"
+              />
 
               {screenshotImage && (
                 <div 

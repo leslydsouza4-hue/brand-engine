@@ -33,7 +33,9 @@ export default function BrandEngine() {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `brand-engine-export.${format === "jpeg" ? "jpg" : "png"}`;
+          const exportName = el.getAttribute("data-export-name") || "brand-engine-export";
+          const safeName = exportName.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
+          a.download = `${safeName}.${format === "jpeg" ? "jpg" : "png"}`;
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);

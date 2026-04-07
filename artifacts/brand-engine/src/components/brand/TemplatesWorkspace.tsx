@@ -110,7 +110,7 @@ const TEMPLATES: Template[] = [
     textStyle: "clean",
     headline: "SUMMIT 2025",
     subtext: "Join the movement",
-    logoSrc: logo("Lockup=Full Horizontal, Color=AllWhite.png"),
+    logoSrc: logo("Lockup=Full Horizontal, Color=Light.png"),
   },
   {
     id: "planet-promo",
@@ -187,15 +187,15 @@ const TEMPLATES: Template[] = [
     textStyle: "bold",
     headline: "LIVE EVENT",
     subtext: "Register now \u2022 Free access",
-    logoSrc: logo("Lockup=Full Horizontal, Color=AllWhite.png"),
+    logoSrc: logo("Lockup=Full Horizontal, Color=Light.png"),
   },
   {
     id: "teal-gradient",
     name: "Teal Flow",
     tag: "Brand Core",
     categories: ["social", "ads", "presentation"],
-    bgType: "gradient",
-    bgValue: "radial-gradient(circle at 50% 50%, #00B2A9 0%, #07223D 70%, #030B17 100%)",
+    bgType: "image",
+    bgValue: bg("Type=Small Radial Shine Right.png"),
     textLayout: "center",
     textStyle: "clean",
     headline: "GROW WITH US",
@@ -233,22 +233,22 @@ const TEXT_LAYOUTS: Record<string, { container: string; headlineClass: string; s
   "center": {
     container: "absolute inset-0 flex flex-col items-center justify-center p-[10%] text-center z-[3]",
     headlineClass: "font-['Poppins'] font-black uppercase leading-[0.95] drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)]",
-    subtextClass: "font-semibold uppercase tracking-[2.5px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]",
+    subtextClass: "font-['Poppins'] font-semibold uppercase tracking-[2.5px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]",
   },
   "top-left": {
     container: "absolute inset-0 flex flex-col items-start justify-start p-[8%] text-left z-[3]",
     headlineClass: "font-['Poppins'] font-black uppercase leading-[0.95] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]",
-    subtextClass: "font-medium tracking-[1px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
+    subtextClass: "font-['Poppins'] font-medium tracking-[1px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
   },
   "bottom-left": {
     container: "absolute inset-0 flex flex-col items-start justify-end p-[8%] text-left z-[3]",
     headlineClass: "font-['Poppins'] font-black uppercase leading-[0.95] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]",
-    subtextClass: "font-medium tracking-[1px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
+    subtextClass: "font-['Poppins'] font-medium tracking-[1px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
   },
   "minimal-center": {
     container: "absolute inset-0 flex flex-col items-center justify-center p-[10%] text-center z-[3]",
-    headlineClass: "font-['Inter'] font-bold tracking-[4px] uppercase leading-[1.2] drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)]",
-    subtextClass: "font-normal tracking-[2px] mt-[8px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
+    headlineClass: "font-['Poppins'] font-bold tracking-[4px] uppercase leading-[1.2] drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)]",
+    subtextClass: "font-['Poppins'] font-normal tracking-[2px] mt-[8px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
   },
 };
 

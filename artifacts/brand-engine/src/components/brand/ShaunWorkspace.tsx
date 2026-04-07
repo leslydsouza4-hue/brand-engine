@@ -286,7 +286,7 @@ export function ShaunWorkspace() {
                   style={{ background: 'linear-gradient(100deg, rgba(35,75,170,0.9) 0%, rgba(65,130,235,0.85) 100%)' }}
                 >
                   <div className="absolute inset-0 bg-[rgba(255,255,255,0.05)]" />
-                  <div className="relative py-[clamp(3px,0.6vw,7px)] pl-[28px] pr-[clamp(12px,1.8vw,20px)] font-['Poppins'] font-bold text-white text-[clamp(6px,0.85vw,10px)] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+                  <div className="relative py-[clamp(3px,0.6vw,7px)] pl-[32px] pr-[clamp(12px,1.8vw,20px)] font-['Poppins'] font-bold text-white text-[clamp(6px,0.85vw,10px)] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
                   >
                     {stripText}
                   </div>

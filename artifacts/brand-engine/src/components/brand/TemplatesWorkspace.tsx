@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, Upload, Image as ImageIcon, Move, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
@@ -287,8 +287,71 @@ export function TemplatesWorkspace() {
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
   const [selectedHighly, setSelectedHighly] = useState<string | null>(null);
+  const [mascotPos, setMascotPos] = useState({ x: 65, y: 30 });
+  const [mascotScale, setMascotScale] = useState(60);
+  const [uploadedPhoto, setUploadedPhoto] = useState<string | null>(null);
+  const [photoPos, setPhotoPos] = useState({ x: 50, y: 50 });
+  const [photoScale, setPhotoScale] = useState(40);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState<"mascot" | "photo" | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
+
+  useEffect(() => {
+    return () => { cleanupRef.current?.(); };
+  }, []);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setUploadedPhoto(ev.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragStart = useCallback((type: "mascot" | "photo", e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(type);
+
+    const preview = previewRef.current;
+    if (!preview) return;
+    const rect = preview.getBoundingClientRect();
+
+    const getClientPos = (ev: MouseEvent | TouchEvent) => {
+      if ('touches' in ev) return { cx: ev.touches[0].clientX, cy: ev.touches[0].clientY };
+      return { cx: (ev as MouseEvent).clientX, cy: (ev as MouseEvent).clientY };
+    };
+
+    const onMove = (ev: MouseEvent | TouchEvent) => {
+      const { cx, cy } = getClientPos(ev);
+      const px = Math.max(0, Math.min(100, ((cx - rect.left) / rect.width) * 100));
+      const py = Math.max(0, Math.min(100, ((cy - rect.top) / rect.height) * 100));
+      if (type === "mascot") setMascotPos({ x: px, y: py });
+      else setPhotoPos({ x: px, y: py });
+    };
+
+    const cleanup = () => {
+      setDragging(null);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("touchend", onUp);
+      cleanupRef.current = null;
+    };
+
+    const onUp = () => cleanup();
+
+    cleanupRef.current = cleanup;
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onMove);
+    window.addEventListener("touchend", onUp);
+  }, []);
 
   const handleCategoryChange = (cat: Category) => {
     setActiveCategory(cat);
@@ -303,9 +366,13 @@ export function TemplatesWorkspace() {
 
   const filtered = TEMPLATES.filter(t => t.categories.includes(activeCategory.id));
 
+  const LOGO_LIGHT = logo("Lockup=Full Horizontal, Color=Light.png");
+
   const renderPreviewContent = (tpl: Template, headlineText: string, subtextText: string, isCard: boolean) => {
     const layout = TEXT_LAYOUTS[tpl.textLayout];
     const style = TEXT_STYLES[tpl.textStyle];
+    const showDraggableMascot = !isCard && activeHighly;
+    const showDraggablePhoto = !isCard && uploadedPhoto;
 
     return (
       <>
@@ -319,29 +386,7 @@ export function TemplatesWorkspace() {
           <div className="absolute inset-0 z-[1]" style={{ backgroundColor: tpl.overlay }} />
         )}
 
-        {((!isCard && activeHighly) || tpl.mascotSrc) && (
-          <img
-            src={!isCard && activeHighly ? activeHighly.image : tpl.mascotSrc!}
-            alt=""
-            className={`absolute z-[2] object-contain pointer-events-none ${
-              tpl.mascotPosition === "right" || !tpl.mascotPosition
-                ? isCard ? "bottom-0 right-[4%] h-[65%]" : "bottom-0 right-[5%] h-[70%]"
-                : "bottom-0 left-[5%] h-[70%]"
-            }`}
-          />
-        )}
-
-        {tpl.logoSrc && (
-          <img
-            src={tpl.logoSrc}
-            alt="HighLevel"
-            className={`absolute z-[4] object-contain pointer-events-none ${
-              isCard ? "bottom-[8%] right-[6%] h-[10%] max-h-[16px] opacity-60" : "bottom-[6%] right-[5%] h-[6%] max-h-[28px] opacity-50"
-            }`}
-          />
-        )}
-
-        <div className={layout.container}>
+        <div className={`${layout.container} pointer-events-none`}>
           <div className={`${layout.headlineClass} ${isCard ? 'text-[clamp(7px,1.4vw,13px)]' : style.headlineSize} ${style.headlineColor}`}>
             {headlineText}
           </div>
@@ -349,6 +394,61 @@ export function TemplatesWorkspace() {
             {subtextText}
           </div>
         </div>
+
+        {showDraggablePhoto && (
+          <img
+            src={uploadedPhoto!}
+            alt="Uploaded"
+            className="absolute z-[6] object-contain cursor-move select-none"
+            style={{
+              left: `${photoPos.x}%`,
+              top: `${photoPos.y}%`,
+              transform: "translate(-50%, -50%)",
+              height: `${photoScale}%`,
+              maxWidth: "90%",
+            }}
+            onMouseDown={(e) => handleDragStart("photo", e)}
+            onTouchStart={(e) => handleDragStart("photo", e)}
+            draggable={false}
+          />
+        )}
+
+        {showDraggableMascot ? (
+          <img
+            src={activeHighly.image}
+            alt={activeHighly.name}
+            className="absolute z-[7] object-contain cursor-move select-none"
+            style={{
+              left: `${mascotPos.x}%`,
+              top: `${mascotPos.y}%`,
+              transform: "translate(-50%, -50%)",
+              height: `${mascotScale}%`,
+            }}
+            onMouseDown={(e) => handleDragStart("mascot", e)}
+            onTouchStart={(e) => handleDragStart("mascot", e)}
+            draggable={false}
+          />
+        ) : tpl.mascotSrc ? (
+          <img
+            src={tpl.mascotSrc}
+            alt=""
+            className={`absolute z-[3] object-contain pointer-events-none ${
+              tpl.mascotPosition === "right" || !tpl.mascotPosition
+                ? isCard ? "bottom-0 right-[4%] h-[65%]" : "bottom-0 right-[5%] h-[70%]"
+                : "bottom-0 left-[5%] h-[70%]"
+            }`}
+          />
+        ) : null}
+
+        <img
+          src={LOGO_LIGHT}
+          alt="HighLevel"
+          className={`absolute z-[8] object-contain pointer-events-none ${
+            isCard
+              ? "top-[6%] left-[5%] h-[8%] max-h-[14px] opacity-70"
+              : "top-[4%] left-[4%] h-[5%] max-h-[24px] opacity-80"
+          }`}
+        />
       </>
     );
   };
@@ -518,6 +618,106 @@ export function TemplatesWorkspace() {
                 </motion.button>
               ))}
             </div>
+
+            {selectedHighly && (
+              <div className="flex flex-col gap-[4px] mt-[8px]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-[4px]">
+                    <Move className="w-[10px] h-[10px] text-[#64748B]" />
+                    <span className="text-[9px] text-[#64748B]">Drag mascot on preview to reposition</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-[8px]">
+                  <span className="text-[9px] text-[#64748B] w-[28px]">Size</span>
+                  <input
+                    type="range"
+                    min={20}
+                    max={100}
+                    value={mascotScale}
+                    onChange={(e) => setMascotScale(Number(e.target.value))}
+                    className="flex-1 h-[3px] appearance-none bg-[rgba(255,255,255,0.08)] rounded-full outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[12px] [&::-webkit-slider-thumb]:h-[12px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00B2A9] [&::-webkit-slider-thumb]:cursor-pointer"
+                  />
+                  <span className="text-[9px] text-[#64748B] w-[24px] text-right">{mascotScale}%</span>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {activeTemplate && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="flex flex-col gap-[10px] mt-[16px] pt-[16px] border-t border-[rgba(255,255,255,0.04)]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-[6px]">
+                <ImageIcon className="w-[12px] h-[12px] text-[#2896FB]" />
+                <span className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Your Photo</span>
+              </div>
+              {uploadedPhoto && (
+                <motion.button
+                  onClick={() => { setUploadedPhoto(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="text-[9px] text-[#5A6B80] hover:text-[#FF6B6B] cursor-pointer transition-colors flex items-center gap-[3px]"
+                >
+                  <X className="w-[9px] h-[9px]" />
+                  Remove
+                </motion.button>
+              )}
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
+              className="hidden"
+            />
+
+            {uploadedPhoto ? (
+              <div className="flex flex-col gap-[6px]">
+                <div className="relative w-full h-[60px] rounded-[8px] overflow-hidden border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)]">
+                  <img src={uploadedPhoto} alt="Uploaded" className="w-full h-full object-contain" />
+                </div>
+                <div className="flex items-center gap-[4px]">
+                  <Move className="w-[10px] h-[10px] text-[#64748B]" />
+                  <span className="text-[9px] text-[#64748B]">Drag photo on preview to reposition</span>
+                </div>
+                <div className="flex items-center gap-[8px]">
+                  <span className="text-[9px] text-[#64748B] w-[28px]">Size</span>
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    value={photoScale}
+                    onChange={(e) => setPhotoScale(Number(e.target.value))}
+                    className="flex-1 h-[3px] appearance-none bg-[rgba(255,255,255,0.08)] rounded-full outline-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[12px] [&::-webkit-slider-thumb]:h-[12px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#2896FB] [&::-webkit-slider-thumb]:cursor-pointer"
+                  />
+                  <span className="text-[9px] text-[#64748B] w-[24px] text-right">{photoScale}%</span>
+                </div>
+                <motion.button
+                  onClick={() => fileInputRef.current?.click()}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-[7px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[8px] text-[10px] font-medium text-[#64748B] cursor-pointer hover:border-[rgba(40,150,251,0.2)] hover:text-[#2896FB] transition-all"
+                >
+                  Change Photo
+                </motion.button>
+              </div>
+            ) : (
+              <motion.button
+                onClick={() => fileInputRef.current?.click()}
+                whileHover={{ scale: 1.02, y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full py-[14px] flex flex-col items-center gap-[6px] bg-[rgba(255,255,255,0.02)] border border-dashed border-[rgba(255,255,255,0.08)] rounded-[10px] cursor-pointer hover:border-[rgba(40,150,251,0.25)] hover:bg-[rgba(40,150,251,0.03)] transition-all"
+              >
+                <Upload className="w-[16px] h-[16px] text-[#475569]" />
+                <span className="text-[10px] text-[#475569]">Upload a photo or logo</span>
+              </motion.button>
+            )}
           </motion.div>
         )}
       </div>
@@ -534,13 +734,14 @@ export function TemplatesWorkspace() {
           <AnimatePresence mode="wait">
             {activeTemplate ? (
               <motion.div
+                ref={previewRef}
                 key={activeTemplate.id}
                 data-export-preview
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.97 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
-                className="relative w-full max-w-[680px] mx-auto rounded-[14px] overflow-hidden z-[2]"
+                className={`relative w-full max-w-[680px] mx-auto rounded-[14px] overflow-hidden z-[2] ${dragging ? 'cursor-grabbing' : ''}`}
                 style={{
                   aspectRatio: activeSize.ratio,
                   boxShadow: '0 8px 50px rgba(0,0,0,0.3)',

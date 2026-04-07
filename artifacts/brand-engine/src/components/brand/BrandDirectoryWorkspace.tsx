@@ -158,20 +158,6 @@ const CATEGORIES: AssetCategory[] = [
       { name: "Product UI — Nurture", file: "bundles/Type=Product UI (Frosted), Color=Nurture Blue.png", preview: `${BASE}assets/bundles/Type=Product UI (Frosted), Color=Nurture Blue.png` },
     ],
   },
-  {
-    id: "shaun",
-    title: "Shaun Clark Photos",
-    description: "Professional headshots — transparent background",
-    color: "#A855F7",
-    items: [
-      { name: "Shaun — Pose 1", file: "shaun/ShaunClark_03057_StudioSura-Photoroom.png", preview: `${BASE}assets/shaun/ShaunClark_03057_StudioSura-Photoroom.png` },
-      { name: "Shaun — Pose 2", file: "shaun/ShaunClark_03096_StudioSura-Photoroom.png", preview: `${BASE}assets/shaun/ShaunClark_03096_StudioSura-Photoroom.png` },
-      { name: "Shaun — Pose 3", file: "shaun/ShaunClark_03141_StudioSura-Photoroom.png", preview: `${BASE}assets/shaun/ShaunClark_03141_StudioSura-Photoroom.png` },
-      { name: "Shaun — Pose 4", file: "shaun/ShaunClark_03182_StudioSura-Photoroom.png", preview: `${BASE}assets/shaun/ShaunClark_03182_StudioSura-Photoroom.png` },
-      { name: "Shaun — Pose 5", file: "shaun/ShaunClark_03235_StudioSura-Photoroom.png", preview: `${BASE}assets/shaun/ShaunClark_03235_StudioSura-Photoroom.png` },
-      { name: "Shaun — Pose 6", file: "shaun/ShaunClark_03269_StudioSura-Photoroom.png", preview: `${BASE}assets/shaun/ShaunClark_03269_StudioSura-Photoroom.png` },
-    ],
-  },
 ];
 
 function downloadAsset(filePath: string, name: string) {
@@ -294,7 +280,7 @@ export function BrandDirectoryWorkspace() {
                       >
                         <div className="px-[18px] pb-[16px]">
                           <div className={`grid gap-[10px] ${
-                            cat.id === "highly" || cat.id === "shaun"
+                            cat.id === "highly"
                               ? "grid-cols-5"
                               : cat.id === "logos"
                                 ? "grid-cols-4"
@@ -313,7 +299,7 @@ export function BrandDirectoryWorkspace() {
                                     ? "aspect-[16/9]"
                                     : cat.id === "backgrounds-light"
                                       ? "aspect-[16/9]"
-                                      : cat.id === "highly" || cat.id === "shaun"
+                                      : cat.id === "highly"
                                         ? "aspect-square"
                                         : "aspect-square"
                                 }`}>

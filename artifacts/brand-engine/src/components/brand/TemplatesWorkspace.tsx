@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Type, Palette, Bold, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
@@ -97,27 +97,36 @@ const TEMPLATES: Template[] = [
   },
 ];
 
-const TEXT_LAYOUTS: Record<string, { container: string; headlineClass: string; subtextClass: string }> = {
-  "center": {
-    container: "absolute inset-0 flex flex-col items-center justify-center p-[10%] text-center z-[3]",
+const ALIGN_MAP: Record<string, string> = {
+  left: "items-start text-left",
+  center: "items-center text-center",
+  right: "items-end text-right",
+};
+
+const VPOS_MAP: Record<string, string> = {
+  top: "justify-start",
+  middle: "justify-center",
+  bottom: "justify-end",
+};
+
+function buildLayout(align: string, vpos: string) {
+  return {
+    container: `absolute inset-0 flex flex-col ${ALIGN_MAP[align] || ALIGN_MAP.center} ${VPOS_MAP[vpos] || VPOS_MAP.middle} p-[8%] z-[3]`,
     headlineClass: "font-['Poppins'] font-black uppercase leading-[0.95] drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)]",
     subtextClass: "font-['Poppins'] font-semibold uppercase tracking-[2.5px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]",
-  },
-  "top-left": {
-    container: "absolute inset-0 flex flex-col items-start justify-start p-[8%] text-left z-[3]",
-    headlineClass: "font-['Poppins'] font-black uppercase leading-[0.95] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]",
-    subtextClass: "font-['Poppins'] font-medium tracking-[1px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
-  },
-  "bottom-left": {
-    container: "absolute inset-0 flex flex-col items-start justify-end p-[8%] text-left z-[3]",
-    headlineClass: "font-['Poppins'] font-black uppercase leading-[0.95] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]",
-    subtextClass: "font-['Poppins'] font-medium tracking-[1px] mt-[6px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
-  },
-  "minimal-center": {
-    container: "absolute inset-0 flex flex-col items-center justify-center p-[10%] text-center z-[3]",
-    headlineClass: "font-['Poppins'] font-bold tracking-[4px] uppercase leading-[1.2] drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)]",
-    subtextClass: "font-['Poppins'] font-normal tracking-[2px] mt-[8px] drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]",
-  },
+  };
+}
+
+const TEXT_LAYOUTS: Record<string, { container: string; headlineClass: string; subtextClass: string }> = {
+  "top-left": buildLayout("left", "top"),
+  "top-center": buildLayout("center", "top"),
+  "top-right": buildLayout("right", "top"),
+  "middle-left": buildLayout("left", "middle"),
+  "center": buildLayout("center", "middle"),
+  "middle-right": buildLayout("right", "middle"),
+  "bottom-left": buildLayout("left", "bottom"),
+  "bottom-center": buildLayout("center", "bottom"),
+  "bottom-right": buildLayout("right", "bottom"),
 };
 
 const TEXT_STYLES: Record<string, { headlineSize: string; subtextSize: string; headlineColor: string; subtextColor: string }> = {
@@ -147,11 +156,16 @@ const TEXT_STYLES: Record<string, { headlineSize: string; subtextSize: string; h
   },
 };
 
-const POSITION_OPTIONS = [
+const ALIGN_OPTIONS = [
+  { id: "left", label: "Left", Icon: AlignLeft },
   { id: "center", label: "Center", Icon: AlignCenter },
-  { id: "top-left", label: "Top Left", Icon: AlignVerticalJustifyStart },
-  { id: "bottom-left", label: "Bottom", Icon: AlignVerticalJustifyEnd },
-  { id: "minimal-center", label: "Minimal", Icon: AlignLeft },
+  { id: "right", label: "Right", Icon: AlignRight },
+] as const;
+
+const VPOS_OPTIONS = [
+  { id: "top", label: "Top", Icon: ArrowUp },
+  { id: "middle", label: "Middle", Icon: Minus },
+  { id: "bottom", label: "Bottom", Icon: ArrowDown },
 ] as const;
 
 const STYLE_OPTIONS = [
@@ -177,7 +191,8 @@ export function TemplatesWorkspace() {
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
   const [selectedHighly, setSelectedHighly] = useState<string | null>(null);
-  const [textLayout, setTextLayout] = useState<string | null>(null);
+  const [textAlign, setTextAlign] = useState<string | null>(null);
+  const [textVpos, setTextVpos] = useState<string | null>(null);
   const [textStyle, setTextStyle] = useState<string | null>(null);
   const [headlineColor, setHeadlineColor] = useState<string | null>(null);
   const [mascotPos, setMascotPos] = useState({ x: 65, y: 30 });
@@ -256,7 +271,8 @@ export function TemplatesWorkspace() {
     setActiveTemplate(tpl);
     setHeadline(tpl.headline);
     setSubtext(tpl.subtext);
-    setTextLayout(null);
+    setTextAlign(null);
+    setTextVpos(null);
     setTextStyle(null);
     setHeadlineColor(null);
     setActiveToolbar(null);
@@ -266,10 +282,20 @@ export function TemplatesWorkspace() {
 
   const LOGO_LIGHT = logo("Lockup=Full Horizontal, Color=Light.png");
 
+  const getEffectiveLayoutKey = (tpl: Template, isCard: boolean) => {
+    if (isCard) return tpl.textLayout;
+    const defaultAlign = tpl.textLayout.includes("left") ? "left" : tpl.textLayout.includes("right") ? "right" : "center";
+    const defaultVpos = tpl.textLayout.startsWith("top") ? "top" : tpl.textLayout.startsWith("bottom") ? "bottom" : "middle";
+    const align = textAlign || defaultAlign;
+    const vpos = textVpos || defaultVpos;
+    if (align === "center" && vpos === "middle") return "center";
+    return `${vpos}-${align}`;
+  };
+
   const renderPreviewContent = (tpl: Template, headlineText: string, subtextText: string, isCard: boolean) => {
-    const effectiveLayout = isCard ? tpl.textLayout : (textLayout || tpl.textLayout);
+    const effectiveLayoutKey = getEffectiveLayoutKey(tpl, isCard);
     const effectiveStyle = isCard ? tpl.textStyle : (textStyle || tpl.textStyle);
-    const layout = TEXT_LAYOUTS[effectiveLayout];
+    const layout = TEXT_LAYOUTS[effectiveLayoutKey] || TEXT_LAYOUTS["center"];
     const style = TEXT_STYLES[effectiveStyle];
     const effectiveHeadlineColor = !isCard && headlineColor ? headlineColor : style.headlineColor;
     const showDraggableMascot = !isCard && activeHighly;
@@ -344,7 +370,10 @@ export function TemplatesWorkspace() {
     );
   };
 
-  const effectiveLayout = textLayout || activeTemplate?.textLayout || "center";
+  const defaultAlign = activeTemplate?.textLayout.includes("left") ? "left" : activeTemplate?.textLayout.includes("right") ? "right" : "center";
+  const defaultVpos = activeTemplate?.textLayout.startsWith("top") ? "top" : activeTemplate?.textLayout.startsWith("bottom") ? "bottom" : "middle";
+  const effectiveAlign = textAlign || defaultAlign;
+  const effectiveVpos = textVpos || defaultVpos;
   const effectiveStyle = textStyle || activeTemplate?.textStyle || "bold";
 
   return (
@@ -670,27 +699,57 @@ export function TemplatesWorkspace() {
                       initial={{ opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 12 }}
-                      className="absolute bottom-[60px] left-1/2 -translate-x-1/2 z-[20] p-[8px] bg-[rgba(0,0,0,0.8)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-[14px] shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex gap-[4px]"
+                      className="absolute bottom-[60px] left-1/2 -translate-x-1/2 z-[20] p-[10px] bg-[rgba(0,0,0,0.8)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-[14px] shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex flex-col gap-[8px]"
                     >
-                      {POSITION_OPTIONS.map(({ id, label, Icon }) => {
-                        const isActive = effectiveLayout === id;
-                        return (
-                          <motion.button
-                            key={id}
-                            onClick={() => setTextLayout(id === activeTemplate?.textLayout ? null : id)}
-                            whileHover={{ scale: 1.08 }}
-                            whileTap={{ scale: 0.93 }}
-                            className={`flex flex-col items-center gap-[3px] py-[8px] px-[12px] rounded-[10px] cursor-pointer transition-all
-                              ${isActive
-                                ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
-                                : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
-                              }`}
-                          >
-                            <Icon className="w-[16px] h-[16px]" />
-                            <span className="text-[9px] font-medium">{label}</span>
-                          </motion.button>
-                        );
-                      })}
+                      <div className="flex items-center gap-[4px]">
+                        <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Align</span>
+                        <div className="flex gap-[3px]">
+                          {ALIGN_OPTIONS.map(({ id, label, Icon }) => {
+                            const isActive = effectiveAlign === id;
+                            return (
+                              <motion.button
+                                key={id}
+                                onClick={() => setTextAlign(id === defaultAlign ? null : id)}
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.93 }}
+                                title={label}
+                                className={`flex items-center justify-center w-[36px] h-[32px] rounded-[8px] cursor-pointer transition-all
+                                  ${isActive
+                                    ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                                    : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                                  }`}
+                              >
+                                <Icon className="w-[15px] h-[15px]" />
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div className="w-full h-[1px] bg-[rgba(255,255,255,0.06)]" />
+                      <div className="flex items-center gap-[4px]">
+                        <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Vertical</span>
+                        <div className="flex gap-[3px]">
+                          {VPOS_OPTIONS.map(({ id, label, Icon }) => {
+                            const isActive = effectiveVpos === id;
+                            return (
+                              <motion.button
+                                key={id}
+                                onClick={() => setTextVpos(id === defaultVpos ? null : id)}
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.93 }}
+                                title={label}
+                                className={`flex items-center justify-center w-[36px] h-[32px] rounded-[8px] cursor-pointer transition-all
+                                  ${isActive
+                                    ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                                    : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                                  }`}
+                              >
+                                <Icon className="w-[15px] h-[15px]" />
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </motion.div>
                   )}
 

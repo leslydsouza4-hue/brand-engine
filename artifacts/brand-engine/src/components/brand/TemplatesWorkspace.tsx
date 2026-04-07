@@ -357,15 +357,13 @@ export function TemplatesWorkspace() {
           />
         )}
 
-        <img
-          src={LOGO_LIGHT}
-          alt="HighLevel"
-          className={`absolute z-[8] object-contain pointer-events-none ${
-            isCard
-              ? "top-[6%] left-[5%] h-[8%] max-h-[14px] opacity-70"
-              : "top-[4%] left-[4%] h-[5%] max-h-[24px] opacity-80"
-          }`}
-        />
+        {!isCard && (
+          <img
+            src={LOGO_LIGHT}
+            alt="HighLevel"
+            className="absolute z-[8] object-contain pointer-events-none top-[4%] left-[4%] h-[5%] max-h-[24px] opacity-80"
+          />
+        )}
       </>
     );
   };

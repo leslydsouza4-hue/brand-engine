@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { Sidebar } from "@/components/brand/Sidebar";
 import { Toolbar } from "@/components/brand/Toolbar";
@@ -6,9 +6,28 @@ import { TemplatesWorkspace } from "@/components/brand/TemplatesWorkspace";
 import { ShaunWorkspace } from "@/components/brand/ShaunWorkspace";
 import { ZoomWorkspace } from "@/components/brand/ZoomWorkspace";
 import { AIImageWorkspace } from "@/components/brand/AIImageWorkspace";
+import { BrandDirectoryWorkspace } from "@/components/brand/BrandDirectoryWorkspace";
 
 export default function BrandEngine() {
-  const [currentMode, setCurrentMode] = useState("templates");
+  const [currentMode, _setCurrentMode] = useState(() => {
+    const hash = window.location.hash.replace("#", "");
+    const valid = ["templates", "ai-image", "shaun-thumbnails", "zoom-backgrounds", "brand-directory"];
+    return valid.includes(hash) ? hash : "templates";
+  });
+  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "zoom-backgrounds", "brand-directory"];
+  const parseHash = () => {
+    const h = window.location.hash.replace("#", "");
+    return VALID_MODES.includes(h) ? h : "templates";
+  };
+  const setCurrentMode = (mode: string) => {
+    _setCurrentMode(mode);
+    window.location.hash = mode === "templates" ? "" : mode;
+  };
+  useEffect(() => {
+    const onHashChange = () => _setCurrentMode(parseHash());
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = useCallback(async (format: "png" | "jpeg") => {
@@ -73,6 +92,7 @@ export default function BrandEngine() {
         {currentMode === "zoom-backgrounds" && <ZoomWorkspace />}
         
         {currentMode === "ai-image" && <AIImageWorkspace />}
+        {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
       </div>
     </div>
   );

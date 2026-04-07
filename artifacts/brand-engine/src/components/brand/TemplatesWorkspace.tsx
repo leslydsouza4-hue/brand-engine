@@ -1,12 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Type, Palette, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignVerticalJustifyStart, AlignVerticalJustifyEnd, Type, Palette, Bold, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
 const bg = (name: string) => `${BASE}assets/backgrounds-dark/${name}`;
-const bgLight = (name: string) => `${BASE}assets/backgrounds-light/${name}`;
-const highly = (name: string) => `${BASE}assets/highly/${name}`;
 const logo = (name: string) => `${BASE}assets/logos/${name}`;
 
 interface Category {
@@ -34,9 +32,6 @@ interface Template {
   headline: string;
   subtext: string;
   overlay?: string;
-  logoSrc?: string;
-  mascotSrc?: string;
-  mascotPosition?: string;
 }
 
 const CATEGORIES: Category[] = [
@@ -113,8 +108,8 @@ const TEMPLATES: Template[] = [
     subtext: "Join the movement",
   },
   {
-    id: "highly-wave",
-    name: "Highly Wave",
+    id: "gradient-wave",
+    name: "Gradient Wave",
     tag: "Social",
     categories: ["social", "ads", "presentation"],
     bgType: "gradient",
@@ -123,8 +118,6 @@ const TEMPLATES: Template[] = [
     textStyle: "bold",
     headline: "SAY HI TO HIGHLY",
     subtext: "Your new AI sidekick",
-    mascotSrc: highly("Highly_Hi 1.png"),
-    mascotPosition: "right",
   },
 ];
 
@@ -178,6 +171,29 @@ const TEXT_STYLES: Record<string, { headlineSize: string; subtextSize: string; h
   },
 };
 
+const POSITION_OPTIONS = [
+  { id: "center", label: "Center", Icon: AlignCenter },
+  { id: "top-left", label: "Top Left", Icon: AlignVerticalJustifyStart },
+  { id: "bottom-left", label: "Bottom", Icon: AlignVerticalJustifyEnd },
+  { id: "minimal-center", label: "Minimal", Icon: AlignLeft },
+] as const;
+
+const STYLE_OPTIONS = [
+  { id: "bold", label: "Bold" },
+  { id: "clean", label: "Clean" },
+  { id: "futuristic", label: "Neon" },
+  { id: "minimal", label: "Minimal" },
+] as const;
+
+const COLOR_OPTIONS = [
+  { id: null, label: "Default", color: "bg-gradient-to-r from-white to-[#20EDF1]" },
+  { id: "text-white", label: "White", color: "bg-white" },
+  { id: "text-[#20EDF1]", label: "Teal", color: "bg-[#20EDF1]" },
+  { id: "text-[#2896FB]", label: "Blue", color: "bg-[#2896FB]" },
+  { id: "text-[#00B2A9]", label: "Brand", color: "bg-[#00B2A9]" },
+  { id: "text-[#FFD700]", label: "Gold", color: "bg-[#FFD700]" },
+] as const;
+
 export function TemplatesWorkspace() {
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0]);
   const [activeSize, setActiveSize] = useState(CATEGORIES[0].sizes[0]);
@@ -197,6 +213,7 @@ export function TemplatesWorkspace() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState<"mascot" | "photo" | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const [activeToolbar, setActiveToolbar] = useState<"text" | "position" | "style" | "color" | null>(null);
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
 
@@ -266,6 +283,8 @@ export function TemplatesWorkspace() {
     setTextLayout(null);
     setTextStyle(null);
     setHeadlineColor(null);
+    setActiveToolbar(null);
+    setEditingField(null);
   };
 
   const filtered = TEMPLATES.filter(t => t.categories.includes(activeCategory.id));
@@ -320,7 +339,7 @@ export function TemplatesWorkspace() {
           />
         )}
 
-        {showDraggableMascot ? (
+        {showDraggableMascot && (
           <img
             src={activeHighly.image}
             alt={activeHighly.name}
@@ -335,17 +354,7 @@ export function TemplatesWorkspace() {
             onTouchStart={(e) => handleDragStart("mascot", e)}
             draggable={false}
           />
-        ) : tpl.mascotSrc ? (
-          <img
-            src={tpl.mascotSrc}
-            alt=""
-            className={`absolute z-[3] object-contain pointer-events-none ${
-              tpl.mascotPosition === "right" || !tpl.mascotPosition
-                ? isCard ? "bottom-0 right-[4%] h-[65%]" : "bottom-0 right-[5%] h-[70%]"
-                : "bottom-0 left-[5%] h-[70%]"
-            }`}
-          />
-        ) : null}
+        )}
 
         <img
           src={LOGO_LIGHT}
@@ -360,10 +369,13 @@ export function TemplatesWorkspace() {
     );
   };
 
+  const effectiveLayout = textLayout || activeTemplate?.textLayout || "center";
+  const effectiveStyle = textStyle || activeTemplate?.textStyle || "bold";
+
   return (
     <div className="flex flex-1 overflow-hidden p-0 gap-0">
 
-      <div className="w-[400px] min-w-[400px] overflow-y-auto overflow-x-hidden py-[16px] px-[24px] pb-[28px] border-r border-[rgba(255,255,255,0.04)] flex flex-col">
+      <div className="w-[340px] min-w-[340px] overflow-y-auto overflow-x-hidden py-[16px] px-[20px] pb-[28px] border-r border-[rgba(255,255,255,0.04)] flex flex-col">
         <div className="text-[14px] font-bold text-white mb-[1px]">Create something new</div>
         <div className="text-[11.5px] text-[#475569] mb-[16px]">Pick a format, size, then a template.</div>
 
@@ -447,134 +459,6 @@ export function TemplatesWorkspace() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col gap-[12px] mt-[16px] pt-[16px] border-t border-[rgba(255,255,255,0.04)]"
-          >
-            <div className="flex items-center gap-[6px] mb-[2px]">
-              <Type className="w-[12px] h-[12px] text-[#00B2A9]" />
-              <span className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Text</span>
-            </div>
-            <div className="flex flex-col gap-[6px]">
-              <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Headline</label>
-              <input
-                type="text"
-                value={headline}
-                onChange={e => setHeadline(e.target.value)}
-                placeholder="Enter bold headline..."
-                maxLength={60}
-                className="w-full py-[12px] px-[14px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[10px] text-white font-inherit text-[15px] font-bold outline-none focus:border-[rgba(0,178,169,0.3)] placeholder:text-[#475569]"
-              />
-            </div>
-            <div className="flex flex-col gap-[6px]">
-              <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Subtext</label>
-              <input
-                type="text"
-                value={subtext}
-                onChange={e => setSubtext(e.target.value)}
-                placeholder="Supporting text..."
-                maxLength={40}
-                className="w-full py-[10px] px-[14px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[10px] text-white font-inherit text-[13px] font-medium outline-none focus:border-[rgba(0,178,169,0.3)] placeholder:text-[#475569]"
-              />
-            </div>
-
-            <div className="flex flex-col gap-[6px]">
-              <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Position</label>
-              <div className="grid grid-cols-4 gap-[6px]">
-                {([
-                  { id: "center", label: "Center", Icon: AlignCenter },
-                  { id: "top-left", label: "Top Left", Icon: AlignVerticalJustifyStart },
-                  { id: "bottom-left", label: "Bottom Left", Icon: AlignVerticalJustifyEnd },
-                  { id: "minimal-center", label: "Minimal", Icon: AlignLeft },
-                ] as const).map(({ id, label, Icon }) => {
-                  const effectiveLayout = textLayout || activeTemplate.textLayout;
-                  const isActive = effectiveLayout === id;
-                  return (
-                    <motion.button
-                      key={id}
-                      onClick={() => setTextLayout(id === activeTemplate.textLayout ? null : id)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`flex flex-col items-center gap-[4px] py-[8px] rounded-[8px] border cursor-pointer transition-all text-center
-                        ${isActive
-                          ? 'border-[rgba(0,178,169,0.3)] bg-[rgba(0,178,169,0.08)] text-[#00B2A9]'
-                          : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(255,255,255,0.1)]'
-                        }`}
-                    >
-                      <Icon className="w-[14px] h-[14px]" />
-                      <span className="text-[8px] font-medium">{label}</span>
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-[6px]">
-              <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Style</label>
-              <div className="grid grid-cols-4 gap-[6px]">
-                {([
-                  { id: "bold", label: "Bold" },
-                  { id: "clean", label: "Clean" },
-                  { id: "futuristic", label: "Neon" },
-                  { id: "minimal", label: "Minimal" },
-                ] as const).map(({ id, label }) => {
-                  const effectiveStyle = textStyle || activeTemplate.textStyle;
-                  const isActive = effectiveStyle === id;
-                  return (
-                    <motion.button
-                      key={id}
-                      onClick={() => setTextStyle(id === activeTemplate.textStyle ? null : id)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`py-[8px] rounded-[8px] border cursor-pointer transition-all text-[9px] font-semibold
-                        ${isActive
-                          ? 'border-[rgba(0,178,169,0.3)] bg-[rgba(0,178,169,0.08)] text-[#00B2A9]'
-                          : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(255,255,255,0.1)]'
-                        }`}
-                    >
-                      {label}
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-[6px]">
-              <label className="text-[11px] font-semibold uppercase tracking-[0.8px] text-[#64748B]">Headline Color</label>
-              <div className="flex gap-[6px]">
-                {([
-                  { id: null, label: "Default", color: "bg-gradient-to-r from-white to-[#20EDF1]" },
-                  { id: "text-white", label: "White", color: "bg-white" },
-                  { id: "text-[#20EDF1]", label: "Teal", color: "bg-[#20EDF1]" },
-                  { id: "text-[#2896FB]", label: "Blue", color: "bg-[#2896FB]" },
-                  { id: "text-[#00B2A9]", label: "Brand", color: "bg-[#00B2A9]" },
-                  { id: "text-[#FFD700]", label: "Gold", color: "bg-[#FFD700]" },
-                ] as const).map(({ id, label, color }) => {
-                  const isActive = headlineColor === id;
-                  return (
-                    <motion.button
-                      key={label}
-                      onClick={() => setHeadlineColor(id)}
-                      whileHover={{ scale: 1.15 }}
-                      whileTap={{ scale: 0.9 }}
-                      title={label}
-                      className={`w-[28px] h-[28px] rounded-full border-[2px] cursor-pointer transition-all
-                        ${isActive
-                          ? 'border-[#00B2A9] ring-[2px] ring-[#00B2A9] ring-offset-[2px] ring-offset-[#0A1628]'
-                          : 'border-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.2)]'
-                        }`}
-                    >
-                      <div className={`w-full h-full rounded-full ${color}`} />
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {activeTemplate && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="flex flex-col gap-[10px] mt-[16px] pt-[16px] border-t border-[rgba(255,255,255,0.04)]"
           >
@@ -623,12 +507,10 @@ export function TemplatesWorkspace() {
             </div>
 
             {selectedHighly && (
-              <div className="flex flex-col gap-[4px] mt-[8px]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-[4px]">
-                    <Move className="w-[10px] h-[10px] text-[#64748B]" />
-                    <span className="text-[9px] text-[#64748B]">Drag mascot on preview to reposition</span>
-                  </div>
+              <div className="flex flex-col gap-[4px] mt-[4px]">
+                <div className="flex items-center gap-[4px]">
+                  <Move className="w-[10px] h-[10px] text-[#64748B]" />
+                  <span className="text-[9px] text-[#64748B]">Drag on preview to move</span>
                 </div>
                 <div className="flex items-center gap-[8px]">
                   <span className="text-[9px] text-[#64748B] w-[28px]">Size</span>
@@ -687,7 +569,7 @@ export function TemplatesWorkspace() {
                 </div>
                 <div className="flex items-center gap-[4px]">
                   <Move className="w-[10px] h-[10px] text-[#64748B]" />
-                  <span className="text-[9px] text-[#64748B]">Drag photo on preview to reposition</span>
+                  <span className="text-[9px] text-[#64748B]">Drag on preview to move</span>
                 </div>
                 <div className="flex items-center gap-[8px]">
                   <span className="text-[9px] text-[#64748B] w-[28px]">Size</span>
@@ -759,6 +641,144 @@ export function TemplatesWorkspace() {
                   subtext || activeTemplate.subtext,
                   false
                 )}
+
+                <div className="absolute bottom-[12px] left-1/2 -translate-x-1/2 z-[20] flex items-center gap-[3px] py-[6px] px-[8px] bg-[rgba(0,0,0,0.7)] backdrop-blur-[16px] border border-[rgba(255,255,255,0.1)] rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                  {([
+                    { id: "text" as const, Icon: Type, label: "Text" },
+                    { id: "position" as const, Icon: Move, label: "Position" },
+                    { id: "style" as const, Icon: Bold, label: "Style" },
+                    { id: "color" as const, Icon: Palette, label: "Color" },
+                  ]).map(({ id, Icon, label }) => (
+                    <motion.button
+                      key={id}
+                      onClick={() => setActiveToolbar(activeToolbar === id ? null : id)}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`flex items-center gap-[5px] py-[6px] px-[10px] rounded-[8px] cursor-pointer transition-all text-[10px] font-medium
+                        ${activeToolbar === id
+                          ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                          : 'text-[rgba(255,255,255,0.6)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                        }`}
+                    >
+                      <Icon className="w-[13px] h-[13px]" />
+                      {label}
+                    </motion.button>
+                  ))}
+                </div>
+
+                <AnimatePresence>
+                  {activeToolbar === "text" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 12 }}
+                      className="absolute bottom-[60px] left-1/2 -translate-x-1/2 z-[20] w-[90%] max-w-[400px] p-[12px] bg-[rgba(0,0,0,0.8)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-[14px] shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex flex-col gap-[8px]"
+                    >
+                      <input
+                        type="text"
+                        value={headline}
+                        onChange={e => setHeadline(e.target.value)}
+                        placeholder="Headline..."
+                        maxLength={60}
+                        className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-white font-['Poppins'] text-[14px] font-bold outline-none focus:border-[rgba(0,178,169,0.4)] placeholder:text-[rgba(255,255,255,0.25)]"
+                      />
+                      <input
+                        type="text"
+                        value={subtext}
+                        onChange={e => setSubtext(e.target.value)}
+                        placeholder="Subtext..."
+                        maxLength={40}
+                        className="w-full py-[8px] px-[12px] bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-white font-['Poppins'] text-[12px] font-medium outline-none focus:border-[rgba(0,178,169,0.4)] placeholder:text-[rgba(255,255,255,0.25)]"
+                      />
+                    </motion.div>
+                  )}
+
+                  {activeToolbar === "position" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 12 }}
+                      className="absolute bottom-[60px] left-1/2 -translate-x-1/2 z-[20] p-[8px] bg-[rgba(0,0,0,0.8)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-[14px] shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex gap-[4px]"
+                    >
+                      {POSITION_OPTIONS.map(({ id, label, Icon }) => {
+                        const isActive = effectiveLayout === id;
+                        return (
+                          <motion.button
+                            key={id}
+                            onClick={() => setTextLayout(id === activeTemplate?.textLayout ? null : id)}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.93 }}
+                            className={`flex flex-col items-center gap-[3px] py-[8px] px-[12px] rounded-[10px] cursor-pointer transition-all
+                              ${isActive
+                                ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                                : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                              }`}
+                          >
+                            <Icon className="w-[16px] h-[16px]" />
+                            <span className="text-[9px] font-medium">{label}</span>
+                          </motion.button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+
+                  {activeToolbar === "style" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 12 }}
+                      className="absolute bottom-[60px] left-1/2 -translate-x-1/2 z-[20] p-[8px] bg-[rgba(0,0,0,0.8)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-[14px] shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex gap-[4px]"
+                    >
+                      {STYLE_OPTIONS.map(({ id, label }) => {
+                        const isActive = effectiveStyle === id;
+                        return (
+                          <motion.button
+                            key={id}
+                            onClick={() => setTextStyle(id === activeTemplate?.textStyle ? null : id)}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.93 }}
+                            className={`py-[8px] px-[14px] rounded-[10px] cursor-pointer transition-all text-[11px] font-semibold
+                              ${isActive
+                                ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                                : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                              }`}
+                          >
+                            {label}
+                          </motion.button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+
+                  {activeToolbar === "color" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 12 }}
+                      className="absolute bottom-[60px] left-1/2 -translate-x-1/2 z-[20] p-[10px] bg-[rgba(0,0,0,0.8)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-[14px] shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex gap-[6px]"
+                    >
+                      {COLOR_OPTIONS.map(({ id, label, color }) => {
+                        const isActive = headlineColor === id;
+                        return (
+                          <motion.button
+                            key={label}
+                            onClick={() => setHeadlineColor(id)}
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                            title={label}
+                            className={`w-[28px] h-[28px] rounded-full border-[2px] cursor-pointer transition-all
+                              ${isActive
+                                ? 'border-[#00B2A9] ring-[2px] ring-[#00B2A9] ring-offset-[2px] ring-offset-[rgba(0,0,0,0.8)]'
+                                : 'border-[rgba(255,255,255,0.15)] hover:border-[rgba(255,255,255,0.4)]'
+                              }`}
+                          >
+                            <div className={`w-full h-full rounded-full ${color}`} />
+                          </motion.button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             ) : (
               <motion.div

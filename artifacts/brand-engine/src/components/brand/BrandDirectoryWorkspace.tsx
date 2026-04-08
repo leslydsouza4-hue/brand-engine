@@ -196,7 +196,7 @@ export function BrandDirectoryWorkspace() {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-[40px] py-[24px]">
+      <div className="flex-1 overflow-y-auto px-[16px] md:px-[40px] py-[24px]">
         <div className="max-w-[1100px] mx-auto">
           <div className="mb-[28px]">
             <h1 className="text-[22px] font-bold text-white mb-[4px]">Brand Directory</h1>
@@ -218,7 +218,7 @@ export function BrandDirectoryWorkspace() {
 
           {!isSearching && <div className="mb-[32px] p-[20px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] rounded-[16px]">
             <div className="text-[11px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[14px]">Brand Colors</div>
-            <div className="grid grid-cols-4 gap-[10px]">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px]">
               {BRAND_COLORS.map(c => (
                 <div
                   key={c.hex}
@@ -281,10 +281,10 @@ export function BrandDirectoryWorkspace() {
                         <div className="px-[18px] pb-[16px]">
                           <div className={`grid gap-[10px] ${
                             cat.id === "highly"
-                              ? "grid-cols-5"
+                              ? "grid-cols-3 md:grid-cols-5"
                               : cat.id === "logos"
-                                ? "grid-cols-4"
-                                : "grid-cols-3"
+                                ? "grid-cols-2 md:grid-cols-4"
+                                : "grid-cols-2 md:grid-cols-3"
                           }`}>
                             {cat.items.map(item => (
                               <motion.div

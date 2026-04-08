@@ -17,8 +17,8 @@ export function ZoomWorkspace() {
   const bgUrl = `${BASE}assets/backgrounds-dark/${activeBg.file}`;
 
   return (
-    <div className="flex flex-1 overflow-hidden p-0 gap-0">
-      <div className="w-[400px] min-w-[400px] overflow-y-auto pt-[20px] px-[28px] pb-[28px] border-r border-[rgba(255,255,255,0.06)] flex flex-col">
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
+      <div className="w-full md:w-[400px] md:min-w-[400px] overflow-y-auto pt-[20px] px-[16px] md:px-[28px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.06)] flex flex-col max-h-[50vh] md:max-h-none">
         <div className="text-[16px] font-bold text-white mb-[4px]">Zoom Background</div>
         <div className="text-[12px] text-[#64748B] mb-[20px] leading-[1.5]">Branded virtual background for Zoom, Meet & Teams. Pick a background, add your name, and export.</div>
 

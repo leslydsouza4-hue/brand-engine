@@ -197,7 +197,7 @@ export function SettingsWorkspace() {
 
   return (
     <div className="flex flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-[40px] py-[24px]">
+      <div className="flex-1 overflow-y-auto px-[16px] md:px-[40px] py-[24px]">
         <div className="max-w-[680px] mx-auto">
           <div className="flex items-center justify-between mb-[28px]">
             <div>

@@ -386,13 +386,13 @@ export function TemplatesWorkspace() {
   const effectiveStyle = textStyle || activeTemplate?.textStyle || "bold";
 
   return (
-    <div className="flex flex-1 overflow-hidden p-0 gap-0">
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
 
-      <div className="w-[340px] min-w-[340px] overflow-y-auto overflow-x-hidden py-[16px] px-[20px] pb-[28px] border-r border-[rgba(255,255,255,0.04)] flex flex-col">
+      <div className="w-full md:w-[340px] md:min-w-[340px] overflow-y-auto overflow-x-hidden py-[16px] px-[16px] md:px-[20px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.04)] flex flex-col max-h-[50vh] md:max-h-none">
         <div className="text-[14px] font-bold text-white mb-[1px]">Create something new</div>
         <div className="text-[11.5px] text-[#475569] mb-[16px]">Pick a format, size, then a template.</div>
 
-        <div className="flex gap-[8px] mb-[16px]">
+        <div className="flex gap-[8px] mb-[16px] overflow-x-auto sidebar-scroll">
           {CATEGORIES.map(cat => {
             const Icon = cat.icon;
             const isActive = activeCategory.id === cat.id;
@@ -402,7 +402,7 @@ export function TemplatesWorkspace() {
                 onClick={() => handleCategoryChange(cat)}
                 whileHover={{ y: isActive ? 0 : -2 }}
                 whileTap={{ scale: 0.97 }}
-                className={`flex-1 flex flex-col items-center gap-[8px] pt-[14px] px-[8px] pb-[12px] bg-[rgba(255,255,255,0.015)] border rounded-[12px] cursor-pointer transition-all duration-300 relative overflow-hidden
+                className={`flex-1 min-w-[70px] flex flex-col items-center gap-[8px] pt-[14px] px-[8px] pb-[12px] bg-[rgba(255,255,255,0.015)] border rounded-[12px] cursor-pointer transition-all duration-300 relative overflow-hidden
                   ${isActive
                     ? 'border-[rgba(0,178,169,0.25)] bg-[rgba(255,255,255,0.025)] shadow-[0_6px_24px_rgba(0,0,0,0.2)]'
                     : 'border-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.07)]'

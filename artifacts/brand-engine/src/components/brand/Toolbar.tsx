@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import { Download, Loader2, FileText } from "lucide-react";
+import { Download, Loader2, FileText, Menu } from "lucide-react";
 
 interface ToolbarProps {
   onExport?: (format: "png" | "jpeg" | "pdf") => void;
   isExporting?: boolean;
+  onMenuToggle?: () => void;
 }
 
-export function Toolbar({ onExport, isExporting }: ToolbarProps) {
+export function Toolbar({ onExport, isExporting, onMenuToggle }: ToolbarProps) {
   const [exportOpen, setExportOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -26,7 +27,14 @@ export function Toolbar({ onExport, isExporting }: ToolbarProps) {
   };
 
   return (
-    <div className="flex items-center justify-end py-[14px] px-[28px] relative z-50">
+    <div className="flex items-center justify-between md:justify-end py-[14px] px-[16px] md:px-[28px] relative z-50">
+      <button
+        onClick={onMenuToggle}
+        className="md:hidden flex items-center justify-center w-[38px] h-[38px] rounded-[12px] bg-white/[0.04] border border-white/[0.08] text-[#94A3B8] hover:text-white hover:bg-white/[0.08] transition-all cursor-pointer"
+      >
+        <Menu className="w-[20px] h-[20px]" />
+      </button>
+
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setExportOpen(!exportOpen)}

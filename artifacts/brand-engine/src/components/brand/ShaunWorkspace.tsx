@@ -58,9 +58,9 @@ export function ShaunWorkspace() {
   };
 
   return (
-    <div className="flex flex-1 overflow-hidden p-0 gap-0">
+    <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
       
-      <div className="w-[380px] min-w-[380px] overflow-y-auto pt-[20px] px-[28px] pb-[28px] border-r border-[rgba(255,255,255,0.06)] flex flex-col">
+      <div className="w-full md:w-[380px] md:min-w-[380px] overflow-y-auto pt-[20px] px-[16px] md:px-[28px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.06)] flex flex-col max-h-[50vh] md:max-h-none">
         <div className="pt-[20px] pb-[16px]">
           <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[12px]">Select Shaun</div>
           

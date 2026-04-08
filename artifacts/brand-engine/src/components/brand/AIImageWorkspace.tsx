@@ -239,7 +239,7 @@ export function AIImageWorkspace() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              className="flex-1 flex flex-col items-center justify-center px-[32px] pb-[60px] relative z-[2]"
+              className="flex-1 flex flex-col items-center justify-center px-[16px] md:px-[32px] pb-[60px] relative z-[2]"
             >
               <div className="ai-header-float flex items-center gap-[10px] mb-[8px]">
                 <div className="relative">
@@ -360,7 +360,7 @@ export function AIImageWorkspace() {
                       className="overflow-hidden"
                     >
                       <div className="mt-[12px] rounded-[18px] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.025)] backdrop-blur-[20px] p-[20px]">
-                        <div className="grid grid-cols-3 gap-[16px]">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-[16px]">
                           <div>
                             <div className="text-[10px] font-semibold text-[#5A6B80] mb-[6px] uppercase tracking-[1px]">Outputs</div>
                             <div className="flex gap-[4px]">
@@ -523,7 +523,7 @@ export function AIImageWorkspace() {
               <div className="text-[16px] font-semibold text-[#F1F5F9] mb-[6px]">Generating with AI...</div>
               <div className="text-[12px] text-[#5A6B80]">Creating {outputCount} on-brand images — this may take 15-30 seconds</div>
 
-              <div className="grid grid-cols-4 gap-[12px] mt-[40px] w-full max-w-[600px]">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-[12px] mt-[40px] w-full max-w-[600px]">
                 {Array.from({ length: outputCount }).map((_, i) => (
                   <motion.div
                     key={i}
@@ -548,7 +548,7 @@ export function AIImageWorkspace() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="flex-1 flex flex-col px-[32px] pt-[20px] pb-[32px] relative z-[2]"
+              className="flex-1 flex flex-col px-[16px] md:px-[32px] pt-[20px] pb-[32px] relative z-[2]"
             >
               <div className="flex items-center gap-[16px] mb-[20px]">
                 <div className="flex-1 relative group">

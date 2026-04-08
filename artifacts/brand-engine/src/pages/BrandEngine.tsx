@@ -31,6 +31,7 @@ export default function BrandEngine() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
   const [isExporting, setIsExporting] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleExport = useCallback(async (format: "png" | "jpeg" | "pdf") => {
     const el = document.querySelector("[data-export-preview]") as HTMLElement | null;
@@ -96,10 +97,12 @@ export default function BrandEngine() {
     <div className="flex h-screen w-screen relative bg-[#060B16] brand-app-bg">
       <div className="absolute inset-0 brand-app-noise pointer-events-none z-0"></div>
       
-      <Sidebar currentMode={currentMode} setMode={setCurrentMode} />
+      <div className="w-0 md:w-auto shrink-0">
+        <Sidebar currentMode={currentMode} setMode={setCurrentMode} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </div>
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">
-        <Toolbar onExport={handleExport} isExporting={isExporting} />
+        <Toolbar onExport={handleExport} isExporting={isExporting} onMenuToggle={() => setSidebarOpen(true)} />
         
         {currentMode === "templates" && <TemplatesWorkspace />}
         {currentMode === "shaun-thumbnails" && <ShaunWorkspace />}

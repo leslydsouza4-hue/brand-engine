@@ -26,12 +26,16 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - **Templates**: Category-based template picker (Social/Ads/Presentation) with live preview
   - **Shaun Thumbnails**: YouTube thumbnail creator with Shaun Clark poses, positioning, headline/subtext
   - **Zoom Backgrounds**: Virtual background generator with AI background removal, 8 gradient styles, photo upload
-  - **AI Image**: Real AI image generation via OpenAI gpt-image-1 with HighLevel brand context prompt
+  - **AI Image**: Multi-model AI image generation with model picker UI
+    - **Nano Banana 2** (`gemini-2.5-flash-image`) — ultra-fast generation via Gemini
+    - **Nano Banana Pro** (`gemini-3-pro-image-preview`) — high-quality details via Gemini
+    - **GPT-4** (`gpt-image-1`) — OpenAI image model
 - **Design system**: Deep navy (#060B16), brand teal (#00B2A9), electric blue (#2896FB), CTA yellow (#FFD000)
 - **Fonts**: Inter + Poppins (Google Fonts)
 - **AI Features**:
   - Background removal via `@imgly/background-removal` (loaded from esm.run CDN)
-  - AI image generation via `@workspace/integrations-openai-ai-server` (gpt-image-1), Replit AI Integration (no API key required, billed to Replit credits)
+  - AI image generation via Gemini (default) and OpenAI gpt-image-1, Replit AI Integration (no API key required, billed to Replit credits)
+  - Model picker with animated dropdown in prompt bar (primary) and inline select in regenerate bar
 - **API Proxy**: Vite dev server proxies `/api` to API server at `http://localhost:8080`
 - **Assets**: Shaun images from GitHub raw URLs
 
@@ -40,8 +44,9 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Port**: 8080
 - **Routes**:
   - `GET /api/healthz` — health check
-  - `POST /api/openai/generate-image` — AI image generation (prompt, size, count); basic rate limiting (5s between requests)
-- **Dependencies**: `@workspace/integrations-openai-ai-server` for OpenAI gpt-image-1 image generation
+  - `POST /api/openai/generate-image` — OpenAI gpt-image-1 generation (prompt, size, count); basic rate limiting (5s between requests)
+  - `POST /api/gemini/generate-image` — Gemini image generation (prompt, aspectRatio, style); supports Nano Banana 2 and Pro models
+- **Dependencies**: `@workspace/integrations-openai-ai-server` for OpenAI, `@workspace/integrations-gemini-ai` for Gemini
 
 ## Key Commands
 

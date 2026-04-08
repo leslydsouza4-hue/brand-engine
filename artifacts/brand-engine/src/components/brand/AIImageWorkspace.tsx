@@ -74,6 +74,20 @@ const PROMPT_SUGGESTIONS = [
 const ASPECT_RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:2"];
 const STYLE_PRESETS = ["Auto", "Photorealistic", "3D Render", "Illustration", "Cinematic", "Abstract"];
 
+type AIModel = {
+  id: string;
+  label: string;
+  desc: string;
+  apiEndpoint: string;
+  apiModelParam?: string;
+};
+
+const AI_MODELS: AIModel[] = [
+  { id: "nano-banana-2", label: "Nano Banana 2", desc: "Ultra-fast generation", apiEndpoint: "/api/gemini/generate-image", apiModelParam: "gemini-2.5-flash-image" },
+  { id: "nano-banana-pro", label: "Nano Banana Pro", desc: "High-quality details", apiEndpoint: "/api/gemini/generate-image", apiModelParam: "gemini-3-pro-image-preview" },
+  { id: "gpt-4", label: "GPT-4", desc: "OpenAI image model", apiEndpoint: "/api/openai/generate-image" },
+];
+
 const API_BASE = "/api";
 
 type GeneratedImage = { id: number; image: string };
@@ -173,9 +187,13 @@ export function AIImageWorkspace() {
   const [error, setError] = useState<string | null>(null);
   const [selectedHighly, setSelectedHighly] = useState<string | null>(null);
   const [showHighlyPicker, setShowHighlyPicker] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<string>("nano-banana-2");
+  const [showModelPicker, setShowModelPicker] = useState(false);
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
   const hasResults = results.length > 0;
+
+  const activeModel = AI_MODELS.find(m => m.id === selectedModel) || AI_MODELS[0];
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -192,8 +210,11 @@ export function AIImageWorkspace() {
       if (activeHighly) {
         body.highlyPoseId = activeHighly.id;
       }
+      if (activeModel.apiModelParam) {
+        body.model = activeModel.apiModelParam;
+      }
 
-      const res = await fetch(`${API_BASE}/openai/generate-image`, {
+      const res = await fetch(activeModel.apiEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -294,8 +315,53 @@ export function AIImageWorkspace() {
                           <span className="text-[9px] font-semibold text-[#00B2A9] uppercase tracking-[0.5px]">HighLevel Brand Context Applied</span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between px-[20px] pb-[16px] pt-[6px] relative z-[1]">
-                        <div className="flex items-center gap-[6px]">
+                      <div className="flex items-center justify-between flex-wrap gap-y-[6px] px-[20px] pb-[16px] pt-[6px] relative z-[1]">
+                        <div className="flex items-center gap-[6px] flex-wrap">
+                          <div className="relative">
+                            <motion.button
+                              onClick={() => setShowModelPicker(!showModelPicker)}
+                              whileHover={{ scale: 1.04 }}
+                              whileTap={{ scale: 0.97 }}
+                              className="flex items-center gap-[5px] py-[6px] px-[10px] rounded-[10px] border border-[rgba(40,150,251,0.25)] bg-[rgba(40,150,251,0.08)] text-[11px] font-medium cursor-pointer transition-all duration-200 text-[#3DA4FF] hover:bg-[rgba(40,150,251,0.12)]"
+                            >
+                              <Sparkles className="w-[11px] h-[11px]" />
+                              {activeModel.label}
+                              <ChevronDown className={`w-[10px] h-[10px] transition-transform ${showModelPicker ? 'rotate-180' : ''}`} />
+                            </motion.button>
+                            <AnimatePresence>
+                              {showModelPicker && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 6, scale: 0.96 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="absolute bottom-full left-0 mb-[6px] w-[220px] bg-[rgba(8,18,38,0.98)] backdrop-blur-[28px] border border-[rgba(255,255,255,0.08)] rounded-[14px] shadow-[0_12px_48px_rgba(0,0,0,0.5)] overflow-hidden z-50"
+                                >
+                                  <div className="p-[6px]">
+                                    {AI_MODELS.map((m) => (
+                                      <button
+                                        key={m.id}
+                                        onClick={() => { setSelectedModel(m.id); setShowModelPicker(false); }}
+                                        className={`w-full flex items-start gap-[10px] py-[10px] px-[12px] rounded-[10px] cursor-pointer transition-all duration-200 text-left border-none
+                                          ${selectedModel === m.id
+                                            ? 'bg-[rgba(40,150,251,0.12)] text-white'
+                                            : 'bg-transparent text-[#94A3B8] hover:bg-[rgba(255,255,255,0.04)] hover:text-white'
+                                          }`}
+                                      >
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-[6px]">
+                                            <span className="text-[12px] font-semibold">{m.label}</span>
+                                            {selectedModel === m.id && <Check className="w-[12px] h-[12px] text-[#3DA4FF] shrink-0" />}
+                                          </div>
+                                          <div className="text-[10px] text-[#5A6B80] mt-[2px]">{m.desc}</div>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                           <InlineSelect value={aspectRatio} options={ASPECT_RATIOS} onChange={setAspectRatio} />
                           <InlineSelect value={style} options={STYLE_PRESETS} onChange={setStyle} />
                           <motion.button
@@ -565,6 +631,18 @@ export function AIImageWorkspace() {
                       className="flex-1 bg-transparent border-none outline-none text-[13px] text-[#F1F5F9] placeholder:text-[#5A6B80] relative z-[1]"
                     />
                     <div className="flex items-center gap-[4px] shrink-0 relative z-[1]">
+                      <div className="relative">
+                        <select
+                          value={selectedModel}
+                          onChange={(e) => setSelectedModel(e.target.value)}
+                          className="py-[6px] pl-[10px] pr-[24px] rounded-[10px] bg-transparent border border-[rgba(40,150,251,0.25)] text-[11px] font-medium text-[#3DA4FF] outline-none appearance-none cursor-pointer transition-all duration-200 hover:border-[rgba(40,150,251,0.4)]"
+                        >
+                          {AI_MODELS.map((m) => (
+                            <option key={m.id} value={m.id} className="bg-[#0A1628] text-[#CBD5E1]">{m.label}</option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-[6px] top-1/2 -translate-y-1/2 w-[10px] h-[10px] text-[#3DA4FF] pointer-events-none" />
+                      </div>
                       <InlineSelect value={aspectRatio} options={ASPECT_RATIOS} onChange={setAspectRatio} />
                       <InlineSelect value={style} options={STYLE_PRESETS} onChange={setStyle} />
                     </div>

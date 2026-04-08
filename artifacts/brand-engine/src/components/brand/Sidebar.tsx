@@ -71,7 +71,7 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
         <div className={`${btnBase} ${disabledClass}`}>
           <MonitorPlay className="w-[18px] h-[18px] shrink-0" />
           Content Army
-          <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">Coming Soon</span>
+          <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">New</span>
         </div>
       </div>
 
@@ -81,19 +81,19 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
         <div className={`${btnBase} ${disabledClass}`}>
           <Gift className="w-[18px] h-[18px] shrink-0" />
           Super Promo
-          <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">Coming Soon</span>
+          <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">New</span>
         </div>
 
         <div className={`${btnBase} ${disabledClass}`}>
           <Video className="w-[18px] h-[18px] shrink-0" />
           Virtual Workshop
-          <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">Coming Soon</span>
+          <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">New</span>
         </div>
 
         <div className={`${btnBase} ${disabledClass}`}>
           <GraduationCap className="w-[18px] h-[18px] shrink-0" />
           Master Class
-          <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">Coming Soon</span>
+          <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">New</span>
         </div>
       </div>
 

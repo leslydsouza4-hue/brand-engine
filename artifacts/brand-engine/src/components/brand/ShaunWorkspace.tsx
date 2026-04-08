@@ -508,10 +508,15 @@ export function ShaunWorkspace() {
 
               {(headline || subtext) ? (
                 <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
-                  <div className="font-black text-[clamp(24px,3.8vw,48px)] leading-[0.92] uppercase bg-gradient-to-b from-[#FFFFFF] to-[#B8D4F0] text-transparent bg-clip-text drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+                  <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-transparent bg-clip-text"
+                    style={{
+                      backgroundImage: "linear-gradient(180deg, #9DD5FF 0%, #4DA8FF 40%, #2896FB 100%)",
+                      filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.7)) drop-shadow(0 4px 16px rgba(0,0,0,0.5)) drop-shadow(0 0 24px rgba(40,150,251,0.3))",
+                    }}
+                  >
                     {headline}
                   </div>
-                  <div className="font-bold text-[clamp(10px,1.2vw,15px)] uppercase text-white mt-[8px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                  <div className="font-bold text-[clamp(7px,0.8vw,10px)] uppercase text-white mt-[6px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
                     {subtext}
                   </div>
                 </div>

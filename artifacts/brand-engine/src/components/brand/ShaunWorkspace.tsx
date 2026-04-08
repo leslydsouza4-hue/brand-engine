@@ -507,19 +507,23 @@ export function ShaunWorkspace() {
               ) : null}
 
               {(headline || subtext) ? (
-                <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
-                  <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-transparent bg-clip-text"
-                    style={{
-                      backgroundImage: "linear-gradient(180deg, #E0FFF9 0%, #5EDDCC 30%, #00B2A9 70%, #009E96 100%)",
-                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5)) drop-shadow(0 0 32px rgba(0,178,169,0.35))",
-                    }}
-                  >
-                    {headline}
+                <>
+                  <div className="absolute bottom-0 left-0 right-0 h-[45%] z-[3] pointer-events-none"
+                    style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 50%, transparent 100%)" }}
+                  />
+                  <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
+                    <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-white"
+                      style={{
+                        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5))",
+                      }}
+                    >
+                      {headline}
+                    </div>
+                    <div className="font-bold text-[clamp(7px,0.8vw,10px)] uppercase text-white mt-[6px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                      {subtext}
+                    </div>
                   </div>
-                  <div className="font-bold text-[clamp(7px,0.8vw,10px)] uppercase text-white mt-[6px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-                    {subtext}
-                  </div>
-                </div>
+                </>
               ) : null}
 
               {!activeImage && !headline && !subtext && !screenshotImage && (

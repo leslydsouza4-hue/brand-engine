@@ -3,14 +3,24 @@ import {
   Image as ImageIcon, 
   User, 
   Video, 
-  Award, 
   Gift, 
   Settings, 
   FolderOpen,
-  MonitorPlay
+  MonitorPlay,
+  Mail,
+  GraduationCap
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
+
+const activeClass = 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)] before:content-[""] before:absolute before:-left-[12px] before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[22px] before:bg-gradient-to-b before:from-[#00B2A9] before:to-[#2896FB] before:rounded-r-[4px] before:shadow-[0_0_16px_rgba(0,178,169,0.3)]';
+const inactiveClass = 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]';
+const disabledClass = 'text-[#94A3B8] opacity-40 cursor-not-allowed pointer-events-none';
+const btnBase = 'w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] transition-all duration-250 relative text-[13.5px] font-medium mb-[2px]';
+
+function iconCls(active: boolean) {
+  return `w-[18px] h-[18px] shrink-0 transition-all duration-250 ${active ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60'}`;
+}
 
 export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode: (mode: string) => void }) {
   return (
@@ -32,79 +42,71 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
         
         <button 
           onClick={() => setMode('templates')}
-          className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 relative text-[13.5px] font-medium mb-[2px]
-            ${currentMode === 'templates' 
-              ? 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)] before:content-[""] before:absolute before:-left-[12px] before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[22px] before:bg-gradient-to-b before:from-[#00B2A9] before:to-[#2896FB] before:rounded-r-[4px] before:shadow-[0_0_16px_rgba(0,178,169,0.3)]'
-              : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]'
-            }`}
+          className={`${btnBase} cursor-pointer ${currentMode === 'templates' ? activeClass : inactiveClass}`}
         >
-          <LayoutTemplate className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'templates' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60 group-hover:opacity-90'}`} />
+          <LayoutTemplate className={iconCls(currentMode === 'templates')} />
           Templates
         </button>
         
         <button 
           onClick={() => setMode('ai-image')}
-          className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 relative text-[13.5px] font-medium mb-[2px]
-            ${currentMode === 'ai-image' 
-              ? 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)] before:content-[""] before:absolute before:-left-[12px] before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[22px] before:bg-gradient-to-b before:from-[#00B2A9] before:to-[#2896FB] before:rounded-r-[4px] before:shadow-[0_0_16px_rgba(0,178,169,0.3)]'
-              : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]'
-            }`}
+          className={`${btnBase} cursor-pointer ${currentMode === 'ai-image' ? activeClass : inactiveClass}`}
         >
-          <ImageIcon className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'ai-image' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60 group-hover:opacity-90'}`} />
+          <ImageIcon className={iconCls(currentMode === 'ai-image')} />
           AI Image
         </button>
       </div>
 
       <div className="px-[12px] mb-[10px] relative">
-        <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Creative Packs</div>
+        <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Thumbnails</div>
         
         <button 
           onClick={() => setMode('shaun-thumbnails')}
-          className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 relative text-[13.5px] font-medium mb-[2px]
-            ${currentMode === 'shaun-thumbnails' 
-              ? 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)] before:content-[""] before:absolute before:-left-[12px] before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[22px] before:bg-gradient-to-b before:from-[#00B2A9] before:to-[#2896FB] before:rounded-r-[4px] before:shadow-[0_0_16px_rgba(0,178,169,0.3)]'
-              : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]'
-            }`}
+          className={`${btnBase} cursor-pointer ${currentMode === 'shaun-thumbnails' ? activeClass : inactiveClass}`}
         >
-          <User className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'shaun-thumbnails' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60 group-hover:opacity-90'}`} />
+          <User className={iconCls(currentMode === 'shaun-thumbnails')} />
           Shaun Comin Atcha
         </button>
 
-        <button 
-          onClick={() => setMode('zoom-backgrounds')}
-          className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 relative text-[13.5px] font-medium mb-[2px]
-            ${currentMode === 'zoom-backgrounds' 
-              ? 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)] before:content-[""] before:absolute before:-left-[12px] before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[22px] before:bg-gradient-to-b before:from-[#00B2A9] before:to-[#2896FB] before:rounded-r-[4px] before:shadow-[0_0_16px_rgba(0,178,169,0.3)]'
-              : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]'
-            }`}
-        >
-          <Video className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'zoom-backgrounds' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60 group-hover:opacity-90'}`} />
-          Zoom Backgrounds
-        </button>
-
-        <div className="w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] text-[#94A3B8] opacity-40 cursor-not-allowed pointer-events-none relative text-[13.5px] font-medium mb-[2px]">
+        <div className={`${btnBase} ${disabledClass}`}>
           <MonitorPlay className="w-[18px] h-[18px] shrink-0" />
           Content Army
           <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">Soon</span>
         </div>
+      </div>
 
-        <div className="w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] text-[#94A3B8] opacity-40 cursor-not-allowed pointer-events-none relative text-[13.5px] font-medium mb-[2px]">
+      <div className="px-[12px] mb-[10px] relative">
+        <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Social & Email Packs</div>
+
+        <div className={`${btnBase} ${disabledClass}`}>
           <Gift className="w-[18px] h-[18px] shrink-0" />
           Super Promo
           <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">Soon</span>
         </div>
 
-        <div className="w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] text-[#94A3B8] opacity-40 cursor-not-allowed pointer-events-none relative text-[13.5px] font-medium mb-[2px]">
-          <LayoutTemplate className="w-[18px] h-[18px] shrink-0" />
-          Master Class
+        <div className={`${btnBase} ${disabledClass}`}>
+          <Video className="w-[18px] h-[18px] shrink-0" />
+          Virtual Workshop
           <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">Soon</span>
         </div>
 
-        <div className="w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] text-[#94A3B8] opacity-40 cursor-not-allowed pointer-events-none relative text-[13.5px] font-medium mb-[2px]">
-          <Award className="w-[18px] h-[18px] shrink-0" />
-          Certified Admin
+        <div className={`${btnBase} ${disabledClass}`}>
+          <GraduationCap className="w-[18px] h-[18px] shrink-0" />
+          Master Class
           <span className="text-[9px] font-semibold bg-white/5 px-[7px] py-[2px] rounded-[6px] ml-auto text-[#64748B]">Soon</span>
         </div>
+      </div>
+
+      <div className="px-[12px] mb-[10px] relative">
+        <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Backgrounds</div>
+
+        <button 
+          onClick={() => setMode('zoom-backgrounds')}
+          className={`${btnBase} cursor-pointer ${currentMode === 'zoom-backgrounds' ? activeClass : inactiveClass}`}
+        >
+          <Mail className={iconCls(currentMode === 'zoom-backgrounds')} />
+          Zoom Backgrounds
+        </button>
       </div>
 
       <div className="mt-auto px-[12px] py-[16px] border-t border-white/5">

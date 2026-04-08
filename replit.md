@@ -33,7 +33,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Design system**: Deep navy (#060B16), brand teal (#00B2A9), electric blue (#2896FB), CTA yellow (#FFD000)
 - **Fonts**: Inter + Poppins (Google Fonts)
 - **AI Features**:
-  - Background removal via `@imgly/background-removal` (loaded from esm.run CDN)
+  - Background removal via `@imgly/background-removal` (npm package, runs client-side)
   - AI image generation via Gemini (default) and OpenAI gpt-image-1, Replit AI Integration (no API key required, billed to Replit credits)
   - Model picker with animated dropdown in prompt bar (primary) and inline select in regenerate bar
 - **API Proxy**: Vite dev server proxies `/api` to API server at `http://localhost:8080`

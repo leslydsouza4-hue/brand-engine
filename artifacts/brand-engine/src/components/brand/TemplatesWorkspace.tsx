@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
@@ -213,9 +213,12 @@ export function TemplatesWorkspace() {
   const [photoScale, setPhotoScale] = useState(40);
   const previewRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = useState<"mascot" | "photo" | null>(null);
+  const [dragging, setDragging] = useState<"mascot" | "photo" | "text" | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const [activeToolbar, setActiveToolbar] = useState<"text" | "position" | "style" | "color" | null>(null);
+  const [textPos, setTextPos] = useState({ x: 50, y: 50 });
+  const [textFreeMode, setTextFreeMode] = useState(false);
+  const [snapGuides, setSnapGuides] = useState<{ h: number[]; v: number[] }>({ h: [], v: [] });
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [bgRemoved, setBgRemoved] = useState(false);
 
@@ -257,7 +260,25 @@ export function TemplatesWorkspace() {
     reader.readAsDataURL(file);
   };
 
-  const handleDragStart = useCallback((type: "mascot" | "photo", e: React.MouseEvent | React.TouchEvent) => {
+  const SNAP_THRESHOLD = 2;
+  const SNAP_LINES = {
+    v: [4, 8, 50, 92, 96],
+    h: [4, 8, 50, 92, 96],
+  };
+
+  const snapValue = (val: number, lines: number[]) => {
+    const guides: number[] = [];
+    let snapped = val;
+    for (const line of lines) {
+      if (Math.abs(val - line) <= SNAP_THRESHOLD) {
+        snapped = line;
+        guides.push(line);
+      }
+    }
+    return { snapped, guides };
+  };
+
+  const handleDragStart = useCallback((type: "mascot" | "photo" | "text", e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragging(type);
@@ -273,14 +294,24 @@ export function TemplatesWorkspace() {
 
     const onMove = (ev: MouseEvent | TouchEvent) => {
       const { cx, cy } = getClientPos(ev);
-      const px = Math.max(0, Math.min(100, ((cx - rect.left) / rect.width) * 100));
-      const py = Math.max(0, Math.min(100, ((cy - rect.top) / rect.height) * 100));
-      if (type === "mascot") setMascotPos({ x: px, y: py });
-      else setPhotoPos({ x: px, y: py });
+      const rawX = Math.max(0, Math.min(100, ((cx - rect.left) / rect.width) * 100));
+      const rawY = Math.max(0, Math.min(100, ((cy - rect.top) / rect.height) * 100));
+
+      if (type === "text") {
+        const sx = snapValue(rawX, SNAP_LINES.v);
+        const sy = snapValue(rawY, SNAP_LINES.h);
+        setTextPos({ x: sx.snapped, y: sy.snapped });
+        setSnapGuides({ v: sx.guides, h: sy.guides });
+      } else if (type === "mascot") {
+        setMascotPos({ x: rawX, y: rawY });
+      } else {
+        setPhotoPos({ x: rawX, y: rawY });
+      }
     };
 
     const cleanup = () => {
       setDragging(null);
+      setSnapGuides({ h: [], v: [] });
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
       window.removeEventListener("touchmove", onMove);
@@ -348,14 +379,57 @@ export function TemplatesWorkspace() {
           <div className="absolute inset-0 z-[1]" style={{ backgroundColor: tpl.overlay }} />
         )}
 
-        <div className={`${layout.container} pointer-events-none`}>
-          <div className={`${layout.headlineClass} ${isCard ? 'text-[clamp(7px,1.4vw,13px)]' : style.headlineSize} ${effectiveHeadlineColor}`}>
-            {headlineText}
+        {!isCard && textFreeMode ? (
+          <div
+            className="absolute z-[3] cursor-move select-none"
+            style={{
+              left: `${textPos.x}%`,
+              top: `${textPos.y}%`,
+              transform: "translate(-50%, -50%)",
+              maxWidth: "80%",
+            }}
+            onMouseDown={(e) => handleDragStart("text", e)}
+            onTouchStart={(e) => handleDragStart("text", e)}
+          >
+            <div className={`${layout.headlineClass} ${style.headlineSize} ${effectiveHeadlineColor} ${textAlign === "right" ? "text-right" : textAlign === "left" ? "text-left" : "text-center"}`}>
+              {headlineText}
+            </div>
+            <div className={`${layout.subtextClass} ${style.subtextSize} ${style.subtextColor} ${textAlign === "right" ? "text-right" : textAlign === "left" ? "text-left" : "text-center"}`}>
+              {subtextText}
+            </div>
           </div>
-          <div className={`${layout.subtextClass} ${isCard ? 'text-[clamp(5px,0.7vw,8px)]' : style.subtextSize} ${style.subtextColor}`}>
-            {subtextText}
+        ) : (
+          <div className={`${layout.container} pointer-events-none`}
+          >
+            <div className={`${layout.headlineClass} ${isCard ? 'text-[clamp(7px,1.4vw,13px)]' : style.headlineSize} ${effectiveHeadlineColor}`}>
+              {headlineText}
+            </div>
+            <div className={`${layout.subtextClass} ${isCard ? 'text-[clamp(5px,0.7vw,8px)]' : style.subtextSize} ${style.subtextColor}`}>
+              {subtextText}
+            </div>
           </div>
-        </div>
+        )}
+
+        {!isCard && dragging === "text" && (
+          <>
+            {snapGuides.v.map((g) => (
+              <div key={`sv-${g}`} className="absolute top-0 bottom-0 z-[20] pointer-events-none" style={{ left: `${g}%`, width: "1px", background: "#FF3366", boxShadow: "0 0 4px #FF3366" }} />
+            ))}
+            {snapGuides.h.map((g) => (
+              <div key={`sh-${g}`} className="absolute left-0 right-0 z-[20] pointer-events-none" style={{ top: `${g}%`, height: "1px", background: "#FF3366", boxShadow: "0 0 4px #FF3366" }} />
+            ))}
+            <div className="absolute top-0 bottom-0 z-[19] pointer-events-none opacity-20" style={{ left: "50%", width: "1px", background: "#FF3366" }} />
+            <div className="absolute left-0 right-0 z-[19] pointer-events-none opacity-20" style={{ top: "50%", height: "1px", background: "#FF3366" }} />
+            <div className="absolute top-0 bottom-0 z-[19] pointer-events-none opacity-10" style={{ left: "4%", width: "1px", background: "#FF3366" }} />
+            <div className="absolute top-0 bottom-0 z-[19] pointer-events-none opacity-10" style={{ left: "96%", width: "1px", background: "#FF3366" }} />
+            <div className="absolute left-0 right-0 z-[19] pointer-events-none opacity-10" style={{ top: "4%", height: "1px", background: "#FF3366" }} />
+            <div className="absolute left-0 right-0 z-[19] pointer-events-none opacity-10" style={{ top: "96%", height: "1px", background: "#FF3366" }} />
+            <div className="absolute top-0 bottom-0 z-[19] pointer-events-none opacity-10" style={{ left: "8%", width: "1px", background: "#FF3366" }} />
+            <div className="absolute top-0 bottom-0 z-[19] pointer-events-none opacity-10" style={{ left: "92%", width: "1px", background: "#FF3366" }} />
+            <div className="absolute left-0 right-0 z-[19] pointer-events-none opacity-10" style={{ top: "8%", height: "1px", background: "#FF3366" }} />
+            <div className="absolute left-0 right-0 z-[19] pointer-events-none opacity-10" style={{ top: "92%", height: "1px", background: "#FF3366" }} />
+          </>
+        )}
 
         {showDraggablePhoto && (
           <img
@@ -767,54 +841,116 @@ export function TemplatesWorkspace() {
                       className="absolute bottom-[60px] left-1/2 -translate-x-1/2 z-[20] p-[10px] bg-[rgba(0,0,0,0.8)] backdrop-blur-[20px] border border-[rgba(255,255,255,0.1)] rounded-[14px] shadow-[0_12px_40px_rgba(0,0,0,0.6)] flex flex-col gap-[8px]"
                     >
                       <div className="flex items-center gap-[4px]">
-                        <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Align</span>
+                        <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Mode</span>
                         <div className="flex gap-[3px]">
-                          {ALIGN_OPTIONS.map(({ id, label, Icon }) => {
-                            const isActive = effectiveAlign === id;
-                            return (
-                              <motion.button
-                                key={id}
-                                onClick={() => setTextAlign(id === defaultAlign ? null : id)}
-                                whileHover={{ scale: 1.08 }}
-                                whileTap={{ scale: 0.93 }}
-                                title={label}
-                                className={`flex items-center justify-center w-[36px] h-[32px] rounded-[8px] cursor-pointer transition-all
-                                  ${isActive
-                                    ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
-                                    : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
-                                  }`}
-                              >
-                                <Icon className="w-[15px] h-[15px]" />
-                              </motion.button>
-                            );
-                          })}
+                          <motion.button
+                            onClick={() => { setTextFreeMode(false); }}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.93 }}
+                            title="Grid Snap"
+                            className={`flex items-center justify-center gap-[4px] h-[32px] px-[10px] rounded-[8px] cursor-pointer transition-all text-[10px] font-medium
+                              ${!textFreeMode
+                                ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                                : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                              }`}
+                          >
+                            <Move className="w-[13px] h-[13px]" />Grid
+                          </motion.button>
+                          <motion.button
+                            onClick={() => { setTextFreeMode(true); setTextPos({ x: 50, y: 50 }); }}
+                            whileHover={{ scale: 1.08 }}
+                            whileTap={{ scale: 0.93 }}
+                            title="Free Drag"
+                            className={`flex items-center justify-center gap-[4px] h-[32px] px-[10px] rounded-[8px] cursor-pointer transition-all text-[10px] font-medium
+                              ${textFreeMode
+                                ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                                : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                              }`}
+                          >
+                            <Hand className="w-[13px] h-[13px]" />Free
+                          </motion.button>
+                          {textFreeMode && (
+                            <motion.button
+                              onClick={() => { setTextPos({ x: 50, y: 50 }); }}
+                              whileHover={{ scale: 1.08 }}
+                              whileTap={{ scale: 0.93 }}
+                              title="Reset to center"
+                              className="flex items-center justify-center w-[32px] h-[32px] rounded-[8px] cursor-pointer transition-all text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]"
+                            >
+                              <RotateCcw className="w-[13px] h-[13px]" />
+                            </motion.button>
+                          )}
                         </div>
                       </div>
-                      <div className="w-full h-[1px] bg-[rgba(255,255,255,0.06)]" />
-                      <div className="flex items-center gap-[4px]">
-                        <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Vertical</span>
-                        <div className="flex gap-[3px]">
-                          {VPOS_OPTIONS.map(({ id, label, Icon }) => {
-                            const isActive = effectiveVpos === id;
-                            return (
-                              <motion.button
-                                key={id}
-                                onClick={() => setTextVpos(id === defaultVpos ? null : id)}
-                                whileHover={{ scale: 1.08 }}
-                                whileTap={{ scale: 0.93 }}
-                                title={label}
-                                className={`flex items-center justify-center w-[36px] h-[32px] rounded-[8px] cursor-pointer transition-all
-                                  ${isActive
-                                    ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
-                                    : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
-                                  }`}
-                              >
-                                <Icon className="w-[15px] h-[15px]" />
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      {textFreeMode && (
+                        <>
+                          <div className="w-full h-[1px] bg-[rgba(255,255,255,0.06)]" />
+                          <div className="flex items-center gap-[6px]">
+                            <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Position</span>
+                            <span className="text-[10px] font-mono text-[rgba(255,255,255,0.5)]">
+                              X: {Math.round(textPos.x)}% &nbsp; Y: {Math.round(textPos.y)}%
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-[6px]">
+                            <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Tip</span>
+                            <span className="text-[9px] text-[rgba(255,255,255,0.3)] italic">Drag text on preview · pink guides show alignment</span>
+                          </div>
+                        </>
+                      )}
+                      {!textFreeMode && (
+                        <>
+                          <div className="w-full h-[1px] bg-[rgba(255,255,255,0.06)]" />
+                          <div className="flex items-center gap-[4px]">
+                            <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Align</span>
+                            <div className="flex gap-[3px]">
+                              {ALIGN_OPTIONS.map(({ id, label, Icon }) => {
+                                const isActive = effectiveAlign === id;
+                                return (
+                                  <motion.button
+                                    key={id}
+                                    onClick={() => setTextAlign(id === defaultAlign ? null : id)}
+                                    whileHover={{ scale: 1.08 }}
+                                    whileTap={{ scale: 0.93 }}
+                                    title={label}
+                                    className={`flex items-center justify-center w-[36px] h-[32px] rounded-[8px] cursor-pointer transition-all
+                                      ${isActive
+                                        ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                                        : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                                      }`}
+                                  >
+                                    <Icon className="w-[15px] h-[15px]" />
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div className="w-full h-[1px] bg-[rgba(255,255,255,0.06)]" />
+                          <div className="flex items-center gap-[4px]">
+                            <span className="text-[9px] font-medium text-[rgba(255,255,255,0.35)] w-[50px]">Vertical</span>
+                            <div className="flex gap-[3px]">
+                              {VPOS_OPTIONS.map(({ id, label, Icon }) => {
+                                const isActive = effectiveVpos === id;
+                                return (
+                                  <motion.button
+                                    key={id}
+                                    onClick={() => setTextVpos(id === defaultVpos ? null : id)}
+                                    whileHover={{ scale: 1.08 }}
+                                    whileTap={{ scale: 0.93 }}
+                                    title={label}
+                                    className={`flex items-center justify-center w-[36px] h-[32px] rounded-[8px] cursor-pointer transition-all
+                                      ${isActive
+                                        ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                                        : 'text-[rgba(255,255,255,0.5)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                                      }`}
+                                  >
+                                    <Icon className="w-[15px] h-[15px]" />
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </motion.div>
                   )}
 

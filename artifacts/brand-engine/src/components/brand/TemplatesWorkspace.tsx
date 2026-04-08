@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
@@ -67,6 +67,17 @@ const CATEGORIES: Category[] = [
       { id: "ultra", name: "Ultra Wide (21:9)", ratio: 21/9 },
       { id: "square", name: "Square (1:1)", ratio: 1 }
     ]
+  },
+  {
+    id: "email",
+    name: "Email",
+    icon: Mail,
+    sizes: [
+      { id: "email-header", name: "Email Header (600×200)", ratio: 600/200 },
+      { id: "email-banner", name: "Email Banner (600×300)", ratio: 600/300 },
+      { id: "email-hero", name: "Email Hero (600×400)", ratio: 600/400 },
+      { id: "email-square", name: "Email Square (600×600)", ratio: 1 }
+    ]
   }
 ];
 
@@ -75,7 +86,7 @@ const TEMPLATES: Template[] = [
     id: "core-gradient",
     name: "Core Gradient",
     tag: "Brand Core",
-    categories: ["social", "ads", "presentation"],
+    categories: ["social", "ads", "presentation", "email"],
     bgType: "image",
     bgValue: bg("Type=Core Gradient.png"),
     textLayout: "center",
@@ -87,7 +98,7 @@ const TEMPLATES: Template[] = [
     id: "planet-hero",
     name: "Planet Hero",
     tag: "Cinematic",
-    categories: ["social", "ads", "presentation"],
+    categories: ["social", "ads", "presentation", "email"],
     bgType: "image",
     bgValue: bg("Type=Centered Planet.png"),
     textLayout: "center",

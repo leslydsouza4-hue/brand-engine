@@ -225,10 +225,8 @@ export function TemplatesWorkspace() {
     if (!uploadedPhoto || isRemovingBg) return;
     setIsRemovingBg(true);
     try {
-      const imglyModule = await import("https://esm.run/@imgly/background-removal@1.5.6");
-      const removeBackground = imglyModule.default || imglyModule.removeBackground;
+      const { removeBackground } = await import("@imgly/background-removal");
       const blob = await removeBackground(uploadedPhoto, {
-        publicPath: "https://esm.run/@imgly/background-removal@1.5.6/dist/",
         progress: () => {},
       });
       const reader = new FileReader();

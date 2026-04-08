@@ -510,8 +510,8 @@ export function ShaunWorkspace() {
                 <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
                   <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-transparent bg-clip-text"
                     style={{
-                      backgroundImage: "linear-gradient(180deg, #9DD5FF 0%, #4DA8FF 40%, #2896FB 100%)",
-                      filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.7)) drop-shadow(0 4px 16px rgba(0,0,0,0.5)) drop-shadow(0 0 24px rgba(40,150,251,0.3))",
+                      backgroundImage: "linear-gradient(180deg, #E0FFF9 0%, #5EDDCC 30%, #00B2A9 70%, #009E96 100%)",
+                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5)) drop-shadow(0 0 32px rgba(0,178,169,0.35))",
                     }}
                   >
                     {headline}

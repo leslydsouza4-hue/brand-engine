@@ -32,6 +32,7 @@ interface Template {
   headline: string;
   subtext: string;
   overlay?: string;
+  bgHasLogo?: boolean;
 }
 
 const CATEGORIES: Category[] = [
@@ -93,6 +94,7 @@ const TEMPLATES: Template[] = [
     textStyle: "bold",
     headline: "LAUNCH YOUR BRAND",
     subtext: "HighLevel",
+    bgHasLogo: true,
   },
   {
     id: "planet-hero",
@@ -105,6 +107,7 @@ const TEMPLATES: Template[] = [
     textStyle: "futuristic",
     headline: "BEYOND LIMITS",
     subtext: "Powered by HighLevel",
+    bgHasLogo: true,
   },
 ];
 
@@ -466,7 +469,7 @@ export function TemplatesWorkspace() {
           />
         )}
 
-        {!isCard && (
+        {!isCard && !tpl.bgHasLogo && (
           <img
             src={LOGO_LIGHT}
             alt="HighLevel"

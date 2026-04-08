@@ -20,8 +20,6 @@ const HIGHLY_CHARACTER_SHEET = `"Highly" is the official HighLevel mascot robot.
 
 CRITICAL: Do NOT draw a generic robot. Highly must match EXACTLY the description above — oversized head with black visor, teal eyes, three colored arrows on top, floating detached hands, single jet-cone bottom, no legs.`;
 
-const HIGHLEVEL_LOGO_DESCRIPTION = `The HighLevel logo consists of exactly three upward-pointing arrow shapes side by side (yellow on the left, blue in the center, green on the right) followed by the word "HighLevel" in clean white bold sans-serif text. The arrows are simple filled chevron/arrow shapes pointing up, evenly spaced. Do NOT invent a different logo — use ONLY this exact design: three colored arrows (yellow, blue, green) + "HighLevel" wordmark.`;
-
 const BRAND_SYSTEM_PROMPT = `Create a premium marketing image in HighLevel brand style.
 
 Use a modern SaaS design aesthetic with clean composition, strong visual hierarchy, and minimal clutter.
@@ -33,9 +31,7 @@ Apply HighLevel visual identity:
 - smooth gradients and polished surfaces
 - futuristic, high-end, and professional look
 
-HighLevel logo rules:
-${HIGHLEVEL_LOGO_DESCRIPTION}
-If the image includes any logo, branding, or text that says "HighLevel", it MUST use the exact logo described above. Never generate a random or made-up logo.
+IMPORTANT: Do NOT draw, render, or include any logos, wordmarks, brand names, or text overlays in the image. Leave clean open space in the bottom-left or bottom-right corner where a logo can be placed later. The image should be a clean background/scene with NO text or logo elements whatsoever.
 
 Keep the design clean, spacious, and campaign-ready.
 Avoid random colors, avoid clutter, avoid generic AI styles.
@@ -43,7 +39,66 @@ Avoid random colors, avoid clutter, avoid generic AI styles.
 User request:
 {{USER_PROMPT}}
 
-Make the final result look like a real HighLevel campaign asset, suitable for ads, social media, or product marketing.`;
+Make the final result look like a real HighLevel campaign asset, suitable for ads, social media, or product marketing. Remember: absolutely NO logos or text in the image.`;
+
+const BASE = import.meta.env.BASE_URL;
+const LOGO_VARIANTS = [
+  { id: "full-white", label: "Full — White", src: `${BASE}assets/logos/Lockup=Full Horizontal, Color=AllWhite.png` },
+  { id: "full-light", label: "Full — Light", src: `${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png` },
+  { id: "icon-full", label: "Icon Only", src: `${BASE}assets/logos/Lockup=Icon, Color=Full.png` },
+  { id: "none", label: "No Logo", src: "" },
+];
+
+const LOGO_POSITIONS = [
+  { id: "bottom-left", label: "Bottom Left" },
+  { id: "bottom-right", label: "Bottom Right" },
+  { id: "top-left", label: "Top Left" },
+  { id: "top-right", label: "Top Right" },
+  { id: "center", label: "Center" },
+];
+
+function applyLogoOverlay(imageDataUrl: string, logoSrc: string, position: string): Promise<string> {
+  return new Promise((resolve) => {
+    if (!logoSrc) { resolve(imageDataUrl); return; }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const logo = new Image();
+      logo.crossOrigin = "anonymous";
+      logo.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, 0, 0);
+
+        const maxLogoW = img.width * 0.28;
+        const scale = maxLogoW / logo.width;
+        const lw = logo.width * scale;
+        const lh = logo.height * scale;
+        const pad = img.width * 0.04;
+
+        let x = pad, y = img.height - lh - pad;
+        if (position === "bottom-right") { x = img.width - lw - pad; y = img.height - lh - pad; }
+        else if (position === "top-left") { x = pad; y = pad; }
+        else if (position === "top-right") { x = img.width - lw - pad; y = pad; }
+        else if (position === "center") { x = (img.width - lw) / 2; y = (img.height - lh) / 2; }
+
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 2;
+        ctx.drawImage(logo, x, y, lw, lh);
+
+        resolve(canvas.toDataURL("image/png"));
+      };
+      logo.onerror = () => resolve(imageDataUrl);
+      logo.src = logoSrc;
+    };
+    img.onerror = () => resolve(imageDataUrl);
+    img.src = imageDataUrl;
+  });
+}
 
 const ROBOT_KEYWORDS = /\b(highly|robot|mascot|bot|character)\b/i;
 
@@ -189,11 +244,14 @@ export function AIImageWorkspace() {
   const [showHighlyPicker, setShowHighlyPicker] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string>("nano-banana-2");
   const [showModelPicker, setShowModelPicker] = useState(false);
+  const [logoVariant, setLogoVariant] = useState<string>("full-white");
+  const [logoPosition, setLogoPosition] = useState<string>("bottom-left");
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
   const hasResults = results.length > 0;
 
   const activeModel = AI_MODELS.find(m => m.id === selectedModel) || AI_MODELS[0];
+  const activeLogo = LOGO_VARIANTS.find(l => l.id === logoVariant) || LOGO_VARIANTS[0];
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -226,12 +284,19 @@ export function AIImageWorkspace() {
       }
 
       const data = await res.json();
-      const images: GeneratedImage[] = (data.images as string[]).map(
-        (b64: string, i: number) => ({
-          id: i + 1,
-          image: `data:image/png;base64,${b64}`,
-        })
+      const rawImages: string[] = (data.images as string[]).map(
+        (b64: string) => `data:image/png;base64,${b64}`
       );
+
+      const logoSrc = activeLogo.src;
+      const branded = await Promise.all(
+        rawImages.map((imgUrl) => applyLogoOverlay(imgUrl, logoSrc, logoPosition))
+      );
+
+      const images: GeneratedImage[] = branded.map((img, i) => ({
+        id: i + 1,
+        image: img,
+      }));
       setResults(images);
     } catch (err: any) {
       setError(err.message || "Something went wrong");
@@ -465,6 +530,60 @@ export function AIImageWorkspace() {
                               Off
                             </motion.button>
                           </div>
+                        </div>
+                        <div className="mt-[14px] pt-[14px] border-t border-[rgba(255,255,255,0.06)]">
+                          <div className="text-[10px] font-semibold text-[#00B2A9] mb-[10px] uppercase tracking-[1px] flex items-center gap-[5px]">
+                            <ImageIcon className="w-[10px] h-[10px]" />
+                            Logo Overlay
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-[12px]">
+                            <div>
+                              <div className="text-[10px] text-[#5A6B80] mb-[4px]">Logo Style</div>
+                              <div className="flex flex-wrap gap-[4px]">
+                                {LOGO_VARIANTS.map((v) => (
+                                  <motion.button
+                                    key={v.id}
+                                    onClick={() => setLogoVariant(v.id)}
+                                    whileHover={{ scale: 1.04 }}
+                                    whileTap={{ scale: 0.96 }}
+                                    className={`py-[5px] px-[10px] rounded-[8px] text-[11px] font-medium cursor-pointer transition-all duration-200 border
+                                      ${logoVariant === v.id
+                                        ? 'bg-[rgba(0,178,169,0.12)] border-[rgba(0,178,169,0.3)] text-[#00B2A9]'
+                                        : 'bg-transparent border-[rgba(255,255,255,0.06)] text-[#5A6B80] hover:text-[#A0B0C4] hover:border-[rgba(255,255,255,0.1)]'
+                                      }`}
+                                  >
+                                    {v.label}
+                                  </motion.button>
+                                ))}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] text-[#5A6B80] mb-[4px]">Position</div>
+                              <div className="flex flex-wrap gap-[4px]">
+                                {LOGO_POSITIONS.map((p) => (
+                                  <motion.button
+                                    key={p.id}
+                                    onClick={() => setLogoPosition(p.id)}
+                                    whileHover={{ scale: 1.04 }}
+                                    whileTap={{ scale: 0.96 }}
+                                    className={`py-[5px] px-[10px] rounded-[8px] text-[11px] font-medium cursor-pointer transition-all duration-200 border
+                                      ${logoPosition === p.id
+                                        ? 'bg-[rgba(0,178,169,0.12)] border-[rgba(0,178,169,0.3)] text-[#00B2A9]'
+                                        : 'bg-transparent border-[rgba(255,255,255,0.06)] text-[#5A6B80] hover:text-[#A0B0C4] hover:border-[rgba(255,255,255,0.1)]'
+                                      }`}
+                                  >
+                                    {p.label}
+                                  </motion.button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          {activeLogo.src && (
+                            <div className="mt-[10px] flex items-center gap-[10px] p-[8px] rounded-[10px] bg-[rgba(0,0,0,0.2)] border border-[rgba(0,178,169,0.1)]">
+                              <img src={activeLogo.src} alt="" className="h-[20px] object-contain" />
+                              <span className="text-[10px] text-[#7B8BA5]">Will be placed at {LOGO_POSITIONS.find(p => p.id === logoPosition)?.label?.toLowerCase()}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </motion.div>

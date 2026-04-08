@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
@@ -216,8 +216,33 @@ export function TemplatesWorkspace() {
   const [dragging, setDragging] = useState<"mascot" | "photo" | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const [activeToolbar, setActiveToolbar] = useState<"text" | "position" | "style" | "color" | null>(null);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [bgRemoved, setBgRemoved] = useState(false);
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
+
+  const handleRemoveBackground = async () => {
+    if (!uploadedPhoto || isRemovingBg) return;
+    setIsRemovingBg(true);
+    try {
+      const imglyModule = await import("https://esm.run/@imgly/background-removal@1.5.6");
+      const removeBackground = imglyModule.default || imglyModule.removeBackground;
+      const blob = await removeBackground(uploadedPhoto, {
+        publicPath: "https://esm.run/@imgly/background-removal@1.5.6/dist/",
+        progress: () => {},
+      });
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setUploadedPhoto(ev.target?.result as string);
+        setBgRemoved(true);
+      };
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error("Background removal failed:", err);
+    } finally {
+      setIsRemovingBg(false);
+    }
+  };
 
   useEffect(() => {
     return () => { cleanupRef.current?.(); };
@@ -229,6 +254,7 @@ export function TemplatesWorkspace() {
     const reader = new FileReader();
     reader.onload = (ev) => {
       setUploadedPhoto(ev.target?.result as string);
+      setBgRemoved(false);
     };
     reader.readAsDataURL(file);
   };
@@ -556,7 +582,7 @@ export function TemplatesWorkspace() {
               </div>
               {uploadedPhoto && (
                 <motion.button
-                  onClick={() => { setUploadedPhoto(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  onClick={() => { setUploadedPhoto(null); setBgRemoved(false); if (fileInputRef.current) fileInputRef.current.value = ""; }}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   className="text-[9px] text-[#5A6B80] hover:text-[#FF6B6B] cursor-pointer transition-colors flex items-center gap-[3px]"
@@ -596,14 +622,46 @@ export function TemplatesWorkspace() {
                   />
                   <span className="text-[9px] text-[#64748B] w-[24px] text-right">{photoScale}%</span>
                 </div>
-                <motion.button
-                  onClick={() => fileInputRef.current?.click()}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full py-[7px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[8px] text-[10px] font-medium text-[#64748B] cursor-pointer hover:border-[rgba(40,150,251,0.2)] hover:text-[#2896FB] transition-all"
-                >
-                  Change Photo
-                </motion.button>
+                <div className="flex gap-[6px]">
+                  <motion.button
+                    onClick={() => fileInputRef.current?.click()}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="flex-1 py-[7px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[8px] text-[10px] font-medium text-[#64748B] cursor-pointer hover:border-[rgba(40,150,251,0.2)] hover:text-[#2896FB] transition-all"
+                  >
+                    Change Photo
+                  </motion.button>
+                  <motion.button
+                    onClick={handleRemoveBackground}
+                    disabled={isRemovingBg || bgRemoved}
+                    whileHover={{ scale: isRemovingBg || bgRemoved ? 1 : 1.02 }}
+                    whileTap={{ scale: isRemovingBg || bgRemoved ? 1 : 0.98 }}
+                    className={`flex-1 py-[7px] flex items-center justify-center gap-[5px] rounded-[8px] text-[10px] font-medium cursor-pointer transition-all border
+                      ${bgRemoved
+                        ? 'bg-[rgba(0,178,169,0.08)] border-[rgba(0,178,169,0.2)] text-[#00B2A9] cursor-default'
+                        : isRemovingBg
+                          ? 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] cursor-wait'
+                          : 'bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:border-[rgba(0,178,169,0.25)] hover:text-[#00B2A9] hover:bg-[rgba(0,178,169,0.04)]'
+                      }`}
+                  >
+                    {isRemovingBg ? (
+                      <>
+                        <Loader2 className="w-[10px] h-[10px] animate-spin" />
+                        Removing...
+                      </>
+                    ) : bgRemoved ? (
+                      <>
+                        <Check className="w-[10px] h-[10px]" />
+                        BG Removed
+                      </>
+                    ) : (
+                      <>
+                        <Eraser className="w-[10px] h-[10px]" />
+                        Remove BG
+                      </>
+                    )}
+                  </motion.button>
+                </div>
               </div>
             ) : (
               <motion.button

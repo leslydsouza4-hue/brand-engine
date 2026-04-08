@@ -8,7 +8,10 @@ import {
   FolderOpen,
   MonitorPlay,
   Mail,
-  GraduationCap
+  GraduationCap,
+  Bot,
+  Globe,
+  PartyPopper
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -93,6 +96,28 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
         <div className={`${btnBase} ${disabledClass}`}>
           <GraduationCap className="w-[18px] h-[18px] shrink-0" />
           Master Class
+          <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+        </div>
+      </div>
+
+      <div className="px-[12px] mb-[10px] relative">
+        <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Highly's Pack</div>
+
+        <div className={`${btnBase} ${disabledClass}`}>
+          <PartyPopper className="w-[18px] h-[18px] shrink-0" />
+          Event Level
+          <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+        </div>
+
+        <div className={`${btnBase} ${disabledClass}`}>
+          <Globe className="w-[18px] h-[18px] shrink-0" />
+          Mexico Highly
+          <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+        </div>
+
+        <div className={`${btnBase} ${disabledClass}`}>
+          <Globe className="w-[18px] h-[18px] shrink-0" />
+          India Highly
           <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
         </div>
       </div>

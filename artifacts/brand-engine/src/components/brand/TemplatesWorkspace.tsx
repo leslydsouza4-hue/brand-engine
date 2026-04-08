@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
@@ -224,6 +224,7 @@ export function TemplatesWorkspace() {
   const [snapGuides, setSnapGuides] = useState<{ h: number[]; v: number[] }>({ h: [], v: [] });
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [bgRemoved, setBgRemoved] = useState(false);
+  const [showLogoOverlay, setShowLogoOverlay] = useState(false);
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
 
@@ -345,6 +346,7 @@ export function TemplatesWorkspace() {
     setTextStyle(null);
     setHeadlineColor(null);
     setActiveToolbar(null);
+    setShowLogoOverlay(false);
   };
 
   const filtered = TEMPLATES.filter(t => t.categories.includes(activeCategory.id));
@@ -469,7 +471,7 @@ export function TemplatesWorkspace() {
           />
         )}
 
-        {!isCard && !tpl.bgHasLogo && (
+        {!isCard && showLogoOverlay && (
           <img
             src={LOGO_LIGHT}
             alt="HighLevel"
@@ -807,6 +809,21 @@ export function TemplatesWorkspace() {
                       {label}
                     </motion.button>
                   ))}
+                  <div className="w-[1px] h-[20px] bg-[rgba(255,255,255,0.1)] mx-[2px]" />
+                  <motion.button
+                    onClick={() => setShowLogoOverlay(!showLogoOverlay)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    title={showLogoOverlay ? "Hide HL Logo" : "Add HL Logo"}
+                    className={`flex items-center gap-[5px] py-[6px] px-[10px] rounded-[8px] cursor-pointer transition-all text-[10px] font-medium
+                      ${showLogoOverlay
+                        ? 'bg-[rgba(0,178,169,0.2)] text-[#00B2A9]'
+                        : 'text-[rgba(255,255,255,0.6)] hover:text-white hover:bg-[rgba(255,255,255,0.08)]'
+                      }`}
+                  >
+                    <Stamp className="w-[13px] h-[13px]" />
+                    Logo
+                  </motion.button>
                 </div>
 
                 <AnimatePresence>

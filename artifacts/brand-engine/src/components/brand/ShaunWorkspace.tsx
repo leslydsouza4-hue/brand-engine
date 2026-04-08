@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles } from "lucide-react";
+import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles, Crop } from "lucide-react";
+import { CropModal } from "./CropModal";
 
 const SHAUN_IMAGES = [
   "ShaunClark_03057_StudioSura-Photoroom.png",
@@ -105,31 +106,7 @@ export function ShaunWorkspace() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const [extractingUi, setExtractingUi] = useState(false);
-
-  const cropImageInBrowser = (
-    base64Src: string,
-    bbox: { x: number; y: number; w: number; h: number }
-  ): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        const cx = Math.round((bbox.x / 100) * img.width);
-        const cy = Math.round((bbox.y / 100) * img.height);
-        const cw = Math.round((bbox.w / 100) * img.width);
-        const ch = Math.round((bbox.h / 100) * img.height);
-        const canvas = document.createElement("canvas");
-        canvas.width = cw;
-        canvas.height = ch;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("No canvas context"));
-        ctx.drawImage(img, cx, cy, cw, ch, 0, 0, cw, ch);
-        resolve(canvas.toDataURL("image/jpeg", 0.92));
-      };
-      img.onerror = () => reject(new Error("Failed to load image for cropping"));
-      img.src = base64Src;
-    });
+  const [cropModalImage, setCropModalImage] = useState<string | null>(null);
 
   const handleDescriptFetch = async () => {
     const url = descriptUrl.trim();
@@ -161,28 +138,7 @@ export function ShaunWorkspace() {
         setScreenshotRadius(16);
         setScreenshotOffsetX(0);
         setScreenshotOffsetY(0);
-
-        setExtractingUi(true);
-        try {
-          const extractRes = await fetch(`${apiBase}api/descript/extract-ui`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ imageUrl: data.image }),
-          });
-          if (extractRes.ok) {
-            const extractData = await extractRes.json();
-            if (extractData.found && extractData.bbox && extractData.fullImageBase64) {
-              const cropped = await cropImageInBrowser(
-                extractData.fullImageBase64,
-                extractData.bbox
-              );
-              setScreenshotImage(cropped);
-            }
-          }
-        } catch {
-        } finally {
-          setExtractingUi(false);
-        }
+        setCropModalImage(data.image);
       }
       setDescriptLoaded(true);
     } catch (err: any) {
@@ -190,6 +146,15 @@ export function ShaunWorkspace() {
     } finally {
       setDescriptLoading(false);
     }
+  };
+
+  const handleCropApply = (croppedDataUrl: string) => {
+    setScreenshotImage(croppedDataUrl);
+    setCropModalImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setCropModalImage(null);
   };
 
   const clearDescript = () => {
@@ -331,17 +296,8 @@ export function ShaunWorkspace() {
           )}
           {descriptLoaded && (
             <div className="mt-[6px] text-[10px] text-[#00B2A9] font-medium flex items-center gap-[4px]">
-              {extractingUi ? (
-                <>
-                  <Loader2 className="w-[10px] h-[10px] animate-spin" />
-                  Extracting UI screenshot with AI...
-                </>
-              ) : (
-                <>
-                  <Check className="w-[10px] h-[10px]" />
-                  Title & UI screenshot loaded from Descript
-                </>
-              )}
+              <Check className="w-[10px] h-[10px]" />
+              Title & thumbnail loaded from Descript
             </div>
           )}
         </div>
@@ -421,12 +377,21 @@ export function ShaunWorkspace() {
               </span>
             </div>
             {screenshotImage && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); clearScreenshot(); }}
-                className="ml-auto w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[6px] text-[#64748B] flex items-center justify-center cursor-pointer shrink-0 hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D]"
-              >
-                <X className="w-[12px] h-[12px]" />
-              </button>
+              <div className="ml-auto flex items-center gap-[4px] shrink-0">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCropModalImage(screenshotImage); }}
+                  className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[6px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(40,150,251,0.15)] hover:text-[#2896FB] transition-all"
+                  title="Crop image"
+                >
+                  <Crop className="w-[12px] h-[12px]" />
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); clearScreenshot(); }}
+                  className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[6px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all"
+                >
+                  <X className="w-[12px] h-[12px]" />
+                </button>
+              </div>
             )}
           </div>
 
@@ -595,6 +560,14 @@ export function ShaunWorkspace() {
           </div>
         </div>
       </div>
+
+      {cropModalImage && (
+        <CropModal
+          imageSrc={cropModalImage}
+          onCrop={handleCropApply}
+          onCancel={handleCropCancel}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import https from "node:https";
+import http from "node:http";
 
 function fetchPage(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -39,6 +40,48 @@ function fetchPage(url: string): Promise<string> {
   });
 }
 
+function fetchImageAsBase64(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const doRequest = (reqUrl: string, redirects = 0) => {
+      if (redirects > 5) return reject(new Error("Too many redirects"));
+      const parsed = new URL(reqUrl);
+      const mod = parsed.protocol === "https:" ? https : http;
+      const options = {
+        hostname: parsed.hostname,
+        path: parsed.pathname + parsed.search,
+        method: "GET",
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; BrandEngine/1.0)" },
+        maxHeaderSize: 65536,
+      };
+      const req = mod.request(options, (res) => {
+        if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          const next = res.headers.location.startsWith("http")
+            ? res.headers.location
+            : `${parsed.protocol}//${parsed.hostname}${res.headers.location}`;
+          res.resume();
+          return doRequest(next, redirects + 1);
+        }
+        if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+          res.resume();
+          return reject(new Error(`HTTP ${res.statusCode}`));
+        }
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => {
+          const buffer = Buffer.concat(chunks);
+          const mime = reqUrl.includes(".png") ? "image/png" : "image/jpeg";
+          resolve(`data:${mime};base64,${buffer.toString("base64")}`);
+        });
+        res.on("error", reject);
+      });
+      req.on("error", reject);
+      req.setTimeout(15000, () => { req.destroy(); reject(new Error("Timeout")); });
+      req.end();
+    };
+    doRequest(url);
+  });
+}
+
 const router = Router();
 
 router.post("/descript/fetch-meta", async (req, res) => {
@@ -65,11 +108,20 @@ router.post("/descript/fetch-meta", async (req, res) => {
     );
 
     let title = (titleMatch?.[1] || titleMatch?.[2] || "").replace(/ - Descript$/, "").trim();
-    const image = imageMatch?.[1] || imageMatch?.[2] || "";
+    const imageUrl = imageMatch?.[1] || imageMatch?.[2] || "";
 
     if (!title) {
       const fallbackTitle = html.match(/<title>([^<]*)<\/title>/);
       title = (fallbackTitle?.[1] || "").replace(/ - Descript$/, "").trim();
+    }
+
+    let image = imageUrl;
+    if (imageUrl) {
+      try {
+        image = await fetchImageAsBase64(imageUrl);
+      } catch {
+        image = imageUrl;
+      }
     }
 
     res.json({ title, image });

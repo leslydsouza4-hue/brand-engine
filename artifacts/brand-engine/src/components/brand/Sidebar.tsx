@@ -31,7 +31,7 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
       before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_50%_0%,rgba(0,178,169,0.06)_0%,transparent_50%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,transparent_30%)] before:pointer-events-none
       after:content-[''] after:absolute after:top-0 after:right-0 after:w-[1px] after:h-full after:bg-[linear-gradient(to_bottom,rgba(0,178,169,0.2),rgba(40,150,251,0.08),transparent_80%)]
     ">
-      <div className="pt-[26px] px-[20px] pb-[32px] flex items-center gap-[11px] relative">
+      <div className="pt-[26px] px-[20px] pb-[20px] flex items-center gap-[11px] relative shrink-0">
         <div className="w-[36px] h-[36px] rounded-[11px] flex items-center justify-center overflow-hidden shrink-0 relative shadow-[0_0_10px_rgba(0,178,169,0.2),0_0_20px_rgba(40,150,251,0.1)]
           after:content-[''] after:absolute after:inset-[-3px] after:rounded-[14px] after:bg-gradient-to-br after:from-[rgba(0,178,169,0.2)] after:to-[rgba(40,150,251,0.12)] after:-z-10 after:blur-[8px]
         ">
@@ -40,6 +40,7 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
         <div className="text-[17px] font-bold text-white tracking-[-0.4px]">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
       </div>
       
+      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
       <div className="px-[12px] mb-[10px] relative">
         <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Create</div>
         
@@ -105,19 +106,7 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
 
         <div className={`${btnBase} ${disabledClass}`}>
           <PartyPopper className="w-[18px] h-[18px] shrink-0" />
-          Event Level
-          <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
-        </div>
-
-        <div className={`${btnBase} ${disabledClass}`}>
-          <Globe className="w-[18px] h-[18px] shrink-0" />
-          Mexico Highly
-          <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
-        </div>
-
-        <div className={`${btnBase} ${disabledClass}`}>
-          <Globe className="w-[18px] h-[18px] shrink-0" />
-          India Highly
+          Event Highlys
           <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
         </div>
       </div>
@@ -134,7 +123,9 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
         </button>
       </div>
 
-      <div className="mt-auto px-[12px] py-[16px] border-t border-white/5">
+      </div>
+
+      <div className="shrink-0 px-[12px] py-[16px] border-t border-white/5">
         <button 
           onClick={() => setMode('settings')}
           className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px]

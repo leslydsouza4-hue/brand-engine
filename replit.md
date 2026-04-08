@@ -46,6 +46,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - `GET /api/healthz` — health check
   - `POST /api/openai/generate-image` — OpenAI gpt-image-1 generation (prompt, size, count); basic rate limiting (5s between requests)
   - `POST /api/gemini/generate-image` — Gemini image generation (prompt, aspectRatio, style); supports Nano Banana 2 and Pro models
+  - `POST /api/descript/fetch-meta` — Fetch OG metadata (title, thumbnail) from a Descript share URL
 - **Dependencies**: `@workspace/integrations-openai-ai-server` for OpenAI, `@workspace/integrations-gemini-ai` for Gemini
 
 ## Key Commands

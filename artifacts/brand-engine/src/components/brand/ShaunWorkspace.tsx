@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw } from "lucide-react";
+import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles } from "lucide-react";
 
 const SHAUN_IMAGES = [
   "ShaunClark_03057_StudioSura-Photoroom.png",
@@ -30,6 +30,11 @@ export function ShaunWorkspace() {
   const [screenshotRadius, setScreenshotRadius] = useState(16);
   const [screenshotOffsetX, setScreenshotOffsetX] = useState(0);
   const [screenshotOffsetY, setScreenshotOffsetY] = useState(0);
+
+  const [descriptUrl, setDescriptUrl] = useState("");
+  const [descriptLoading, setDescriptLoading] = useState(false);
+  const [descriptError, setDescriptError] = useState<string | null>(null);
+  const [descriptLoaded, setDescriptLoaded] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -98,6 +103,50 @@ export function ShaunWorkspace() {
     setScreenshotOffsetX(0);
     setScreenshotOffsetY(0);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleDescriptFetch = async () => {
+    const url = descriptUrl.trim();
+    if (!url) return;
+    if (!/^https?:\/\/share\.descript\.com\/view\/[\w-]+/.test(url)) {
+      setDescriptError("Please enter a valid Descript share link");
+      return;
+    }
+    setDescriptLoading(true);
+    setDescriptError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/descript/fetch-meta`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed to fetch" }));
+        throw new Error(err.error || "Failed to fetch");
+      }
+      const data = await res.json();
+      if (data.title) setHeadline(data.title);
+      if (data.image) {
+        setScreenshotImage(data.image);
+        setScreenshotOpacity(40);
+        setScreenshotScale(85);
+        setScreenshotRadius(16);
+        setScreenshotOffsetX(0);
+        setScreenshotOffsetY(0);
+      }
+      setDescriptLoaded(true);
+    } catch (err: any) {
+      setDescriptError(err.message || "Something went wrong");
+    } finally {
+      setDescriptLoading(false);
+    }
+  };
+
+  const clearDescript = () => {
+    setDescriptUrl("");
+    setDescriptLoaded(false);
+    setDescriptError(null);
   };
 
   return (
@@ -186,6 +235,59 @@ export function ShaunWorkspace() {
           )}
         </div>
         
+        <div className="border-t border-[rgba(255,255,255,0.04)] pt-[16px] pb-[12px]">
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px] flex items-center gap-[6px]">
+            <Sparkles className="w-[12px] h-[12px] text-[#2896FB]" />
+            Descript Auto-Fill
+          </div>
+          <div className="flex gap-[6px]">
+            <div className="relative flex-1">
+              <Link2 className="absolute left-[12px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] text-[#475569] pointer-events-none" />
+              <input
+                type="text"
+                value={descriptUrl}
+                onChange={e => { setDescriptUrl(e.target.value); setDescriptLoaded(false); setDescriptError(null); }}
+                onKeyDown={e => { if (e.key === "Enter") handleDescriptFetch(); }}
+                placeholder="Paste Descript share link..."
+                className="w-full py-[10px] pl-[34px] pr-[10px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[10px] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
+                disabled={descriptLoading}
+              />
+            </div>
+            {descriptLoaded ? (
+              <button
+                onClick={clearDescript}
+                className="shrink-0 w-[36px] h-[36px] rounded-[10px] bg-[rgba(0,178,169,0.1)] border border-[rgba(0,178,169,0.2)] flex items-center justify-center cursor-pointer text-[#00B2A9] hover:bg-[rgba(0,178,169,0.15)] transition-all"
+              >
+                <Check className="w-[14px] h-[14px]" />
+              </button>
+            ) : (
+              <button
+                onClick={handleDescriptFetch}
+                disabled={descriptLoading || !descriptUrl.trim()}
+                className="shrink-0 h-[36px] px-[14px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none flex items-center gap-[6px] cursor-pointer text-white text-[11px] font-semibold transition-all hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {descriptLoading ? (
+                  <Loader2 className="w-[13px] h-[13px] animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="w-[12px] h-[12px]" />
+                    Fetch
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+          {descriptError && (
+            <div className="mt-[6px] text-[10px] text-[#FF6B6B] font-medium">{descriptError}</div>
+          )}
+          {descriptLoaded && (
+            <div className="mt-[6px] text-[10px] text-[#00B2A9] font-medium flex items-center gap-[4px]">
+              <Check className="w-[10px] h-[10px]" />
+              Title & thumbnail loaded from Descript
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col gap-[12px] py-[8px] pb-[20px]">
           <div className="flex flex-col">
             <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px] flex items-center justify-between">

@@ -121,6 +121,12 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
           <Mail className={iconCls(currentMode === 'zoom-backgrounds')} />
           Zoom Backgrounds
         </button>
+
+        <div className={`${btnBase} ${disabledClass}`}>
+          <Video className="w-[18px] h-[18px] shrink-0" />
+          Swoosh Backgrounds
+          <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+        </div>
       </div>
 
       </div>

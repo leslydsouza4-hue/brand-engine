@@ -140,7 +140,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
 
         </div>
 
-        <div className="shrink-0 px-[12px] py-[16px] border-t border-white/5">
+        <div className="mt-auto shrink-0 px-[12px] pt-[12px] pb-[20px] border-t border-white/5">
           <button 
             onClick={() => handleSetMode('settings')}
             className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px]

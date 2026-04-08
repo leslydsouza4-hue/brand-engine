@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Download, Loader2 } from "lucide-react";
+import { Download, Loader2, FileText } from "lucide-react";
 
 interface ToolbarProps {
-  onExport?: (format: "png" | "jpeg") => void;
+  onExport?: (format: "png" | "jpeg" | "pdf") => void;
   isExporting?: boolean;
 }
 
@@ -20,7 +20,7 @@ export function Toolbar({ onExport, isExporting }: ToolbarProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleExport = (format: "png" | "jpeg") => {
+  const handleExport = (format: "png" | "jpeg" | "pdf") => {
     setExportOpen(false);
     onExport?.(format);
   };
@@ -58,6 +58,15 @@ export function Toolbar({ onExport, isExporting }: ToolbarProps) {
               <Download className="w-[15px] h-[15px] shrink-0" />
               JPEG
               <span className="ml-auto text-[11px] text-[#475569] group-hover:text-[#94A3B8]">1920×1080 · 92%</span>
+            </button>
+            <div className="h-[1px] bg-white/[0.06] my-[4px] mx-[8px]" />
+            <button
+              onClick={() => handleExport("pdf")}
+              className="flex items-center gap-[10px] w-full py-[10px] px-[14px] bg-transparent text-[#CBD5E1] border-none rounded-[8px] text-[13px] font-medium cursor-pointer transition-all duration-150 hover:bg-[rgba(255,255,255,0.08)] hover:text-white group"
+            >
+              <FileText className="w-[15px] h-[15px] shrink-0" />
+              PDF
+              <span className="ml-auto text-[11px] text-[#475569] group-hover:text-[#94A3B8]">Document</span>
             </button>
           </div>
         )}

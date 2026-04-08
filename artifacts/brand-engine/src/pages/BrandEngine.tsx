@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { Sidebar } from "@/components/brand/Sidebar";
 import { Toolbar } from "@/components/brand/Toolbar";
 import { TemplatesWorkspace } from "@/components/brand/TemplatesWorkspace";
@@ -31,7 +32,7 @@ export default function BrandEngine() {
   }, []);
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = useCallback(async (format: "png" | "jpeg") => {
+  const handleExport = useCallback(async (format: "png" | "jpeg" | "pdf") => {
     const el = document.querySelector("[data-export-preview]") as HTMLElement | null;
     if (!el) return;
 
@@ -49,27 +50,39 @@ export default function BrandEngine() {
         logging: false,
       });
 
-      const mimeType = format === "jpeg" ? "image/jpeg" : "image/png";
-      const quality = format === "jpeg" ? 0.92 : undefined;
+      const exportName = el.getAttribute("data-export-name") || "brand-engine-export";
+      const safeName = exportName.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
 
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) return;
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          const exportName = el.getAttribute("data-export-name") || "brand-engine-export";
-          const safeName = exportName.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
-          a.download = `${safeName}.${format === "jpeg" ? "jpg" : "png"}`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          setIsExporting(false);
-        },
-        mimeType,
-        quality
-      );
+      if (format === "pdf") {
+        const imgData = canvas.toDataURL("image/png");
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+        const orientation = imgW >= imgH ? "landscape" : "portrait";
+        const pdf = new jsPDF({ orientation, unit: "px", format: [imgW, imgH] });
+        pdf.addImage(imgData, "PNG", 0, 0, imgW, imgH);
+        pdf.save(`${safeName}.pdf`);
+        setIsExporting(false);
+      } else {
+        const mimeType = format === "jpeg" ? "image/jpeg" : "image/png";
+        const quality = format === "jpeg" ? 0.92 : undefined;
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${safeName}.${format === "jpeg" ? "jpg" : "png"}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            setIsExporting(false);
+          },
+          mimeType,
+          quality
+        );
+      }
     } catch (err) {
       console.error("Export failed:", err);
       setIsExporting(false);

@@ -40,7 +40,7 @@ export function Sidebar({ currentMode, setMode }: { currentMode: string, setMode
         <div className="text-[17px] font-bold text-white tracking-[-0.4px]">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
       </div>
       
-      <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
       <div className="px-[12px] mb-[10px] relative">
         <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Create</div>
         

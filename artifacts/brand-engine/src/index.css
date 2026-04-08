@@ -77,6 +77,15 @@ body {
   border-radius: 6px;
 }
 
+/* Hide sidebar scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+  display: none;
+}
+.sidebar-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 /* Animations */
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }

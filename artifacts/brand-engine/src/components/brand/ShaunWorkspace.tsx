@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from "react";
-import { Check, Image as ImageIcon, UploadCloud, X, Monitor } from "lucide-react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw } from "lucide-react";
 
 const SHAUN_IMAGES = [
   "ShaunClark_03057_StudioSura-Photoroom.png",
@@ -13,14 +13,16 @@ const SHAUN_IMAGES = [
 const BASE_URL = `${import.meta.env.BASE_URL}assets/shaun/`;
 const BG_URL = `${import.meta.env.BASE_URL}assets/backgrounds-dark/Type=Core Gradient.png`;
 
-type Position = "left" | "center" | "right";
-
 export function ShaunWorkspace() {
   const [activeImage, setActiveImage] = useState<string | null>(null);
-  const [position, setPosition] = useState<Position>("right");
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
   const [stripText, setStripText] = useState("FEATURE UPDATES");
+
+  const [shaunX, setShaunX] = useState(75);
+  const [shaunY, setShaunY] = useState(50);
+  const [shaunScale, setShaunScale] = useState(95);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [screenshotImage, setScreenshotImage] = useState<string | null>(null);
   const [screenshotOpacity, setScreenshotOpacity] = useState(40);
@@ -30,6 +32,47 @@ export function ShaunWorkspace() {
   const [screenshotOffsetY, setScreenshotOffsetY] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+
+  const handleDragStart = useCallback((clientX: number, clientY: number) => {
+    if (!activeImage || !previewRef.current) return;
+    setIsDragging(true);
+    dragStartRef.current = { startX: clientX, startY: clientY, origX: shaunX, origY: shaunY };
+  }, [activeImage, shaunX, shaunY]);
+
+  const handleDragMove = useCallback((clientX: number, clientY: number) => {
+    if (!isDragging || !dragStartRef.current || !previewRef.current) return;
+    const rect = previewRef.current.getBoundingClientRect();
+    const dx = ((clientX - dragStartRef.current.startX) / rect.width) * 100;
+    const dy = ((clientY - dragStartRef.current.startY) / rect.height) * 100;
+    setShaunX(Math.max(0, Math.min(100, dragStartRef.current.origX + dx)));
+    setShaunY(Math.max(0, Math.min(100, dragStartRef.current.origY + dy)));
+  }, [isDragging]);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+    dragStartRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e: MouseEvent) => handleDragMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => { if (e.touches[0]) handleDragMove(e.touches[0].clientX, e.touches[0].clientY); };
+    const onUp = () => handleDragEnd();
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
+  const resetShaunPosition = () => { setShaunX(75); setShaunY(50); setShaunScale(95); };
 
   const wordCount = useMemo(() => {
     const words = headline.trim().split(/\s+/).filter(w => w.length > 0);
@@ -93,21 +136,51 @@ export function ShaunWorkspace() {
           </div>
           
           {activeImage && (
-            <div className="flex items-center gap-[12px] mt-[12px] animate-in fade-in duration-300">
-              <span className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B]">Position</span>
-              <div className="flex gap-[6px]">
-                {(['left', 'center', 'right'] as Position[]).map(pos => (
+            <div className="mt-[12px] animate-in fade-in duration-300">
+              <div className="flex items-center justify-between mb-[8px]">
+                <span className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] flex items-center gap-[5px]">
+                  <Move className="w-[11px] h-[11px]" />
+                  Position & Size
+                </span>
+                <button
+                  onClick={resetShaunPosition}
+                  className="flex items-center gap-[4px] py-[3px] px-[8px] rounded-[6px] border border-[rgba(255,255,255,0.06)] bg-transparent text-[10px] font-medium text-[#64748B] cursor-pointer hover:text-[#00B2A9] hover:border-[rgba(0,178,169,0.2)] transition-all"
+                >
+                  <RotateCcw className="w-[9px] h-[9px]" />
+                  Reset
+                </button>
+              </div>
+              <div className="flex items-center gap-[6px] mb-[6px] p-[8px] rounded-[10px] bg-[rgba(0,178,169,0.04)] border border-[rgba(0,178,169,0.1)]">
+                <Move className="w-[12px] h-[12px] text-[#00B2A9] shrink-0" />
+                <span className="text-[10px] text-[#00B2A9] font-medium">Drag Shaun in the live preview to reposition</span>
+              </div>
+              <div className="flex gap-[6px] mb-[6px]">
+                {[
+                  { label: "Left", x: 22, y: 50 },
+                  { label: "Center", x: 50, y: 50 },
+                  { label: "Right", x: 75, y: 50 },
+                ].map((preset) => (
                   <button
-                    key={pos}
-                    onClick={() => setPosition(pos)}
+                    key={preset.label}
+                    onClick={() => { setShaunX(preset.x); setShaunY(preset.y); }}
                     className={`flex-1 py-[6px] px-[8px] border rounded-[8px] font-inherit text-[10px] font-semibold cursor-pointer text-center capitalize transition-all
-                      ${position === pos 
+                      ${Math.abs(shaunX - preset.x) < 5 && Math.abs(shaunY - preset.y) < 5
                         ? 'border-[rgba(0,178,169,0.25)] text-[#00B2A9] bg-[rgba(0,178,169,0.08)]' 
                         : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(0,178,169,0.15)] hover:text-[#CBD5E1]'}`}
                   >
-                    {pos}
+                    {preset.label}
                   </button>
                 ))}
+              </div>
+              <div>
+                <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[4px]">
+                  Scale <span className="font-semibold text-[#94A3B8]">{shaunScale}%</span>
+                </div>
+                <input 
+                  type="range" min="40" max="150" value={shaunScale}
+                  onChange={e => setShaunScale(Number(e.target.value))}
+                  className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                />
               </div>
             </div>
           )}
@@ -273,7 +346,7 @@ export function ShaunWorkspace() {
         
         <div className="flex-1 flex items-center justify-center rounded-[28px] overflow-hidden bg-[rgba(255,255,255,0.015)] border border-[rgba(255,255,255,0.04)] relative">
           <div className="flex justify-center items-center w-full h-full p-[32px]">
-            <div data-export-preview className="w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
+            <div ref={previewRef} data-export-preview className={`w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}>
               
               <img 
                 src={BG_URL} 
@@ -317,8 +390,17 @@ export function ShaunWorkspace() {
                 <img 
                   src={`${BASE_URL}${activeImage}`} 
                   alt="Shaun Cutout" 
-                  className={`absolute z-[2] bottom-0 h-[95%] object-contain drop-shadow-[0_0_30px_rgba(0,178,169,0.3)] drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all duration-400 ease-out
-                    ${position === 'right' ? 'right-[2%]' : position === 'center' ? 'left-1/2 -translate-x-1/2' : 'left-[2%]'}`}
+                  onMouseDown={(e) => { e.preventDefault(); handleDragStart(e.clientX, e.clientY); }}
+                  onTouchStart={(e) => { if (e.touches[0]) handleDragStart(e.touches[0].clientX, e.touches[0].clientY); }}
+                  draggable={false}
+                  className={`absolute z-[2] object-contain drop-shadow-[0_0_30px_rgba(0,178,169,0.3)] drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] select-none
+                    ${isDragging ? '' : 'transition-all duration-300 ease-out'}`}
+                  style={{
+                    left: `${shaunX}%`,
+                    top: `${shaunY}%`,
+                    transform: `translate(-50%, -50%) scale(${shaunScale / 100})`,
+                    height: '95%',
+                  }}
                 />
               ) : null}
 

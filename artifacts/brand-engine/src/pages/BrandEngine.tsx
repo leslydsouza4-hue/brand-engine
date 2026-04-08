@@ -97,7 +97,7 @@ export default function BrandEngine() {
     <div className="flex h-screen w-screen relative bg-[#060B16] brand-app-bg">
       <div className="absolute inset-0 brand-app-noise pointer-events-none z-0"></div>
       
-      <div className="w-0 md:w-auto shrink-0">
+      <div className="w-0 md:w-[220px] shrink-0 overflow-visible">
         <Sidebar currentMode={currentMode} setMode={setCurrentMode} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
       

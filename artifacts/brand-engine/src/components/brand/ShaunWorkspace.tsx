@@ -105,6 +105,32 @@ export function ShaunWorkspace() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const [extractingUi, setExtractingUi] = useState(false);
+
+  const cropImageInBrowser = (
+    base64Src: string,
+    bbox: { x: number; y: number; w: number; h: number }
+  ): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const cx = Math.round((bbox.x / 100) * img.width);
+        const cy = Math.round((bbox.y / 100) * img.height);
+        const cw = Math.round((bbox.w / 100) * img.width);
+        const ch = Math.round((bbox.h / 100) * img.height);
+        const canvas = document.createElement("canvas");
+        canvas.width = cw;
+        canvas.height = ch;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("No canvas context"));
+        ctx.drawImage(img, cx, cy, cw, ch, 0, 0, cw, ch);
+        resolve(canvas.toDataURL("image/jpeg", 0.92));
+      };
+      img.onerror = () => reject(new Error("Failed to load image for cropping"));
+      img.src = base64Src;
+    });
+
   const handleDescriptFetch = async () => {
     const url = descriptUrl.trim();
     if (!url) return;
@@ -127,6 +153,7 @@ export function ShaunWorkspace() {
       }
       const data = await res.json();
       if (data.title) setHeadline(data.title);
+
       if (data.image) {
         setScreenshotImage(data.image);
         setScreenshotOpacity(40);
@@ -134,6 +161,28 @@ export function ShaunWorkspace() {
         setScreenshotRadius(16);
         setScreenshotOffsetX(0);
         setScreenshotOffsetY(0);
+
+        setExtractingUi(true);
+        try {
+          const extractRes = await fetch(`${apiBase}api/descript/extract-ui`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageUrl: data.image }),
+          });
+          if (extractRes.ok) {
+            const extractData = await extractRes.json();
+            if (extractData.found && extractData.bbox && extractData.fullImageBase64) {
+              const cropped = await cropImageInBrowser(
+                extractData.fullImageBase64,
+                extractData.bbox
+              );
+              setScreenshotImage(cropped);
+            }
+          }
+        } catch {
+        } finally {
+          setExtractingUi(false);
+        }
       }
       setDescriptLoaded(true);
     } catch (err: any) {
@@ -282,8 +331,17 @@ export function ShaunWorkspace() {
           )}
           {descriptLoaded && (
             <div className="mt-[6px] text-[10px] text-[#00B2A9] font-medium flex items-center gap-[4px]">
-              <Check className="w-[10px] h-[10px]" />
-              Title & thumbnail loaded from Descript
+              {extractingUi ? (
+                <>
+                  <Loader2 className="w-[10px] h-[10px] animate-spin" />
+                  Extracting UI screenshot with AI...
+                </>
+              ) : (
+                <>
+                  <Check className="w-[10px] h-[10px]" />
+                  Title & UI screenshot loaded from Descript
+                </>
+              )}
             </div>
           )}
         </div>

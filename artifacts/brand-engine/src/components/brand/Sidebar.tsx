@@ -47,7 +47,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         after:content-[''] after:absolute after:top-0 after:right-0 after:w-[1px] after:h-full after:bg-[linear-gradient(to_bottom,rgba(0,178,169,0.2),rgba(40,150,251,0.08),transparent_80%)]
         fixed inset-y-0 left-0 w-[260px] transition-transform duration-300 ease-out
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:relative md:translate-x-0 md:w-[220px]
+        md:relative md:translate-x-0 md:w-[220px] md:h-screen
       `}>
         <div className="pt-[26px] px-[20px] pb-[20px] flex items-center gap-[11px] relative shrink-0">
           <div className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center shrink-0 relative bg-white/[0.04] backdrop-blur-[12px] border border-white/[0.08]">

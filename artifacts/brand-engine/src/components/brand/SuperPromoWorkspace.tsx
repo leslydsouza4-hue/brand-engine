@@ -448,7 +448,7 @@ function VerticalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", bottom: "8%", left: "7%", right: "7%",
+        position: "absolute", bottom: "14%", left: "7%", right: "7%",
         display: "flex", justifyContent: "center", gap: "2.5em",
         zIndex: 2,
       }}>

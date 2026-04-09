@@ -194,7 +194,7 @@ function HorizontalTemplate({
               width: "1em", height: "1em", borderRadius: "0.12em",
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="#FFC800" stroke="#FFC800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFC800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
@@ -324,7 +324,7 @@ function SquarePortraitTemplate({
               width: "0.9em", height: "0.9em", borderRadius: "0.1em",
               display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="#FFC800" stroke="#FFC800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFC800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />

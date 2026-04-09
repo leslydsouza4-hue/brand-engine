@@ -95,11 +95,11 @@ export default function BrandEngine() {
       <div className="absolute inset-0 brand-app-noise pointer-events-none z-0"></div>
       
       <div className="w-0 md:w-[220px] shrink-0 overflow-visible">
-        <Sidebar currentMode={currentMode} setMode={setCurrentMode} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar currentMode={currentMode} setMode={setCurrentMode} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onExport={handleExport} isExporting={isExporting} />
       </div>
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">
-        <Toolbar onExport={handleExport} isExporting={isExporting} onMenuToggle={() => setSidebarOpen(true)} />
+        <Toolbar onMenuToggle={() => setSidebarOpen(true)} />
         
         {currentMode === "templates" && <TemplatesWorkspace />}
         {currentMode === "shaun-thumbnails" && <ShaunWorkspace />}

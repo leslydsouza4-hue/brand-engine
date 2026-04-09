@@ -216,7 +216,7 @@ export function TemplatesWorkspace() {
   const [photoScale, setPhotoScale] = useState(40);
   const previewRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [dragging, setDragging] = useState<"mascot" | "photo" | "text" | null>(null);
+  const [dragging, setDragging] = useState<"mascot" | "photo" | "text" | "logo" | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   const [activeToolbar, setActiveToolbar] = useState<"text" | "position" | "style" | "color" | null>(null);
   const [textPos, setTextPos] = useState({ x: 50, y: 50 });
@@ -225,6 +225,8 @@ export function TemplatesWorkspace() {
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [bgRemoved, setBgRemoved] = useState(false);
   const [showLogoOverlay, setShowLogoOverlay] = useState(false);
+  const [logoPos, setLogoPos] = useState({ x: 50, y: 8 });
+  const [logoScale, setLogoScale] = useState(20);
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
 
@@ -282,7 +284,7 @@ export function TemplatesWorkspace() {
     return { snapped, guides };
   };
 
-  const handleDragStart = useCallback((type: "mascot" | "photo" | "text", e: React.MouseEvent | React.TouchEvent) => {
+  const handleDragStart = useCallback((type: "mascot" | "photo" | "text" | "logo", e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragging(type);
@@ -308,6 +310,8 @@ export function TemplatesWorkspace() {
         setSnapGuides({ v: sx.guides, h: sy.guides });
       } else if (type === "mascot") {
         setMascotPos({ x: rawX, y: rawY });
+      } else if (type === "logo") {
+        setLogoPos({ x: rawX, y: rawY });
       } else {
         setPhotoPos({ x: rawX, y: rawY });
       }
@@ -347,6 +351,8 @@ export function TemplatesWorkspace() {
     setHeadlineColor(null);
     setActiveToolbar(null);
     setShowLogoOverlay(false);
+    setLogoPos({ x: 50, y: 8 });
+    setLogoScale(20);
   };
 
   const filtered = TEMPLATES.filter(t => t.categories.includes(activeCategory.id));
@@ -475,7 +481,18 @@ export function TemplatesWorkspace() {
           <img
             src={LOGO_LIGHT}
             alt="HighLevel"
-            className="absolute z-[8] object-contain pointer-events-none top-[4%] left-[4%] h-[5%] max-h-[24px] opacity-80"
+            className="absolute z-[8] object-contain select-none"
+            style={{
+              left: `${logoPos.x}%`,
+              top: `${logoPos.y}%`,
+              height: `${logoScale}%`,
+              transform: "translate(-50%, -50%)",
+              cursor: "grab",
+              filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))",
+            }}
+            onMouseDown={(e) => handleDragStart("logo", e)}
+            onTouchStart={(e) => handleDragStart("logo", e)}
+            draggable={false}
           />
         )}
       </>
@@ -824,6 +841,18 @@ export function TemplatesWorkspace() {
                     <Stamp className="w-[13px] h-[13px]" />
                     Logo
                   </motion.button>
+                  {showLogoOverlay && (
+                    <div className="flex items-center gap-[6px] ml-[4px] pl-[8px] border-l border-[rgba(255,255,255,0.1)]">
+                      <span className="text-[9px] text-[#64748B]">Size</span>
+                      <input
+                        type="range" min="8" max="40" step="1"
+                        value={logoScale}
+                        onChange={(e) => setLogoScale(Number(e.target.value))}
+                        className="w-[60px] h-[3px] appearance-none bg-[rgba(255,255,255,0.1)] rounded-full cursor-pointer accent-[#00B2A9] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[10px] [&::-webkit-slider-thumb]:h-[10px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00B2A9]"
+                      />
+                      <span className="text-[9px] text-[#64748B] w-[20px] text-right">{logoScale}%</span>
+                    </div>
+                  )}
                 </div>
 
                 <AnimatePresence>

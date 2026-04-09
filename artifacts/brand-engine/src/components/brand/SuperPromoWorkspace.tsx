@@ -337,7 +337,7 @@ function VerticalTemplate({
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
-  const circleSize = "5.5em";
+  const circleSize = "7.15em";
 
   return (
     <div
@@ -363,7 +363,7 @@ function VerticalTemplate({
 
       <div style={{
         position: "absolute", left: "7%", right: "7%", top: "8%", zIndex: 3,
-        display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.5em",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
       }}>
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.25em",
@@ -381,7 +381,7 @@ function VerticalTemplate({
           </svg>
           <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
-        <div>
+        <div style={{ textAlign: "center" }}>
           <span style={{
             fontSize: "1.6em", fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
@@ -402,7 +402,6 @@ function VerticalTemplate({
             padding: "0.32em 0.7em",
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
             borderRadius: "0.25em",
-            alignSelf: "flex-start",
           }}>
             <svg width="0.7em" height="0.7em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -420,7 +419,6 @@ function VerticalTemplate({
             padding: "0.35em 1em",
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
             borderRadius: "0.25em",
-            alignSelf: "flex-start",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
               <path d="M1 4v6h6" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />

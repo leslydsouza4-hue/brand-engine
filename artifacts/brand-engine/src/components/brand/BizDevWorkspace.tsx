@@ -475,16 +475,24 @@ export function BizDevWorkspace() {
       });
       const blob = dataUrlToBlob(dataUrl);
       const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(blobUrl);
-      }, 200);
+      const filename = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
+      try {
+        const fh = await (window as any).showSaveFilePicker({ suggestedName: filename, types: [{ description: "PNG Image", accept: { "image/png": [".png"] } }] });
+        const ws = await fh.createWritable();
+        await ws.write(blob);
+        await ws.close();
+      } catch {
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = filename;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 200);
+      }
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
     } catch (err) {
       console.error("exportTemplate error:", err);
     } finally {
@@ -512,15 +520,27 @@ export function BizDevWorkspace() {
         await new Promise((r) => setTimeout(r, 200));
       }
       const blob = await zip.generateAsync({ type: "blob" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `BizDev_Templates_${guestName.trim().replace(/\s+/g, "_") || "export"}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    } catch {
-      // ignore
+      const blobUrl = URL.createObjectURL(blob);
+      const zipName = `BizDev_Templates_${guestName.trim().replace(/\s+/g, "_") || "export"}.zip`;
+      try {
+        const fh = await (window as any).showSaveFilePicker({ suggestedName: zipName, types: [{ description: "ZIP Archive", accept: { "application/zip": [".zip"] } }] });
+        const ws = await fh.createWritable();
+        await ws.write(blob);
+        await ws.close();
+      } catch {
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = zipName;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 500);
+      }
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+      console.error("exportAllZip error:", err);
     } finally {
       setIsExportingAll(false);
     }

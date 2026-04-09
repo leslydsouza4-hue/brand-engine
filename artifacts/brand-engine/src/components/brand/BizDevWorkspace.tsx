@@ -218,7 +218,7 @@ function HorizontalTemplate({
 
         {showDay && (
           <div style={{
-            fontSize: "2.4em", fontWeight: 900, color: "#FFFFFF", lineHeight: 1,
+            fontSize: "1.92em", fontWeight: 900, color: "#FFFFFF", lineHeight: 1,
             letterSpacing: "0.02em", paddingBottom: "0.2em",
             textShadow: "0 0.05em 0.3em rgba(0,0,0,0.3)",
           }}>{dayLabel}</div>

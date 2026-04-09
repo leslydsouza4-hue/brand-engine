@@ -47,11 +47,12 @@ function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base:
   }, [ref, base]);
 }
 
-function GuestPill({ guestName, pillSettings, onDrag, isDragging }: {
+function GuestPill({ guestName, pillSettings, onDrag, isDragging, baseX = 50 }: {
   guestName: string;
   pillSettings: PillSettings;
   onDrag?: (e: React.MouseEvent) => void;
   isDragging?: boolean;
+  baseX?: number;
 }) {
   if (!guestName) return null;
 
@@ -60,7 +61,7 @@ function GuestPill({ guestName, pillSettings, onDrag, isDragging }: {
       onMouseDown={onDrag}
       style={{
         position: "absolute",
-        left: `${50 + pillSettings.offsetX}%`,
+        left: `${baseX + pillSettings.offsetX}%`,
         top: `${85 + pillSettings.offsetY}%`,
         transform: "translate(-50%, -50%)",
         zIndex: 10,
@@ -177,7 +178,7 @@ function HorizontalTemplate({
       <div style={{ position: "absolute", left: "5%", top: "22%", width: "48%", zIndex: 3, display: "flex", flexDirection: "column" }}>
         <div style={{
           fontSize: "1.95em", fontWeight: 800, lineHeight: 1.08, textTransform: "uppercase",
-          background: "linear-gradient(180deg, #FFFFFF 0%, #5BE0D8 40%, #00B2A9 100%)",
+          background: "linear-gradient(180deg, #2896FB 0%, #4CA8FC 24%, #C3D8FF 51%, #94D9FF 77%, #6FCDFF 100%)",
           WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
           letterSpacing: "-0.02em", paddingBottom: "0.5em",
         }}>
@@ -188,16 +189,16 @@ function HorizontalTemplate({
           <div style={{ display: "flex", alignItems: "center", gap: "0.3em", paddingBottom: "0.4em" }}>
             <div style={{
               width: "1em", height: "1em", borderRadius: "0.12em",
-              background: "rgba(0,178,169,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              background: "rgba(255,200,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#00B2A9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFC800" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
             </div>
-            <span style={{ fontSize: "0.6em", fontWeight: 600, color: "#FFFFFF", letterSpacing: "0.03em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.6em", fontWeight: 600, color: "#FFC800", letterSpacing: "0.03em" }}>{dateText}</span>
           </div>
         )}
 
@@ -205,8 +206,8 @@ function HorizontalTemplate({
           <div style={{ paddingBottom: "0.4em" }}>
             <span style={{
               display: "inline-block", padding: "0.28em 1em",
-              fontSize: "0.52em", fontWeight: 700, color: "#FFFFFF",
-              background: "linear-gradient(135deg, #00B2A9 0%, #00C9A7 100%)",
+              fontSize: "0.52em", fontWeight: 700, color: "#0A1628",
+              background: "linear-gradient(135deg, #FFC800 0%, #FFD84D 100%)",
               borderRadius: "0.22em", letterSpacing: "0.03em",
             }}>{ctaText}</span>
           </div>
@@ -222,7 +223,7 @@ function HorizontalTemplate({
       </div>
 
       <GuideLines show={isDraggingPill || false} pillX={pillSettings.offsetX} pillY={pillSettings.offsetY} />
-      <GuestPill guestName={guestName} pillSettings={pillSettings} onDrag={onPillDrag} isDragging={isDraggingPill} />
+      <GuestPill guestName={guestName} pillSettings={pillSettings} onDrag={onPillDrag} isDragging={isDraggingPill} baseX={72} />
     </div>
   );
 }
@@ -302,7 +303,7 @@ function SquarePortraitTemplate({
           fontWeight: 800,
           lineHeight: 1.08,
           textTransform: "uppercase",
-          background: "linear-gradient(180deg, #FFFFFF 0%, #5BE0D8 40%, #00B2A9 100%)",
+          background: "linear-gradient(180deg, #2896FB 0%, #4CA8FC 24%, #C3D8FF 51%, #94D9FF 77%, #6FCDFF 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
@@ -316,16 +317,16 @@ function SquarePortraitTemplate({
           <div style={{ display: "flex", alignItems: "center", gap: "0.3em", justifyContent: "center" }}>
             <div style={{
               width: "0.9em", height: "0.9em", borderRadius: "0.1em",
-              background: "rgba(0,178,169,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              background: "rgba(255,200,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#00B2A9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFC800" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
                 <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
             </div>
-            <span style={{ fontSize: "0.55em", fontWeight: 600, color: "#FFFFFF", letterSpacing: "0.03em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.55em", fontWeight: 600, color: "#FFC800", letterSpacing: "0.03em" }}>{dateText}</span>
           </div>
         )}
       </div>

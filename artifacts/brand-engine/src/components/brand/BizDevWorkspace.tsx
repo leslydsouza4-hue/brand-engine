@@ -458,6 +458,23 @@ export function BizDevWorkspace() {
     return new Blob([arr], { type: mime });
   }, []);
 
+  const triggerDownload = useCallback((blob: Blob, filename: string) => {
+    const blobUrl = URL.createObjectURL(blob);
+    const w = window.open(blobUrl, "_blank");
+    if (!w || w.closed) {
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      link.target = "_blank";
+      link.rel = "noopener";
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => document.body.removeChild(link), 200);
+    }
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+  }, []);
+
   const exportTemplate = useCallback(async (templateId: string, containerEl?: HTMLElement) => {
     const root = containerEl || document;
     const el = root.querySelector(`[data-template-id="${templateId}"]`) as HTMLElement;
@@ -474,31 +491,14 @@ export function BizDevWorkspace() {
         skipAutoScale: true,
       });
       const blob = dataUrlToBlob(dataUrl);
-      const blobUrl = URL.createObjectURL(blob);
       const filename = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
-      try {
-        const fh = await (window as any).showSaveFilePicker({ suggestedName: filename, types: [{ description: "PNG Image", accept: { "image/png": [".png"] } }] });
-        const ws = await fh.createWritable();
-        await ws.write(blob);
-        await ws.close();
-      } catch {
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = filename;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          document.body.removeChild(link);
-        }, 200);
-      }
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      triggerDownload(blob, filename);
     } catch (err) {
       console.error("exportTemplate error:", err);
     } finally {
       setIsExporting(null);
     }
-  }, [dataUrlToBlob]);
+  }, [dataUrlToBlob, triggerDownload]);
 
   const exportAllZip = useCallback(async () => {
     setIsExportingAll(true);
@@ -507,7 +507,7 @@ export function BizDevWorkspace() {
       const zip = new JSZip();
       for (const t of activeTemplates) {
         const el = container.querySelector(`[data-template-id="${t.id}"]`) as HTMLElement;
-        if (!el) continue;
+        if (!el) { console.error("ZIP: element not found for", t.id); continue; }
         const dataUrl = await toPng(el, {
           width: el.offsetWidth,
           height: el.offsetHeight,
@@ -520,31 +520,14 @@ export function BizDevWorkspace() {
         await new Promise((r) => setTimeout(r, 200));
       }
       const blob = await zip.generateAsync({ type: "blob" });
-      const blobUrl = URL.createObjectURL(blob);
       const zipName = `BizDev_Templates_${guestName.trim().replace(/\s+/g, "_") || "export"}.zip`;
-      try {
-        const fh = await (window as any).showSaveFilePicker({ suggestedName: zipName, types: [{ description: "ZIP Archive", accept: { "application/zip": [".zip"] } }] });
-        const ws = await fh.createWritable();
-        await ws.write(blob);
-        await ws.close();
-      } catch {
-        const link = document.createElement("a");
-        link.href = blobUrl;
-        link.download = zipName;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => {
-          document.body.removeChild(link);
-        }, 500);
-      }
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      triggerDownload(blob, zipName);
     } catch (err) {
       console.error("exportAllZip error:", err);
     } finally {
       setIsExportingAll(false);
     }
-  }, [activeTemplates, guestName]);
+  }, [activeTemplates, guestName, triggerDownload]);
 
   const inputCls = "w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] transition-all";
   const labelCls = "text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[6px]";

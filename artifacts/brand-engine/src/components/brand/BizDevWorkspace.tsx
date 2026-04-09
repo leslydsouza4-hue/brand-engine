@@ -93,6 +93,7 @@ function GuestPill({ guestName, layout = "center" }: { guestName: string; layout
 
 interface ImageSettings {
   scale: number;
+  offsetX: number;
   offsetY: number;
 }
 
@@ -141,12 +142,12 @@ function HorizontalTemplate({
 
       {personImage && (
         <div style={{
-          position: "absolute", right: "3%", bottom: 0, width: "45%", height: "100%",
+          position: "absolute", right: "3%", bottom: 0, width: "50%", height: "100%",
           display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden", zIndex: 2,
         }}>
           <img src={personImage} alt="" crossOrigin="anonymous" style={{
             height: `${88 * imgSettings.scale}%`,
-            transform: `translateY(${imgSettings.offsetY}%)`,
+            transform: `translate(${imgSettings.offsetX}%, ${imgSettings.offsetY}%)`,
             objectFit: "contain", objectPosition: "bottom center",
           }} />
         </div>
@@ -251,7 +252,7 @@ function SquarePortraitTemplate({
         }}>
           <img src={personImage} alt="" crossOrigin="anonymous" style={{
             height: `${baseH * imgSettings.scale}%`,
-            transform: `translateY(${imgSettings.offsetY}%)`,
+            transform: `translate(${imgSettings.offsetX}%, ${imgSettings.offsetY}%)`,
             objectFit: "contain", objectPosition: "bottom center",
           }} />
         </div>
@@ -325,7 +326,7 @@ export function BizDevWorkspace() {
   const [guestName, setGuestName] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [personImage, setPersonImage] = useState<string | null>(null);
-  const [imgSettings, setImgSettings] = useState<ImageSettings>({ scale: 1, offsetY: 0 });
+  const [imgSettings, setImgSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [generateDays, setGenerateDays] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState("horizontal-cta");
@@ -535,7 +536,7 @@ export function BizDevWorkspace() {
                     <button onClick={() => fileInputRef.current?.click()} className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#94A3B8] flex items-center justify-center cursor-pointer hover:bg-[rgba(40,150,251,0.15)] hover:text-[#2896FB] transition-all" title="Replace image">
                       <RefreshCw className="w-[10px] h-[10px]" />
                     </button>
-                    <button onClick={() => { setPersonImage(null); setImgSettings({ scale: 1, offsetY: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all" title="Remove image">
+                    <button onClick={() => { setPersonImage(null); setImgSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all" title="Remove image">
                       <X className="w-[10px] h-[10px]" />
                     </button>
                   </div>
@@ -543,7 +544,7 @@ export function BizDevWorkspace() {
                 <div className="px-[10px] py-[8px] flex flex-col gap-[8px]">
                   <div className="flex items-center gap-[8px]">
                     <ZoomIn className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
-                    <span className="text-[9px] text-[#64748B] w-[32px] shrink-0">Scale</span>
+                    <span className="text-[9px] text-[#64748B] w-[28px] shrink-0">Size</span>
                     <input
                       type="range" min="0.5" max="1.8" step="0.02"
                       value={imgSettings.scale}
@@ -553,8 +554,19 @@ export function BizDevWorkspace() {
                     <span className="text-[9px] text-[#94A3B8] w-[28px] text-right tabular-nums">{Math.round(imgSettings.scale * 100)}%</span>
                   </div>
                   <div className="flex items-center gap-[8px]">
+                    <svg className="w-[12px] h-[12px] text-[#64748B] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    <span className="text-[9px] text-[#64748B] w-[28px] shrink-0">X</span>
+                    <input
+                      type="range" min="-40" max="40" step="1"
+                      value={imgSettings.offsetX}
+                      onChange={(e) => setImgSettings((s) => ({ ...s, offsetX: parseFloat(e.target.value) }))}
+                      className="flex-1 h-[3px] appearance-none bg-[rgba(255,255,255,0.08)] rounded-full cursor-pointer accent-[#00B2A9] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[12px] [&::-webkit-slider-thumb]:h-[12px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00B2A9] [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(0,178,169,0.4)]"
+                    />
+                    <span className="text-[9px] text-[#94A3B8] w-[28px] text-right tabular-nums">{imgSettings.offsetX > 0 ? "+" : ""}{imgSettings.offsetX}</span>
+                  </div>
+                  <div className="flex items-center gap-[8px]">
                     <ArrowUpDown className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
-                    <span className="text-[9px] text-[#64748B] w-[32px] shrink-0">Y Pos</span>
+                    <span className="text-[9px] text-[#64748B] w-[28px] shrink-0">Y</span>
                     <input
                       type="range" min="-30" max="30" step="1"
                       value={imgSettings.offsetY}
@@ -564,7 +576,7 @@ export function BizDevWorkspace() {
                     <span className="text-[9px] text-[#94A3B8] w-[28px] text-right tabular-nums">{imgSettings.offsetY > 0 ? "+" : ""}{imgSettings.offsetY}</span>
                   </div>
                   <button
-                    onClick={() => setImgSettings({ scale: 1, offsetY: 0 })}
+                    onClick={() => setImgSettings({ scale: 1, offsetX: 0, offsetY: 0 })}
                     className="text-[9px] text-[#64748B] hover:text-[#94A3B8] cursor-pointer bg-transparent border-none p-0 self-end transition-all"
                   >Reset</button>
                 </div>

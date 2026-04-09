@@ -202,25 +202,17 @@ function HorizontalTemplate({
       {showDate && dateText && (
         <div style={{
           position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
-          display: "inline-flex", alignItems: "center", gap: "0.35em",
+          display: "inline-flex", alignItems: "center", gap: "0.25em",
           padding: "0.32em 0.7em",
           background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
           borderRadius: "0.25em",
         }}>
-          <div style={{
-            width: "0.77em", height: "0.77em",
-            background: "rgba(255,255,255,0.15)",
-            borderRadius: "0.15em",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}>
-            <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-          </div>
+          <svg width="0.7em" height="0.7em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
           <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
         </div>
       )}

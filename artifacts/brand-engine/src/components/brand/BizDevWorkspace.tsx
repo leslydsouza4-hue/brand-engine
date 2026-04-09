@@ -359,18 +359,50 @@ function TemplatePreview(props: {
   return <SquarePortraitTemplate {...props} />;
 }
 
+const STORAGE_KEY = "bizdev-workspace-state";
+
+function loadSaved<T>(key: string, fallback: T): T {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return fallback;
+    const data = JSON.parse(raw);
+    return key in data ? data[key] : fallback;
+  } catch { return fallback; }
+}
+
+function saveToDisk(patch: Record<string, unknown>) {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const data = raw ? JSON.parse(raw) : {};
+    Object.assign(data, patch);
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch { /* ignore */ }
+}
+
+function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
+  const [val, setValRaw] = useState<T>(() => loadSaved(key, fallback));
+  const setVal = useCallback((v: T | ((prev: T) => T)) => {
+    setValRaw((prev) => {
+      const next = typeof v === "function" ? (v as (p: T) => T)(prev) : v;
+      saveToDisk({ [key]: next });
+      return next;
+    });
+  }, [key]);
+  return [val, setVal];
+}
+
 export function BizDevWorkspace() {
-  const [headline, setHeadline] = useState("");
-  const [dateText, setDateText] = useState("");
-  const [guestName, setGuestName] = useState("");
-  const [ctaText, setCtaText] = useState("");
-  const [personImage, setPersonImage] = useState<string | null>(null);
-  const [imgSettings, setImgSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
-  const [pillSettings, setPillSettings] = useState<PillSettings>({ offsetX: 0, offsetY: 0 });
+  const [headline, setHeadline] = usePersistedState("headline", "");
+  const [dateText, setDateText] = usePersistedState("dateText", "");
+  const [guestName, setGuestName] = usePersistedState("guestName", "");
+  const [ctaText, setCtaText] = usePersistedState("ctaText", "");
+  const [personImage, setPersonImage] = usePersistedState<string | null>("personImage", null);
+  const [imgSettings, setImgSettings] = usePersistedState<ImageSettings>("imgSettings", { scale: 1, offsetX: 0, offsetY: 0 });
+  const [pillSettings, setPillSettings] = usePersistedState<PillSettings>("pillSettings", { offsetX: 0, offsetY: 0 });
   const [isDraggingPill, setIsDraggingPill] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
-  const [generateDays, setGenerateDays] = useState(true);
-  const [selectedTemplate, setSelectedTemplate] = useState("horizontal-cta");
+  const [generateDays, setGenerateDays] = usePersistedState("generateDays", true);
+  const [selectedTemplate, setSelectedTemplate] = usePersistedState("selectedTemplate", "horizontal-cta");
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [isExportingAll, setIsExportingAll] = useState(false);
   const [showGallery, setShowGallery] = useState(false);

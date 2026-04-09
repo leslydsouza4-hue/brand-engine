@@ -145,7 +145,7 @@ function HorizontalTemplate({
           borderRadius: "50%",
           border: "0.15em solid rgba(255,255,255,0.2)",
           overflow: "hidden",
-          background: hostImage ? "transparent" : "rgba(20,40,80,0.7)",
+          background: hostImage ? "transparent" : "rgba(255,255,255,0.15)",
           boxShadow: "0 0 1.2em 0.3em rgba(100,180,255,0.2)",
           flexShrink: 0,
         }}>
@@ -156,7 +156,7 @@ function HorizontalTemplate({
             }} />
           ) : (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+              <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
             </div>
           )}
         </div>
@@ -176,7 +176,7 @@ function HorizontalTemplate({
           borderRadius: "50%",
           border: "0.15em solid rgba(255,255,255,0.2)",
           overflow: "hidden",
-          background: guestImage ? "transparent" : "rgba(20,40,80,0.7)",
+          background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
           boxShadow: "0 0 1.2em 0.3em rgba(100,180,255,0.2)",
           flexShrink: 0,
         }}>
@@ -187,7 +187,7 @@ function HorizontalTemplate({
             }} />
           ) : (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+              <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
             </div>
           )}
         </div>

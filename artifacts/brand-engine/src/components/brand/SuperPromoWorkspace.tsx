@@ -11,7 +11,7 @@ const BG_URL = `${BASE}assets/superpromo/background.png`;
 const LOGO_URL = `${BASE}assets/superpromo/logo-light.png`;
 
 type Variant = "dates" | "cta" | "nodate" | "day1" | "day2" | "replays";
-type SizeMode = "horizontal" | "vertical";
+type SizeMode = "horizontal" | "vertical" | "portrait";
 
 interface TemplateConfig {
   id: string;
@@ -33,6 +33,9 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "vt-dates", name: "Vertical - Dates", shortName: "Dates", width: 1080, height: 1920, variant: "dates", size: "vertical" },
   { id: "vt-nodate", name: "Vertical - No Date", shortName: "No Date", width: 1080, height: 1920, variant: "nodate", size: "vertical" },
   { id: "vt-replays", name: "Vertical - Replays", shortName: "Replays", width: 1080, height: 1920, variant: "replays", size: "vertical" },
+  { id: "pt-dates", name: "Portrait - Dates", shortName: "Dates", width: 1080, height: 1350, variant: "dates", size: "portrait" },
+  { id: "pt-nodate", name: "Portrait - No Date", shortName: "No Date", width: 1080, height: 1350, variant: "nodate", size: "portrait" },
+  { id: "pt-replays", name: "Portrait - Replays", shortName: "Replays", width: 1080, height: 1350, variant: "replays", size: "portrait" },
 ];
 
 function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base: number = 0.045) {
@@ -510,6 +513,207 @@ function VerticalTemplate({
   );
 }
 
+function PortraitTemplate({
+  config,
+  headline,
+  dateText,
+  hostName,
+  hostTitle,
+  hostImage,
+  guestName,
+  guestTitle,
+  guestImage,
+  hostSettings,
+  guestSettings,
+}: {
+  config: TemplateConfig;
+  headline: string;
+  dateText: string;
+  ctaText: string;
+  hostName: string;
+  hostTitle: string;
+  hostImage: string | null;
+  guestName: string;
+  guestTitle: string;
+  guestImage: string | null;
+  hostSettings: ImageSettings;
+  guestSettings: ImageSettings;
+}) {
+  const { variant } = config;
+  const showDate = variant === "dates";
+  const showReplays = variant === "replays";
+  const containerRef = useRef<HTMLDivElement>(null);
+  useContainerFontSize(containerRef, 0.045);
+
+  const circleSize = "6.5em";
+
+  return (
+    <div
+      ref={containerRef}
+      data-template-id={config.id}
+      style={{
+        width: "100%",
+        aspectRatio: "1080/1350",
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: "0.3em",
+        fontFamily: "'Poppins', sans-serif",
+        backgroundColor: "#2563EB",
+        fontSize: "16px",
+      }}
+    >
+      <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+
+      <div style={{
+        position: "absolute", top: "4.5%", left: "6%", right: "6%", zIndex: 3,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ height: "2.2em", width: "auto", objectFit: "contain" }} />
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: "0.25em",
+          padding: "0.18em 0.6em 0.18em 0.35em",
+          background: "transparent",
+          border: "1px solid rgba(255,255,255,0.45)",
+          borderRadius: "999px",
+        }}>
+          <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
+            <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
+            <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+          </svg>
+          <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+        </div>
+      </div>
+
+      <div style={{
+        position: "absolute", left: "6%", right: "6%", top: "16%", zIndex: 3,
+        display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
+      }}>
+        <div style={{ textAlign: "center" }}>
+          <span style={{
+            fontSize: "1.9em", fontWeight: 700, lineHeight: 1.08,
+            background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            color: "transparent",
+            letterSpacing: "-0.02em",
+            display: "inline",
+          }}>
+            {headline ? headline.split("\n").map((line, i, arr) => (
+              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+            )) : "Enter Headline"}
+          </span>
+        </div>
+
+        {showDate && dateText && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "0.25em",
+            padding: "0.32em 0.7em", marginTop: "0.4em",
+            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            borderRadius: "0.25em",
+          }}>
+            <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span style={{ fontSize: "0.6em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+          </div>
+        )}
+
+        {showReplays && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "0.3em",
+            padding: "0.35em 1em", marginTop: "0.4em",
+            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            borderRadius: "0.25em",
+          }}>
+            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+              <defs>
+                <linearGradient id="replay-grad-pt" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#62E8FF" />
+                  <stop offset="100%" stopColor="#FFFFFF" />
+                </linearGradient>
+              </defs>
+              <path d="M1 4v6h6" stroke="url(#replay-grad-pt)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-pt)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span style={{
+              fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
+              letterSpacing: "0.04em",
+              background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              color: "transparent",
+            }}>REPLAYS</span>
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        position: "absolute", bottom: "8%", left: "6%", right: "6%",
+        display: "flex", justifyContent: "center", gap: "2.5em",
+        zIndex: 2,
+      }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{
+            width: circleSize, height: circleSize,
+            borderRadius: "50%",
+            border: "0.15em solid rgba(255,255,255,0.2)",
+            overflow: "hidden",
+            background: hostImage ? "transparent" : "rgba(255,255,255,0.15)",
+            boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
+            flexShrink: 0,
+          }}>
+            {hostImage ? (
+              <img src={hostImage} alt="" crossOrigin="anonymous" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                transform: `scale(${hostSettings.scale}) translate(${hostSettings.offsetX}%, ${hostSettings.offsetY}%)`,
+              }} />
+            ) : (
+              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+              </div>
+            )}
+          </div>
+          <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
+            <div style={{ fontSize: "0.6em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{hostName || "Host Name"}</div>
+            <div style={{ fontSize: "0.32em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{
+            width: circleSize, height: circleSize,
+            borderRadius: "50%",
+            border: "0.15em solid rgba(255,255,255,0.2)",
+            overflow: "hidden",
+            background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
+            boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
+            flexShrink: 0,
+          }}>
+            {guestImage ? (
+              <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+                width: "100%", height: "100%", objectFit: "cover",
+                transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              }} />
+            ) : (
+              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+              </div>
+            )}
+          </div>
+          <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
+            <div style={{ fontSize: "0.6em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Guest Name"}</div>
+            <div style={{ fontSize: "0.32em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TemplatePreview(props: {
   config: TemplateConfig;
   headline: string;
@@ -525,6 +729,7 @@ function TemplatePreview(props: {
   guestSettings: ImageSettings;
 }) {
   if (props.config.size === "vertical") return <VerticalTemplate {...props} />;
+  if (props.config.size === "portrait") return <PortraitTemplate {...props} />;
   return <HorizontalTemplate {...props} />;
 }
 
@@ -742,7 +947,7 @@ export function SuperPromoWorkspace() {
           <div className="flex flex-col">
             <label className={labelCls}>Size</label>
             <div className="flex items-center gap-[2px] p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.04)]">
-              {(["horizontal", "vertical"] as SizeMode[]).map((s) => {
+              {(["horizontal", "vertical", "portrait"] as SizeMode[]).map((s) => {
                 const isActive = sizeMode === s;
                 return (
                   <button
@@ -754,7 +959,7 @@ export function SuperPromoWorkspace() {
                         : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
                       }`}
                   >
-                    {s === "horizontal" ? "Horizontal" : "Vertical"}
+                    {s === "horizontal" ? "Horizontal" : s === "vertical" ? "Vertical" : "Portrait"}
                   </button>
                 );
               })}
@@ -838,7 +1043,7 @@ export function SuperPromoWorkspace() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
           <LivePreview>
-            <div className={`w-full ${currentConfig.size === "vertical" ? "max-w-[320px]" : "max-w-[560px]"}`} ref={previewRef}>
+            <div className={`w-full ${currentConfig.size === "horizontal" ? "max-w-[560px]" : currentConfig.size === "vertical" ? "max-w-[320px]" : "max-w-[380px]"}`} ref={previewRef}>
               <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} />
             </div>
           </LivePreview>

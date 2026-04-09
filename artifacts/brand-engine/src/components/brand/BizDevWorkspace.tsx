@@ -47,46 +47,46 @@ function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base:
   }, [ref, base]);
 }
 
-function GuestPill({ guestName, hostName, fontSize }: { guestName: string; hostName: string; fontSize: string }) {
-  if (!guestName && !hostName) return null;
+function GuestPill({ guestName, layout = "center" }: { guestName: string; layout?: "center" | "right" }) {
+  if (!guestName) return null;
+
+  if (layout === "right") {
+    return (
+      <div style={{
+        position: "absolute",
+        bottom: "5%",
+        right: "4%",
+        zIndex: 5,
+        background: "rgba(6,17,35,0.82)",
+        backdropFilter: "blur(10px)",
+        borderRadius: "0.5em",
+        padding: "0.4em 1em",
+        border: "1px solid rgba(255,255,255,0.1)",
+        textAlign: "center",
+        minWidth: "10em",
+      }}>
+        <div style={{ fontSize: "0.32em", fontWeight: 700, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.4em" }}>Guest:</div>
+        <div style={{ fontSize: "0.72em", fontWeight: 800, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.1 }}>{guestName}</div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       position: "absolute",
-      bottom: "4%",
-      left: "8%",
-      right: "8%",
+      bottom: "3.5%",
+      left: "10%",
+      right: "10%",
       zIndex: 5,
-      display: "flex",
-      gap: "0.3em",
+      background: "rgba(6,17,35,0.82)",
+      backdropFilter: "blur(10px)",
+      borderRadius: "0.45em",
+      padding: "0.4em 0.8em",
+      border: "1px solid rgba(255,255,255,0.1)",
+      textAlign: "center",
     }}>
-      {hostName && (
-        <div style={{
-          flex: 1,
-          background: "rgba(6,17,35,0.75)",
-          backdropFilter: "blur(8px)",
-          borderRadius: "0.4em",
-          padding: "0.45em 0.6em",
-          border: "1px solid rgba(255,255,255,0.08)",
-          textAlign: "center",
-        }}>
-          <div style={{ fontSize: `calc(${fontSize} * 0.38)`, fontWeight: 600, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.12em", lineHeight: 1, paddingBottom: "0.25em" }}>Host:</div>
-          <div style={{ fontSize: `calc(${fontSize} * 0.7)`, fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.03em", lineHeight: 1.1 }}>{hostName}</div>
-        </div>
-      )}
-      {guestName && (
-        <div style={{
-          flex: 1,
-          background: "rgba(6,17,35,0.75)",
-          backdropFilter: "blur(8px)",
-          borderRadius: "0.4em",
-          padding: "0.45em 0.6em",
-          border: "1px solid rgba(255,255,255,0.08)",
-          textAlign: "center",
-        }}>
-          <div style={{ fontSize: `calc(${fontSize} * 0.38)`, fontWeight: 600, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.12em", lineHeight: 1, paddingBottom: "0.25em" }}>Guest:</div>
-          <div style={{ fontSize: `calc(${fontSize} * 0.7)`, fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.03em", lineHeight: 1.1 }}>{guestName}</div>
-        </div>
-      )}
+      <div style={{ fontSize: "0.32em", fontWeight: 700, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.35em" }}>Guest:</div>
+      <div style={{ fontSize: "0.65em", fontWeight: 800, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.1 }}>{guestName}</div>
     </div>
   );
 }
@@ -101,7 +101,6 @@ function HorizontalTemplate({
   headline,
   dateText,
   guestName,
-  hostName,
   ctaText,
   personImage,
   imgSettings,
@@ -110,7 +109,6 @@ function HorizontalTemplate({
   headline: string;
   dateText: string;
   guestName: string;
-  hostName: string;
   ctaText: string;
   personImage: string | null;
   imgSettings: ImageSettings;
@@ -201,7 +199,7 @@ function HorizontalTemplate({
         )}
       </div>
 
-      <GuestPill guestName={guestName} hostName={hostName} fontSize="1em" />
+      <GuestPill guestName={guestName} layout="right" />
     </div>
   );
 }
@@ -211,7 +209,6 @@ function SquarePortraitTemplate({
   headline,
   dateText,
   guestName,
-  hostName,
   personImage,
   imgSettings,
 }: {
@@ -219,7 +216,6 @@ function SquarePortraitTemplate({
   headline: string;
   dateText: string;
   guestName: string;
-  hostName: string;
   personImage: string | null;
   imgSettings: ImageSettings;
 }) {
@@ -305,7 +301,7 @@ function SquarePortraitTemplate({
         )}
       </div>
 
-      <GuestPill guestName={guestName} hostName={hostName} fontSize="1em" />
+      <GuestPill guestName={guestName} layout="center" />
     </div>
   );
 }
@@ -315,7 +311,6 @@ function TemplatePreview(props: {
   headline: string;
   dateText: string;
   guestName: string;
-  hostName: string;
   ctaText: string;
   personImage: string | null;
   imgSettings: ImageSettings;
@@ -328,7 +323,6 @@ export function BizDevWorkspace() {
   const [headline, setHeadline] = useState("");
   const [dateText, setDateText] = useState("");
   const [guestName, setGuestName] = useState("");
-  const [hostName, setHostName] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [imgSettings, setImgSettings] = useState<ImageSettings>({ scale: 1, offsetY: 0 });
@@ -498,15 +492,9 @@ export function BizDevWorkspace() {
             <label className={labelCls}>Date <span className="text-[#FF6B6B]">*</span></label>
             <input type="text" value={dateText} onChange={(e) => setDateText(e.target.value)} placeholder="APRIL 6–7, 12PM EDT" className={inputCls} />
           </div>
-          <div className="grid grid-cols-2 gap-[10px]">
-            <div className="flex flex-col">
-              <label className={labelCls}>Host Name</label>
-              <input type="text" value={hostName} onChange={(e) => setHostName(e.target.value)} placeholder="Robin Alex" className={inputCls} />
-            </div>
-            <div className="flex flex-col">
-              <label className={labelCls}>Guest Name <span className="text-[#FF6B6B]">*</span></label>
-              <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Michael Cooch" className={inputCls} />
-            </div>
+          <div className="flex flex-col">
+            <label className={labelCls}>Guest Name <span className="text-[#FF6B6B]">*</span></label>
+            <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Michael Cooch" className={inputCls} />
           </div>
           <div className="flex flex-col">
             <label className={labelCls}>CTA Text <span className="text-[#94A3B8] font-normal normal-case tracking-normal ml-[4px]">(optional)</span></label>
@@ -611,7 +599,7 @@ export function BizDevWorkspace() {
         {!showGallery ? (
           <div className="flex-1 flex items-center justify-center p-[24px] overflow-auto">
             <div className="w-full max-w-[800px]">
-              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} hostName={hostName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
+              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
             </div>
           </div>
         ) : (
@@ -634,7 +622,7 @@ export function BizDevWorkspace() {
                 {activeTemplates.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} hostName={hostName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
+                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
                     </div>
                     <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
                       <div>

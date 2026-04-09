@@ -7,7 +7,6 @@ import {
   Settings, 
   FolderOpen,
   MonitorPlay,
-  Briefcase,
   X
 } from "lucide-react";
 
@@ -104,19 +103,13 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             onClick={() => handleSetMode('bizdev-templates')}
             className={`${btnBase} cursor-pointer ${currentMode === 'bizdev-templates' ? activeClass : inactiveClass}`}
           >
-            <Briefcase className={iconCls(currentMode === 'bizdev-templates')} />
-            Biz Dev Templates
+            <Video className={iconCls(currentMode === 'bizdev-templates')} />
+            Virtual Workshop
           </button>
 
           <div className={`${btnBase} ${disabledClass}`}>
             <Gift className="w-[18px] h-[18px] shrink-0" />
             Super Promo
-            <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
-          </div>
-
-          <div className={`${btnBase} ${disabledClass}`}>
-            <Video className="w-[18px] h-[18px] shrink-0" />
-            Virtual Workshop
             <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
           </div>
         </div>

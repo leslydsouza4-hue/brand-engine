@@ -178,7 +178,7 @@ function HorizontalTemplate({
       <div style={{ position: "absolute", left: "5%", top: "22%", width: "48%", zIndex: 3, display: "flex", flexDirection: "column" }}>
         <div style={{ paddingBottom: "0.5em" }}>
           <span style={{
-            fontSize: "1.95em", fontWeight: 800, lineHeight: 1.08, textTransform: "uppercase",
+            fontSize: "0.975em", fontWeight: 800, lineHeight: 1.08,
             background: "linear-gradient(180deg, #2896FB 0%, #4CA8FC 24%, #C3D8FF 51%, #94D9FF 77%, #6FCDFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent", letterSpacing: "-0.02em",
@@ -303,10 +303,9 @@ function SquarePortraitTemplate({
       }}>
         <div style={{ paddingBottom: "0.4em" }}>
           <span style={{
-            fontSize: isPortrait ? "1.6em" : "1.7em",
+            fontSize: isPortrait ? "0.8em" : "0.85em",
             fontWeight: 800,
             lineHeight: 1.08,
-            textTransform: "uppercase",
             background: "linear-gradient(180deg, #2896FB 0%, #4CA8FC 24%, #C3D8FF 51%, #94D9FF 77%, #6FCDFF 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",

@@ -202,15 +202,15 @@ function HorizontalTemplate({
       {showDate && dateText && (
         <div style={{
           position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
-          display: "inline-flex", alignItems: "center", gap: "0.5em",
-          padding: "0.45em 1em",
+          display: "inline-flex", alignItems: "center", gap: "0.35em",
+          padding: "0.32em 0.7em",
           background: "rgba(15,23,42,0.85)",
-          borderRadius: "0.35em",
+          borderRadius: "0.25em",
         }}>
           <div style={{
-            width: "1.1em", height: "1.1em",
-            background: "linear-gradient(135deg, #38BDF8 0%, #2563EB 100%)",
-            borderRadius: "0.2em",
+            width: "0.77em", height: "0.77em",
+            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            borderRadius: "0.15em",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}>
@@ -221,7 +221,7 @@ function HorizontalTemplate({
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
           </div>
-          <span style={{ fontSize: "0.52em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+          <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
         </div>
       )}
 

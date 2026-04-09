@@ -120,7 +120,7 @@ function HorizontalTemplate({
         <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
       </div>
 
-      <div style={{ position: "absolute", left: "5%", top: "22%", width: "50%", zIndex: 3, display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "absolute", left: "5%", top: "20%", width: "50%", zIndex: 3, display: "flex", flexDirection: "column" }}>
         <div style={{ paddingBottom: "0.4em" }}>
           <span style={{
             fontSize: "1.24em", fontWeight: 800, lineHeight: 1.08,
@@ -201,7 +201,7 @@ function HorizontalTemplate({
 
       {showDate && dateText && (
         <div style={{
-          position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
+          position: "absolute", left: "5%", top: "52%", zIndex: 3,
           display: "inline-flex", alignItems: "center", gap: "0.25em",
           padding: "0.32em 0.7em",
           background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
@@ -219,7 +219,7 @@ function HorizontalTemplate({
 
       {showCta && ctaText && (
         <div style={{
-          position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
+          position: "absolute", left: "5%", top: "52%", zIndex: 3,
         }}>
           <span style={{
             display: "inline-block", padding: "0.4em 1.4em",
@@ -233,7 +233,7 @@ function HorizontalTemplate({
 
       {showDay && (
         <div style={{
-          position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
+          position: "absolute", left: "5%", top: "52%", zIndex: 3,
           fontSize: "1.8em", fontWeight: 900, color: "#FFFFFF", lineHeight: 1,
           letterSpacing: "0.02em",
           textShadow: "0 0.05em 0.2em rgba(0,0,0,0.25)",

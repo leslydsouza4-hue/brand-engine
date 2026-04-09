@@ -167,7 +167,7 @@ function HorizontalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", right: "7%", bottom: "16%",
+        position: "absolute", right: "4%", bottom: "16%",
         display: "flex", flexDirection: "column", alignItems: "center",
         zIndex: 2,
       }}>

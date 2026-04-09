@@ -107,11 +107,13 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             Virtual Workshop
           </button>
 
-          <div className={`${btnBase} ${disabledClass}`}>
-            <Gift className="w-[18px] h-[18px] shrink-0" />
+          <button 
+            onClick={() => handleSetMode('super-promo')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'super-promo' ? activeClass : inactiveClass}`}
+          >
+            <Gift className={iconCls(currentMode === 'super-promo')} />
             Super Promo
-            <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
-          </div>
+          </button>
         </div>
 
         <div className="px-[12px] mb-[10px] relative">

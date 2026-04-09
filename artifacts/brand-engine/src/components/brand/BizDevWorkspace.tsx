@@ -1,28 +1,30 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  UploadCloud, X, Loader2, Download, Check, Sparkles
+  UploadCloud, X, Loader2, Download, Check, Sparkles, Monitor, Square, RectangleVertical
 } from "lucide-react";
 import html2canvas from "html2canvas";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/bizdev/background.png`;
-
+const LOGO_URL = `${BASE}assets/bizdev/logo-light.png`;
 
 interface TemplateConfig {
   id: string;
   name: string;
+  shortName: string;
   width: number;
   height: number;
   variant: "dates" | "cta" | "day1" | "day2";
+  group: "horizontal" | "square" | "portrait";
 }
 
 const TEMPLATES: TemplateConfig[] = [
-  { id: "horizontal-cta", name: "Horizontal - CTA", width: 1920, height: 1080, variant: "cta" },
-  { id: "horizontal-dates", name: "Horizontal - Dates", width: 1920, height: 1080, variant: "dates" },
-  { id: "horizontal-day1", name: "Horizontal - DAY 1", width: 1920, height: 1080, variant: "day1" },
-  { id: "horizontal-day2", name: "Horizontal - DAY 2", width: 1920, height: 1080, variant: "day2" },
-  { id: "ql-dates", name: "QL - Dates", width: 1080, height: 1080, variant: "dates" },
-  { id: "portrait-dates", name: "Portrait - Dates", width: 1080, height: 1350, variant: "dates" },
+  { id: "horizontal-cta", name: "Horizontal - CTA", shortName: "CTA", width: 1920, height: 1080, variant: "cta", group: "horizontal" },
+  { id: "horizontal-dates", name: "Horizontal - Dates", shortName: "Dates", width: 1920, height: 1080, variant: "dates", group: "horizontal" },
+  { id: "horizontal-day1", name: "Horizontal - DAY 1", shortName: "Day 1", width: 1920, height: 1080, variant: "day1", group: "horizontal" },
+  { id: "horizontal-day2", name: "Horizontal - DAY 2", shortName: "Day 2", width: 1920, height: 1080, variant: "day2", group: "horizontal" },
+  { id: "ql-dates", name: "QL - Dates", shortName: "Dates", width: 1080, height: 1080, variant: "dates", group: "square" },
+  { id: "portrait-dates", name: "Portrait - Dates", shortName: "Dates", width: 1080, height: 1350, variant: "dates", group: "portrait" },
 ];
 
 function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base: number = 0.045) {
@@ -35,6 +37,25 @@ function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base:
     ro.observe(ref.current);
     return () => ro.disconnect();
   }, [ref, base]);
+}
+
+function LogoOverlay() {
+  return (
+    <img
+      src={LOGO_URL}
+      alt=""
+      crossOrigin="anonymous"
+      style={{
+        position: "absolute",
+        top: "5.5%",
+        left: "5%",
+        height: "4.5%",
+        width: "auto",
+        objectFit: "contain",
+        zIndex: 3,
+      }}
+    />
+  );
 }
 
 function HorizontalTemplate({
@@ -76,7 +97,7 @@ function HorizontalTemplate({
     >
       <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(6,11,22,0.65) 0%, rgba(6,11,22,0.25) 45%, transparent 65%)", zIndex: 1 }} />
-
+      <LogoOverlay />
 
       {personImage && (
         <img src={personImage} alt="Guest" crossOrigin="anonymous" style={{
@@ -181,6 +202,7 @@ function SquareTemplate({
     >
       <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,11,22,0.5) 0%, rgba(6,11,22,0.15) 40%, transparent 60%)", zIndex: 1 }} />
+      <LogoOverlay />
 
       {personImage && (
         <img src={personImage} alt="Guest" crossOrigin="anonymous" style={{
@@ -189,7 +211,7 @@ function SquareTemplate({
         }} />
       )}
 
-      <div style={{ position: "absolute", left: "6%", top: "14%", width: "60%", zIndex: 3, display: "flex", flexDirection: "column" }}>
+      <div style={{ position: "absolute", left: "6%", top: "16%", width: "60%", zIndex: 3, display: "flex", flexDirection: "column" }}>
         <div style={{
           fontSize: "1.8em", fontWeight: 800, lineHeight: 1.08, textTransform: "uppercase",
           background: "linear-gradient(180deg, #FFFFFF 0%, #5BE0D8 40%, #00B2A9 100%)",
@@ -239,6 +261,12 @@ function TemplatePreview(props: {
   return <SquareTemplate {...props} />;
 }
 
+const SIZE_GROUPS = [
+  { key: "horizontal", label: "Horizontal", icon: Monitor, dims: "1920 × 1080" },
+  { key: "square", label: "Square", icon: Square, dims: "1080 × 1080" },
+  { key: "portrait", label: "Portrait", icon: RectangleVertical, dims: "1080 × 1350" },
+] as const;
+
 export function BizDevWorkspace() {
   const [headline, setHeadline] = useState("");
   const [dateText, setDateText] = useState("");
@@ -287,6 +315,8 @@ export function BizDevWorkspace() {
   }, [activeTemplates, selectedTemplate]);
 
   const currentConfig = TEMPLATES.find((t) => t.id === selectedTemplate) || TEMPLATES[0];
+  const currentGroup = currentConfig.group;
+  const groupTemplates = activeTemplates.filter((t) => t.group === currentGroup);
 
   const exportTemplate = useCallback(async (templateId: string, containerEl?: HTMLElement) => {
     const root = containerEl || document;
@@ -409,14 +439,56 @@ export function BizDevWorkspace() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
           <>
-            <div className="flex items-center gap-[6px] px-[20px] pt-[16px] pb-[10px] overflow-x-auto shrink-0">
-              {activeTemplates.map((t) => (
-                <button key={t.id} onClick={() => setSelectedTemplate(t.id)} className={`shrink-0 px-[12px] py-[6px] rounded-[8px] text-[10px] font-medium transition-all cursor-pointer border-none ${selectedTemplate === t.id ? "bg-[rgba(0,178,169,0.12)] text-[#00B2A9] shadow-[inset_0_0_0_1px_rgba(0,178,169,0.2)]" : "bg-[rgba(255,255,255,0.03)] text-[#64748B] hover:text-[#94A3B8] hover:bg-[rgba(255,255,255,0.06)]"}`}>
-                  {t.name}
-                  <span className="ml-[4px] text-[9px] opacity-60">{t.width}×{t.height}</span>
-                </button>
-              ))}
+            <div className="px-[20px] pt-[16px] pb-[12px] shrink-0 border-b border-[rgba(255,255,255,0.04)]">
+              <div className="flex items-center gap-[6px] mb-[10px]">
+                {SIZE_GROUPS.map((g) => {
+                  const Icon = g.icon;
+                  const isActive = currentGroup === g.key;
+                  const hasTemplates = activeTemplates.some((t) => t.group === g.key);
+                  if (!hasTemplates) return null;
+                  return (
+                    <button
+                      key={g.key}
+                      onClick={() => {
+                        const first = activeTemplates.find((t) => t.group === g.key);
+                        if (first) setSelectedTemplate(first.id);
+                      }}
+                      className={`flex items-center gap-[8px] px-[14px] py-[8px] rounded-[10px] text-[11px] font-semibold transition-all cursor-pointer border
+                        ${isActive
+                          ? "bg-[rgba(0,178,169,0.08)] text-[#00B2A9] border-[rgba(0,178,169,0.2)]"
+                          : "bg-transparent text-[#64748B] border-transparent hover:text-[#94A3B8] hover:bg-[rgba(255,255,255,0.03)]"
+                        }`}
+                    >
+                      <Icon className="w-[14px] h-[14px]" />
+                      <span>{g.label}</span>
+                      <span className={`text-[9px] font-normal ${isActive ? "text-[rgba(0,178,169,0.6)]" : "text-[#475569]"}`}>{g.dims}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {groupTemplates.length > 1 && (
+                <div className="flex items-center gap-[4px]">
+                  {groupTemplates.map((t) => {
+                    const isActive = selectedTemplate === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelectedTemplate(t.id)}
+                        className={`px-[10px] py-[4px] rounded-[6px] text-[10px] font-medium transition-all cursor-pointer border-none
+                          ${isActive
+                            ? "bg-[rgba(255,255,255,0.08)] text-white"
+                            : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                          }`}
+                      >
+                        {t.shortName}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
+
             <div className="flex-1 flex items-center justify-center p-[20px] overflow-auto">
               <div className="w-full max-w-[800px]">
                 <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} />

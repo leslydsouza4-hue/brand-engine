@@ -50,43 +50,32 @@ function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base:
 function GuestPill({ guestName, layout = "center" }: { guestName: string; layout?: "center" | "right" }) {
   if (!guestName) return null;
 
+  const pillStyle: React.CSSProperties = {
+    position: "absolute",
+    zIndex: 5,
+    background: "rgba(6,17,40,0.55)",
+    backdropFilter: "blur(16px)",
+    WebkitBackdropFilter: "blur(16px)",
+    borderRadius: "0.35em",
+    padding: "0.25em 0.6em",
+    border: "1px solid rgba(0,178,169,0.15)",
+    boxShadow: "0 0 20px rgba(0,178,169,0.12), 0 0 40px rgba(0,178,169,0.06), inset 0 1px 0 rgba(255,255,255,0.05)",
+    textAlign: "center" as const,
+  };
+
   if (layout === "right") {
     return (
-      <div style={{
-        position: "absolute",
-        bottom: "5%",
-        right: "4%",
-        zIndex: 5,
-        background: "rgba(6,17,35,0.82)",
-        backdropFilter: "blur(10px)",
-        borderRadius: "0.5em",
-        padding: "0.4em 1em",
-        border: "1px solid rgba(255,255,255,0.1)",
-        textAlign: "center",
-        minWidth: "10em",
-      }}>
-        <div style={{ fontSize: "0.32em", fontWeight: 700, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.4em" }}>Guest:</div>
-        <div style={{ fontSize: "0.72em", fontWeight: 800, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.1 }}>{guestName}</div>
+      <div style={{ ...pillStyle, bottom: "5%", right: "4%" }}>
+        <div style={{ fontSize: "0.22em", fontWeight: 700, color: "#00B2A9", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.6em" }}>Guest:</div>
+        <div style={{ fontSize: "0.48em", fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.05em", lineHeight: 1.1 }}>{guestName}</div>
       </div>
     );
   }
 
   return (
-    <div style={{
-      position: "absolute",
-      bottom: "3.5%",
-      left: "10%",
-      right: "10%",
-      zIndex: 5,
-      background: "rgba(6,17,35,0.82)",
-      backdropFilter: "blur(10px)",
-      borderRadius: "0.45em",
-      padding: "0.4em 0.8em",
-      border: "1px solid rgba(255,255,255,0.1)",
-      textAlign: "center",
-    }}>
-      <div style={{ fontSize: "0.32em", fontWeight: 700, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.35em" }}>Guest:</div>
-      <div style={{ fontSize: "0.65em", fontWeight: 800, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.1 }}>{guestName}</div>
+    <div style={{ ...pillStyle, bottom: "3.5%", left: "12%", right: "12%" }}>
+      <div style={{ fontSize: "0.22em", fontWeight: 700, color: "#00B2A9", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.6em" }}>Guest:</div>
+      <div style={{ fontSize: "0.45em", fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.05em", lineHeight: 1.1 }}>{guestName}</div>
     </div>
   );
 }

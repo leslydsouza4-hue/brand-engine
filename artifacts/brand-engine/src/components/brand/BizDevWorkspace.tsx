@@ -293,7 +293,7 @@ function SquarePortraitTemplate({
       <div style={{
         position: "absolute",
         left: "8%",
-        top: isPortrait ? "11%" : "14%",
+        top: isPortrait ? "14%" : "18%",
         width: "84%",
         zIndex: 3,
         display: "flex",
@@ -337,7 +337,7 @@ function SquarePortraitTemplate({
       </div>
 
       <GuideLines show={isDraggingPill || false} pillX={pillSettings.offsetX} pillY={pillSettings.offsetY} />
-      <GuestPill guestName={guestName} pillSettings={pillSettings} onDrag={onPillDrag} isDragging={isDraggingPill} />
+      <GuestPill guestName={guestName} pillSettings={pillSettings} onDrag={onPillDrag} isDragging={isDraggingPill} baseX={50} />
     </div>
   );
 }

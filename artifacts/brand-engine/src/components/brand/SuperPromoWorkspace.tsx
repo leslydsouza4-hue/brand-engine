@@ -110,7 +110,7 @@ function HorizontalTemplate({
         border: "1px solid rgba(255,255,255,0.45)",
         borderRadius: "999px",
       }}>
-        <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none">
+        <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(45deg)" }}>
           <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
           <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
           <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />

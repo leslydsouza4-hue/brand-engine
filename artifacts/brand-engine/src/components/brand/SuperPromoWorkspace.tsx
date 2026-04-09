@@ -362,28 +362,28 @@ function VerticalTemplate({
       }} />
 
       <div style={{
-        position: "absolute", left: "7%", right: "7%", top: "8%", zIndex: 3,
+        position: "absolute", left: "7%", right: "7%", top: "12%", zIndex: 3,
         display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
       }}>
         <div style={{
-          display: "inline-flex", alignItems: "center", gap: "0.25em",
-          padding: "0.18em 0.6em 0.18em 0.35em",
+          display: "inline-flex", alignItems: "center", gap: "0.3em",
+          padding: "0.25em 0.85em 0.25em 0.5em",
           background: "transparent",
           border: "1px solid rgba(255,255,255,0.45)",
           borderRadius: "999px",
         }}>
-          <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
+          <svg width="0.92em" height="0.92em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
             <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
             <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.32em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: "1.6em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: "2.08em", fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",

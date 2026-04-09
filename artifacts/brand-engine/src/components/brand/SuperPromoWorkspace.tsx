@@ -81,8 +81,8 @@ function HorizontalTemplate({
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
-  const hostCircleSize = "7em";
-  const guestCircleSize = "5.5em";
+  const hostCircleSize = "6.8em";
+  const guestCircleSize = "4.8em";
 
   return (
     <div
@@ -95,136 +95,149 @@ function HorizontalTemplate({
         overflow: "hidden",
         borderRadius: "0.3em",
         fontFamily: "'Poppins', sans-serif",
-        backgroundColor: "#0e1f3a",
+        backgroundColor: "#2563EB",
         fontSize: "16px",
       }}
     >
       <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(6,11,22,0.7) 0%, rgba(6,11,22,0.3) 50%, rgba(6,11,22,0.15) 70%)", zIndex: 1 }} />
 
-      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "6.5%", left: "5%", height: "8.2%", width: "auto", objectFit: "contain", zIndex: 3 }} />
+      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "7%", left: "5%", height: "7.5%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
-      <div style={{ position: "absolute", left: "5%", top: "24%", width: "44%", zIndex: 3, display: "flex", flexDirection: "column" }}>
-        {showBadge && (
-          <div style={{ paddingBottom: "0.6em" }}>
-            <span style={{
-              display: "inline-block", padding: "0.2em 0.7em",
-              fontSize: "0.38em", fontWeight: 700, color: "#FFFFFF",
-              background: "rgba(255,255,255,0.12)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              borderRadius: "0.2em", letterSpacing: "0.12em",
-              textTransform: "uppercase",
-            }}>Free Virtual Event</span>
-          </div>
-        )}
+      {(showBadge || showDate) && (
+        <div style={{
+          position: "absolute", top: "7%", right: "5%", zIndex: 3,
+          display: "inline-flex", alignItems: "center", gap: "0.35em",
+          padding: "0.28em 0.8em",
+          background: "rgba(255,255,255,0.15)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255,255,255,0.25)",
+          borderRadius: "0.3em",
+        }}>
+          <svg width="0.7em" height="0.7em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 20l-3-3H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3l-3 3z"/>
+            <path d="M8 10h0"/><path d="M12 10h0"/><path d="M16 10h0"/>
+          </svg>
+          <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.1em", textTransform: "uppercase" }}>Free Virtual Event</span>
+        </div>
+      )}
 
-        <div style={{ paddingBottom: "0.5em" }}>
+      <div style={{ position: "absolute", left: "5%", top: "22%", width: "50%", zIndex: 3, display: "flex", flexDirection: "column" }}>
+        <div style={{ paddingBottom: "0.4em" }}>
           <span style={{
-            fontSize: "1.4em", fontWeight: 800, lineHeight: 1.05,
-            background: "linear-gradient(135deg, #5FD0FF 0%, #FFFFFF 100%)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            color: "transparent", letterSpacing: "-0.02em",
+            fontSize: "1.55em", fontWeight: 800, lineHeight: 1.08,
+            color: "#FFFFFF",
+            letterSpacing: "-0.02em",
             display: "inline",
           }}>
             {headline || "Enter Headline"}
           </span>
         </div>
-
-        {showDate && dateText && (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.3em", paddingBottom: "0.4em" }}>
-            <div style={{ width: "1em", height: "1em", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFC800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="3" y1="10" x2="21" y2="10" />
-              </svg>
-            </div>
-            <span style={{ fontSize: "0.55em", fontWeight: 600, color: "#FFC800", letterSpacing: "0.03em" }}>{dateText}</span>
-          </div>
-        )}
-
-        {showCta && ctaText && (
-          <div style={{ paddingBottom: "0.4em" }}>
-            <span style={{
-              display: "inline-block", padding: "0.28em 1em",
-              fontSize: "0.52em", fontWeight: 700, color: "#0A1628",
-              background: "linear-gradient(135deg, #FFC800 0%, #FFD84D 100%)",
-              borderRadius: "0.22em", letterSpacing: "0.03em",
-            }}>{ctaText}</span>
-          </div>
-        )}
-
-        {showDay && (
-          <div style={{
-            fontSize: "1.92em", fontWeight: 900, color: "#FFFFFF", lineHeight: 1,
-            letterSpacing: "0.02em", paddingBottom: "0.2em",
-            textShadow: "0 0.05em 0.3em rgba(0,0,0,0.3)",
-          }}>{dayLabel}</div>
-        )}
       </div>
 
       <div style={{
-        position: "absolute", right: "5%", top: "18%", width: "44%", height: "70%",
-        display: "flex", alignItems: "center", justifyContent: "center",
+        position: "absolute", right: "12%", top: "20%",
+        display: "flex", flexDirection: "column", alignItems: "center",
         zIndex: 2,
       }}>
-        <div style={{ position: "relative", display: "flex", alignItems: "flex-start", justifyContent: "center" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", zIndex: 2 }}>
-            <div style={{
-              width: hostCircleSize, height: hostCircleSize,
-              borderRadius: "50%",
-              border: "0.15em solid rgba(255,255,255,0.15)",
-              overflow: "hidden",
-              background: hostImage ? "transparent" : "linear-gradient(135deg, #1a2a4a 0%, #0e1f3a 100%)",
-              boxShadow: "0 0.4em 1.5em rgba(0,0,0,0.5), 0 0 2em rgba(40,150,251,0.15)",
-              flexShrink: 0,
-            }}>
-              {hostImage ? (
-                <img src={hostImage} alt="" crossOrigin="anonymous" style={{
-                  width: "100%", height: "100%", objectFit: "cover",
-                  transform: `scale(${hostSettings.scale}) translate(${hostSettings.offsetX}%, ${hostSettings.offsetY}%)`,
-                }} />
-              ) : (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-                </div>
-              )}
+        <div style={{
+          width: hostCircleSize, height: hostCircleSize,
+          borderRadius: "50%",
+          border: "0.18em solid rgba(255,255,255,0.25)",
+          overflow: "hidden",
+          background: hostImage ? "transparent" : "rgba(20,40,80,0.7)",
+          boxShadow: "0 0.4em 1.5em rgba(0,0,0,0.35)",
+          flexShrink: 0,
+        }}>
+          {hostImage ? (
+            <img src={hostImage} alt="" crossOrigin="anonymous" style={{
+              width: "100%", height: "100%", objectFit: "cover",
+              transform: `scale(${hostSettings.scale}) translate(${hostSettings.offsetX}%, ${hostSettings.offsetY}%)`,
+            }} />
+          ) : (
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
             </div>
-            <div style={{ textAlign: "center", marginTop: "0.4em" }}>
-              <div style={{ fontSize: "0.48em", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2 }}>{hostName || "Host Name"}</div>
-              <div style={{ fontSize: "0.32em", fontWeight: 400, color: "rgba(255,255,255,0.55)", lineHeight: 1.3, marginTop: "0.15em" }}>{hostTitle || "Host Title"}</div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginLeft: "-1.2em", zIndex: 1, marginTop: "1.5em" }}>
-            <div style={{
-              width: guestCircleSize, height: guestCircleSize,
-              borderRadius: "50%",
-              border: "0.15em solid rgba(255,255,255,0.12)",
-              overflow: "hidden",
-              background: guestImage ? "transparent" : "linear-gradient(135deg, #1a2a4a 0%, #0e1f3a 100%)",
-              boxShadow: "0 0.4em 1.5em rgba(0,0,0,0.5), 0 0 2em rgba(0,178,169,0.1)",
-              flexShrink: 0,
-            }}>
-              {guestImage ? (
-                <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-                  width: "100%", height: "100%", objectFit: "cover",
-                  transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-                }} />
-              ) : (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-                </div>
-              )}
-            </div>
-            <div style={{ textAlign: "center", marginTop: "0.4em" }}>
-              <div style={{ fontSize: "0.42em", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2 }}>{guestName || "Guest Name"}</div>
-              <div style={{ fontSize: "0.28em", fontWeight: 400, color: "rgba(255,255,255,0.5)", lineHeight: 1.3, marginTop: "0.15em" }}>{guestTitle || "Guest Title"}</div>
-            </div>
-          </div>
+          )}
+        </div>
+        <div style={{ textAlign: "center", marginTop: "0.35em" }}>
+          <div style={{ fontSize: "0.5em", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2 }}>{hostName || "Host Name"}</div>
+          <div style={{ fontSize: "0.28em", fontWeight: 500, color: "rgba(255,255,255,0.7)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.05em" }}>{hostTitle || "Host Title"}</div>
         </div>
       </div>
+
+      <div style={{
+        position: "absolute", right: "4%", bottom: "8%",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        zIndex: 2,
+      }}>
+        <div style={{
+          width: guestCircleSize, height: guestCircleSize,
+          borderRadius: "50%",
+          border: "0.15em solid rgba(255,255,255,0.2)",
+          overflow: "hidden",
+          background: guestImage ? "transparent" : "rgba(20,40,80,0.7)",
+          boxShadow: "0 0.4em 1.5em rgba(0,0,0,0.35)",
+          flexShrink: 0,
+        }}>
+          {guestImage ? (
+            <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+              width: "100%", height: "100%", objectFit: "cover",
+              transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+            }} />
+          ) : (
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+            </div>
+          )}
+        </div>
+        <div style={{ textAlign: "center", marginTop: "0.3em" }}>
+          <div style={{ fontSize: "0.44em", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2 }}>{guestName || "Guest Name"}</div>
+          <div style={{ fontSize: "0.24em", fontWeight: 500, color: "rgba(255,255,255,0.65)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.05em" }}>{guestTitle || "Guest Title"}</div>
+        </div>
+      </div>
+
+      {showDate && dateText && (
+        <div style={{
+          position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
+          display: "inline-flex", alignItems: "center", gap: "0.4em",
+          padding: "0.35em 0.9em",
+          background: "rgba(255,255,255,0.15)",
+          backdropFilter: "blur(8px)",
+          border: "1px solid rgba(255,255,255,0.2)",
+          borderRadius: "0.3em",
+        }}>
+          <svg width="0.75em" height="0.75em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <span style={{ fontSize: "0.48em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.03em" }}>{dateText}</span>
+        </div>
+      )}
+
+      {showCta && ctaText && (
+        <div style={{
+          position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
+        }}>
+          <span style={{
+            display: "inline-block", padding: "0.35em 1.2em",
+            fontSize: "0.52em", fontWeight: 700, color: "#1a56db",
+            background: "#FFFFFF",
+            borderRadius: "0.25em", letterSpacing: "0.03em",
+            boxShadow: "0 0.2em 0.8em rgba(0,0,0,0.2)",
+          }}>{ctaText}</span>
+        </div>
+      )}
+
+      {showDay && (
+        <div style={{
+          position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
+          fontSize: "1.8em", fontWeight: 900, color: "#FFFFFF", lineHeight: 1,
+          letterSpacing: "0.02em",
+          textShadow: "0 0.05em 0.2em rgba(0,0,0,0.25)",
+        }}>{dayLabel}</div>
+      )}
     </div>
   );
 }

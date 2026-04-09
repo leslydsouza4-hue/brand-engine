@@ -568,7 +568,7 @@ function PortraitTemplate({
         position: "absolute", top: "4.5%", left: "6%", right: "6%", zIndex: 3,
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ height: "2.2em", width: "auto", objectFit: "contain" }} />
+        <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ height: "1.54em", width: "auto", objectFit: "contain" }} />
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.25em",
           padding: "0.18em 0.6em 0.18em 0.35em",
@@ -588,12 +588,12 @@ function PortraitTemplate({
       </div>
 
       <div style={{
-        position: "absolute", left: "6%", right: "6%", top: "16%", zIndex: 3,
+        position: "absolute", left: "6%", right: "6%", top: "20%", zIndex: 3,
         display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
       }}>
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: "1.9em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: "2.09em", fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",

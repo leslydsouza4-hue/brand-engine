@@ -2,6 +2,8 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles, Crop } from "lucide-react";
 import { CropModal } from "./CropModal";
 import { LivePreview } from "./LivePreview";
+import { DownloadButton } from "./DownloadButton";
+import { useExport } from "./useExport";
 
 const SHAUN_IMAGES = [
   "ShaunClark_03057_StudioSura-Photoroom.png",
@@ -17,6 +19,7 @@ const BG_URL = `${import.meta.env.BASE_URL}assets/backgrounds-dark/Type=Core Gra
 
 
 export function ShaunWorkspace() {
+  const { isExporting, handleExport } = useExport();
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
@@ -460,6 +463,10 @@ export function ShaunWorkspace() {
               </div>
             </div>
           )}
+
+          <div className="mt-auto pt-[16px]">
+            <DownloadButton onExport={handleExport} isExporting={isExporting} label="Download Current" />
+          </div>
         </div>
       </div>
 

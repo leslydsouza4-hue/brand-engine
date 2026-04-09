@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 import { LivePreview } from "./LivePreview";
+import { DownloadButton } from "./DownloadButton";
+import { useExport } from "./useExport";
 
 const BASE = import.meta.env.BASE_URL;
 const bg = (name: string) => `${BASE}assets/backgrounds-dark/${name}`;
@@ -200,6 +202,7 @@ const COLOR_OPTIONS = [
 ] as const;
 
 export function TemplatesWorkspace() {
+  const { isExporting, handleExport } = useExport();
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0]);
   const [activeSize, setActiveSize] = useState(CATEGORIES[0].sizes[0]);
   const [activeTemplate, setActiveTemplate] = useState<Template | null>(null);
@@ -761,6 +764,12 @@ export function TemplatesWorkspace() {
               </motion.button>
             )}
           </motion.div>
+        )}
+
+        {activeTemplate && (
+          <div className="mt-auto pt-[16px]">
+            <DownloadButton onExport={handleExport} isExporting={isExporting} label="Download Current" />
+          </div>
         )}
       </div>
 

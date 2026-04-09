@@ -1,4 +1,3 @@
-import { useState, useRef, useEffect } from "react";
 import { 
   LayoutTemplate, 
   Image as ImageIcon, 
@@ -11,10 +10,7 @@ import {
   Mail,
   GraduationCap,
   Briefcase,
-  X,
-  Download,
-  Loader2,
-  FileText
+  X
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -33,29 +29,9 @@ interface SidebarProps {
   setMode: (mode: string) => void;
   mobileOpen?: boolean;
   onClose?: () => void;
-  onExport?: (format: "png" | "jpeg" | "pdf") => void;
-  isExporting?: boolean;
 }
 
-export function Sidebar({ currentMode, setMode, mobileOpen, onClose, onExport, isExporting }: SidebarProps) {
-  const [exportOpen, setExportOpen] = useState(false);
-  const exportRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (exportRef.current && !exportRef.current.contains(event.target as Node)) {
-        setExportOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleExport = (format: "png" | "jpeg" | "pdf") => {
-    setExportOpen(false);
-    onExport?.(format);
-  };
-
+export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarProps) {
   const handleSetMode = (mode: string) => {
     setMode(mode);
     onClose?.();
@@ -178,55 +154,6 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose, onExport, i
         </div>
 
         <div className="mt-auto shrink-0 px-[12px] pt-[12px] pb-[20px] border-t border-white/5">
-          <div className="relative mb-[6px]" ref={exportRef}>
-            <button
-              onClick={() => setExportOpen(!exportOpen)}
-              disabled={isExporting}
-              className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium
-                ${exportOpen
-                  ? 'text-white bg-gradient-to-r from-[rgba(9,93,195,0.2)] to-[rgba(40,150,251,0.15)] shadow-[inset_0_0_0_1px_rgba(40,150,251,0.2)]'
-                  : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              {isExporting ? (
-                <Loader2 className="w-[18px] h-[18px] shrink-0 opacity-60 animate-spin" />
-              ) : (
-                <Download className="w-[18px] h-[18px] shrink-0 opacity-60" />
-              )}
-              {isExporting ? "Exporting..." : "Export"}
-            </button>
-
-            {exportOpen && !isExporting && (
-              <div className="absolute bottom-[calc(100%+6px)] left-[8px] right-[8px] bg-[rgba(7,34,61,0.95)] backdrop-blur-[24px] border border-[rgba(255,255,255,0.1)] rounded-[12px] p-[6px] shadow-[0_-12px_40px_rgba(0,0,0,0.5)] z-[1000]">
-                <button
-                  onClick={() => handleExport("png")}
-                  className="flex items-center gap-[10px] w-full py-[10px] px-[14px] bg-transparent text-[#CBD5E1] border-none rounded-[8px] text-[12px] font-medium cursor-pointer transition-all duration-150 hover:bg-[rgba(255,255,255,0.08)] hover:text-white group"
-                >
-                  <Download className="w-[14px] h-[14px] shrink-0" />
-                  PNG
-                  <span className="ml-auto text-[10px] text-[#475569] group-hover:text-[#94A3B8]">High Res</span>
-                </button>
-                <button
-                  onClick={() => handleExport("jpeg")}
-                  className="flex items-center gap-[10px] w-full py-[10px] px-[14px] bg-transparent text-[#CBD5E1] border-none rounded-[8px] text-[12px] font-medium cursor-pointer transition-all duration-150 hover:bg-[rgba(255,255,255,0.08)] hover:text-white group"
-                >
-                  <Download className="w-[14px] h-[14px] shrink-0" />
-                  JPEG
-                  <span className="ml-auto text-[10px] text-[#475569] group-hover:text-[#94A3B8]">92%</span>
-                </button>
-                <div className="h-[1px] bg-white/[0.06] my-[4px] mx-[8px]" />
-                <button
-                  onClick={() => handleExport("pdf")}
-                  className="flex items-center gap-[10px] w-full py-[10px] px-[14px] bg-transparent text-[#CBD5E1] border-none rounded-[8px] text-[12px] font-medium cursor-pointer transition-all duration-150 hover:bg-[rgba(255,255,255,0.08)] hover:text-white group"
-                >
-                  <FileText className="w-[14px] h-[14px] shrink-0" />
-                  PDF
-                  <span className="ml-auto text-[10px] text-[#475569] group-hover:text-[#94A3B8]">Document</span>
-                </button>
-              </div>
-            )}
-          </div>
-
           <button 
             onClick={() => handleSetMode('settings')}
             className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px]

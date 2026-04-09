@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import { LivePreview } from "./LivePreview";
+import { DownloadButton } from "./DownloadButton";
+import { useExport } from "./useExport";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -11,6 +13,7 @@ const BG_OPTIONS = [
 ];
 
 export function ZoomWorkspace() {
+  const { isExporting, handleExport } = useExport();
   const [activeBg, setActiveBg] = useState(BG_OPTIONS[0]);
   const [name, setName] = useState("");
   const [designation, setDesignation] = useState("");
@@ -72,6 +75,10 @@ export function ZoomWorkspace() {
               maxLength={50}
               className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-inherit text-[13.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
             />
+          </div>
+
+          <div className="mt-auto pt-[16px]">
+            <DownloadButton onExport={handleExport} isExporting={isExporting} label="Download Current" />
           </div>
         </div>
       </div>

@@ -1,6 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
-import { toPng, toJpeg } from "html-to-image";
-import { jsPDF } from "jspdf";
+import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/brand/Sidebar";
 import { Toolbar } from "@/components/brand/Toolbar";
 import { TemplatesWorkspace } from "@/components/brand/TemplatesWorkspace";
@@ -31,71 +29,14 @@ export default function BrandEngine() {
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
-  const [isExporting, setIsExporting] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleExport = useCallback(async (format: "png" | "jpeg" | "pdf") => {
-    const el = document.querySelector("[data-export-preview]") as HTMLElement | null;
-    if (!el) return;
-
-    setIsExporting(true);
-    const origRadius = el.style.borderRadius;
-    el.style.borderRadius = "0";
-
-    const scale = 1920 / el.offsetWidth;
-    const opts = {
-      width: el.offsetWidth,
-      height: el.offsetHeight,
-      pixelRatio: scale,
-      cacheBust: true,
-      skipAutoScale: true,
-      style: { borderRadius: "0" },
-    };
-
-    try {
-      const exportName = el.getAttribute("data-export-name") || "brand-engine-export";
-      const safeName = exportName.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
-
-      if (format === "pdf") {
-        const dataUrl = await toPng(el, opts);
-        const img = new Image();
-        img.src = dataUrl;
-        await new Promise((r) => { img.onload = r; });
-        const orientation = img.width >= img.height ? "landscape" as const : "portrait" as const;
-        const pdf = new jsPDF({ orientation, unit: "px", format: [img.width, img.height] });
-        pdf.addImage(dataUrl, "PNG", 0, 0, img.width, img.height);
-        pdf.save(`${safeName}.pdf`);
-      } else if (format === "jpeg") {
-        const dataUrl = await toJpeg(el, { ...opts, quality: 0.92, backgroundColor: "#060B16" });
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = `${safeName}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        const dataUrl = await toPng(el, opts);
-        const a = document.createElement("a");
-        a.href = dataUrl;
-        a.download = `${safeName}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      }
-    } catch (err) {
-      console.error("Export failed:", err);
-    } finally {
-      el.style.borderRadius = origRadius;
-      setIsExporting(false);
-    }
-  }, []);
 
   return (
     <div className="flex h-screen w-screen relative bg-[#060B16] brand-app-bg">
       <div className="absolute inset-0 brand-app-noise pointer-events-none z-0"></div>
       
       <div className="w-0 md:w-[220px] shrink-0 overflow-visible">
-        <Sidebar currentMode={currentMode} setMode={setCurrentMode} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onExport={handleExport} isExporting={isExporting} />
+        <Sidebar currentMode={currentMode} setMode={setCurrentMode} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">

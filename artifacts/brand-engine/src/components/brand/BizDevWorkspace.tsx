@@ -449,10 +449,19 @@ export function BizDevWorkspace() {
   const currentGroup = currentConfig.group;
   const groupTemplates = activeTemplates.filter((t) => t.group === currentGroup);
 
+  const dataUrlToBlob = useCallback((dataUrl: string): Blob => {
+    const [header, base64] = dataUrl.split(",");
+    const mime = header.match(/:(.*?);/)?.[1] || "image/png";
+    const binary = atob(base64);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }, []);
+
   const exportTemplate = useCallback(async (templateId: string, containerEl?: HTMLElement) => {
     const root = containerEl || document;
     const el = root.querySelector(`[data-template-id="${templateId}"]`) as HTMLElement;
-    if (!el) return;
+    if (!el) { console.error("exportTemplate: element not found for", templateId); return; }
     const config = TEMPLATES.find((t) => t.id === templateId);
     if (!config) return;
     setIsExporting(templateId);
@@ -464,18 +473,24 @@ export function BizDevWorkspace() {
         cacheBust: true,
         skipAutoScale: true,
       });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } catch {
-      // ignore
+      const blob = dataUrlToBlob(dataUrl);
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(blobUrl);
+      }, 200);
+    } catch (err) {
+      console.error("exportTemplate error:", err);
     } finally {
       setIsExporting(null);
     }
-  }, []);
+  }, [dataUrlToBlob]);
 
   const exportAllZip = useCallback(async () => {
     setIsExportingAll(true);

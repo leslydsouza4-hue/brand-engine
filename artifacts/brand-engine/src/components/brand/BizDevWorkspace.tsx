@@ -449,6 +449,22 @@ export function BizDevWorkspace() {
     const config = TEMPLATES.find((t) => t.id === templateId);
     if (!config) return;
     setIsExporting(templateId);
+
+    const frozen: { el: HTMLElement; prop: string; orig: string }[] = [];
+    const propsToFreeze = ["fontSize", "paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "borderRadius", "borderTopRightRadius", "borderBottomRightRadius", "letterSpacing", "lineHeight"];
+    el.querySelectorAll("*").forEach((child) => {
+      const htmlEl = child as HTMLElement;
+      const computed = window.getComputedStyle(htmlEl);
+      for (const prop of propsToFreeze) {
+        const cssProp = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
+        const val = computed.getPropertyValue(cssProp);
+        if (val && val !== "normal" && val !== "none") {
+          frozen.push({ el: htmlEl, prop: cssProp, orig: htmlEl.style.getPropertyValue(cssProp) });
+          htmlEl.style.setProperty(cssProp, val);
+        }
+      }
+    });
+
     try {
       const canvas = await html2canvas(el, {
         scale: config.width / el.offsetWidth,
@@ -472,6 +488,11 @@ export function BizDevWorkspace() {
       });
     } catch {
       setIsExporting(null);
+    } finally {
+      for (const { el: frozenEl, prop, orig } of frozen) {
+        if (orig) frozenEl.style.setProperty(prop, orig);
+        else frozenEl.style.removeProperty(prop);
+      }
     }
   }, []);
 

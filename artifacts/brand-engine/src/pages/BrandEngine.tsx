@@ -43,6 +43,22 @@ export default function BrandEngine() {
     const origOverflow = el.style.overflow;
     el.style.borderRadius = "0";
     el.style.overflow = "hidden";
+
+    const frozen: { el: HTMLElement; prop: string; orig: string }[] = [];
+    const propsToFreeze = ["fontSize", "paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "borderRadius", "borderTopRightRadius", "borderBottomRightRadius", "letterSpacing", "lineHeight"];
+    const allChildren = el.querySelectorAll("*");
+    allChildren.forEach((child) => {
+      const htmlEl = child as HTMLElement;
+      const computed = window.getComputedStyle(htmlEl);
+      for (const prop of propsToFreeze) {
+        const val = computed.getPropertyValue(prop.replace(/([A-Z])/g, "-$1").toLowerCase());
+        if (val && val !== "normal" && val !== "none") {
+          frozen.push({ el: htmlEl, prop, orig: htmlEl.style.getPropertyValue(prop.replace(/([A-Z])/g, "-$1").toLowerCase()) });
+          htmlEl.style.setProperty(prop.replace(/([A-Z])/g, "-$1").toLowerCase(), val);
+        }
+      }
+    });
+
     try {
       const canvas = await html2canvas(el, {
         scale: 1920 / el.offsetWidth,
@@ -89,6 +105,14 @@ export default function BrandEngine() {
       console.error("Export failed:", err);
       setIsExporting(false);
     } finally {
+      for (const { el: frozenEl, prop, orig } of frozen) {
+        const cssProp = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
+        if (orig) {
+          frozenEl.style.setProperty(cssProp, orig);
+        } else {
+          frozenEl.style.removeProperty(cssProp);
+        }
+      }
       el.style.borderRadius = origRadius;
       el.style.overflow = origOverflow;
     }

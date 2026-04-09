@@ -136,7 +136,7 @@ function HorizontalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", left: "42%", top: "12%",
+        position: "absolute", left: "48%", top: "18%",
         display: "flex", flexDirection: "column", alignItems: "center",
         zIndex: 2,
       }}>
@@ -167,7 +167,7 @@ function HorizontalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", right: "8%", bottom: "10%",
+        position: "absolute", right: "10%", bottom: "14%",
         display: "flex", flexDirection: "column", alignItems: "center",
         zIndex: 2,
       }}>

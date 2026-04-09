@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import {
   UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw
 } from "lucide-react";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/bizdev/background.png`;
@@ -449,50 +449,24 @@ export function BizDevWorkspace() {
     const config = TEMPLATES.find((t) => t.id === templateId);
     if (!config) return;
     setIsExporting(templateId);
-
-    const frozen: { el: HTMLElement; prop: string; orig: string }[] = [];
-    const propsToFreeze = ["fontSize", "paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "borderRadius", "borderTopRightRadius", "borderBottomRightRadius", "letterSpacing", "lineHeight"];
-    el.querySelectorAll("*").forEach((child) => {
-      const htmlEl = child as HTMLElement;
-      const computed = window.getComputedStyle(htmlEl);
-      for (const prop of propsToFreeze) {
-        const cssProp = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
-        const val = computed.getPropertyValue(cssProp);
-        if (val && val !== "normal" && val !== "none") {
-          frozen.push({ el: htmlEl, prop: cssProp, orig: htmlEl.style.getPropertyValue(cssProp) });
-          htmlEl.style.setProperty(cssProp, val);
-        }
-      }
-    });
-
     try {
-      const canvas = await html2canvas(el, {
-        scale: config.width / el.offsetWidth,
-        useCORS: true, backgroundColor: null, logging: false,
+      const dataUrl = await toPng(el, {
+        width: el.offsetWidth,
+        height: el.offsetHeight,
+        pixelRatio: config.width / el.offsetWidth,
+        cacheBust: true,
+        skipAutoScale: true,
       });
-      await new Promise<void>((resolve) => {
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }
-          setIsExporting(null);
-          resolve();
-        }, "image/png");
-      });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     } catch {
-      setIsExporting(null);
+      // ignore
     } finally {
-      for (const { el: frozenEl, prop, orig } of frozen) {
-        if (orig) frozenEl.style.setProperty(prop, orig);
-        else frozenEl.style.removeProperty(prop);
-      }
+      setIsExporting(null);
     }
   }, []);
 

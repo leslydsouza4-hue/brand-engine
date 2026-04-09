@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import html2canvas from "html2canvas";
+import { toPng, toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { Sidebar } from "@/components/brand/Sidebar";
 import { Toolbar } from "@/components/brand/Toolbar";
@@ -40,81 +40,53 @@ export default function BrandEngine() {
 
     setIsExporting(true);
     const origRadius = el.style.borderRadius;
-    const origOverflow = el.style.overflow;
     el.style.borderRadius = "0";
-    el.style.overflow = "hidden";
 
-    const frozen: { el: HTMLElement; prop: string; orig: string }[] = [];
-    const propsToFreeze = ["fontSize", "paddingTop", "paddingBottom", "paddingLeft", "paddingRight", "borderRadius", "borderTopRightRadius", "borderBottomRightRadius", "letterSpacing", "lineHeight"];
-    const allChildren = el.querySelectorAll("*");
-    allChildren.forEach((child) => {
-      const htmlEl = child as HTMLElement;
-      const computed = window.getComputedStyle(htmlEl);
-      for (const prop of propsToFreeze) {
-        const val = computed.getPropertyValue(prop.replace(/([A-Z])/g, "-$1").toLowerCase());
-        if (val && val !== "normal" && val !== "none") {
-          frozen.push({ el: htmlEl, prop, orig: htmlEl.style.getPropertyValue(prop.replace(/([A-Z])/g, "-$1").toLowerCase()) });
-          htmlEl.style.setProperty(prop.replace(/([A-Z])/g, "-$1").toLowerCase(), val);
-        }
-      }
-    });
+    const scale = 1920 / el.offsetWidth;
+    const opts = {
+      width: el.offsetWidth,
+      height: el.offsetHeight,
+      pixelRatio: scale,
+      cacheBust: true,
+      skipAutoScale: true,
+      style: { borderRadius: "0" },
+    };
 
     try {
-      const canvas = await html2canvas(el, {
-        scale: 1920 / el.offsetWidth,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
-      });
-
       const exportName = el.getAttribute("data-export-name") || "brand-engine-export";
       const safeName = exportName.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
 
       if (format === "pdf") {
-        const imgData = canvas.toDataURL("image/png");
-        const imgW = canvas.width;
-        const imgH = canvas.height;
-        const orientation = imgW >= imgH ? "landscape" : "portrait";
-        const pdf = new jsPDF({ orientation, unit: "px", format: [imgW, imgH] });
-        pdf.addImage(imgData, "PNG", 0, 0, imgW, imgH);
+        const dataUrl = await toPng(el, opts);
+        const img = new Image();
+        img.src = dataUrl;
+        await new Promise((r) => { img.onload = r; });
+        const orientation = img.width >= img.height ? "landscape" as const : "portrait" as const;
+        const pdf = new jsPDF({ orientation, unit: "px", format: [img.width, img.height] });
+        pdf.addImage(dataUrl, "PNG", 0, 0, img.width, img.height);
         pdf.save(`${safeName}.pdf`);
-        setIsExporting(false);
+      } else if (format === "jpeg") {
+        const dataUrl = await toJpeg(el, { ...opts, quality: 0.92, backgroundColor: "#060B16" });
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `${safeName}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       } else {
-        const mimeType = format === "jpeg" ? "image/jpeg" : "image/png";
-        const quality = format === "jpeg" ? 0.92 : undefined;
-
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${safeName}.${format === "jpeg" ? "jpg" : "png"}`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            setIsExporting(false);
-          },
-          mimeType,
-          quality
-        );
+        const dataUrl = await toPng(el, opts);
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `${safeName}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
       }
     } catch (err) {
       console.error("Export failed:", err);
-      setIsExporting(false);
     } finally {
-      for (const { el: frozenEl, prop, orig } of frozen) {
-        const cssProp = prop.replace(/([A-Z])/g, "-$1").toLowerCase();
-        if (orig) {
-          frozenEl.style.setProperty(cssProp, orig);
-        } else {
-          frozenEl.style.removeProperty(cssProp);
-        }
-      }
       el.style.borderRadius = origRadius;
-      el.style.overflow = origOverflow;
+      setIsExporting(false);
     }
   }, []);
 

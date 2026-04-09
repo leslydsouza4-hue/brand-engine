@@ -81,8 +81,7 @@ function HorizontalTemplate({
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
-  const hostCircleSize = "6.8em";
-  const guestCircleSize = "4.8em";
+  const circleSize = "5.8em";
 
   return (
     <div
@@ -137,17 +136,17 @@ function HorizontalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", right: "12%", top: "20%",
-        display: "flex", flexDirection: "column", alignItems: "center",
+        position: "absolute", left: "42%", top: "12%",
+        display: "flex", flexDirection: "column", alignItems: "flex-start",
         zIndex: 2,
       }}>
         <div style={{
-          width: hostCircleSize, height: hostCircleSize,
+          width: circleSize, height: circleSize,
           borderRadius: "50%",
-          border: "0.18em solid rgba(255,255,255,0.25)",
+          border: "0.15em solid rgba(255,255,255,0.2)",
           overflow: "hidden",
           background: hostImage ? "transparent" : "rgba(20,40,80,0.7)",
-          boxShadow: "0 0.4em 1.5em rgba(0,0,0,0.35)",
+          boxShadow: "0 0.4em 1.5em rgba(0,0,0,0.3)",
           flexShrink: 0,
         }}>
           {hostImage ? (
@@ -161,24 +160,24 @@ function HorizontalTemplate({
             </div>
           )}
         </div>
-        <div style={{ textAlign: "center", marginTop: "0.35em" }}>
-          <div style={{ fontSize: "0.5em", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2 }}>{hostName || "Host Name"}</div>
-          <div style={{ fontSize: "0.28em", fontWeight: 500, color: "rgba(255,255,255,0.7)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.05em" }}>{hostTitle || "Host Title"}</div>
+        <div style={{ marginTop: "0.5em" }}>
+          <div style={{ fontSize: "0.58em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{hostName || "Host Name"}</div>
+          <div style={{ fontSize: "0.26em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.4, marginTop: "0.3em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
         </div>
       </div>
 
       <div style={{
-        position: "absolute", right: "4%", bottom: "8%",
-        display: "flex", flexDirection: "column", alignItems: "center",
+        position: "absolute", right: "8%", bottom: "10%",
+        display: "flex", flexDirection: "column", alignItems: "flex-end",
         zIndex: 2,
       }}>
         <div style={{
-          width: guestCircleSize, height: guestCircleSize,
+          width: circleSize, height: circleSize,
           borderRadius: "50%",
           border: "0.15em solid rgba(255,255,255,0.2)",
           overflow: "hidden",
           background: guestImage ? "transparent" : "rgba(20,40,80,0.7)",
-          boxShadow: "0 0.4em 1.5em rgba(0,0,0,0.35)",
+          boxShadow: "0 0.4em 1.5em rgba(0,0,0,0.3)",
           flexShrink: 0,
         }}>
           {guestImage ? (
@@ -192,9 +191,9 @@ function HorizontalTemplate({
             </div>
           )}
         </div>
-        <div style={{ textAlign: "center", marginTop: "0.3em" }}>
-          <div style={{ fontSize: "0.44em", fontWeight: 700, color: "#FFFFFF", lineHeight: 1.2 }}>{guestName || "Guest Name"}</div>
-          <div style={{ fontSize: "0.24em", fontWeight: 500, color: "rgba(255,255,255,0.65)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.05em" }}>{guestTitle || "Guest Title"}</div>
+        <div style={{ marginTop: "0.5em", textAlign: "right" }}>
+          <div style={{ fontSize: "0.58em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Guest Name"}</div>
+          <div style={{ fontSize: "0.26em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.4, marginTop: "0.3em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
         </div>
       </div>
 

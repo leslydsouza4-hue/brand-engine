@@ -599,7 +599,7 @@ export function BizDevWorkspace() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
           <div className="flex-1 flex items-center justify-center p-[24px] overflow-auto">
-            <div className="w-full max-w-[800px]">
+            <div className="w-full max-w-[560px]">
               <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
             </div>
           </div>

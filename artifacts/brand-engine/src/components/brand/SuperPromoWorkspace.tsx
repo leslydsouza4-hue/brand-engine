@@ -363,7 +363,7 @@ function VerticalTemplate({
       <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
 
       <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{
-        position: "absolute", top: "3.5%", left: "50%", transform: "translateX(-50%)",
+        position: "absolute", top: "4.55%", left: "50%", transform: "translateX(-50%)",
         height: "4.5%", width: "auto", objectFit: "contain", zIndex: 3,
       }} />
 
@@ -475,7 +475,7 @@ function VerticalTemplate({
           </div>
           <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
             <div style={{ fontSize: "0.84em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{hostName || "Host Name"}</div>
-            <div style={{ fontSize: "0.36em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
+            <div style={{ fontSize: "0.54em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
           </div>
         </div>
 
@@ -502,7 +502,7 @@ function VerticalTemplate({
           </div>
           <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
             <div style={{ fontSize: "0.84em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Guest Name"}</div>
-            <div style={{ fontSize: "0.36em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
+            <div style={{ fontSize: "0.54em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
           </div>
         </div>
       </div>

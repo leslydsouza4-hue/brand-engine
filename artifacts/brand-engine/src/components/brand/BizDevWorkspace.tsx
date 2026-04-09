@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw
+  UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw, PackageOpen
 } from "lucide-react";
 import { toPng } from "html-to-image";
+import JSZip from "jszip";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/bizdev/background.png`;
@@ -476,14 +477,39 @@ export function BizDevWorkspace() {
     }
   }, []);
 
-  const exportAll = useCallback(async () => {
+  const exportAllZip = useCallback(async () => {
     setIsExportingAll(true);
-    for (const t of activeTemplates) {
-      await exportTemplate(t.id, galleryRef.current || undefined);
-      await new Promise((r) => setTimeout(r, 500));
+    try {
+      const container = galleryRef.current || document;
+      const zip = new JSZip();
+      for (const t of activeTemplates) {
+        const el = container.querySelector(`[data-template-id="${t.id}"]`) as HTMLElement;
+        if (!el) continue;
+        const dataUrl = await toPng(el, {
+          width: el.offsetWidth,
+          height: el.offsetHeight,
+          pixelRatio: t.width / el.offsetWidth,
+          cacheBust: true,
+          skipAutoScale: true,
+        });
+        const base64 = dataUrl.split(",")[1];
+        zip.file(`${t.name.replace(/\s+/g, "_")}_${t.width}x${t.height}.png`, base64, { base64: true });
+        await new Promise((r) => setTimeout(r, 200));
+      }
+      const blob = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `BizDev_Templates_${guestName.trim().replace(/\s+/g, "_") || "export"}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch {
+      // ignore
+    } finally {
+      setIsExportingAll(false);
     }
-    setIsExportingAll(false);
-  }, [activeTemplates, exportTemplate]);
+  }, [activeTemplates, guestName]);
 
   const inputCls = "w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] transition-all";
   const labelCls = "text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[6px]";
@@ -669,13 +695,13 @@ export function BizDevWorkspace() {
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <button onClick={() => setShowGallery(true)} disabled={!headline.trim() || !dateText.trim() || !guestName.trim() || !personImage} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-40 disabled:cursor-not-allowed">
-              <Sparkles className="w-[13px] h-[13px]" />
-              Generate All ({activeTemplates.length})
-            </button>
-            <button onClick={() => exportTemplate(currentConfig.id)} disabled={isExporting === currentConfig.id} className="w-full py-[9px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] text-[#94A3B8] text-[10px] font-medium flex items-center justify-center gap-[5px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-50">
-              {isExporting === currentConfig.id ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
+            <button onClick={() => exportTemplate(currentConfig.id)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">
+              {isExporting === currentConfig.id ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
               Download Current
+            </button>
+            <button onClick={() => setShowGallery(true)} disabled={!headline.trim() || !dateText.trim() || !guestName.trim() || !personImage} className="w-full py-[9px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] text-[#94A3B8] text-[10px] font-medium flex items-center justify-center gap-[5px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
+              <Sparkles className="w-[11px] h-[11px]" />
+              Preview All ({activeTemplates.length})
             </button>
           </div>
         </div>
@@ -698,9 +724,9 @@ export function BizDevWorkspace() {
                 </div>
                 <div className="flex gap-[8px]">
                   <button onClick={() => setShowGallery(false)} className="h-[32px] px-[14px] rounded-[8px] bg-[rgba(255,255,255,0.06)] border-none text-[#94A3B8] text-[11px] font-medium flex items-center gap-[5px] cursor-pointer hover:bg-[rgba(255,255,255,0.1)] transition-all">Back to Editor</button>
-                  <button onClick={exportAll} disabled={isExportingAll} className="h-[32px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center gap-[5px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-50">
-                    {isExportingAll ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
-                    Download All
+                  <button onClick={exportAllZip} disabled={isExportingAll} className="h-[32px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center gap-[5px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-50">
+                    {isExportingAll ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <PackageOpen className="w-[12px] h-[12px]" />}
+                    {isExportingAll ? "Creating ZIP..." : "Download All (ZIP)"}
                   </button>
                 </div>
               </div>

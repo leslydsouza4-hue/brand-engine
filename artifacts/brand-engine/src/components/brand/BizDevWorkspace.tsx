@@ -438,9 +438,13 @@ export function BizDevWorkspace() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
-          <>
-            <div className="px-[20px] pt-[16px] pb-[14px] shrink-0">
-              <div className="flex items-center gap-[8px] mb-[12px]">
+          <div className="flex-1 flex flex-col items-center justify-center p-[24px] overflow-auto gap-[16px]">
+            <div className="w-full max-w-[800px]">
+              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} />
+            </div>
+
+            <div className="w-full max-w-[560px] flex flex-col gap-[8px]">
+              <div className="flex items-center justify-center gap-[6px]">
                 {SIZE_GROUPS.map((g) => {
                   const isActive = currentGroup === g.key;
                   const hasTemplates = activeTemplates.some((t) => t.group === g.key);
@@ -453,29 +457,28 @@ export function BizDevWorkspace() {
                         const first = activeTemplates.find((t) => t.group === g.key);
                         if (first) setSelectedTemplate(first.id);
                       }}
-                      className="flex items-center gap-[10px] cursor-pointer border-none bg-transparent p-0 group transition-all"
+                      className={`flex items-center gap-[8px] px-[14px] py-[8px] rounded-[10px] cursor-pointer border transition-all duration-200
+                        ${isActive
+                          ? "bg-[rgba(0,178,169,0.06)] border-[rgba(0,178,169,0.2)]"
+                          : "bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.1)]"
+                        }`}
                     >
                       <div
-                        className={`h-[38px] rounded-[6px] transition-all duration-200 flex items-center justify-center
+                        className={`h-[28px] rounded-[4px] flex items-center justify-center transition-all
                           ${isActive
-                            ? "bg-gradient-to-br from-[rgba(0,178,169,0.25)] to-[rgba(40,150,251,0.15)] shadow-[inset_0_0_0_1.5px_rgba(0,178,169,0.4)]"
-                            : "bg-[rgba(255,255,255,0.04)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] group-hover:bg-[rgba(255,255,255,0.07)] group-hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]"
+                            ? "bg-gradient-to-br from-[rgba(0,178,169,0.3)] to-[rgba(40,150,251,0.15)] shadow-[inset_0_0_0_1.5px_rgba(0,178,169,0.5)]"
+                            : "bg-[rgba(255,255,255,0.05)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
                           }`}
                         style={{ aspectRatio: ar }}
                       >
                         <div
-                          className={`rounded-[3px] transition-all
-                            ${isActive ? "bg-[rgba(0,178,169,0.5)]" : "bg-[rgba(255,255,255,0.12)] group-hover:bg-[rgba(255,255,255,0.18)]"}`}
-                          style={{ width: "55%", aspectRatio: ar }}
+                          className={`rounded-[2px] transition-all ${isActive ? "bg-[rgba(0,178,169,0.6)]" : "bg-[rgba(255,255,255,0.15)]"}`}
+                          style={{ width: "50%", aspectRatio: ar }}
                         />
                       </div>
                       <div className="text-left">
-                        <div className={`text-[11px] font-semibold transition-all ${isActive ? "text-white" : "text-[#94A3B8] group-hover:text-[#CBD5E1]"}`}>
-                          {g.label}
-                        </div>
-                        <div className={`text-[9px] transition-all ${isActive ? "text-[#00B2A9]" : "text-[#475569] group-hover:text-[#64748B]"}`}>
-                          {g.dims}
-                        </div>
+                        <div className={`text-[10px] font-semibold leading-tight transition-all ${isActive ? "text-white" : "text-[#94A3B8]"}`}>{g.label}</div>
+                        <div className={`text-[8px] leading-tight transition-all ${isActive ? "text-[#00B2A9]" : "text-[#475569]"}`}>{g.dims}</div>
                       </div>
                     </button>
                   );
@@ -483,16 +486,16 @@ export function BizDevWorkspace() {
               </div>
 
               {groupTemplates.length > 1 && (
-                <div className="flex items-center gap-[2px] p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)]">
+                <div className="flex items-center gap-[2px] p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.04)] mx-auto w-fit min-w-[280px]">
                   {groupTemplates.map((t) => {
                     const isActive = selectedTemplate === t.id;
                     return (
                       <button
                         key={t.id}
                         onClick={() => setSelectedTemplate(t.id)}
-                        className={`flex-1 px-[12px] py-[6px] rounded-[8px] text-[10px] font-semibold transition-all duration-200 cursor-pointer border-none
+                        className={`flex-1 px-[14px] py-[5px] rounded-[7px] text-[10px] font-semibold transition-all duration-200 cursor-pointer border-none whitespace-nowrap
                           ${isActive
-                            ? "bg-[rgba(255,255,255,0.1)] text-white shadow-[0_1px_4px_rgba(0,0,0,0.2)]"
+                            ? "bg-[rgba(255,255,255,0.1)] text-white shadow-[0_1px_6px_rgba(0,0,0,0.25)]"
                             : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
                           }`}
                       >
@@ -503,13 +506,7 @@ export function BizDevWorkspace() {
                 </div>
               )}
             </div>
-
-            <div className="flex-1 flex items-center justify-center p-[20px] overflow-auto">
-              <div className="w-full max-w-[800px]">
-                <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} />
-              </div>
-            </div>
-          </>
+          </div>
         ) : (
           <div className="flex-1 overflow-y-auto" ref={galleryRef}>
             <div className="max-w-[1100px] mx-auto py-[20px] px-[20px]">

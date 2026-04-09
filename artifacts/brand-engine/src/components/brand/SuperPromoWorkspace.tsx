@@ -204,12 +204,12 @@ function HorizontalTemplate({
           position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
           display: "inline-flex", alignItems: "center", gap: "0.35em",
           padding: "0.32em 0.7em",
-          background: "rgba(15,23,42,0.85)",
+          background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
           borderRadius: "0.25em",
         }}>
           <div style={{
             width: "0.77em", height: "0.77em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "rgba(255,255,255,0.15)",
             borderRadius: "0.15em",
             display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,

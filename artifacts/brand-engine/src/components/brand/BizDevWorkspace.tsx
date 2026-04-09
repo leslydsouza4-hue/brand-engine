@@ -176,22 +176,25 @@ function HorizontalTemplate({
       )}
 
       <div style={{ position: "absolute", left: "5%", top: "22%", width: "48%", zIndex: 3, display: "flex", flexDirection: "column" }}>
-        <div style={{
-          fontSize: "1.95em", fontWeight: 800, lineHeight: 1.08, textTransform: "uppercase",
-          background: "linear-gradient(180deg, #2896FB 0%, #4CA8FC 24%, #C3D8FF 51%, #94D9FF 77%, #6FCDFF 100%)",
-          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-          letterSpacing: "-0.02em", paddingBottom: "0.5em",
-        }}>
-          {headline || "Enter Headline"}
+        <div style={{ paddingBottom: "0.5em" }}>
+          <span style={{
+            fontSize: "1.95em", fontWeight: 800, lineHeight: 1.08, textTransform: "uppercase",
+            background: "linear-gradient(180deg, #2896FB 0%, #4CA8FC 24%, #C3D8FF 51%, #94D9FF 77%, #6FCDFF 100%)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            color: "transparent", letterSpacing: "-0.02em",
+            display: "inline",
+          }}>
+            {headline || "Enter Headline"}
+          </span>
         </div>
 
         {!showDay && dateText && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.3em", paddingBottom: "0.4em" }}>
             <div style={{
               width: "1em", height: "1em", borderRadius: "0.12em",
-              background: "rgba(255,200,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFC800" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="#FFC800" stroke="#FFC800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />
@@ -298,28 +301,31 @@ function SquarePortraitTemplate({
         alignItems: "center",
         textAlign: "center",
       }}>
-        <div style={{
-          fontSize: isPortrait ? "1.6em" : "1.7em",
-          fontWeight: 800,
-          lineHeight: 1.08,
-          textTransform: "uppercase",
-          background: "linear-gradient(180deg, #2896FB 0%, #4CA8FC 24%, #C3D8FF 51%, #94D9FF 77%, #6FCDFF 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-          letterSpacing: "-0.02em",
-          paddingBottom: "0.4em",
-        }}>
-          {headline || "Enter Headline"}
+        <div style={{ paddingBottom: "0.4em" }}>
+          <span style={{
+            fontSize: isPortrait ? "1.6em" : "1.7em",
+            fontWeight: 800,
+            lineHeight: 1.08,
+            textTransform: "uppercase",
+            background: "linear-gradient(180deg, #2896FB 0%, #4CA8FC 24%, #C3D8FF 51%, #94D9FF 77%, #6FCDFF 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            color: "transparent",
+            letterSpacing: "-0.02em",
+            display: "inline",
+          }}>
+            {headline || "Enter Headline"}
+          </span>
         </div>
 
         {dateText && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.3em", justifyContent: "center" }}>
             <div style={{
               width: "0.9em", height: "0.9em", borderRadius: "0.1em",
-              background: "rgba(255,200,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
-              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFC800" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="60%" height="60%" viewBox="0 0 24 24" fill="#FFC800" stroke="#FFC800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <line x1="16" y1="2" x2="16" y2="6" />
                 <line x1="8" y1="2" x2="8" y2="6" />

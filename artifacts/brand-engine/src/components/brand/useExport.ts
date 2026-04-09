@@ -2,6 +2,25 @@ import { useState, useCallback } from "react";
 import { toPng, toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
 
+function stripRadii(root: HTMLElement): Array<{ el: HTMLElement; orig: string }> {
+  const saved: Array<{ el: HTMLElement; orig: string }> = [];
+  const all = [root, ...Array.from(root.querySelectorAll("*"))] as HTMLElement[];
+  for (const el of all) {
+    const cs = getComputedStyle(el);
+    if (cs.borderRadius && cs.borderRadius !== "0px") {
+      saved.push({ el, orig: el.style.borderRadius });
+      el.style.borderRadius = "0";
+    }
+  }
+  return saved;
+}
+
+function restoreRadii(saved: Array<{ el: HTMLElement; orig: string }>) {
+  for (const { el, orig } of saved) {
+    el.style.borderRadius = orig;
+  }
+}
+
 export function useExport() {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -10,8 +29,7 @@ export function useExport() {
     if (!target) return;
 
     setIsExporting(true);
-    const origRadius = target.style.borderRadius;
-    target.style.borderRadius = "0";
+    const saved = stripRadii(target);
 
     const scale = 1920 / target.offsetWidth;
     const opts = {
@@ -56,7 +74,7 @@ export function useExport() {
     } catch (err) {
       console.error("Export failed:", err);
     } finally {
-      target.style.borderRadius = origRadius;
+      restoreRadii(saved);
       setIsExporting(false);
     }
   }, []);

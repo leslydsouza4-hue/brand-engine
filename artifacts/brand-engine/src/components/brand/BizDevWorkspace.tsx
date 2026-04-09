@@ -530,6 +530,25 @@ export function BizDevWorkspace() {
     setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
   }, []);
 
+  const stripRadii = useCallback((root: HTMLElement) => {
+    const saved: Array<{ el: HTMLElement; orig: string }> = [];
+    const all = [root, ...Array.from(root.querySelectorAll("*"))] as HTMLElement[];
+    for (const el of all) {
+      const cs = getComputedStyle(el);
+      if (cs.borderRadius && cs.borderRadius !== "0px") {
+        saved.push({ el, orig: el.style.borderRadius });
+        el.style.borderRadius = "0";
+      }
+    }
+    return saved;
+  }, []);
+
+  const restoreRadii = useCallback((saved: Array<{ el: HTMLElement; orig: string }>) => {
+    for (const { el, orig } of saved) {
+      el.style.borderRadius = orig;
+    }
+  }, []);
+
   const exportTemplate = useCallback(async (templateId: string, containerEl?: HTMLElement) => {
     const root = containerEl || document;
     const el = root.querySelector(`[data-template-id="${templateId}"]`) as HTMLElement;
@@ -537,6 +556,7 @@ export function BizDevWorkspace() {
     const config = TEMPLATES.find((t) => t.id === templateId);
     if (!config) return;
     setIsExporting(templateId);
+    const saved = stripRadii(el);
     try {
       const dataUrl = await toPng(el, {
         width: el.offsetWidth,
@@ -544,6 +564,7 @@ export function BizDevWorkspace() {
         pixelRatio: config.width / el.offsetWidth,
         cacheBust: true,
         skipAutoScale: true,
+        style: { borderRadius: "0" },
       });
       const blob = dataUrlToBlob(dataUrl);
       const filename = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
@@ -551,9 +572,10 @@ export function BizDevWorkspace() {
     } catch (err) {
       console.error("exportTemplate error:", err);
     } finally {
+      restoreRadii(saved);
       setIsExporting(null);
     }
-  }, [dataUrlToBlob, triggerDownload]);
+  }, [dataUrlToBlob, triggerDownload, stripRadii, restoreRadii]);
 
   const exportAllZip = useCallback(async () => {
     setIsExportingAll(true);
@@ -563,13 +585,16 @@ export function BizDevWorkspace() {
       for (const t of activeTemplates) {
         const el = container.querySelector(`[data-template-id="${t.id}"]`) as HTMLElement;
         if (!el) { console.error("ZIP: element not found for", t.id); continue; }
+        const saved = stripRadii(el);
         const dataUrl = await toPng(el, {
           width: el.offsetWidth,
           height: el.offsetHeight,
           pixelRatio: t.width / el.offsetWidth,
           cacheBust: true,
           skipAutoScale: true,
+          style: { borderRadius: "0" },
         });
+        restoreRadii(saved);
         const base64 = dataUrl.split(",")[1];
         zip.file(`${t.name.replace(/\s+/g, "_")}_${t.width}x${t.height}.png`, base64, { base64: true });
         await new Promise((r) => setTimeout(r, 200));
@@ -582,7 +607,7 @@ export function BizDevWorkspace() {
     } finally {
       setIsExportingAll(false);
     }
-  }, [activeTemplates, guestName, triggerDownload]);
+  }, [activeTemplates, guestName, triggerDownload, stripRadii, restoreRadii]);
 
   const inputCls = "w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] transition-all";
   const labelCls = "text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[6px]";

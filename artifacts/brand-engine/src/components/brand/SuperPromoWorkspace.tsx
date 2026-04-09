@@ -145,7 +145,7 @@ function HorizontalTemplate({
         )}
         <div>
           <span style={{
-            fontSize: "1.24em", fontWeight: 800, lineHeight: 1.08,
+            fontSize: "1.24em", fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",

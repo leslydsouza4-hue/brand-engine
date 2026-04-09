@@ -136,7 +136,7 @@ function HorizontalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", left: "48%", top: "18%",
+        position: "absolute", left: "50%", top: "20%",
         display: "flex", flexDirection: "column", alignItems: "center",
         zIndex: 2,
       }}>
@@ -146,7 +146,7 @@ function HorizontalTemplate({
           border: "0.15em solid rgba(255,255,255,0.2)",
           overflow: "hidden",
           background: hostImage ? "transparent" : "rgba(255,255,255,0.15)",
-          boxShadow: "0 0 1.2em 0.3em rgba(100,180,255,0.2)",
+          boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
           flexShrink: 0,
         }}>
           {hostImage ? (
@@ -167,7 +167,7 @@ function HorizontalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", right: "10%", bottom: "14%",
+        position: "absolute", right: "12%", bottom: "16%",
         display: "flex", flexDirection: "column", alignItems: "center",
         zIndex: 2,
       }}>
@@ -177,7 +177,7 @@ function HorizontalTemplate({
           border: "0.15em solid rgba(255,255,255,0.2)",
           overflow: "hidden",
           background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
-          boxShadow: "0 0 1.2em 0.3em rgba(100,180,255,0.2)",
+          boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
           flexShrink: 0,
         }}>
           {guestImage ? (

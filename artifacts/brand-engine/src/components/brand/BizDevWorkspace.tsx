@@ -49,7 +49,7 @@ function LogoOverlay() {
         position: "absolute",
         top: "5.5%",
         left: "5%",
-        height: "4.5%",
+        height: "6.3%",
         width: "auto",
         objectFit: "contain",
         zIndex: 3,

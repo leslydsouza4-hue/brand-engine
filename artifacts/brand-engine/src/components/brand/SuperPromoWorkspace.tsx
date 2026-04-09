@@ -190,10 +190,20 @@ function HorizontalTemplate({
 
         {showDay && (
           <div style={{
-            fontSize: "1.8em", fontWeight: 900, color: "#FFFFFF", lineHeight: 1,
-            letterSpacing: "0.02em",
-            textShadow: "0 0.05em 0.2em rgba(0,0,0,0.25)",
-          }}>{dayLabel}</div>
+            display: "inline-block",
+            padding: "0.3em 0.8em",
+            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            borderRadius: "0.25em",
+            alignSelf: "flex-start",
+          }}>
+            <span style={{
+              fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
+              letterSpacing: "0.04em",
+              background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              color: "transparent",
+            }}>{dayLabel}</span>
+          </div>
         )}
       </div>
 

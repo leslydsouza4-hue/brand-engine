@@ -542,6 +542,7 @@ function PortraitTemplate({
   const { variant } = config;
   const showDate = variant === "dates";
   const showReplays = variant === "replays";
+  const contentTop = (showDate || showReplays) ? "18%" : "24%";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
@@ -588,7 +589,7 @@ function PortraitTemplate({
       </div>
 
       <div style={{
-        position: "absolute", left: "6%", right: "6%", top: "24%", zIndex: 3,
+        position: "absolute", left: "6%", right: "6%", top: contentTop, zIndex: 3,
         display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
       }}>
         <div style={{ textAlign: "center" }}>

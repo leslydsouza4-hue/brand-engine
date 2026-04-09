@@ -474,8 +474,8 @@ function VerticalTemplate({
             )}
           </div>
           <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
-            <div style={{ fontSize: "0.6em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{hostName || "Host Name"}</div>
-            <div style={{ fontSize: "0.28em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
+            <div style={{ fontSize: "0.84em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{hostName || "Host Name"}</div>
+            <div style={{ fontSize: "0.36em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
           </div>
         </div>
 
@@ -501,8 +501,8 @@ function VerticalTemplate({
             )}
           </div>
           <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
-            <div style={{ fontSize: "0.6em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Guest Name"}</div>
-            <div style={{ fontSize: "0.28em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
+            <div style={{ fontSize: "0.84em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Guest Name"}</div>
+            <div style={{ fontSize: "0.36em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
           </div>
         </div>
       </div>

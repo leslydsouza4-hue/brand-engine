@@ -123,7 +123,7 @@ function HorizontalTemplate({
       <div style={{ position: "absolute", left: "5%", top: "22%", width: "50%", zIndex: 3, display: "flex", flexDirection: "column" }}>
         <div style={{ paddingBottom: "0.4em" }}>
           <span style={{
-            fontSize: "1.55em", fontWeight: 800, lineHeight: 1.08,
+            fontSize: "1.24em", fontWeight: 800, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
@@ -160,9 +160,9 @@ function HorizontalTemplate({
             </div>
           )}
         </div>
-        <div style={{ marginTop: "0.5em", textAlign: "center" }}>
-          <div style={{ fontSize: "0.58em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{hostName || "Host Name"}</div>
-          <div style={{ fontSize: "0.26em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.4, marginTop: "0.3em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
+        <div style={{ marginTop: "0.35em", textAlign: "center", maxWidth: circleSize }}>
+          <div style={{ fontSize: "0.42em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{hostName || "Host Name"}</div>
+          <div style={{ fontSize: "0.2em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
         </div>
       </div>
 
@@ -191,9 +191,9 @@ function HorizontalTemplate({
             </div>
           )}
         </div>
-        <div style={{ marginTop: "0.5em", textAlign: "center" }}>
-          <div style={{ fontSize: "0.58em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Guest Name"}</div>
-          <div style={{ fontSize: "0.26em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.4, marginTop: "0.3em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
+        <div style={{ marginTop: "0.35em", textAlign: "center", maxWidth: circleSize }}>
+          <div style={{ fontSize: "0.42em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{guestName || "Guest Name"}</div>
+          <div style={{ fontSize: "0.2em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
         </div>
       </div>
 

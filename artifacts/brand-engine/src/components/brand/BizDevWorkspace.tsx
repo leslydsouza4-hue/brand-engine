@@ -695,13 +695,13 @@ export function BizDevWorkspace() {
           </div>
 
           <div className="flex flex-col gap-[6px]">
-            <button onClick={() => exportTemplate(currentConfig.id)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">
+            <button onClick={() => exportTemplate(currentConfig.id, previewRef.current || undefined)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">
               {isExporting === currentConfig.id ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
               Download Current
             </button>
             <button onClick={() => setShowGallery(true)} disabled={!headline.trim() || !dateText.trim() || !guestName.trim() || !personImage} className="w-full py-[9px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] text-[#94A3B8] text-[10px] font-medium flex items-center justify-center gap-[5px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
               <Sparkles className="w-[11px] h-[11px]" />
-              Preview All ({activeTemplates.length})
+              Preview & Download All ({activeTemplates.length})
             </button>
           </div>
         </div>

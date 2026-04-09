@@ -6,6 +6,7 @@ import html2canvas from "html2canvas";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/bizdev/background.png`;
+const BG_SQUARE = `${BASE}assets/bizdev/background-square.png`;
 const BG_PORTRAIT = `${BASE}assets/bizdev/background-portrait.png`;
 const LOGO_URL = `${BASE}assets/bizdev/logo-light.png`;
 
@@ -210,7 +211,7 @@ function SquarePortraitTemplate({
   const containerRef = useRef<HTMLDivElement>(null);
   const isPortrait = config.height > config.width;
   useContainerFontSize(containerRef, isPortrait ? 0.055 : 0.05);
-  const bgUrl = isPortrait ? BG_PORTRAIT : BG_HORIZONTAL;
+  const bgUrl = isPortrait ? BG_PORTRAIT : BG_SQUARE;
 
   return (
     <div

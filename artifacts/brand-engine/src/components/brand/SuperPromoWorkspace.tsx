@@ -399,7 +399,7 @@ function VerticalTemplate({
         {showDate && dateText && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
-            padding: "0.32em 0.7em",
+            padding: "0.32em 0.7em", marginTop: "0.6em",
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
             borderRadius: "0.25em",
           }}>

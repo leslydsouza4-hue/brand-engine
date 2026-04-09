@@ -102,25 +102,23 @@ function HorizontalTemplate({
 
       <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "7%", left: "5%", height: "7.5%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
-      {(showBadge || showDate) && (
-        <div style={{
-          position: "absolute", top: "7%", right: "5%", zIndex: 3,
-          display: "inline-flex", alignItems: "center", gap: "0.45em",
-          padding: "0.3em 1em 0.3em 0.6em",
-          background: "transparent",
-          border: "1.5px solid rgba(255,255,255,0.45)",
-          borderRadius: "999px",
-        }}>
-          <svg width="1.1em" height="1.1em" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
-            <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
-            <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
-            <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
-            <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
-          </svg>
-          <span style={{ fontSize: "0.38em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
-        </div>
-      )}
+      <div style={{
+        position: "absolute", top: "7%", right: "5%", zIndex: 3,
+        display: "inline-flex", alignItems: "center", gap: "0.25em",
+        padding: "0.18em 0.6em 0.18em 0.35em",
+        background: "transparent",
+        border: "1px solid rgba(255,255,255,0.45)",
+        borderRadius: "999px",
+      }}>
+        <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
+          <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+        </svg>
+        <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+      </div>
 
       <div style={{ position: "absolute", left: "5%", top: "22%", width: "50%", zIndex: 3, display: "flex", flexDirection: "column" }}>
         <div style={{ paddingBottom: "0.4em" }}>

@@ -224,13 +224,13 @@ function HorizontalTemplate({
 
         {showReplays && (
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: "0.3em",
-            padding: "0.3em 0.8em",
+            display: "inline-flex", alignItems: "center", gap: "0.18em",
+            padding: "0.18em 0.48em",
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
-            borderRadius: "0.25em",
+            borderRadius: "0.15em",
             alignSelf: "flex-start",
           }}>
-            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+            <svg width="0.72em" height="0.72em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
               <defs>
                 <linearGradient id="replay-grad-hz" x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0%" stopColor="#62E8FF" />
@@ -241,7 +241,7 @@ function HorizontalTemplate({
               <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-hz)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{
-              fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
+              fontSize: "0.84em", fontWeight: 800, lineHeight: 1,
               letterSpacing: "0.04em",
               background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",

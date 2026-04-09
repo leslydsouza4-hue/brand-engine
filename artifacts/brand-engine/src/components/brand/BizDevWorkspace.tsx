@@ -47,37 +47,57 @@ function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base:
   }, [ref, base]);
 }
 
-function GuestPill({ guestName, layout = "center", pillSettings }: { guestName: string; layout?: "center" | "right"; pillSettings: PillSettings }) {
+function GuestPill({ guestName, pillSettings, onDrag, isDragging }: {
+  guestName: string;
+  pillSettings: PillSettings;
+  onDrag?: (e: React.MouseEvent) => void;
+  isDragging?: boolean;
+}) {
   if (!guestName) return null;
 
-  const pillStyle: React.CSSProperties = {
-    position: "absolute",
-    zIndex: 5,
-    background: "rgba(6,17,40,0.55)",
-    backdropFilter: "blur(16px)",
-    WebkitBackdropFilter: "blur(16px)",
-    borderRadius: "0.35em",
-    padding: "0.22em 0.55em",
-    border: "1px solid rgba(0,178,169,0.15)",
-    boxShadow: "0 0 20px rgba(0,178,169,0.12), 0 0 40px rgba(0,178,169,0.06), inset 0 1px 0 rgba(255,255,255,0.05)",
-    textAlign: "center" as const,
-    transform: `translate(${pillSettings.offsetX}%, ${pillSettings.offsetY}%)`,
-  };
-
-  if (layout === "right") {
-    return (
-      <div style={{ ...pillStyle, bottom: "5%", right: "15%" }}>
-        <div style={{ fontSize: "0.2em", fontWeight: 700, color: "#00B2A9", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.6em" }}>Guest:</div>
-        <div style={{ fontSize: "0.42em", fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.05em", lineHeight: 1.1 }}>{guestName}</div>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ ...pillStyle, bottom: "3.5%", left: "12%", right: "12%" }}>
+    <div
+      onMouseDown={onDrag}
+      style={{
+        position: "absolute",
+        left: `${50 + pillSettings.offsetX}%`,
+        top: `${85 + pillSettings.offsetY}%`,
+        transform: "translate(-50%, -50%)",
+        zIndex: 10,
+        background: "rgba(6,17,40,0.55)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        borderRadius: "0.35em",
+        padding: "0.22em 0.8em",
+        border: isDragging ? "1px solid rgba(0,178,169,0.5)" : "1px solid rgba(0,178,169,0.15)",
+        boxShadow: isDragging
+          ? "0 0 24px rgba(0,178,169,0.3), 0 0 48px rgba(0,178,169,0.1), inset 0 1px 0 rgba(255,255,255,0.08)"
+          : "0 0 20px rgba(0,178,169,0.12), 0 0 40px rgba(0,178,169,0.06), inset 0 1px 0 rgba(255,255,255,0.05)",
+        textAlign: "center" as const,
+        cursor: onDrag ? "grab" : "default",
+        userSelect: "none" as const,
+        whiteSpace: "nowrap" as const,
+      }}
+    >
       <div style={{ fontSize: "0.2em", fontWeight: 700, color: "#00B2A9", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.6em" }}>Guest:</div>
       <div style={{ fontSize: "0.42em", fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.05em", lineHeight: 1.1 }}>{guestName}</div>
     </div>
+  );
+}
+
+function GuideLines({ show, pillX, pillY }: { show: boolean; pillX: number; pillY: number }) {
+  if (!show) return null;
+  const isCenter = Math.abs(pillX) < 1.5;
+  const isMiddle = Math.abs(pillY - (-35)) < 1.5;
+  return (
+    <>
+      <div style={{ position: "absolute", left: "50%", top: 0, bottom: 0, width: "1px", background: isCenter ? "rgba(0,178,169,0.6)" : "rgba(0,178,169,0.15)", zIndex: 8, pointerEvents: "none", transition: "background 0.15s" }} />
+      <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: isMiddle ? "rgba(0,178,169,0.6)" : "rgba(0,178,169,0.15)", zIndex: 8, pointerEvents: "none", transition: "background 0.15s" }} />
+      <div style={{ position: "absolute", top: "33.33%", left: 0, right: 0, height: "1px", background: "rgba(255,255,255,0.04)", zIndex: 8, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", top: "66.66%", left: 0, right: 0, height: "1px", background: "rgba(255,255,255,0.04)", zIndex: 8, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", left: "33.33%", top: 0, bottom: 0, width: "1px", background: "rgba(255,255,255,0.04)", zIndex: 8, pointerEvents: "none" }} />
+      <div style={{ position: "absolute", left: "66.66%", top: 0, bottom: 0, width: "1px", background: "rgba(255,255,255,0.04)", zIndex: 8, pointerEvents: "none" }} />
+    </>
   );
 }
 
@@ -101,6 +121,8 @@ function HorizontalTemplate({
   personImage,
   imgSettings,
   pillSettings,
+  onPillDrag,
+  isDraggingPill,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -110,6 +132,8 @@ function HorizontalTemplate({
   personImage: string | null;
   imgSettings: ImageSettings;
   pillSettings: PillSettings;
+  onPillDrag?: (e: React.MouseEvent) => void;
+  isDraggingPill?: boolean;
 }) {
   const { variant } = config;
   const showCta = variant === "cta";
@@ -197,7 +221,8 @@ function HorizontalTemplate({
         )}
       </div>
 
-      <GuestPill guestName={guestName} layout="right" pillSettings={pillSettings} />
+      <GuideLines show={isDraggingPill || false} pillX={pillSettings.offsetX} pillY={pillSettings.offsetY} />
+      <GuestPill guestName={guestName} pillSettings={pillSettings} onDrag={onPillDrag} isDragging={isDraggingPill} />
     </div>
   );
 }
@@ -210,6 +235,8 @@ function SquarePortraitTemplate({
   personImage,
   imgSettings,
   pillSettings,
+  onPillDrag,
+  isDraggingPill,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -218,6 +245,8 @@ function SquarePortraitTemplate({
   personImage: string | null;
   imgSettings: ImageSettings;
   pillSettings: PillSettings;
+  onPillDrag?: (e: React.MouseEvent) => void;
+  isDraggingPill?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isPortrait = config.height > config.width;
@@ -301,7 +330,8 @@ function SquarePortraitTemplate({
         )}
       </div>
 
-      <GuestPill guestName={guestName} layout="center" pillSettings={pillSettings} />
+      <GuideLines show={isDraggingPill || false} pillX={pillSettings.offsetX} pillY={pillSettings.offsetY} />
+      <GuestPill guestName={guestName} pillSettings={pillSettings} onDrag={onPillDrag} isDragging={isDraggingPill} />
     </div>
   );
 }
@@ -315,6 +345,8 @@ function TemplatePreview(props: {
   personImage: string | null;
   imgSettings: ImageSettings;
   pillSettings: PillSettings;
+  onPillDrag?: (e: React.MouseEvent) => void;
+  isDraggingPill?: boolean;
 }) {
   if (props.config.width > props.config.height) return <HorizontalTemplate {...props} />;
   return <SquarePortraitTemplate {...props} />;
@@ -328,6 +360,7 @@ export function BizDevWorkspace() {
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [imgSettings, setImgSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
   const [pillSettings, setPillSettings] = useState<PillSettings>({ offsetX: 0, offsetY: 0 });
+  const [isDraggingPill, setIsDraggingPill] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [generateDays, setGenerateDays] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState("horizontal-cta");
@@ -337,6 +370,42 @@ export function BizDevWorkspace() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
+
+  const previewRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef<{ startX: number; startY: number; startPillX: number; startPillY: number } | null>(null);
+
+  const handlePillDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const container = previewRef.current?.querySelector("[data-template-id]") as HTMLElement;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    setIsDraggingPill(true);
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startPillX: pillSettings.offsetX,
+      startPillY: pillSettings.offsetY,
+    };
+
+    const onMove = (ev: MouseEvent) => {
+      if (!dragStartRef.current) return;
+      const dx = ((ev.clientX - dragStartRef.current.startX) / rect.width) * 100;
+      const dy = ((ev.clientY - dragStartRef.current.startY) / rect.height) * 100;
+      let newX = dragStartRef.current.startPillX + dx;
+      let newY = dragStartRef.current.startPillY + dy;
+      if (Math.abs(newX) < 1.5) newX = 0;
+      if (Math.abs(newY) < 1.5) newY = 0;
+      setPillSettings({ offsetX: Math.round(newX * 2) / 2, offsetY: Math.round(newY * 2) / 2 });
+    };
+    const onUp = () => {
+      setIsDraggingPill(false);
+      dragStartRef.current = null;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [pillSettings]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -497,21 +566,8 @@ export function BizDevWorkspace() {
           <div className="flex flex-col">
             <label className={labelCls}>Guest Name <span className="text-[#FF6B6B]">*</span></label>
             <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Michael Cooch" className={inputCls} />
-            {guestName.trim() && (
-              <div className="mt-[6px] rounded-[10px] border border-[rgba(255,255,255,0.04)] bg-[rgba(255,255,255,0.015)] px-[10px] py-[7px] flex flex-col gap-[6px]">
-                <div className="text-[9px] font-semibold uppercase tracking-[0.5px] text-[#475569]">Pill Position</div>
-                <div className="flex items-center gap-[8px]">
-                  <span className="text-[9px] text-[#64748B] w-[14px] shrink-0">X</span>
-                  <input type="range" min="-50" max="50" step="1" value={pillSettings.offsetX} onChange={(e) => setPillSettings((s) => ({ ...s, offsetX: parseFloat(e.target.value) }))} className="flex-1 h-[3px] appearance-none bg-[rgba(255,255,255,0.08)] rounded-full cursor-pointer accent-[#00B2A9] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[10px] [&::-webkit-slider-thumb]:h-[10px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00B2A9]" />
-                  <span className="text-[9px] text-[#94A3B8] w-[22px] text-right tabular-nums">{pillSettings.offsetX}</span>
-                </div>
-                <div className="flex items-center gap-[8px]">
-                  <span className="text-[9px] text-[#64748B] w-[14px] shrink-0">Y</span>
-                  <input type="range" min="-50" max="50" step="1" value={pillSettings.offsetY} onChange={(e) => setPillSettings((s) => ({ ...s, offsetY: parseFloat(e.target.value) }))} className="flex-1 h-[3px] appearance-none bg-[rgba(255,255,255,0.08)] rounded-full cursor-pointer accent-[#00B2A9] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[10px] [&::-webkit-slider-thumb]:h-[10px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00B2A9]" />
-                  <span className="text-[9px] text-[#94A3B8] w-[22px] text-right tabular-nums">{pillSettings.offsetY}</span>
-                </div>
-                <button onClick={() => setPillSettings({ offsetX: 0, offsetY: 0 })} className="text-[8px] text-[#64748B] hover:text-[#94A3B8] cursor-pointer bg-transparent border-none p-0 self-end transition-all">Reset</button>
-              </div>
+            {guestName.trim() && (pillSettings.offsetX !== 0 || pillSettings.offsetY !== 0) && (
+              <button onClick={() => setPillSettings({ offsetX: 0, offsetY: 0 })} className="mt-[4px] text-[9px] text-[#64748B] hover:text-[#00B2A9] cursor-pointer bg-transparent border-none p-0 self-end transition-all">Reset pill position</button>
             )}
           </div>
           <div className="flex flex-col">
@@ -627,8 +683,8 @@ export function BizDevWorkspace() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
           <div className="flex-1 flex items-center justify-center p-[24px] overflow-auto">
-            <div className="w-full max-w-[560px]">
-              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} pillSettings={pillSettings} />
+            <div className="w-full max-w-[560px]" ref={previewRef}>
+              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} pillSettings={pillSettings} onPillDrag={handlePillDragStart} isDraggingPill={isDraggingPill} />
             </div>
           </div>
         ) : (

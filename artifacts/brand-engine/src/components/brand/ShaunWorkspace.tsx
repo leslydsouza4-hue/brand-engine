@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback, useEffect, type RefObject } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles, Crop } from "lucide-react";
 import { CropModal } from "./CropModal";
 
@@ -14,17 +14,6 @@ const SHAUN_IMAGES = [
 const BASE_URL = `${import.meta.env.BASE_URL}assets/shaun/`;
 const BG_URL = `${import.meta.env.BASE_URL}assets/backgrounds-dark/Type=Core Gradient.png`;
 
-function useContainerFontSize(ref: RefObject<HTMLDivElement | null>, base: number = 0.045) {
-  useEffect(() => {
-    if (!ref.current) return;
-    const ro = new ResizeObserver(([entry]) => {
-      const w = entry.contentRect.width;
-      if (ref.current) ref.current.style.fontSize = `${w * base}px`;
-    });
-    ro.observe(ref.current);
-    return () => ro.disconnect();
-  }, [ref, base]);
-}
 
 export function ShaunWorkspace() {
   const [activeImage, setActiveImage] = useState<string | null>(null);
@@ -52,8 +41,6 @@ export function ShaunWorkspace() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
-
-  useContainerFontSize(previewRef, 0.045);
 
   const handleDragStart = useCallback((clientX: number, clientY: number) => {
     if (!activeImage || !previewRef.current) return;
@@ -494,24 +481,14 @@ export function ShaunWorkspace() {
               />
 
               {stripText && (
-                <div className="absolute left-0 z-[6] whitespace-nowrap shadow-[2px_2px_12px_rgba(0,0,0,0.3)]"
-                  style={{
-                    top: '16%',
-                    background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 40%, #00B2A9 100%)',
-                    borderTopRightRadius: '6px',
-                    borderBottomRightRadius: '6px',
-                    paddingTop: '0.46%',
-                    paddingBottom: '0.46%',
-                    paddingLeft: '3.3%',
-                    paddingRight: '1.8%',
-                  }}
+                <div className="absolute top-[16%] left-0 z-[6] whitespace-nowrap rounded-r-[clamp(3px,0.5vw,6px)] overflow-hidden shadow-[2px_2px_12px_rgba(0,0,0,0.3)]"
+                  style={{ background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 40%, #00B2A9 100%)' }}
                 >
-                  <div className="absolute inset-0 bg-[rgba(255,255,255,0.06)]" style={{ borderTopRightRadius: '6px', borderBottomRightRadius: '6px' }} />
-                  <span className="relative font-['Poppins'] font-bold text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
-                    style={{ fontSize: '0.35em', letterSpacing: '2.5px' }}
+                  <div className="absolute inset-0 bg-[rgba(255,255,255,0.06)]" />
+                  <div className="relative py-[clamp(2px,0.4vw,5px)] pl-[24px] pr-[clamp(10px,1.4vw,16px)] font-['Poppins'] font-bold text-white text-[clamp(5px,0.7vw,8px)] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
                   >
                     {stripText}
-                  </span>
+                  </div>
                 </div>
               )}
 
@@ -559,17 +536,14 @@ export function ShaunWorkspace() {
                     style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 50%, transparent 100%)" }}
                   />
                   <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
-                    <div className="font-black leading-[0.95] uppercase text-white"
+                    <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-white"
                       style={{
-                        fontSize: '1.4em',
                         filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5))",
                       }}
                     >
                       {headline}
                     </div>
-                    <div className="font-bold uppercase text-white drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]"
-                      style={{ fontSize: '0.42em', marginTop: '0.3em', letterSpacing: '2px' }}
-                    >
+                    <div className="font-bold text-[clamp(7px,0.8vw,10px)] uppercase text-white mt-[6px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
                       {subtext}
                     </div>
                   </div>

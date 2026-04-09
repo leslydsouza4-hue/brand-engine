@@ -481,11 +481,11 @@ export function ShaunWorkspace() {
               />
 
               {stripText && (
-                <div className="absolute top-[16%] left-0 z-[6] whitespace-nowrap rounded-r-[clamp(3px,0.5vw,6px)] overflow-hidden shadow-[2px_2px_12px_rgba(0,0,0,0.3)]"
+                <div className="absolute top-[16%] left-0 z-[6] whitespace-nowrap rounded-r-[6px] overflow-hidden shadow-[2px_2px_12px_rgba(0,0,0,0.3)]"
                   style={{ background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 40%, #00B2A9 100%)' }}
                 >
                   <div className="absolute inset-0 bg-[rgba(255,255,255,0.06)]" />
-                  <div className="relative py-[clamp(2px,0.4vw,5px)] pl-[24px] pr-[clamp(10px,1.4vw,16px)] font-['Poppins'] font-bold text-white text-[clamp(5px,0.7vw,8px)] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+                  <div className="relative py-[5px] pl-[24px] pr-[16px] font-['Poppins'] font-bold text-white text-[8px] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
                   >
                     {stripText}
                   </div>

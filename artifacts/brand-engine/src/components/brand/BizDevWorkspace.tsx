@@ -257,7 +257,7 @@ function SquarePortraitTemplate({
   const isPortrait = config.height > config.width;
   useContainerFontSize(containerRef, isPortrait ? 0.055 : 0.05);
   const bgUrl = isPortrait ? BG_PORTRAIT : BG_SQUARE;
-  const baseH = isPortrait ? 48 : 52;
+  const baseH = isPortrait ? 72 : 75;
 
   return (
     <div
@@ -280,7 +280,7 @@ function SquarePortraitTemplate({
 
       {personImage && (
         <div style={{
-          position: "absolute", left: 0, right: 0, bottom: 0, height: `${(baseH + 20) * imgSettings.scale}%`,
+          position: "absolute", left: 0, right: 0, bottom: 0, height: `${(baseH + 15) * imgSettings.scale}%`,
           display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden", zIndex: 2,
         }}>
           <img src={personImage} alt="" crossOrigin="anonymous" style={{

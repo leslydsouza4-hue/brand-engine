@@ -130,7 +130,9 @@ function HorizontalTemplate({
             letterSpacing: "-0.02em",
             display: "inline",
           }}>
-            {headline || "Enter Headline"}
+            {headline ? headline.split("\n").map((line, i, arr) => (
+              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+            )) : "Enter Headline"}
           </span>
         </div>
       </div>

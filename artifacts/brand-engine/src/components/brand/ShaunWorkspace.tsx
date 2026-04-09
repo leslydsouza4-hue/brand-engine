@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles, Crop } from "lucide-react";
 import { CropModal } from "./CropModal";
+import { LivePreview } from "./LivePreview";
 
 const SHAUN_IMAGES = [
   "ShaunClark_03057_StudioSura-Photoroom.png",
@@ -462,16 +463,7 @@ export function ShaunWorkspace() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 pt-[20px] px-[24px] pb-[24px]">
-        <div className="flex items-center justify-between pb-[14px]">
-          <div className="text-[13px] font-medium text-[#64748B] flex items-center gap-[9px]">
-            <div className="w-[8px] h-[8px] rounded-full bg-[#00B2A9] shadow-[0_0_10px_rgba(0,178,169,0.4)] animate-[pulse-dot_2s_infinite]"></div>
-            Live Preview
-          </div>
-        </div>
-        
-        <div className="flex-1 flex items-center justify-center rounded-[28px] overflow-hidden bg-[rgba(255,255,255,0.015)] border border-[rgba(255,255,255,0.04)] relative">
-          <div className="flex justify-center items-center w-full h-full p-[32px]">
+      <LivePreview>
             <div ref={previewRef} data-export-preview className={`w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}>
               
               <img 
@@ -558,9 +550,7 @@ export function ShaunWorkspace() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      </div>
+      </LivePreview>
 
       {cropModalImage && (
         <CropModal

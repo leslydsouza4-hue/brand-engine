@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
+import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -75,15 +76,7 @@ export function ZoomWorkspace() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 pt-[20px] px-[24px] pb-[24px]">
-        <div className="flex items-center justify-between pb-[14px]">
-          <div className="text-[13px] font-medium text-[#64748B] flex items-center gap-[9px]">
-            <div className="w-[8px] h-[8px] rounded-full bg-[#00B2A9] shadow-[0_0_10px_rgba(0,178,169,0.4)] animate-[pulse-dot_2s_infinite]"></div>
-            Live Preview
-          </div>
-        </div>
-
-        <div className="flex-1 flex justify-center items-center p-[32px]">
+      <LivePreview>
           <div data-export-preview data-export-name={[name, designation].filter(Boolean).join(" - ") || "Zoom Background"} className="w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
 
             <img
@@ -118,8 +111,7 @@ export function ZoomWorkspace() {
               </div>
             )}
           </div>
-        </div>
-      </div>
+      </LivePreview>
     </div>
   );
 }

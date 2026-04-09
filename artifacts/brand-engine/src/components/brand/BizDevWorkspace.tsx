@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
+import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/bizdev/background.png`;
@@ -781,11 +782,11 @@ export function BizDevWorkspace() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
-          <div className="flex-1 flex items-center justify-center p-[24px] overflow-auto">
+          <LivePreview>
             <div className="w-full max-w-[560px]" ref={previewRef}>
               <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} pillSettings={pillSettings} onPillDrag={handlePillDragStart} isDraggingPill={isDraggingPill} />
             </div>
-          </div>
+          </LivePreview>
         ) : (
           <div className="flex-1 overflow-y-auto" ref={galleryRef}>
             <div className="max-w-[1100px] mx-auto py-[20px] px-[20px]">

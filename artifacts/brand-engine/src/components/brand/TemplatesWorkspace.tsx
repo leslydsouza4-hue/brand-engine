@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
+import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
 const bg = (name: string) => `${BASE}assets/backgrounds-dark/${name}`;
@@ -763,15 +764,8 @@ export function TemplatesWorkspace() {
         )}
       </div>
 
-      <div className="flex-1 flex flex-col min-w-0 py-[20px] px-[24px] pb-[24px]">
-        <div className="flex items-center justify-between pb-[14px]">
-          <div className="text-[13px] font-medium text-[#64748B] flex items-center gap-[9px]">
-            <div className="w-[8px] h-[8px] rounded-full bg-[#00B2A9] shadow-[0_0_10px_rgba(0,178,169,0.4)] animate-[pulse-dot_2s_infinite]" />
-            Live Preview
-          </div>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center relative overflow-hidden rounded-[16px]">
+      <LivePreview>
+        <div className="flex-1 flex items-center justify-center relative overflow-hidden w-full">
           <AnimatePresence mode="wait">
             {activeTemplate ? (
               <motion.div
@@ -1088,7 +1082,7 @@ export function TemplatesWorkspace() {
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </LivePreview>
     </div>
   );
 }

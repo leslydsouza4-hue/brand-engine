@@ -356,30 +356,31 @@ function VerticalTemplate({
     >
       <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
 
-      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "3.5%", left: "7%", height: "4.5%", width: "auto", objectFit: "contain", zIndex: 3 }} />
+      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{
+        position: "absolute", top: "3.5%", left: "50%", transform: "translateX(-50%)",
+        height: "4.5%", width: "auto", objectFit: "contain", zIndex: 3,
+      }} />
 
       <div style={{
-        position: "absolute", top: "3.5%", right: "7%", zIndex: 3,
-        display: "inline-flex", alignItems: "center", gap: "0.25em",
-        padding: "0.18em 0.6em 0.18em 0.35em",
-        background: "transparent",
-        border: "1px solid rgba(255,255,255,0.45)",
-        borderRadius: "999px",
+        position: "absolute", left: "7%", right: "7%", top: "8%", zIndex: 3,
+        display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.5em",
       }}>
-        <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
-          <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
-          <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
-          <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
-          <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
-          <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
-        </svg>
-        <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
-      </div>
-
-      <div style={{
-        position: "absolute", left: "7%", right: "7%", top: "10%", zIndex: 3,
-        display: "flex", flexDirection: "column", gap: "0.5em",
-      }}>
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: "0.25em",
+          padding: "0.18em 0.6em 0.18em 0.35em",
+          background: "transparent",
+          border: "1px solid rgba(255,255,255,0.45)",
+          borderRadius: "999px",
+        }}>
+          <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
+            <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
+            <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+          </svg>
+          <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+        </div>
         <div>
           <span style={{
             fontSize: "1.6em", fontWeight: 700, lineHeight: 1.08,

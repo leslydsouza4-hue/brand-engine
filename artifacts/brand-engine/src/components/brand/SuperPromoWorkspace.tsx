@@ -1152,20 +1152,51 @@ export function SuperPromoWorkspace() {
         <div className="flex flex-col gap-[12px]">
           <div className="flex flex-col">
             <label className={labelCls}>Size</label>
-            <div className="flex items-center gap-[2px] p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.04)]">
+            <div className="flex items-center gap-[8px]">
               {(["horizontal", "vertical", "portrait", "quicklinks"] as SizeMode[]).map((s) => {
                 const isActive = sizeMode === s;
+                const label = s === "horizontal" ? "Horizontal" : s === "vertical" ? "Vertical" : s === "portrait" ? "Portrait" : "Square";
+                const iconW = s === "horizontal" ? 38 : s === "vertical" ? 20 : s === "portrait" ? 22 : 24;
+                const iconH = s === "horizontal" ? 24 : s === "vertical" ? 30 : s === "portrait" ? 28 : 24;
+                const iconR = s === "horizontal" ? 4 : 3;
                 return (
                   <button
                     key={s}
                     onClick={() => { setSizeMode(s); setSelectedTemplate(TEMPLATES.filter((t) => t.size === s)[0].id); }}
-                    className={`flex-1 py-[6px] rounded-[7px] text-[10px] font-semibold transition-all duration-200 cursor-pointer border-none
-                      ${isActive
-                        ? "bg-[rgba(0,178,169,0.12)] text-[#00B2A9] shadow-[0_1px_4px_rgba(0,0,0,0.15)]"
-                        : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
-                      }`}
+                    className="cursor-pointer border-none bg-transparent p-0 flex-1"
+                    style={{ outline: "none" }}
                   >
-                    {s === "horizontal" ? "Horizontal" : s === "vertical" ? "Vertical" : s === "portrait" ? "Portrait" : "Quick Links"}
+                    <div
+                      className="flex flex-col items-center gap-[8px] py-[14px] rounded-[10px] transition-all duration-200"
+                      style={{
+                        background: isActive
+                          ? "linear-gradient(135deg, rgba(0,178,169,0.08) 0%, rgba(40,150,251,0.06) 100%)"
+                          : "rgba(255,255,255,0.02)",
+                        border: isActive
+                          ? "1px solid rgba(0,178,169,0.3)"
+                          : "1px solid rgba(255,255,255,0.06)",
+                        boxShadow: isActive
+                          ? "inset 0 1px 0 rgba(0,178,169,0.15), 0 2px 8px rgba(0,0,0,0.2)"
+                          : "inset 0 1px 0 rgba(255,255,255,0.03), 0 2px 8px rgba(0,0,0,0.15)",
+                      }}
+                    >
+                      <svg width={iconW} height={iconH} viewBox={`0 0 ${iconW} ${iconH}`} fill="none">
+                        <rect
+                          x="0.5" y="0.5"
+                          width={iconW - 1} height={iconH - 1}
+                          rx={iconR} ry={iconR}
+                          fill={isActive ? "rgba(0,178,169,0.15)" : "rgba(255,255,255,0.06)"}
+                          stroke={isActive ? "rgba(0,178,169,0.5)" : "rgba(255,255,255,0.15)"}
+                          strokeWidth="1"
+                        />
+                      </svg>
+                      <span
+                        className="text-[10px] font-semibold transition-colors duration-200"
+                        style={{ color: isActive ? "#00B2A9" : "#64748B" }}
+                      >
+                        {label}
+                      </span>
+                    </div>
                   </button>
                 );
               })}

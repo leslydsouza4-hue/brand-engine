@@ -494,15 +494,24 @@ export function ShaunWorkspace() {
               />
 
               {stripText && (
-                <div className="absolute top-[16%] left-0 z-[6] whitespace-nowrap shadow-[2px_2px_12px_rgba(0,0,0,0.3)]"
-                  style={{ background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 40%, #00B2A9 100%)', borderTopRightRadius: '0.28em', borderBottomRightRadius: '0.28em' }}
+                <div className="absolute left-0 z-[6] whitespace-nowrap shadow-[2px_2px_12px_rgba(0,0,0,0.3)]"
+                  style={{
+                    top: '16%',
+                    background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 40%, #00B2A9 100%)',
+                    borderTopRightRadius: '6px',
+                    borderBottomRightRadius: '6px',
+                    paddingTop: '0.46%',
+                    paddingBottom: '0.46%',
+                    paddingLeft: '3.3%',
+                    paddingRight: '1.8%',
+                  }}
                 >
-                  <div className="absolute inset-0 bg-[rgba(255,255,255,0.06)]" style={{ borderTopRightRadius: '0.28em', borderBottomRightRadius: '0.28em' }} />
-                  <div className="relative font-['Poppins'] font-bold text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
-                    style={{ fontSize: '0.35em', letterSpacing: '2.5px', paddingTop: '0.22em', paddingBottom: '0.22em', paddingLeft: '2.1em', paddingRight: '0.8em' }}
+                  <div className="absolute inset-0 bg-[rgba(255,255,255,0.06)]" style={{ borderTopRightRadius: '6px', borderBottomRightRadius: '6px' }} />
+                  <span className="relative font-['Poppins'] font-bold text-white uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+                    style={{ fontSize: '0.35em', letterSpacing: '2.5px' }}
                   >
                     {stripText}
-                  </div>
+                  </span>
                 </div>
               )}
 

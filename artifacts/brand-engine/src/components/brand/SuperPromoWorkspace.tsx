@@ -125,7 +125,14 @@ function HorizontalTemplate({
 
       <div style={{ position: "absolute", left: "5%", top: contentTop, width: "45%", zIndex: 3, display: "flex", flexDirection: "column", gap: "0.4em" }}>
         {showBadge && (
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.3em", marginBottom: "0.15em" }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "0.3em", marginBottom: "0.15em",
+            padding: "0.22em 0.8em 0.22em 0.5em",
+            background: "transparent",
+            border: "1px solid rgba(255,255,255,0.45)",
+            borderRadius: "999px",
+            alignSelf: "flex-start",
+          }}>
             <svg width="0.9em" height="0.9em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(45deg)", flexShrink: 0 }}>
               <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
               <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />

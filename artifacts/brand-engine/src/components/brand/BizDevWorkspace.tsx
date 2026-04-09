@@ -17,13 +17,14 @@ interface TemplateConfig {
   shortName: string;
   width: number;
   height: number;
-  variant: "dates" | "cta" | "day1" | "day2";
+  variant: "dates" | "cta" | "day1" | "day2" | "replays";
   group: "horizontal" | "square" | "portrait";
 }
 
 const TEMPLATES: TemplateConfig[] = [
   { id: "horizontal-cta", name: "Horizontal - CTA", shortName: "CTA", width: 1920, height: 1080, variant: "cta", group: "horizontal" },
   { id: "horizontal-dates", name: "Horizontal - Dates", shortName: "Dates", width: 1920, height: 1080, variant: "dates", group: "horizontal" },
+  { id: "horizontal-replays", name: "Horizontal - Replays", shortName: "Replays", width: 1920, height: 1080, variant: "replays", group: "horizontal" },
   { id: "horizontal-day1", name: "Horizontal - DAY 1", shortName: "Day 1", width: 1920, height: 1080, variant: "day1", group: "horizontal" },
   { id: "horizontal-day2", name: "Horizontal - DAY 2", shortName: "Day 2", width: 1920, height: 1080, variant: "day2", group: "horizontal" },
   { id: "ql-dates", name: "QL - Dates", shortName: "Dates", width: 1080, height: 1080, variant: "dates", group: "square" },
@@ -140,6 +141,7 @@ function HorizontalTemplate({
   const { variant } = config;
   const showCta = variant === "cta";
   const showDay = variant === "day1" || variant === "day2";
+  const showReplays = variant === "replays";
   const dayLabel = variant === "day1" ? "DAY 1" : variant === "day2" ? "DAY 2" : "";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
@@ -189,7 +191,7 @@ function HorizontalTemplate({
           </span>
         </div>
 
-        {!showDay && dateText && (
+        {!showDay && !showReplays && dateText && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.3em", paddingBottom: "0.4em" }}>
             <div style={{
               width: "1em", height: "1em", borderRadius: "0.12em",
@@ -223,6 +225,26 @@ function HorizontalTemplate({
             letterSpacing: "0.02em", paddingBottom: "0.2em",
             textShadow: "0 0.05em 0.3em rgba(0,0,0,0.3)",
           }}>{dayLabel}</div>
+        )}
+
+        {showReplays && (
+          <div style={{ paddingBottom: "0.4em" }}>
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: "0.35em",
+              padding: "0.35em 1.2em",
+              fontSize: "0.7em", fontWeight: 800, color: "#0A1628",
+              background: "#FFC800",
+              borderRadius: "0.25em", letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              border: "2px solid #0A1628",
+            }}>
+              <svg width="0.9em" height="0.9em" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 4v6h6" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+              REPLAYS
+            </span>
+          </div>
         )}
       </div>
 

@@ -230,10 +230,10 @@ function HorizontalTemplate({
           position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
         }}>
           <span style={{
-            display: "inline-block", padding: "0.35em 1.2em",
-            fontSize: "0.52em", fontWeight: 700, color: "#1a56db",
-            background: "#FFFFFF",
-            borderRadius: "0.25em", letterSpacing: "0.03em",
+            display: "inline-block", padding: "0.4em 1.4em",
+            fontSize: "0.52em", fontWeight: 800, color: "#0F1A3E",
+            background: "linear-gradient(180deg, #A8EEFF 0%, #FFFFFF 100%)",
+            borderRadius: "0.35em", letterSpacing: "0.03em",
             boxShadow: "0 0.2em 0.8em rgba(0,0,0,0.2)",
           }}>{ctaText}</span>
         </div>

@@ -225,8 +225,14 @@ function HorizontalTemplate({
             alignSelf: "flex-start",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <path d="M1 4v6h6" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <defs>
+                <linearGradient id="replay-grad-hz" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#62E8FF" />
+                  <stop offset="100%" stopColor="#FFFFFF" />
+                </linearGradient>
+              </defs>
+              <path d="M1 4v6h6" stroke="url(#replay-grad-hz)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-hz)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{
               fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
@@ -421,8 +427,14 @@ function VerticalTemplate({
             borderRadius: "0.25em",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <path d="M1 4v6h6" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <defs>
+                <linearGradient id="replay-grad-vt" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#62E8FF" />
+                  <stop offset="100%" stopColor="#FFFFFF" />
+                </linearGradient>
+              </defs>
+              <path d="M1 4v6h6" stroke="url(#replay-grad-vt)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-vt)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{
               fontSize: "1.4em", fontWeight: 800, lineHeight: 1,

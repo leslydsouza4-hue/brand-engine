@@ -16,7 +16,7 @@ interface TemplateConfig {
   shortName: string;
   width: number;
   height: number;
-  variant: "dates" | "cta" | "nodate" | "day1" | "day2";
+  variant: "dates" | "cta" | "nodate" | "day1" | "day2" | "replays";
 }
 
 const TEMPLATES: TemplateConfig[] = [
@@ -25,6 +25,7 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "hz-nodate", name: "Horizontal - No Date", shortName: "No Date", width: 1920, height: 1080, variant: "nodate" },
   { id: "hz-day1", name: "Horizontal - Day 1", shortName: "Day 1", width: 1920, height: 1080, variant: "day1" },
   { id: "hz-day2", name: "Horizontal - Day 2", shortName: "Day 2", width: 1920, height: 1080, variant: "day2" },
+  { id: "hz-replays", name: "Horizontal - Replays", shortName: "Replays", width: 1920, height: 1080, variant: "replays" },
 ];
 
 function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base: number = 0.045) {
@@ -76,9 +77,10 @@ function HorizontalTemplate({
   const showDate = variant === "dates" || variant === "cta";
   const showCta = variant === "cta";
   const showDay = variant === "day1" || variant === "day2";
+  const showReplays = variant === "replays";
   const showBadge = variant === "nodate";
   const dayLabel = variant === "day1" ? "DAY 1" : variant === "day2" ? "DAY 2" : "";
-  const contentTop = (variant === "dates" || variant === "day1" || variant === "day2" || variant === "nodate") ? "28%" : "20%";
+  const contentTop = (variant === "dates" || variant === "day1" || variant === "day2" || variant === "nodate" || variant === "replays") ? "28%" : "20%";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
@@ -203,6 +205,28 @@ function HorizontalTemplate({
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
               color: "transparent",
             }}>{dayLabel}</span>
+          </div>
+        )}
+
+        {showReplays && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "0.3em",
+            padding: "0.3em 0.8em",
+            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            borderRadius: "0.25em",
+            alignSelf: "flex-start",
+          }}>
+            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+              <path d="M1 4v6h6" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span style={{
+              fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
+              letterSpacing: "0.04em",
+              background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              color: "transparent",
+            }}>REPLAYS</span>
           </div>
         )}
       </div>

@@ -1205,14 +1205,21 @@ export function SuperPromoWorkspace() {
 
           <div className="flex flex-col">
             <label className={labelCls}>Variant</label>
-            <div className="flex items-center gap-[2px] p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.04)]">
+            <div
+              className="p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.04)]"
+              style={{
+                display: "grid",
+                gridTemplateColumns: filteredTemplates.length > 3 ? "repeat(3, 1fr)" : `repeat(${filteredTemplates.length}, 1fr)`,
+                gap: "2px",
+              }}
+            >
               {filteredTemplates.map((t) => {
                 const isActive = selectedTemplate === t.id;
                 return (
                   <button
                     key={t.id}
                     onClick={() => setSelectedTemplate(t.id)}
-                    className={`flex-1 py-[6px] rounded-[7px] text-[10px] font-semibold transition-all duration-200 cursor-pointer border-none
+                    className={`py-[6px] rounded-[7px] text-[10px] font-semibold transition-all duration-200 cursor-pointer border-none
                       ${isActive
                         ? "bg-[rgba(0,178,169,0.12)] text-[#00B2A9] shadow-[0_1px_4px_rgba(0,0,0,0.15)]"
                         : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"

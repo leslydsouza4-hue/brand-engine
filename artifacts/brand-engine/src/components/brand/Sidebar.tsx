@@ -7,7 +7,6 @@ import {
   Settings, 
   FolderOpen,
   MonitorPlay,
-  Mail,
   Briefcase,
   X
 } from "lucide-react";
@@ -129,7 +128,9 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             onClick={() => handleSetMode('zoom-backgrounds')}
             className={`${btnBase} cursor-pointer ${currentMode === 'zoom-backgrounds' ? activeClass : inactiveClass}`}
           >
-            <Mail className={iconCls(currentMode === 'zoom-backgrounds')} />
+            <svg viewBox="0 0 24 24" fill="currentColor" className={`w-[18px] h-[18px] shrink-0 ${iconCls(currentMode === 'zoom-backgrounds')}`}>
+              <path d="M5.5 7.5C4.12 7.5 3 8.62 3 10v4c0 1.38 1.12 2.5 2.5 2.5h7c1.38 0 2.5-1.12 2.5-2.5v-4c0-1.38-1.12-2.5-2.5-2.5h-7zm12.5 1l3.15-1.9A.5.5 0 0 1 21.9 7v10a.5.5 0 0 1-.75.4L18 15.5V8.5z"/>
+            </svg>
             Zoom Backgrounds
           </button>
 

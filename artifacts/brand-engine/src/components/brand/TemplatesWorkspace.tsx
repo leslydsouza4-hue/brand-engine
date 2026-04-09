@@ -225,8 +225,7 @@ export function TemplatesWorkspace() {
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [bgRemoved, setBgRemoved] = useState(false);
   const [showLogoOverlay, setShowLogoOverlay] = useState(false);
-  const [logoPlacement, setLogoPlacement] = useState<"top-center" | "top-right" | "bottom-center" | "bottom-right">("top-center");
-  const [logoScale, setLogoScale] = useState(20);
+  const [logoPlacement, setLogoPlacement] = useState<"top-left" | "bottom-left">("top-left");
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
 
@@ -349,8 +348,7 @@ export function TemplatesWorkspace() {
     setHeadlineColor(null);
     setActiveToolbar(null);
     setShowLogoOverlay(false);
-    setLogoPlacement("top-center");
-    setLogoScale(20);
+    setLogoPlacement("top-left");
   };
 
   const filtered = TEMPLATES.filter(t => t.categories.includes(activeCategory.id));
@@ -481,12 +479,9 @@ export function TemplatesWorkspace() {
             alt="HighLevel"
             className="absolute z-[8] object-contain pointer-events-none select-none"
             style={{
-              height: `${logoScale}%`,
+              height: "5%",
               filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))",
-              ...(logoPlacement === "top-center" ? { top: "5%", left: "50%", transform: "translateX(-50%)" } :
-                 logoPlacement === "top-right" ? { top: "5%", right: "5%" } :
-                 logoPlacement === "bottom-center" ? { bottom: "5%", left: "50%", transform: "translateX(-50%)" } :
-                 { bottom: "5%", right: "5%" }),
+              ...(logoPlacement === "top-left" ? { top: "5%", left: "5%" } : { bottom: "5%", left: "5%" }),
             }}
             draggable={false}
           />
@@ -840,10 +835,8 @@ export function TemplatesWorkspace() {
                   {showLogoOverlay && (
                     <div className="flex items-center gap-[4px] ml-[4px] pl-[8px] border-l border-[rgba(255,255,255,0.1)]">
                       {([
-                        { id: "top-center" as const, label: "TC" , title: "Top Centre" },
-                        { id: "top-right" as const, label: "TR", title: "Top Right" },
-                        { id: "bottom-center" as const, label: "BC", title: "Bottom Centre" },
-                        { id: "bottom-right" as const, label: "BR", title: "Bottom Right" },
+                        { id: "top-left" as const, label: "TL", title: "Top Left" },
+                        { id: "bottom-left" as const, label: "BL", title: "Bottom Left" },
                       ]).map(p => (
                         <button
                           key={p.id}
@@ -858,14 +851,6 @@ export function TemplatesWorkspace() {
                           {p.label}
                         </button>
                       ))}
-                      <div className="w-[1px] h-[14px] bg-[rgba(255,255,255,0.1)] mx-[2px]" />
-                      <input
-                        type="range" min="8" max="40" step="1"
-                        value={logoScale}
-                        onChange={(e) => setLogoScale(Number(e.target.value))}
-                        className="w-[50px] h-[3px] appearance-none bg-[rgba(255,255,255,0.1)] rounded-full cursor-pointer accent-[#00B2A9] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[10px] [&::-webkit-slider-thumb]:h-[10px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00B2A9]"
-                      />
-                      <span className="text-[9px] text-[#64748B] w-[20px] text-right">{logoScale}%</span>
                     </div>
                   )}
                 </div>

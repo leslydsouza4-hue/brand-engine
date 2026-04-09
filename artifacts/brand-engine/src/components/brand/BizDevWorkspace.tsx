@@ -1,11 +1,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  UploadCloud, X, Loader2, Download, Check, Sparkles, Monitor, Square, RectangleVertical
+  UploadCloud, X, Loader2, Download, Check, Sparkles
 } from "lucide-react";
 import html2canvas from "html2canvas";
 
 const BASE = import.meta.env.BASE_URL;
-const BG_URL = `${BASE}assets/bizdev/background.png`;
+const BG_HORIZONTAL = `${BASE}assets/bizdev/background.png`;
+const BG_PORTRAIT = `${BASE}assets/bizdev/background-portrait.png`;
 const LOGO_URL = `${BASE}assets/bizdev/logo-light.png`;
 
 interface TemplateConfig {
@@ -27,6 +28,12 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "portrait-dates", name: "Portrait - Dates", shortName: "Dates", width: 1080, height: 1350, variant: "dates", group: "portrait" },
 ];
 
+const SIZE_GROUPS = [
+  { key: "horizontal" as const, label: "Horizontal", dims: "1920 × 1080", ar: "16/9" },
+  { key: "square" as const, label: "Square", dims: "1080 × 1080", ar: "1/1" },
+  { key: "portrait" as const, label: "Portrait", dims: "1080 × 1350", ar: "4/5" },
+];
+
 function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base: number = 0.045) {
   useEffect(() => {
     if (!ref.current) return;
@@ -39,22 +46,47 @@ function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base:
   }, [ref, base]);
 }
 
-function LogoOverlay() {
+function GuestPill({ guestName, hostName, fontSize }: { guestName: string; hostName: string; fontSize: string }) {
+  if (!guestName && !hostName) return null;
   return (
-    <img
-      src={LOGO_URL}
-      alt=""
-      crossOrigin="anonymous"
-      style={{
-        position: "absolute",
-        top: "6.5%",
-        left: "5%",
-        height: "8.2%",
-        width: "auto",
-        objectFit: "contain",
-        zIndex: 3,
-      }}
-    />
+    <div style={{
+      position: "absolute",
+      bottom: "4%",
+      left: "8%",
+      right: "8%",
+      zIndex: 5,
+      display: "flex",
+      gap: "0.3em",
+    }}>
+      {hostName && (
+        <div style={{
+          flex: 1,
+          background: "rgba(6,17,35,0.75)",
+          backdropFilter: "blur(8px)",
+          borderRadius: "0.4em",
+          padding: "0.45em 0.6em",
+          border: "1px solid rgba(255,255,255,0.08)",
+          textAlign: "center",
+        }}>
+          <div style={{ fontSize: `calc(${fontSize} * 0.38)`, fontWeight: 600, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.12em", lineHeight: 1, paddingBottom: "0.25em" }}>Host:</div>
+          <div style={{ fontSize: `calc(${fontSize} * 0.7)`, fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.03em", lineHeight: 1.1 }}>{hostName}</div>
+        </div>
+      )}
+      {guestName && (
+        <div style={{
+          flex: 1,
+          background: "rgba(6,17,35,0.75)",
+          backdropFilter: "blur(8px)",
+          borderRadius: "0.4em",
+          padding: "0.45em 0.6em",
+          border: "1px solid rgba(255,255,255,0.08)",
+          textAlign: "center",
+        }}>
+          <div style={{ fontSize: `calc(${fontSize} * 0.38)`, fontWeight: 600, color: "rgba(255,255,255,0.45)", textTransform: "uppercase", letterSpacing: "0.12em", lineHeight: 1, paddingBottom: "0.25em" }}>Guest:</div>
+          <div style={{ fontSize: `calc(${fontSize} * 0.7)`, fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.03em", lineHeight: 1.1 }}>{guestName}</div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -63,6 +95,7 @@ function HorizontalTemplate({
   headline,
   dateText,
   guestName,
+  hostName,
   ctaText,
   personImage,
 }: {
@@ -70,6 +103,7 @@ function HorizontalTemplate({
   headline: string;
   dateText: string;
   guestName: string;
+  hostName: string;
   ctaText: string;
   personImage: string | null;
 }) {
@@ -95,12 +129,12 @@ function HorizontalTemplate({
         fontSize: "16px",
       }}
     >
-      <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      <img src={BG_HORIZONTAL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, rgba(6,11,22,0.65) 0%, rgba(6,11,22,0.25) 45%, transparent 65%)", zIndex: 1 }} />
-      <LogoOverlay />
+      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "6.5%", left: "5%", height: "8.2%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
       {personImage && (
-        <img src={personImage} alt="Guest" crossOrigin="anonymous" style={{
+        <img src={personImage} alt="" crossOrigin="anonymous" style={{
           position: "absolute", right: "3%", bottom: "0", height: "88%",
           objectFit: "contain", objectPosition: "bottom right", zIndex: 2,
         }} />
@@ -108,16 +142,10 @@ function HorizontalTemplate({
 
       <div style={{ position: "absolute", left: "5%", top: "22%", width: "48%", zIndex: 3, display: "flex", flexDirection: "column" }}>
         <div style={{
-          fontSize: "1.95em",
-          fontWeight: 800,
-          lineHeight: 1.08,
-          textTransform: "uppercase",
+          fontSize: "1.95em", fontWeight: 800, lineHeight: 1.08, textTransform: "uppercase",
           background: "linear-gradient(180deg, #FFFFFF 0%, #5BE0D8 40%, #00B2A9 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-          letterSpacing: "-0.02em",
-          paddingBottom: "0.5em",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+          letterSpacing: "-0.02em", paddingBottom: "0.5em",
         }}>
           {headline || "Enter Headline"}
         </div>
@@ -159,31 +187,30 @@ function HorizontalTemplate({
         )}
       </div>
 
-      {guestName && (
-        <div style={{ position: "absolute", right: personImage ? "28%" : "5%", bottom: "8%", zIndex: 4, textAlign: "center" }}>
-          <div style={{ fontSize: "0.32em", fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.15em", paddingBottom: "0.15em" }}>Guest:</div>
-          <div style={{ fontSize: "0.62em", fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.03em" }}>{guestName}</div>
-        </div>
-      )}
+      <GuestPill guestName={guestName} hostName={hostName} fontSize="1em" />
     </div>
   );
 }
 
-function SquareTemplate({
+function SquarePortraitTemplate({
   config,
   headline,
   dateText,
   guestName,
+  hostName,
   personImage,
 }: {
   config: TemplateConfig;
   headline: string;
   dateText: string;
   guestName: string;
+  hostName: string;
   personImage: string | null;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  useContainerFontSize(containerRef, 0.05);
+  const isPortrait = config.height > config.width;
+  useContainerFontSize(containerRef, isPortrait ? 0.055 : 0.05);
+  const bgUrl = isPortrait ? BG_PORTRAIT : BG_HORIZONTAL;
 
   return (
     <div
@@ -196,35 +223,57 @@ function SquareTemplate({
         overflow: "hidden",
         borderRadius: "0.3em",
         fontFamily: "'Poppins', sans-serif",
-        backgroundColor: "#0e1f3a",
+        backgroundColor: "#0a1628",
         fontSize: "16px",
       }}
     >
-      <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,11,22,0.5) 0%, rgba(6,11,22,0.15) 40%, transparent 60%)", zIndex: 1 }} />
-      <LogoOverlay />
+      <img src={bgUrl} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,11,22,0.4) 0%, rgba(6,11,22,0.1) 35%, transparent 55%, rgba(6,11,22,0.5) 85%)", zIndex: 1 }} />
+      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "4%", left: "50%", transform: "translateX(-50%)", height: isPortrait ? "5.5%" : "6%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
       {personImage && (
-        <img src={personImage} alt="Guest" crossOrigin="anonymous" style={{
-          position: "absolute", right: "-3%", bottom: "0", height: "65%",
-          objectFit: "contain", objectPosition: "bottom right", zIndex: 2,
+        <img src={personImage} alt="" crossOrigin="anonymous" style={{
+          position: "absolute",
+          left: "50%",
+          transform: "translateX(-50%)",
+          bottom: isPortrait ? "12%" : "14%",
+          height: isPortrait ? "48%" : "52%",
+          objectFit: "contain",
+          objectPosition: "bottom center",
+          zIndex: 2,
         }} />
       )}
 
-      <div style={{ position: "absolute", left: "6%", top: "16%", width: "60%", zIndex: 3, display: "flex", flexDirection: "column" }}>
+      <div style={{
+        position: "absolute",
+        left: "8%",
+        top: isPortrait ? "11%" : "14%",
+        width: "84%",
+        zIndex: 3,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+      }}>
         <div style={{
-          fontSize: "1.8em", fontWeight: 800, lineHeight: 1.08, textTransform: "uppercase",
+          fontSize: isPortrait ? "1.6em" : "1.7em",
+          fontWeight: 800,
+          lineHeight: 1.08,
+          textTransform: "uppercase",
           background: "linear-gradient(180deg, #FFFFFF 0%, #5BE0D8 40%, #00B2A9 100%)",
-          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-          letterSpacing: "-0.02em", paddingBottom: "0.5em",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          letterSpacing: "-0.02em",
+          paddingBottom: "0.4em",
         }}>
           {headline || "Enter Headline"}
         </div>
 
         {dateText && (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.3em", paddingBottom: "0.4em" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.3em", justifyContent: "center" }}>
             <div style={{
-              width: "1em", height: "1em", borderRadius: "0.12em",
+              width: "0.9em", height: "0.9em", borderRadius: "0.1em",
               background: "rgba(0,178,169,0.2)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
             }}>
               <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#00B2A9" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -239,12 +288,7 @@ function SquareTemplate({
         )}
       </div>
 
-      {guestName && (
-        <div style={{ position: "absolute", right: personImage ? "30%" : "6%", bottom: "8%", zIndex: 4, textAlign: "center" }}>
-          <div style={{ fontSize: "0.3em", fontWeight: 600, color: "rgba(255,255,255,0.5)", textTransform: "uppercase", letterSpacing: "0.15em", paddingBottom: "0.12em" }}>Guest:</div>
-          <div style={{ fontSize: "0.55em", fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.03em" }}>{guestName}</div>
-        </div>
-      )}
+      <GuestPill guestName={guestName} hostName={hostName} fontSize="1em" />
     </div>
   );
 }
@@ -254,23 +298,19 @@ function TemplatePreview(props: {
   headline: string;
   dateText: string;
   guestName: string;
+  hostName: string;
   ctaText: string;
   personImage: string | null;
 }) {
   if (props.config.width > props.config.height) return <HorizontalTemplate {...props} />;
-  return <SquareTemplate {...props} />;
+  return <SquarePortraitTemplate {...props} />;
 }
-
-const SIZE_GROUPS = [
-  { key: "horizontal", label: "Horizontal", icon: Monitor, dims: "1920 × 1080" },
-  { key: "square", label: "Square", icon: Square, dims: "1080 × 1080" },
-  { key: "portrait", label: "Portrait", icon: RectangleVertical, dims: "1080 × 1350" },
-] as const;
 
 export function BizDevWorkspace() {
   const [headline, setHeadline] = useState("");
   const [dateText, setDateText] = useState("");
   const [guestName, setGuestName] = useState("");
+  const [hostName, setHostName] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
@@ -366,12 +406,71 @@ export function BizDevWorkspace() {
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
       <div className="w-full md:w-[340px] md:min-w-[340px] overflow-y-auto pt-[20px] px-[16px] md:px-[24px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.06)] flex flex-col max-h-[50vh] md:max-h-none">
-        <div className="mb-[20px]">
+        <div className="mb-[16px]">
           <h2 className="text-[16px] font-bold text-white mb-[4px]">Biz Dev Templates</h2>
           <p className="text-[11px] text-[#64748B]">Fill in details, preview live, then generate all.</p>
         </div>
 
-        <div className="flex flex-col gap-[14px]">
+        <div className="flex flex-col gap-[12px]">
+          <div className="flex flex-col">
+            <label className={labelCls}>Size</label>
+            <div className="grid grid-cols-3 gap-[6px]">
+              {SIZE_GROUPS.map((g) => {
+                const isActive = currentGroup === g.key;
+                return (
+                  <button
+                    key={g.key}
+                    onClick={() => {
+                      const first = activeTemplates.find((t) => t.group === g.key);
+                      if (first) setSelectedTemplate(first.id);
+                    }}
+                    className={`flex flex-col items-center gap-[6px] py-[10px] px-[6px] rounded-[10px] cursor-pointer border transition-all duration-200
+                      ${isActive
+                        ? "bg-[rgba(0,178,169,0.06)] border-[rgba(0,178,169,0.25)]"
+                        : "bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.04)] hover:border-[rgba(255,255,255,0.1)]"
+                      }`}
+                  >
+                    <div
+                      className={`h-[26px] rounded-[3px] transition-all
+                        ${isActive
+                          ? "bg-gradient-to-br from-[rgba(0,178,169,0.35)] to-[rgba(40,150,251,0.2)] shadow-[inset_0_0_0_1.5px_rgba(0,178,169,0.5)]"
+                          : "bg-[rgba(255,255,255,0.06)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                        }`}
+                      style={{ aspectRatio: g.ar }}
+                    />
+                    <div className={`text-[9px] font-semibold transition-all ${isActive ? "text-[#00B2A9]" : "text-[#64748B]"}`}>{g.label}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {groupTemplates.length > 1 && (
+            <div className="flex flex-col">
+              <label className={labelCls}>Variant</label>
+              <div className="flex items-center gap-[2px] p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.04)]">
+                {groupTemplates.map((t) => {
+                  const isActive = selectedTemplate === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => setSelectedTemplate(t.id)}
+                      className={`flex-1 py-[6px] rounded-[7px] text-[10px] font-semibold transition-all duration-200 cursor-pointer border-none
+                        ${isActive
+                          ? "bg-[rgba(0,178,169,0.12)] text-[#00B2A9] shadow-[0_1px_4px_rgba(0,0,0,0.15)]"
+                          : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                        }`}
+                    >
+                      {t.shortName}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="h-[1px] bg-[rgba(255,255,255,0.04)]" />
+
           <div className="flex flex-col">
             <label className={labelCls}>Headline <span className="text-[#FF6B6B]">*</span></label>
             <textarea value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="From Client Acquisition to MRR" rows={2} className={`${inputCls} resize-none`} />
@@ -380,9 +479,15 @@ export function BizDevWorkspace() {
             <label className={labelCls}>Date <span className="text-[#FF6B6B]">*</span></label>
             <input type="text" value={dateText} onChange={(e) => setDateText(e.target.value)} placeholder="APRIL 6–7, 12PM EDT" className={inputCls} />
           </div>
-          <div className="flex flex-col">
-            <label className={labelCls}>Guest Name <span className="text-[#FF6B6B]">*</span></label>
-            <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Michael Cooch" className={inputCls} />
+          <div className="grid grid-cols-2 gap-[10px]">
+            <div className="flex flex-col">
+              <label className={labelCls}>Host Name</label>
+              <input type="text" value={hostName} onChange={(e) => setHostName(e.target.value)} placeholder="Robin Alex" className={inputCls} />
+            </div>
+            <div className="flex flex-col">
+              <label className={labelCls}>Guest Name <span className="text-[#FF6B6B]">*</span></label>
+              <input type="text" value={guestName} onChange={(e) => setGuestName(e.target.value)} placeholder="Michael Cooch" className={inputCls} />
+            </div>
           </div>
           <div className="flex flex-col">
             <label className={labelCls}>CTA Text <span className="text-[#94A3B8] font-normal normal-case tracking-normal ml-[4px]">(optional)</span></label>
@@ -393,43 +498,42 @@ export function BizDevWorkspace() {
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
             <div
               onClick={() => !personImage && !isRemovingBg && fileInputRef.current?.click()}
-              className={`flex items-center gap-[12px] py-[12px] px-[14px] rounded-[14px] transition-all ${personImage ? "border border-[rgba(0,178,169,0.15)] bg-[rgba(0,178,169,0.04)] cursor-default" : "border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(0,178,169,0.2)] cursor-pointer"}`}
+              className={`flex items-center gap-[12px] py-[10px] px-[14px] rounded-[12px] transition-all ${personImage ? "border border-[rgba(0,178,169,0.15)] bg-[rgba(0,178,169,0.04)] cursor-default" : "border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(0,178,169,0.2)] cursor-pointer"}`}
             >
-              <div className={`w-[32px] h-[32px] rounded-[8px] flex items-center justify-center shrink-0 ${personImage ? "bg-[rgba(0,178,169,0.1)]" : "bg-[rgba(255,255,255,0.04)]"}`}>
-                {isRemovingBg ? <Loader2 className="w-[14px] h-[14px] text-[#2896FB] animate-spin" /> : personImage ? <Check className="w-[14px] h-[14px] text-[#00B2A9]" /> : <UploadCloud className="w-[14px] h-[14px] text-[#64748B]" />}
+              <div className={`w-[28px] h-[28px] rounded-[7px] flex items-center justify-center shrink-0 ${personImage ? "bg-[rgba(0,178,169,0.1)]" : "bg-[rgba(255,255,255,0.04)]"}`}>
+                {isRemovingBg ? <Loader2 className="w-[13px] h-[13px] text-[#2896FB] animate-spin" /> : personImage ? <Check className="w-[13px] h-[13px] text-[#00B2A9]" /> : <UploadCloud className="w-[13px] h-[13px] text-[#64748B]" />}
               </div>
-              <div className="text-[11px] font-medium text-[#94A3B8] flex-1">
-                {isRemovingBg ? "Removing background..." : personImage ? "Person image ready" : "Upload person photo"}
-                <span className="block text-[10px] text-[#64748B] mt-[1px]">{isRemovingBg ? "Processing..." : personImage ? "BG removed automatically" : "BG will be auto-removed"}</span>
+              <div className="text-[10px] font-medium text-[#94A3B8] flex-1">
+                {isRemovingBg ? "Removing BG..." : personImage ? "Image ready" : "Upload photo"}
               </div>
               {personImage && (
                 <div className="flex items-center gap-[4px] shrink-0">
-                  <img src={personImage} alt="" className="w-[28px] h-[28px] rounded-[6px] object-contain bg-[rgba(255,255,255,0.04)]" />
-                  <button onClick={(e) => { e.stopPropagation(); setPersonImage(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="w-[22px] h-[22px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all">
-                    <X className="w-[10px] h-[10px]" />
+                  <img src={personImage} alt="" className="w-[24px] h-[24px] rounded-[5px] object-contain bg-[rgba(255,255,255,0.04)]" />
+                  <button onClick={(e) => { e.stopPropagation(); setPersonImage(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="w-[20px] h-[20px] border-none bg-[rgba(255,255,255,0.06)] rounded-[4px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all">
+                    <X className="w-[9px] h-[9px]" />
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between py-[10px] px-[14px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]">
+          <div className="flex items-center justify-between py-[8px] px-[12px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]">
             <div>
-              <div className="text-[11px] font-medium text-[#E2E8F0]">Day 1 / Day 2 Assets</div>
-              <div className="text-[10px] text-[#64748B] mt-[1px]">+2 horizontal variants</div>
+              <div className="text-[10px] font-medium text-[#E2E8F0]">Day 1 / Day 2</div>
+              <div className="text-[9px] text-[#64748B] mt-[1px]">+2 variants</div>
             </div>
-            <button onClick={() => setGenerateDays(!generateDays)} className={`w-[36px] h-[20px] rounded-full transition-all duration-200 cursor-pointer border-none relative ${generateDays ? "bg-[#00B2A9]" : "bg-[rgba(255,255,255,0.1)]"}`}>
-              <div className={`w-[14px] h-[14px] rounded-full bg-white absolute top-[3px] transition-all duration-200 shadow-sm ${generateDays ? "left-[19px]" : "left-[3px]"}`} />
+            <button onClick={() => setGenerateDays(!generateDays)} className={`w-[34px] h-[18px] rounded-full transition-all duration-200 cursor-pointer border-none relative ${generateDays ? "bg-[#00B2A9]" : "bg-[rgba(255,255,255,0.1)]"}`}>
+              <div className={`w-[12px] h-[12px] rounded-full bg-white absolute top-[3px] transition-all duration-200 shadow-sm ${generateDays ? "left-[19px]" : "left-[3px]"}`} />
             </button>
           </div>
 
-          <div className="border-t border-[rgba(255,255,255,0.04)] pt-[14px] flex flex-col gap-[8px]">
-            <button onClick={() => setShowGallery(true)} disabled={!headline.trim() || !dateText.trim() || !guestName.trim() || !personImage} className="w-full py-[12px] rounded-[12px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-40 disabled:cursor-not-allowed">
-              <Sparkles className="w-[14px] h-[14px]" />
+          <div className="flex flex-col gap-[6px]">
+            <button onClick={() => setShowGallery(true)} disabled={!headline.trim() || !dateText.trim() || !guestName.trim() || !personImage} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-40 disabled:cursor-not-allowed">
+              <Sparkles className="w-[13px] h-[13px]" />
               Generate All ({activeTemplates.length})
             </button>
-            <button onClick={() => exportTemplate(currentConfig.id)} disabled={isExporting === currentConfig.id} className="w-full py-[10px] rounded-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] text-[#94A3B8] text-[11px] font-medium flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-50">
-              {isExporting === currentConfig.id ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
+            <button onClick={() => exportTemplate(currentConfig.id)} disabled={isExporting === currentConfig.id} className="w-full py-[9px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] text-[#94A3B8] text-[10px] font-medium flex items-center justify-center gap-[5px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-50">
+              {isExporting === currentConfig.id ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
               Download Current
             </button>
           </div>
@@ -438,73 +542,9 @@ export function BizDevWorkspace() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-[24px] overflow-auto gap-[16px]">
+          <div className="flex-1 flex items-center justify-center p-[24px] overflow-auto">
             <div className="w-full max-w-[800px]">
-              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} />
-            </div>
-
-            <div className="w-full max-w-[560px] flex flex-col gap-[8px]">
-              <div className="flex items-center justify-center gap-[6px]">
-                {SIZE_GROUPS.map((g) => {
-                  const isActive = currentGroup === g.key;
-                  const hasTemplates = activeTemplates.some((t) => t.group === g.key);
-                  if (!hasTemplates) return null;
-                  const ar = g.key === "horizontal" ? "16/9" : g.key === "square" ? "1/1" : "4/5";
-                  return (
-                    <button
-                      key={g.key}
-                      onClick={() => {
-                        const first = activeTemplates.find((t) => t.group === g.key);
-                        if (first) setSelectedTemplate(first.id);
-                      }}
-                      className={`flex items-center gap-[8px] px-[14px] py-[8px] rounded-[10px] cursor-pointer border transition-all duration-200
-                        ${isActive
-                          ? "bg-[rgba(0,178,169,0.06)] border-[rgba(0,178,169,0.2)]"
-                          : "bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.1)]"
-                        }`}
-                    >
-                      <div
-                        className={`h-[28px] rounded-[4px] flex items-center justify-center transition-all
-                          ${isActive
-                            ? "bg-gradient-to-br from-[rgba(0,178,169,0.3)] to-[rgba(40,150,251,0.15)] shadow-[inset_0_0_0_1.5px_rgba(0,178,169,0.5)]"
-                            : "bg-[rgba(255,255,255,0.05)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                          }`}
-                        style={{ aspectRatio: ar }}
-                      >
-                        <div
-                          className={`rounded-[2px] transition-all ${isActive ? "bg-[rgba(0,178,169,0.6)]" : "bg-[rgba(255,255,255,0.15)]"}`}
-                          style={{ width: "50%", aspectRatio: ar }}
-                        />
-                      </div>
-                      <div className="text-left">
-                        <div className={`text-[10px] font-semibold leading-tight transition-all ${isActive ? "text-white" : "text-[#94A3B8]"}`}>{g.label}</div>
-                        <div className={`text-[8px] leading-tight transition-all ${isActive ? "text-[#00B2A9]" : "text-[#475569]"}`}>{g.dims}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {groupTemplates.length > 1 && (
-                <div className="flex items-center gap-[2px] p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.04)] mx-auto w-fit min-w-[280px]">
-                  {groupTemplates.map((t) => {
-                    const isActive = selectedTemplate === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => setSelectedTemplate(t.id)}
-                        className={`flex-1 px-[14px] py-[5px] rounded-[7px] text-[10px] font-semibold transition-all duration-200 cursor-pointer border-none whitespace-nowrap
-                          ${isActive
-                            ? "bg-[rgba(255,255,255,0.1)] text-white shadow-[0_1px_6px_rgba(0,0,0,0.25)]"
-                            : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
-                          }`}
-                      >
-                        {t.shortName}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
+              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} hostName={hostName} ctaText={ctaText} personImage={personImage} />
             </div>
           </div>
         ) : (
@@ -527,7 +567,7 @@ export function BizDevWorkspace() {
                 {activeTemplates.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} ctaText={ctaText} personImage={personImage} />
+                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} hostName={hostName} ctaText={ctaText} personImage={personImage} />
                     </div>
                     <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
                       <div>

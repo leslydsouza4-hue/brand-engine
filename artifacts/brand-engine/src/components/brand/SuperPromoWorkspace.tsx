@@ -29,7 +29,7 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "hz-nodate", name: "Horizontal - No Date", shortName: "No Date", width: 1920, height: 1080, variant: "nodate", size: "horizontal" },
   { id: "hz-day1", name: "Horizontal - Day 1", shortName: "Day 1", width: 941, height: 529, variant: "day1", size: "horizontal" },
   { id: "hz-day2", name: "Horizontal - Day 2", shortName: "Day 2", width: 941, height: 529, variant: "day2", size: "horizontal" },
-  { id: "hz-replays", name: "Horizontal - Replays", shortName: "Replays", width: 941, height: 529, variant: "replays", size: "horizontal" },
+  { id: "hz-replays", name: "Horizontal - Replays", shortName: "Replays", width: 565, height: 317, variant: "replays", size: "horizontal" },
   { id: "vt-dates", name: "Vertical - Dates", shortName: "Dates", width: 1080, height: 1920, variant: "dates", size: "vertical" },
   { id: "vt-nodate", name: "Vertical - No Date", shortName: "No Date", width: 1080, height: 1920, variant: "nodate", size: "vertical" },
   { id: "vt-replays", name: "Vertical - Replays", shortName: "Replays", width: 1080, height: 1920, variant: "replays", size: "vertical" },

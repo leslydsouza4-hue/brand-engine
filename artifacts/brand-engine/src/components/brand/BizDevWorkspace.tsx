@@ -47,9 +47,9 @@ function LogoOverlay() {
       crossOrigin="anonymous"
       style={{
         position: "absolute",
-        top: "5.5%",
+        top: "6.5%",
         left: "5%",
-        height: "6.3%",
+        height: "8.2%",
         width: "auto",
         objectFit: "contain",
         zIndex: 3,
@@ -439,13 +439,13 @@ export function BizDevWorkspace() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
           <>
-            <div className="px-[20px] pt-[16px] pb-[12px] shrink-0 border-b border-[rgba(255,255,255,0.04)]">
-              <div className="flex items-center gap-[6px] mb-[10px]">
+            <div className="px-[20px] pt-[16px] pb-[14px] shrink-0">
+              <div className="flex items-center gap-[8px] mb-[12px]">
                 {SIZE_GROUPS.map((g) => {
-                  const Icon = g.icon;
                   const isActive = currentGroup === g.key;
                   const hasTemplates = activeTemplates.some((t) => t.group === g.key);
                   if (!hasTemplates) return null;
+                  const ar = g.key === "horizontal" ? "16/9" : g.key === "square" ? "1/1" : "4/5";
                   return (
                     <button
                       key={g.key}
@@ -453,31 +453,46 @@ export function BizDevWorkspace() {
                         const first = activeTemplates.find((t) => t.group === g.key);
                         if (first) setSelectedTemplate(first.id);
                       }}
-                      className={`flex items-center gap-[8px] px-[14px] py-[8px] rounded-[10px] text-[11px] font-semibold transition-all cursor-pointer border
-                        ${isActive
-                          ? "bg-[rgba(0,178,169,0.08)] text-[#00B2A9] border-[rgba(0,178,169,0.2)]"
-                          : "bg-transparent text-[#64748B] border-transparent hover:text-[#94A3B8] hover:bg-[rgba(255,255,255,0.03)]"
-                        }`}
+                      className="flex items-center gap-[10px] cursor-pointer border-none bg-transparent p-0 group transition-all"
                     >
-                      <Icon className="w-[14px] h-[14px]" />
-                      <span>{g.label}</span>
-                      <span className={`text-[9px] font-normal ${isActive ? "text-[rgba(0,178,169,0.6)]" : "text-[#475569]"}`}>{g.dims}</span>
+                      <div
+                        className={`h-[38px] rounded-[6px] transition-all duration-200 flex items-center justify-center
+                          ${isActive
+                            ? "bg-gradient-to-br from-[rgba(0,178,169,0.25)] to-[rgba(40,150,251,0.15)] shadow-[inset_0_0_0_1.5px_rgba(0,178,169,0.4)]"
+                            : "bg-[rgba(255,255,255,0.04)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] group-hover:bg-[rgba(255,255,255,0.07)] group-hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]"
+                          }`}
+                        style={{ aspectRatio: ar }}
+                      >
+                        <div
+                          className={`rounded-[3px] transition-all
+                            ${isActive ? "bg-[rgba(0,178,169,0.5)]" : "bg-[rgba(255,255,255,0.12)] group-hover:bg-[rgba(255,255,255,0.18)]"}`}
+                          style={{ width: "55%", aspectRatio: ar }}
+                        />
+                      </div>
+                      <div className="text-left">
+                        <div className={`text-[11px] font-semibold transition-all ${isActive ? "text-white" : "text-[#94A3B8] group-hover:text-[#CBD5E1]"}`}>
+                          {g.label}
+                        </div>
+                        <div className={`text-[9px] transition-all ${isActive ? "text-[#00B2A9]" : "text-[#475569] group-hover:text-[#64748B]"}`}>
+                          {g.dims}
+                        </div>
+                      </div>
                     </button>
                   );
                 })}
               </div>
 
               {groupTemplates.length > 1 && (
-                <div className="flex items-center gap-[4px]">
+                <div className="flex items-center gap-[2px] p-[3px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.04)]">
                   {groupTemplates.map((t) => {
                     const isActive = selectedTemplate === t.id;
                     return (
                       <button
                         key={t.id}
                         onClick={() => setSelectedTemplate(t.id)}
-                        className={`px-[10px] py-[4px] rounded-[6px] text-[10px] font-medium transition-all cursor-pointer border-none
+                        className={`flex-1 px-[12px] py-[6px] rounded-[8px] text-[10px] font-semibold transition-all duration-200 cursor-pointer border-none
                           ${isActive
-                            ? "bg-[rgba(255,255,255,0.08)] text-white"
+                            ? "bg-[rgba(255,255,255,0.1)] text-white shadow-[0_1px_4px_rgba(0,0,0,0.2)]"
                             : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
                           }`}
                       >

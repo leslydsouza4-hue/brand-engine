@@ -105,18 +105,20 @@ function HorizontalTemplate({
       {(showBadge || showDate) && (
         <div style={{
           position: "absolute", top: "7%", right: "5%", zIndex: 3,
-          display: "inline-flex", alignItems: "center", gap: "0.35em",
-          padding: "0.28em 0.8em",
-          background: "rgba(255,255,255,0.15)",
-          backdropFilter: "blur(8px)",
-          border: "1px solid rgba(255,255,255,0.25)",
-          borderRadius: "0.3em",
+          display: "inline-flex", alignItems: "center", gap: "0.45em",
+          padding: "0.3em 1em 0.3em 0.6em",
+          background: "transparent",
+          border: "1.5px solid rgba(255,255,255,0.45)",
+          borderRadius: "999px",
         }}>
-          <svg width="0.7em" height="0.7em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 20l-3-3H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3l-3 3z"/>
-            <path d="M8 10h0"/><path d="M12 10h0"/><path d="M16 10h0"/>
+          <svg width="1.1em" height="1.1em" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="3" fill="#7DD3FC" />
+            <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
+            <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#7DD3FC" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.1em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.38em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
       )}
 

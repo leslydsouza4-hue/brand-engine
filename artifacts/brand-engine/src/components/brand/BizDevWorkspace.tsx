@@ -243,7 +243,7 @@ function SquarePortraitTemplate({
     >
       <img src={bgUrl} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(6,11,22,0.4) 0%, rgba(6,11,22,0.1) 35%, transparent 55%, rgba(6,11,22,0.5) 85%)", zIndex: 1 }} />
-      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "4%", left: "50%", transform: "translateX(-50%)", height: isPortrait ? "5.5%" : "6%", width: "auto", objectFit: "contain", zIndex: 3 }} />
+      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: isPortrait ? "5.5%" : "6%", left: "50%", transform: "translateX(-50%)", height: isPortrait ? "5.5%" : "6%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
       {personImage && (
         <div style={{

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  UploadCloud, X, Loader2, Download, Check, Sparkles
+  UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw
 } from "lucide-react";
 import html2canvas from "html2canvas";
 
@@ -91,6 +91,11 @@ function GuestPill({ guestName, hostName, fontSize }: { guestName: string; hostN
   );
 }
 
+interface ImageSettings {
+  scale: number;
+  offsetY: number;
+}
+
 function HorizontalTemplate({
   config,
   headline,
@@ -99,6 +104,7 @@ function HorizontalTemplate({
   hostName,
   ctaText,
   personImage,
+  imgSettings,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -107,6 +113,7 @@ function HorizontalTemplate({
   hostName: string;
   ctaText: string;
   personImage: string | null;
+  imgSettings: ImageSettings;
 }) {
   const { variant } = config;
   const showCta = variant === "cta";
@@ -135,10 +142,16 @@ function HorizontalTemplate({
       <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "6.5%", left: "5%", height: "8.2%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
       {personImage && (
-        <img src={personImage} alt="" crossOrigin="anonymous" style={{
-          position: "absolute", right: "3%", bottom: "0", height: "88%",
-          objectFit: "contain", objectPosition: "bottom right", zIndex: 2,
-        }} />
+        <div style={{
+          position: "absolute", right: "3%", bottom: 0, width: "45%", height: "100%",
+          display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden", zIndex: 2,
+        }}>
+          <img src={personImage} alt="" crossOrigin="anonymous" style={{
+            height: `${88 * imgSettings.scale}%`,
+            transform: `translateY(${imgSettings.offsetY}%)`,
+            objectFit: "contain", objectPosition: "bottom center",
+          }} />
+        </div>
       )}
 
       <div style={{ position: "absolute", left: "5%", top: "22%", width: "48%", zIndex: 3, display: "flex", flexDirection: "column" }}>
@@ -200,6 +213,7 @@ function SquarePortraitTemplate({
   guestName,
   hostName,
   personImage,
+  imgSettings,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -207,11 +221,13 @@ function SquarePortraitTemplate({
   guestName: string;
   hostName: string;
   personImage: string | null;
+  imgSettings: ImageSettings;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const isPortrait = config.height > config.width;
   useContainerFontSize(containerRef, isPortrait ? 0.055 : 0.05);
   const bgUrl = isPortrait ? BG_PORTRAIT : BG_SQUARE;
+  const baseH = isPortrait ? 48 : 52;
 
   return (
     <div
@@ -233,16 +249,16 @@ function SquarePortraitTemplate({
       <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "4%", left: "50%", transform: "translateX(-50%)", height: isPortrait ? "5.5%" : "6%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
       {personImage && (
-        <img src={personImage} alt="" crossOrigin="anonymous" style={{
-          position: "absolute",
-          left: "50%",
-          transform: "translateX(-50%)",
-          bottom: isPortrait ? "12%" : "14%",
-          height: isPortrait ? "48%" : "52%",
-          objectFit: "contain",
-          objectPosition: "bottom center",
-          zIndex: 2,
-        }} />
+        <div style={{
+          position: "absolute", left: 0, right: 0, bottom: 0, height: `${(baseH + 20) * imgSettings.scale}%`,
+          display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden", zIndex: 2,
+        }}>
+          <img src={personImage} alt="" crossOrigin="anonymous" style={{
+            height: `${baseH * imgSettings.scale}%`,
+            transform: `translateY(${imgSettings.offsetY}%)`,
+            objectFit: "contain", objectPosition: "bottom center",
+          }} />
+        </div>
       )}
 
       <div style={{
@@ -302,6 +318,7 @@ function TemplatePreview(props: {
   hostName: string;
   ctaText: string;
   personImage: string | null;
+  imgSettings: ImageSettings;
 }) {
   if (props.config.width > props.config.height) return <HorizontalTemplate {...props} />;
   return <SquarePortraitTemplate {...props} />;
@@ -314,6 +331,7 @@ export function BizDevWorkspace() {
   const [hostName, setHostName] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [personImage, setPersonImage] = useState<string | null>(null);
+  const [imgSettings, setImgSettings] = useState<ImageSettings>({ scale: 1, offsetY: 0 });
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [generateDays, setGenerateDays] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState("horizontal-cta");
@@ -497,25 +515,73 @@ export function BizDevWorkspace() {
           <div className="flex flex-col">
             <label className={labelCls}>Person Image <span className="text-[#FF6B6B]">*</span></label>
             <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
-            <div
-              onClick={() => !personImage && !isRemovingBg && fileInputRef.current?.click()}
-              className={`flex items-center gap-[12px] py-[10px] px-[14px] rounded-[12px] transition-all ${personImage ? "border border-[rgba(0,178,169,0.15)] bg-[rgba(0,178,169,0.04)] cursor-default" : "border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(0,178,169,0.2)] cursor-pointer"}`}
-            >
-              <div className={`w-[28px] h-[28px] rounded-[7px] flex items-center justify-center shrink-0 ${personImage ? "bg-[rgba(0,178,169,0.1)]" : "bg-[rgba(255,255,255,0.04)]"}`}>
-                {isRemovingBg ? <Loader2 className="w-[13px] h-[13px] text-[#2896FB] animate-spin" /> : personImage ? <Check className="w-[13px] h-[13px] text-[#00B2A9]" /> : <UploadCloud className="w-[13px] h-[13px] text-[#64748B]" />}
+            {!personImage ? (
+              <div
+                onClick={() => !isRemovingBg && fileInputRef.current?.click()}
+                className="flex flex-col items-center gap-[8px] py-[20px] px-[14px] rounded-[12px] border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(0,178,169,0.2)] cursor-pointer transition-all"
+              >
+                {isRemovingBg ? (
+                  <>
+                    <Loader2 className="w-[20px] h-[20px] text-[#2896FB] animate-spin" />
+                    <div className="text-[10px] font-medium text-[#94A3B8]">Removing background...</div>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="w-[20px] h-[20px] text-[#64748B]" />
+                    <div className="text-[10px] font-medium text-[#94A3B8]">Upload person photo</div>
+                    <div className="text-[9px] text-[#475569]">BG will be auto-removed</div>
+                  </>
+                )}
               </div>
-              <div className="text-[10px] font-medium text-[#94A3B8] flex-1">
-                {isRemovingBg ? "Removing BG..." : personImage ? "Image ready" : "Upload photo"}
-              </div>
-              {personImage && (
-                <div className="flex items-center gap-[4px] shrink-0">
-                  <img src={personImage} alt="" className="w-[24px] h-[24px] rounded-[5px] object-contain bg-[rgba(255,255,255,0.04)]" />
-                  <button onClick={(e) => { e.stopPropagation(); setPersonImage(null); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="w-[20px] h-[20px] border-none bg-[rgba(255,255,255,0.06)] rounded-[4px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all">
-                    <X className="w-[9px] h-[9px]" />
-                  </button>
+            ) : (
+              <div className="rounded-[12px] border border-[rgba(0,178,169,0.15)] bg-[rgba(0,178,169,0.04)] overflow-hidden">
+                <div className="flex items-center gap-[10px] p-[10px] border-b border-[rgba(255,255,255,0.04)]">
+                  <img src={personImage} alt="" className="w-[36px] h-[36px] rounded-[8px] object-contain bg-[rgba(255,255,255,0.04)]" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[10px] font-semibold text-[#00B2A9] flex items-center gap-[4px]">
+                      <Check className="w-[10px] h-[10px]" /> Image ready
+                    </div>
+                    <div className="text-[9px] text-[#64748B] mt-[1px]">BG removed</div>
+                  </div>
+                  <div className="flex items-center gap-[3px] shrink-0">
+                    <button onClick={() => fileInputRef.current?.click()} className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#94A3B8] flex items-center justify-center cursor-pointer hover:bg-[rgba(40,150,251,0.15)] hover:text-[#2896FB] transition-all" title="Replace image">
+                      <RefreshCw className="w-[10px] h-[10px]" />
+                    </button>
+                    <button onClick={() => { setPersonImage(null); setImgSettings({ scale: 1, offsetY: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all" title="Remove image">
+                      <X className="w-[10px] h-[10px]" />
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
+                <div className="px-[10px] py-[8px] flex flex-col gap-[8px]">
+                  <div className="flex items-center gap-[8px]">
+                    <ZoomIn className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
+                    <span className="text-[9px] text-[#64748B] w-[32px] shrink-0">Scale</span>
+                    <input
+                      type="range" min="0.5" max="1.8" step="0.02"
+                      value={imgSettings.scale}
+                      onChange={(e) => setImgSettings((s) => ({ ...s, scale: parseFloat(e.target.value) }))}
+                      className="flex-1 h-[3px] appearance-none bg-[rgba(255,255,255,0.08)] rounded-full cursor-pointer accent-[#00B2A9] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[12px] [&::-webkit-slider-thumb]:h-[12px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00B2A9] [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(0,178,169,0.4)]"
+                    />
+                    <span className="text-[9px] text-[#94A3B8] w-[28px] text-right tabular-nums">{Math.round(imgSettings.scale * 100)}%</span>
+                  </div>
+                  <div className="flex items-center gap-[8px]">
+                    <ArrowUpDown className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
+                    <span className="text-[9px] text-[#64748B] w-[32px] shrink-0">Y Pos</span>
+                    <input
+                      type="range" min="-30" max="30" step="1"
+                      value={imgSettings.offsetY}
+                      onChange={(e) => setImgSettings((s) => ({ ...s, offsetY: parseFloat(e.target.value) }))}
+                      className="flex-1 h-[3px] appearance-none bg-[rgba(255,255,255,0.08)] rounded-full cursor-pointer accent-[#00B2A9] [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-[12px] [&::-webkit-slider-thumb]:h-[12px] [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#00B2A9] [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(0,178,169,0.4)]"
+                    />
+                    <span className="text-[9px] text-[#94A3B8] w-[28px] text-right tabular-nums">{imgSettings.offsetY > 0 ? "+" : ""}{imgSettings.offsetY}</span>
+                  </div>
+                  <button
+                    onClick={() => setImgSettings({ scale: 1, offsetY: 0 })}
+                    className="text-[9px] text-[#64748B] hover:text-[#94A3B8] cursor-pointer bg-transparent border-none p-0 self-end transition-all"
+                  >Reset</button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between py-[8px] px-[12px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]">
@@ -545,7 +611,7 @@ export function BizDevWorkspace() {
         {!showGallery ? (
           <div className="flex-1 flex items-center justify-center p-[24px] overflow-auto">
             <div className="w-full max-w-[800px]">
-              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} hostName={hostName} ctaText={ctaText} personImage={personImage} />
+              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} hostName={hostName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
             </div>
           </div>
         ) : (
@@ -568,7 +634,7 @@ export function BizDevWorkspace() {
                 {activeTemplates.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} hostName={hostName} ctaText={ctaText} personImage={personImage} />
+                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} hostName={hostName} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
                     </div>
                     <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
                       <div>

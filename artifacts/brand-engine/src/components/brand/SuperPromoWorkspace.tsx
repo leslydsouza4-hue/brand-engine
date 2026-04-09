@@ -793,7 +793,7 @@ function QuickLinksTemplate({
       </div>
 
       <div style={{
-        position: "absolute", left: "6%", right: "6%", top: "18%", zIndex: 3,
+        position: "absolute", left: "6%", right: "6%", top: "24%", zIndex: 3,
         display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
       }}>
         <div style={{ textAlign: "center" }}>

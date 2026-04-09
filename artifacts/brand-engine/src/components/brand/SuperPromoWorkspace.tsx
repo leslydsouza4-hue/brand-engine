@@ -73,7 +73,7 @@ function HorizontalTemplate({
   guestSettings: ImageSettings;
 }) {
   const { variant } = config;
-  const showDate = variant === "dates";
+  const showDate = variant === "dates" || variant === "cta";
   const showCta = variant === "cta";
   const showDay = variant === "day1" || variant === "day2";
   const showBadge = variant === "nodate";
@@ -120,8 +120,8 @@ function HorizontalTemplate({
         <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
       </div>
 
-      <div style={{ position: "absolute", left: "5%", top: "20%", width: "50%", zIndex: 3, display: "flex", flexDirection: "column" }}>
-        <div style={{ paddingBottom: "0.4em" }}>
+      <div style={{ position: "absolute", left: "5%", top: "20%", width: "45%", zIndex: 3, display: "flex", flexDirection: "column", gap: "0.4em" }}>
+        <div>
           <span style={{
             fontSize: "1.24em", fontWeight: 800, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
@@ -135,6 +135,44 @@ function HorizontalTemplate({
             )) : "Enter Headline"}
           </span>
         </div>
+
+        {showDate && dateText && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "0.25em",
+            padding: "0.32em 0.7em",
+            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            borderRadius: "0.25em",
+            alignSelf: "flex-start",
+          }}>
+            <svg width="0.7em" height="0.7em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+          </div>
+        )}
+
+        {showCta && ctaText && (
+          <div>
+            <span style={{
+              display: "inline-block", padding: "0.4em 1.4em",
+              fontSize: "0.52em", fontWeight: 800, color: "#0F1A3E",
+              background: "linear-gradient(180deg, #A8EEFF 0%, #FFFFFF 100%)",
+              borderRadius: "0.35em", letterSpacing: "0.03em",
+              boxShadow: "0 0.2em 0.8em rgba(0,0,0,0.2)",
+            }}>{ctaText}</span>
+          </div>
+        )}
+
+        {showDay && (
+          <div style={{
+            fontSize: "1.8em", fontWeight: 900, color: "#FFFFFF", lineHeight: 1,
+            letterSpacing: "0.02em",
+            textShadow: "0 0.05em 0.2em rgba(0,0,0,0.25)",
+          }}>{dayLabel}</div>
+        )}
       </div>
 
       <div style={{
@@ -199,46 +237,6 @@ function HorizontalTemplate({
         </div>
       </div>
 
-      {showDate && dateText && (
-        <div style={{
-          position: "absolute", left: "5%", top: "52%", zIndex: 3,
-          display: "inline-flex", alignItems: "center", gap: "0.25em",
-          padding: "0.32em 0.7em",
-          background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
-          borderRadius: "0.25em",
-        }}>
-          <svg width="0.7em" height="0.7em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
-        </div>
-      )}
-
-      {showCta && ctaText && (
-        <div style={{
-          position: "absolute", left: "5%", top: "52%", zIndex: 3,
-        }}>
-          <span style={{
-            display: "inline-block", padding: "0.4em 1.4em",
-            fontSize: "0.52em", fontWeight: 800, color: "#0F1A3E",
-            background: "linear-gradient(180deg, #A8EEFF 0%, #FFFFFF 100%)",
-            borderRadius: "0.35em", letterSpacing: "0.03em",
-            boxShadow: "0 0.2em 0.8em rgba(0,0,0,0.2)",
-          }}>{ctaText}</span>
-        </div>
-      )}
-
-      {showDay && (
-        <div style={{
-          position: "absolute", left: "5%", top: "52%", zIndex: 3,
-          fontSize: "1.8em", fontWeight: 900, color: "#FFFFFF", lineHeight: 1,
-          letterSpacing: "0.02em",
-          textShadow: "0 0.05em 0.2em rgba(0,0,0,0.25)",
-        }}>{dayLabel}</div>
-      )}
     </div>
   );
 }

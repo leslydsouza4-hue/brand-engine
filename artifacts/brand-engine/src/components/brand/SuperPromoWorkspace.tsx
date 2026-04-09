@@ -125,7 +125,9 @@ function HorizontalTemplate({
         <div style={{ paddingBottom: "0.4em" }}>
           <span style={{
             fontSize: "1.55em", fontWeight: 800, lineHeight: 1.08,
-            color: "#FFFFFF",
+            background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+            color: "transparent",
             letterSpacing: "-0.02em",
             display: "inline",
           }}>
@@ -199,20 +201,26 @@ function HorizontalTemplate({
       {showDate && dateText && (
         <div style={{
           position: "absolute", left: "5%", bottom: "8%", zIndex: 3,
-          display: "inline-flex", alignItems: "center", gap: "0.4em",
-          padding: "0.35em 0.9em",
-          background: "rgba(255,255,255,0.15)",
-          backdropFilter: "blur(8px)",
-          border: "1px solid rgba(255,255,255,0.2)",
-          borderRadius: "0.3em",
+          display: "inline-flex", alignItems: "center", gap: "0.5em",
+          padding: "0.45em 1em",
+          background: "rgba(15,23,42,0.85)",
+          borderRadius: "0.35em",
         }}>
-          <svg width="0.75em" height="0.75em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-          <span style={{ fontSize: "0.48em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.03em" }}>{dateText}</span>
+          <div style={{
+            width: "1.1em", height: "1.1em",
+            background: "linear-gradient(135deg, #38BDF8 0%, #2563EB 100%)",
+            borderRadius: "0.2em",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            flexShrink: 0,
+          }}>
+            <svg width="60%" height="60%" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <span style={{ fontSize: "0.52em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
         </div>
       )}
 
@@ -259,13 +267,6 @@ function TemplatePreview(props: {
   return <HorizontalTemplate {...props} />;
 }
 
-async function removeBg(file: File): Promise<string> {
-  const mod = await import("@imgly/background-removal");
-  const fn = mod.default ?? mod.removeBackground;
-  const blob = await (fn as (src: File, cfg: Record<string, unknown>) => Promise<Blob>)(file, { model: "small", output: { format: "image/png", quality: 0.8 } });
-  return URL.createObjectURL(blob);
-}
-
 export function SuperPromoWorkspace() {
   const [headline, setHeadline] = useState("");
   const [dateText, setDateText] = useState("");
@@ -278,8 +279,8 @@ export function SuperPromoWorkspace() {
   const [guestImage, setGuestImage] = useState<string | null>(null);
   const [hostSettings, setHostSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
   const [guestSettings, setGuestSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
-  const [isRemovingBgHost, setIsRemovingBgHost] = useState(false);
-  const [isRemovingBgGuest, setIsRemovingBgGuest] = useState(false);
+  const [isLoadingHost, setIsLoadingHost] = useState(false);
+  const [isLoadingGuest, setIsLoadingGuest] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0].id);
   const [showGallery, setShowGallery] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -292,32 +293,20 @@ export function SuperPromoWorkspace() {
 
   const currentConfig = TEMPLATES.find((t) => t.id === selectedTemplate) || TEMPLATES[0];
 
-  const handleHostUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHostUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsRemovingBgHost(true);
-    try {
-      const url = await removeBg(file);
-      setHostImage(url);
-    } catch {
-      setHostImage(URL.createObjectURL(file));
-    } finally {
-      setIsRemovingBgHost(false);
-    }
+    setIsLoadingHost(true);
+    setHostImage(URL.createObjectURL(file));
+    setIsLoadingHost(false);
   }, []);
 
-  const handleGuestUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGuestUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setIsRemovingBgGuest(true);
-    try {
-      const url = await removeBg(file);
-      setGuestImage(url);
-    } catch {
-      setGuestImage(URL.createObjectURL(file));
-    } finally {
-      setIsRemovingBgGuest(false);
-    }
+    setIsLoadingGuest(true);
+    setGuestImage(URL.createObjectURL(file));
+    setIsLoadingGuest(false);
   }, []);
 
   const dataUrlToBlob = useCallback((dataUrl: string): Blob => {
@@ -409,7 +398,7 @@ export function SuperPromoWorkspace() {
   const renderImageUpload = (
     label: string,
     image: string | null,
-    isRemoving: boolean,
+    isLoading: boolean,
     fileRef: React.RefObject<HTMLInputElement | null>,
     onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void,
     onClear: () => void,
@@ -421,13 +410,13 @@ export function SuperPromoWorkspace() {
       <input type="file" ref={fileRef} onChange={onUpload} accept="image/*" className="hidden" />
       {!image ? (
         <div
-          onClick={() => !isRemoving && fileRef.current?.click()}
+          onClick={() => !isLoading && fileRef.current?.click()}
           className="flex flex-col items-center gap-[6px] py-[14px] px-[14px] rounded-[12px] border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(0,178,169,0.2)] cursor-pointer transition-all"
         >
-          {isRemoving ? (
+          {isLoading ? (
             <>
               <Loader2 className="w-[18px] h-[18px] text-[#2896FB] animate-spin" />
-              <div className="text-[9px] font-medium text-[#94A3B8]">Removing BG...</div>
+              <div className="text-[9px] font-medium text-[#94A3B8]">Loading...</div>
             </>
           ) : (
             <>
@@ -534,7 +523,7 @@ export function SuperPromoWorkspace() {
             <label className={labelCls}>Host Title</label>
             <input type="text" value={hostTitle} onChange={(e) => setHostTitle(e.target.value)} placeholder="VP of Marketing" className={inputCls} />
           </div>
-          {renderImageUpload("Host Image", hostImage, isRemovingBgHost, hostFileRef, handleHostUpload, () => { setHostImage(null); setHostSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (hostFileRef.current) hostFileRef.current.value = ""; }, hostSettings, setHostSettings)}
+          {renderImageUpload("Host Image", hostImage, isLoadingHost, hostFileRef, handleHostUpload, () => { setHostImage(null); setHostSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (hostFileRef.current) hostFileRef.current.value = ""; }, hostSettings, setHostSettings)}
 
           <div className="h-[1px] bg-[rgba(255,255,255,0.04)]" />
 
@@ -546,7 +535,7 @@ export function SuperPromoWorkspace() {
             <label className={labelCls}>Guest Title</label>
             <input type="text" value={guestTitle} onChange={(e) => setGuestTitle(e.target.value)} placeholder="Head of Sales" className={inputCls} />
           </div>
-          {renderImageUpload("Guest Image", guestImage, isRemovingBgGuest, guestFileRef, handleGuestUpload, () => { setGuestImage(null); setGuestSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (guestFileRef.current) guestFileRef.current.value = ""; }, guestSettings, setGuestSettings)}
+          {renderImageUpload("Guest Image", guestImage, isLoadingGuest, guestFileRef, handleGuestUpload, () => { setGuestImage(null); setGuestSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (guestFileRef.current) guestFileRef.current.value = ""; }, guestSettings, setGuestSettings)}
 
           <div className="flex flex-col gap-[6px] mt-[4px]">
             <button onClick={() => exportTemplate(currentConfig.id, previewRef.current || undefined)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">

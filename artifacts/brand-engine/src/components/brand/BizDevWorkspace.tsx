@@ -65,11 +65,11 @@ function GuestPill({ guestName, pillSettings, onDrag, isDragging, baseX = 50 }: 
         top: `${85 + pillSettings.offsetY}%`,
         transform: "translate(-50%, -50%)",
         zIndex: 10,
-        background: "rgba(6,17,40,0.55)",
+        background: "rgba(4,10,28,0.85)",
         backdropFilter: "blur(16px)",
         WebkitBackdropFilter: "blur(16px)",
-        borderRadius: "0.35em",
-        padding: "0.22em 0.8em",
+        borderRadius: "0.42em",
+        padding: "0.26em 0.96em",
         border: isDragging ? "1px solid rgba(0,178,169,0.5)" : "1px solid rgba(0,178,169,0.15)",
         boxShadow: isDragging
           ? "0 0 24px rgba(0,178,169,0.3), 0 0 48px rgba(0,178,169,0.1), inset 0 1px 0 rgba(255,255,255,0.08)"
@@ -80,8 +80,8 @@ function GuestPill({ guestName, pillSettings, onDrag, isDragging, baseX = 50 }: 
         whiteSpace: "nowrap" as const,
       }}
     >
-      <div style={{ fontSize: "0.2em", fontWeight: 700, color: "#00B2A9", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.6em" }}>Guest:</div>
-      <div style={{ fontSize: "0.42em", fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.05em", lineHeight: 1.1 }}>{guestName}</div>
+      <div style={{ fontSize: "0.24em", fontWeight: 700, color: "#00B2A9", textTransform: "uppercase", letterSpacing: "0.15em", lineHeight: 1, paddingBottom: "0.6em" }}>Guest:</div>
+      <div style={{ fontSize: "0.5em", fontWeight: 700, color: "#FFFFFF", textTransform: "uppercase", letterSpacing: "0.05em", lineHeight: 1.1 }}>{guestName}</div>
     </div>
   );
 }

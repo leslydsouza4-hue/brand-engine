@@ -192,8 +192,8 @@ function HorizontalTemplate({
 
         {showDay && (
           <div style={{
-            display: "inline-block",
-            padding: "0.3em 0.8em",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            padding: "0.35em 1em",
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
             borderRadius: "0.25em",
             alignSelf: "flex-start",
@@ -204,6 +204,7 @@ function HorizontalTemplate({
               background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
               color: "transparent",
+              display: "flex", alignItems: "center",
             }}>{dayLabel}</span>
           </div>
         )}

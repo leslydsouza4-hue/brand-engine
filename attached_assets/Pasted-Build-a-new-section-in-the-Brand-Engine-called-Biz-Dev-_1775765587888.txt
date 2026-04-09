@@ -1,0 +1,151 @@
+Build a new section in the Brand Engine called “Biz Dev Templates”.
+
+This should be a strict template automation system, not a freeform AI generator.
+
+GOAL:
+Allow the user to input a few campaign details once, then generate a full set of Biz Dev creatives in one click.
+
+IMPORTANT:
+This system should generate 6 predefined template outputs from the same input set.
+
+--------------------------------------------------
+SECTION NAME
+Biz Dev Templates
+--------------------------------------------------
+
+USER INPUTS:
+Create a clean input panel with these fields:
+
+1. Main Headline / Content
+- multiline text input
+- required
+
+2. Date Text
+- single-line text input
+- required
+- example: APRIL 6–7, 12PM EDT
+
+3. Guest Name
+- single-line text input
+- required
+
+4. CTA Text
+- single-line text input
+- optional
+- example: Register today!
+
+5. Upload Person Image
+- image uploader
+- required
+- remove background automatically
+- background removal is already available, use that
+
+6. Optional Toggle
+- Generate Day 1 / Day 2 assets
+- enabled by default
+
+--------------------------------------------------
+GENERATION LOGIC
+--------------------------------------------------
+
+When user clicks “Generate Set”, generate ALL of these outputs in one shot:
+
+1. QL - Dates
+- size: 1080x1080
+- includes headline
+- includes date
+- includes guest name
+- includes person cutout
+- uses provided background
+
+2. Portrait - Dates
+- size: 1080x1350
+- includes headline
+- includes date
+- includes guest name
+- includes person cutout
+- uses provided background
+
+3. Horizontal - CTA
+- size: 1920x1080
+- includes headline
+- includes date
+- includes guest name
+- includes CTA button/text
+- includes person cutout
+- uses provided background
+
+4. Horizontal - Dates
+- size: 1920x1080
+- includes headline
+- includes date
+- includes guest name
+- includes person cutout
+- uses provided background
+
+5. Horizontal - DAY 1
+- size: 1920x1080
+- includes headline
+- includes “DAY 1”
+- includes guest name
+- includes person cutout
+- uses provided background
+
+6. Horizontal - DAY 2
+- size: 1920x1080
+- includes headline
+- includes “DAY 2”
+- includes guest name
+- includes person cutout
+- uses provided background
+
+--------------------------------------------------
+TEMPLATE RULES
+--------------------------------------------------
+
+- Use the same provided Biz Dev background family for all outputs
+- Use consistent HighLevel / brand styling
+- Keep layouts fixed and predictable
+- Do not randomize composition
+- Person image should be auto cut out and placed correctly in each template
+- Text should scale responsively based on size
+- Maintain strong hierarchy and clean spacing
+- Guest name styling should be consistent across all versions
+- CTA should appear only in the CTA variant
+- Date should appear in the date variants
+- Day 1 and Day 2 should appear only in those variants
+
+--------------------------------------------------
+OUTPUT UI
+--------------------------------------------------
+
+After generation, show all 6 outputs together in a grid/gallery.
+
+Each output card should show:
+- template name
+- size
+- preview
+- download button
+
+Also add:
+- Download All button
+- Regenerate Set button
+
+--------------------------------------------------
+UX RULES
+--------------------------------------------------
+
+- User enters content once
+- One click generates the full set
+- No manual rebuilding for each size
+- This should feel like a business-dev campaign pack generator
+
+--------------------------------------------------
+IMPORTANT IMPLEMENTATION NOTES
+--------------------------------------------------
+
+- Build this as a dedicated template pack system
+- Do not mix with generic Create templates
+- Do not use AI layout generation
+- Use fixed template rendering logic
+- Keep it deterministic and production-ready

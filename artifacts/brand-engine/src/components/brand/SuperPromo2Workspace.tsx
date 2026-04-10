@@ -224,7 +224,7 @@ function HorizontalTemplate({
             filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
           }} />
         ) : (
-          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "70%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
+          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "90%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}
       </div>
 
@@ -380,7 +380,7 @@ function VerticalTemplate({
             filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
           }} />
         ) : (
-          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "50%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
+          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "70%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}
       </div>
 
@@ -538,7 +538,7 @@ function PortraitTemplate({
             filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
           }} />
         ) : (
-          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "45%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
+          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "65%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}
       </div>
 
@@ -694,7 +694,7 @@ function QuickLinksTemplate({
             filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
           }} />
         ) : (
-          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "45%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
+          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "65%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}
       </div>
 

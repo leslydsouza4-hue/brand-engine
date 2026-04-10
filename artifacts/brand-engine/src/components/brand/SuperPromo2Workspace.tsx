@@ -459,11 +459,15 @@ function PortraitTemplate({
     >
       <img src={BG_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
 
+      <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{
+        position: "absolute", top: "4.5%", left: "50%", transform: "translateX(-50%)",
+        height: "1.54em", width: "auto", objectFit: "contain", zIndex: 3,
+      }} />
+
       <div style={{
-        position: "absolute", top: "4.5%", left: "6%", right: "6%", zIndex: 3,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
+        position: "absolute", left: "6%", right: "6%", top: contentTop, zIndex: 3,
+        display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
       }}>
-        <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ height: "1.54em", width: "auto", objectFit: "contain" }} />
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.25em",
         }}>
@@ -474,14 +478,8 @@ function PortraitTemplate({
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.23em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.3em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
-      </div>
-
-      <div style={{
-        position: "absolute", left: "6%", right: "6%", top: contentTop, zIndex: 3,
-        display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
-      }}>
         <div style={{ textAlign: "center" }}>
           <span style={{
             fontSize: headlineSize, fontWeight: 700, lineHeight: 1.08,

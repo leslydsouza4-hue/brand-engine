@@ -119,10 +119,6 @@ function HorizontalTemplate({
         <div style={{
           position: "absolute", top: "7%", right: "5%", zIndex: 3,
           display: "inline-flex", alignItems: "center", gap: "0.25em",
-          padding: "0.18em 0.6em 0.18em 0.35em",
-          background: "transparent",
-          border: "1px solid #FFD000",
-          borderRadius: "999px",
         }}>
           <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
             <circle cx="16" cy="16" r="3" fill="#FFD000" />
@@ -131,7 +127,7 @@ function HorizontalTemplate({
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.23em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
       )}
 
@@ -139,10 +135,6 @@ function HorizontalTemplate({
         {showBadge && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.3em", marginBottom: "0.15em",
-            padding: "0.22em 0.8em 0.22em 0.5em",
-            background: "transparent",
-            border: "1px solid #FFD000",
-            borderRadius: "999px",
             alignSelf: "flex-start",
           }}>
             <svg width="0.9em" height="0.9em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)", flexShrink: 0 }}>
@@ -152,7 +144,7 @@ function HorizontalTemplate({
               <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
               <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             </svg>
-            <span style={{ fontSize: "0.38em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+            <span style={{ fontSize: "0.38em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
           </div>
         )}
         <div>
@@ -331,10 +323,6 @@ function VerticalTemplate({
       }}>
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.3em",
-          padding: "0.25em 0.85em 0.25em 0.5em",
-          background: "transparent",
-          border: "1px solid #FFD000",
-          borderRadius: "999px",
         }}>
           <svg width="1.2em" height="1.2em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
             <circle cx="16" cy="16" r="3" fill="#FFD000" />
@@ -343,7 +331,7 @@ function VerticalTemplate({
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.42em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.42em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
         <div style={{ textAlign: "center", marginTop: "0.4em" }}>
           <span style={{
@@ -487,10 +475,6 @@ function PortraitTemplate({
         <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ height: "1.54em", width: "auto", objectFit: "contain" }} />
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.25em",
-          padding: "0.18em 0.6em 0.18em 0.35em",
-          background: "transparent",
-          border: "1px solid #FFD000",
-          borderRadius: "999px",
         }}>
           <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
             <circle cx="16" cy="16" r="3" fill="#FFD000" />
@@ -499,7 +483,7 @@ function PortraitTemplate({
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.23em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
       </div>
 
@@ -647,10 +631,6 @@ function QuickLinksTemplate({
         <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ height: "1.5em", width: "auto", objectFit: "contain" }} />
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.25em",
-          padding: "0.18em 0.6em 0.18em 0.35em",
-          background: "transparent",
-          border: "1px solid #FFD000",
-          borderRadius: "999px",
         }}>
           <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
             <circle cx="16" cy="16" r="3" fill="#FFD000" />
@@ -659,7 +639,7 @@ function QuickLinksTemplate({
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.23em", fontWeight: 400, color: "#FFFFFF", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.23em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
       </div>
 

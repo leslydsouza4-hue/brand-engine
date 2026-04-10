@@ -36,6 +36,7 @@ export function ShaunWorkspace() {
   const [screenshotRadius, setScreenshotRadius] = useState(16);
   const [screenshotOffsetX, setScreenshotOffsetX] = useState(0);
   const [screenshotOffsetY, setScreenshotOffsetY] = useState(0);
+  const [screenshotStyle, setScreenshotStyle] = useState<"glow" | "float" | "neon" | "minimal">("glow");
 
   const [descriptUrl, setDescriptUrl] = useState("");
   const [descriptLoading, setDescriptLoading] = useState(false);
@@ -108,6 +109,7 @@ export function ShaunWorkspace() {
     setScreenshotRadius(16);
     setScreenshotOffsetX(0);
     setScreenshotOffsetY(0);
+    setScreenshotStyle("glow");
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -402,6 +404,24 @@ export function ShaunWorkspace() {
 
           {screenshotImage && (
             <div className="flex flex-col gap-[14px] animate-in fade-in duration-300">
+              <div>
+                <div className="text-[11px] font-medium text-[#64748B] mb-[6px]">Style</div>
+                <div className="grid grid-cols-4 gap-[4px]">
+                  {(["glow", "float", "neon", "minimal"] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setScreenshotStyle(s)}
+                      className={`py-[6px] px-[4px] rounded-[8px] text-[9px] font-semibold border cursor-pointer transition-all capitalize ${
+                        screenshotStyle === s
+                          ? "bg-[rgba(0,178,169,0.15)] border-[rgba(0,178,169,0.3)] text-[#00B2A9]"
+                          : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8] hover:border-[rgba(255,255,255,0.1)]"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-[14px]">
                 <div className="flex-1">
                   <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
@@ -491,25 +511,59 @@ export function ShaunWorkspace() {
                 </div>
               )}
 
-              {screenshotImage && (
-                <div 
-                  className="absolute z-[1] transition-all duration-300"
-                  style={{
-                    top: `${50 + screenshotOffsetY}%`,
-                    left: `${50 + screenshotOffsetX}%`,
-                    transform: `translate(-50%, -50%) scale(${screenshotScale / 100})`,
-                    opacity: screenshotOpacity / 100,
-                    width: '80%',
-                  }}
-                >
-                  <img 
-                    src={screenshotImage} 
-                    alt="Screenshot" 
-                    className="w-full h-auto object-contain shadow-[0_8px_40px_rgba(0,0,0,0.5)]"
-                    style={{ borderRadius: `${screenshotRadius}px` }}
-                  />
-                </div>
-              )}
+              {screenshotImage && (() => {
+                const baseTransform = `translate(-50%, -50%) scale(${screenshotScale / 100})`;
+                const styleMap: Record<typeof screenshotStyle, { transform: string; border: string; boxShadow: string; outline?: string; outlineOffset?: string }> = {
+                  glow: {
+                    transform: `${baseTransform} rotate(-3deg)`,
+                    border: "2px solid rgba(40,150,251,0.6)",
+                    boxShadow: "0 0 30px rgba(40,150,251,0.4), 0 0 60px rgba(40,150,251,0.2), 0 8px 40px rgba(0,0,0,0.5)",
+                  },
+                  float: {
+                    transform: `${baseTransform} rotate(2deg) perspective(800px) rotateY(-4deg)`,
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)",
+                  },
+                  neon: {
+                    transform: baseTransform,
+                    border: "2px solid rgba(0,178,169,0.4)",
+                    boxShadow: "0 0 15px rgba(0,178,169,0.5), 0 0 40px rgba(40,150,251,0.3), inset 0 0 15px rgba(0,178,169,0.1), 0 8px 40px rgba(0,0,0,0.5)",
+                    outline: "2px solid rgba(0,178,169,0.5)",
+                    outlineOffset: "2px",
+                  },
+                  minimal: {
+                    transform: baseTransform,
+                    border: "none",
+                    boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
+                  },
+                };
+                const s = styleMap[screenshotStyle];
+                return (
+                  <div 
+                    className="absolute z-[1] transition-all duration-300"
+                    style={{
+                      top: `${50 + screenshotOffsetY}%`,
+                      left: `${50 + screenshotOffsetX}%`,
+                      transform: s.transform,
+                      opacity: screenshotOpacity / 100,
+                      width: '80%',
+                    }}
+                  >
+                    <img 
+                      src={screenshotImage} 
+                      alt="Screenshot" 
+                      className="w-full h-auto object-contain"
+                      style={{
+                        borderRadius: `${screenshotRadius}px`,
+                        border: s.border,
+                        boxShadow: s.boxShadow,
+                        outline: s.outline || "none",
+                        outlineOffset: s.outlineOffset || "0",
+                      }}
+                    />
+                  </div>
+                );
+              })()}
               
               {activeImage ? (
                 <img 

@@ -347,7 +347,7 @@ function VerticalTemplate({
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
-  const circleSize = "7.15em";
+  const circleSize = "5em";
 
   return (
     <div
@@ -452,7 +452,7 @@ function VerticalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", bottom: "14%", left: "7%", right: "7%",
+        position: "absolute", bottom: "10%", left: "7%", right: "7%",
         display: "flex", justifyContent: "center", gap: "2.5em",
         zIndex: 2,
       }}>
@@ -478,8 +478,8 @@ function VerticalTemplate({
             )}
           </div>
           <div style={{ marginTop: "0.4em", textAlign: "center" }}>
-            <div style={{ fontSize: "1.18em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{hostName || "Host Name"}</div>
-            <div style={{ fontSize: "0.76em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{hostTitle || "Host Title"}</div>
+            <div style={{ fontSize: "0.83em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{hostName || "Host Name"}</div>
+            <div style={{ fontSize: "0.53em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{hostTitle || "Host Title"}</div>
           </div>
         </div>
 
@@ -505,8 +505,8 @@ function VerticalTemplate({
             )}
           </div>
           <div style={{ marginTop: "0.4em", textAlign: "center" }}>
-            <div style={{ fontSize: "1.18em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{guestName || "Guest Name"}</div>
-            <div style={{ fontSize: "0.76em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{guestTitle || "Guest Title"}</div>
+            <div style={{ fontSize: "0.83em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{guestName || "Guest Name"}</div>
+            <div style={{ fontSize: "0.53em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{guestTitle || "Guest Title"}</div>
           </div>
         </div>
       </div>

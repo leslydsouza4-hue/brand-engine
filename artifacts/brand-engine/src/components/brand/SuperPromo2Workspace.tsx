@@ -144,7 +144,7 @@ function HorizontalTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.25em",
             alignSelf: "flex-start",
           }}>
@@ -167,7 +167,7 @@ function HorizontalTemplate({
             <span style={{
               display: "inline-block", padding: "0.4em 1.4em",
               fontSize: "0.52em", fontWeight: 800, color: "#1A1A1A",
-              background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+              background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
               borderRadius: "0.35em", letterSpacing: "0.03em",
             }}>{ctaText}</span>
           </div>
@@ -194,7 +194,7 @@ function HorizontalTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.23em",
             padding: "0.23em 0.62em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.2em",
             alignSelf: "flex-start",
           }}>
@@ -337,7 +337,7 @@ function VerticalTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em", marginTop: "0.6em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -354,7 +354,7 @@ function VerticalTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.3em",
             padding: "0.35em 1em", marginTop: "1em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -498,7 +498,7 @@ function PortraitTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em", marginTop: "0.4em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -515,7 +515,7 @@ function PortraitTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.3em",
             padding: "0.35em 1em", marginTop: "0.4em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -657,7 +657,7 @@ function QuickLinksTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em", marginTop: "0.3em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
@@ -674,7 +674,7 @@ function QuickLinksTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.3em",
             padding: "0.35em 1em", marginTop: "0.3em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>

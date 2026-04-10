@@ -624,19 +624,19 @@ function QuickLinksTemplate({
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.25em",
         }}>
-          <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
+          <svg width="0.79em" height="0.79em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
             <circle cx="16" cy="16" r="3" fill="#FFD000" />
             <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.23em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.28em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
       </div>
 
       <div style={{
-        position: "absolute", left: "6%", right: "6%", top: "16%", zIndex: 3,
+        position: "absolute", left: "6%", right: "6%", top: "20%", zIndex: 3,
         display: "flex", flexDirection: "column", alignItems: "center", gap: "0.4em",
       }}>
         <div style={{ textAlign: "center" }}>

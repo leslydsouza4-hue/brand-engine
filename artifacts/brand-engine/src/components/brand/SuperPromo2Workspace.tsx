@@ -263,8 +263,9 @@ function HorizontalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", right: "5%", bottom: "8%",
-        zIndex: 3, textAlign: "right",
+        position: "absolute", right: "3%", bottom: "8%",
+        width: "42%",
+        zIndex: 3, textAlign: "center",
       }}>
         <div style={{
           fontSize: "0.52em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap",

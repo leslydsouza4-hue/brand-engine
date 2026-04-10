@@ -95,8 +95,6 @@ function HorizontalTemplate({
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
-  const circleSize = "4.1em";
-
   return (
     <div
       ref={containerRef}
@@ -159,9 +157,7 @@ function HorizontalTemplate({
         <div>
           <span style={{
             fontSize: "1.24em", fontWeight: 700, lineHeight: 1.08,
-            background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            color: "transparent",
+            color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
           }}>
@@ -175,17 +171,17 @@ function HorizontalTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
             borderRadius: "0.25em",
             alignSelf: "flex-start",
           }}>
-            <svg width="0.7em" height="0.7em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="0.7em" height="0.7em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
         )}
 
@@ -249,34 +245,39 @@ function HorizontalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", right: "8%", bottom: "10%",
-        display: "flex", flexDirection: "column", alignItems: "center",
+        position: "absolute", right: "3%", bottom: 0, top: "8%",
+        width: "42%",
         zIndex: 2,
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
+      }}>
+        {guestImage ? (
+          <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+            maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
+            transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+            filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
+          }} />
+        ) : (
+          <svg width="70%" viewBox="0 0 200 350" fill="none" style={{ opacity: 0.5 }}>
+            <circle cx="100" cy="60" r="40" fill="#1a1a2e" />
+            <path d="M50 350 L50 180 Q50 130 100 130 Q150 130 150 180 L150 350 Z" fill="#1a1a2e" />
+            <path d="M50 180 L20 280" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
+            <path d="M150 180 L180 260" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
+          </svg>
+        )}
+      </div>
+
+      <div style={{
+        position: "absolute", right: "5%", bottom: "8%",
+        zIndex: 3, textAlign: "right",
       }}>
         <div style={{
-          width: circleSize, height: circleSize,
-          borderRadius: "50%",
-          border: "0.15em solid rgba(255,255,255,0.2)",
-          overflow: "hidden",
-          background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
-          boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
-          flexShrink: 0,
-        }}>
-          {guestImage ? (
-            <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-              width: "100%", height: "100%", objectFit: "cover",
-              transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-            }} />
-          ) : (
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-            </div>
-          )}
-        </div>
-        <div style={{ marginTop: "0.35em", textAlign: "center", maxWidth: circleSize }}>
-          <div style={{ fontSize: "0.5em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{guestName || "Speaker Name"}</div>
-          <div style={{ fontSize: "0.24em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Speaker Title"}</div>
-        </div>
+          fontSize: "0.52em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap",
+          textShadow: "0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
+        }}>{guestName || "Speaker Name"}</div>
+        <div style={{
+          fontSize: "0.22em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.3em",
+          textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap",
+        }}>{guestTitle || "Speaker Title"}</div>
       </div>
 
     </div>
@@ -314,8 +315,6 @@ function VerticalTemplate({
   const showReplays = variant === "replays";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
-
-  const circleSize = "5em";
 
   return (
     <div
@@ -362,9 +361,7 @@ function VerticalTemplate({
         <div style={{ textAlign: "center", marginTop: "0.4em" }}>
           <span style={{
             fontSize: "2.9em", fontWeight: 700, lineHeight: 1.08,
-            background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            color: "transparent",
+            color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
           }}>
@@ -378,16 +375,16 @@ function VerticalTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em", marginTop: "0.6em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
             borderRadius: "0.25em",
           }}>
-            <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span style={{ fontSize: "0.84em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.84em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
         )}
 
@@ -420,36 +417,39 @@ function VerticalTemplate({
       </div>
 
       <div style={{
-        position: "absolute", bottom: "10%", left: "7%", right: "7%",
-        display: "flex", justifyContent: "center",
+        position: "absolute", bottom: 0, left: "10%", right: "10%",
+        height: "42%",
         zIndex: 2,
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{
-            width: circleSize, height: circleSize,
-            borderRadius: "50%",
-            border: "0.15em solid rgba(255,255,255,0.2)",
-            overflow: "hidden",
-            background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
-            boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
-            flexShrink: 0,
-          }}>
-            {guestImage ? (
-              <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-                width: "100%", height: "100%", objectFit: "cover",
-                transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              }} />
-            ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-              </div>
-            )}
-          </div>
-          <div style={{ marginTop: "0.4em", textAlign: "center" }}>
-            <div style={{ fontSize: "0.83em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{guestName || "Speaker Name"}</div>
-            <div style={{ fontSize: "0.53em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{guestTitle || "Speaker Title"}</div>
-          </div>
-        </div>
+        {guestImage ? (
+          <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+            maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
+            transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+            filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
+          }} />
+        ) : (
+          <svg width="50%" viewBox="0 0 200 350" fill="none" style={{ opacity: 0.5 }}>
+            <circle cx="100" cy="60" r="40" fill="#1a1a2e" />
+            <path d="M50 350 L50 180 Q50 130 100 130 Q150 130 150 180 L150 350 Z" fill="#1a1a2e" />
+            <path d="M50 180 L20 280" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
+            <path d="M150 180 L180 260" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
+          </svg>
+        )}
+      </div>
+
+      <div style={{
+        position: "absolute", bottom: "4%", left: "7%", right: "7%",
+        zIndex: 3, textAlign: "center",
+      }}>
+        <div style={{
+          fontSize: "0.83em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap",
+          textShadow: "0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
+        }}>{guestName || "Speaker Name"}</div>
+        <div style={{
+          fontSize: "0.53em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.15em",
+          textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap",
+        }}>{guestTitle || "Speaker Title"}</div>
       </div>
     </div>
   );
@@ -488,8 +488,6 @@ function PortraitTemplate({
   const headlineSize = variant === "nodate" ? "2.52em" : "2.5em";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
-
-  const circleSize = "6.5em";
 
   return (
     <div
@@ -538,9 +536,7 @@ function PortraitTemplate({
         <div style={{ textAlign: "center" }}>
           <span style={{
             fontSize: headlineSize, fontWeight: 700, lineHeight: 1.08,
-            background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            color: "transparent",
+            color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
           }}>
@@ -554,16 +550,16 @@ function PortraitTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em", marginTop: "0.4em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
             borderRadius: "0.25em",
           }}>
-            <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span style={{ fontSize: "0.84em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.84em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
         )}
 
@@ -596,36 +592,39 @@ function PortraitTemplate({
       </div>
 
       <div style={{
-        position: "absolute", bottom: "8%", left: "6%", right: "6%",
-        display: "flex", justifyContent: "center",
+        position: "absolute", bottom: 0, left: "10%", right: "10%",
+        height: "40%",
         zIndex: 2,
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{
-            width: circleSize, height: circleSize,
-            borderRadius: "50%",
-            border: "0.15em solid rgba(255,255,255,0.2)",
-            overflow: "hidden",
-            background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
-            boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
-            flexShrink: 0,
-          }}>
-            {guestImage ? (
-              <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-                width: "100%", height: "100%", objectFit: "cover",
-                transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              }} />
-            ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-              </div>
-            )}
-          </div>
-          <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
-            <div style={{ fontSize: "0.6em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Speaker Name"}</div>
-            <div style={{ fontSize: "0.32em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Speaker Title"}</div>
-          </div>
-        </div>
+        {guestImage ? (
+          <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+            maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
+            transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+            filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
+          }} />
+        ) : (
+          <svg width="45%" viewBox="0 0 200 350" fill="none" style={{ opacity: 0.5 }}>
+            <circle cx="100" cy="60" r="40" fill="#1a1a2e" />
+            <path d="M50 350 L50 180 Q50 130 100 130 Q150 130 150 180 L150 350 Z" fill="#1a1a2e" />
+            <path d="M50 180 L20 280" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
+            <path d="M150 180 L180 260" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
+          </svg>
+        )}
+      </div>
+
+      <div style={{
+        position: "absolute", bottom: "3%", left: "6%", right: "6%",
+        zIndex: 3, textAlign: "center",
+      }}>
+        <div style={{
+          fontSize: "0.6em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
+          textShadow: "0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
+        }}>{guestName || "Speaker Name"}</div>
+        <div style={{
+          fontSize: "0.32em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.15em",
+          textTransform: "uppercase", letterSpacing: "0.08em",
+        }}>{guestTitle || "Speaker Title"}</div>
       </div>
     </div>
   );
@@ -662,8 +661,6 @@ function QuickLinksTemplate({
   const showReplays = variant === "replays";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
-
-  const circleSize = "5em";
 
   return (
     <div
@@ -712,9 +709,7 @@ function QuickLinksTemplate({
         <div style={{ textAlign: "center" }}>
           <span style={{
             fontSize: "2.1em", fontWeight: 700, lineHeight: 1.08,
-            background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-            color: "transparent",
+            color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
           }}>
@@ -728,16 +723,16 @@ function QuickLinksTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em", marginTop: "0.3em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
             borderRadius: "0.25em",
           }}>
-            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span style={{ fontSize: "0.75em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.75em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
         )}
 
@@ -770,36 +765,39 @@ function QuickLinksTemplate({
       </div>
 
       <div style={{
-        position: "absolute", bottom: "6%", left: "6%", right: "6%",
-        display: "flex", justifyContent: "center",
+        position: "absolute", bottom: 0, left: "10%", right: "10%",
+        height: "38%",
         zIndex: 2,
+        display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <div style={{
-            width: circleSize, height: circleSize,
-            borderRadius: "50%",
-            border: "0.15em solid rgba(255,255,255,0.2)",
-            overflow: "hidden",
-            background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
-            boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
-            flexShrink: 0,
-          }}>
-            {guestImage ? (
-              <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-                width: "100%", height: "100%", objectFit: "cover",
-                transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              }} />
-            ) : (
-              <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-              </div>
-            )}
-          </div>
-          <div style={{ marginTop: "0.35em", textAlign: "center", maxWidth: circleSize }}>
-            <div style={{ fontSize: "0.48em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Speaker Name"}</div>
-            <div style={{ fontSize: "0.24em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.12em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Speaker Title"}</div>
-          </div>
-        </div>
+        {guestImage ? (
+          <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+            maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
+            transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+            filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
+          }} />
+        ) : (
+          <svg width="45%" viewBox="0 0 200 350" fill="none" style={{ opacity: 0.5 }}>
+            <circle cx="100" cy="60" r="40" fill="#1a1a2e" />
+            <path d="M50 350 L50 180 Q50 130 100 130 Q150 130 150 180 L150 350 Z" fill="#1a1a2e" />
+            <path d="M50 180 L20 280" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
+            <path d="M150 180 L180 260" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
+          </svg>
+        )}
+      </div>
+
+      <div style={{
+        position: "absolute", bottom: "3%", left: "6%", right: "6%",
+        zIndex: 3, textAlign: "center",
+      }}>
+        <div style={{
+          fontSize: "0.48em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
+          textShadow: "0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
+        }}>{guestName || "Speaker Name"}</div>
+        <div style={{
+          fontSize: "0.24em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.12em",
+          textTransform: "uppercase", letterSpacing: "0.08em",
+        }}>{guestTitle || "Speaker Title"}</div>
       </div>
     </div>
   );
@@ -1134,7 +1132,7 @@ export function SuperPromo2Workspace() {
             <label className={labelCls}>Speaker Title</label>
             <input type="text" value={guestTitle} onChange={(e) => setGuestTitle(e.target.value)} placeholder="Head of Sales" className={inputCls} />
           </div>
-          {renderImageUpload("Guest Image", guestImage, isLoadingGuest, guestFileRef, handleGuestUpload, () => { setGuestImage(null); setGuestSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (guestFileRef.current) guestFileRef.current.value = ""; }, guestSettings, setGuestSettings)}
+          {renderImageUpload("Speaker Image", guestImage, isLoadingGuest, guestFileRef, handleGuestUpload, () => { setGuestImage(null); setGuestSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (guestFileRef.current) guestFileRef.current.value = ""; }, guestSettings, setGuestSettings)}
 
           <div className="flex flex-col gap-[6px] mt-[4px]">
             <button onClick={() => exportTemplate(currentConfig.id, previewRef.current || undefined)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">

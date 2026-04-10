@@ -532,7 +532,7 @@ function PortraitTemplate({
 
       <div style={{
         position: "absolute", bottom: 0, left: "10%", right: "10%",
-        height: "48%",
+        height: "53%",
         zIndex: 2,
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
@@ -555,11 +555,11 @@ function PortraitTemplate({
         zIndex: 3, textAlign: "center",
       }}>
         <div style={{
-          fontSize: "1.58em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
+          fontSize: "1.42em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
           textShadow: "0 0.06em 0.15em rgba(0,0,0,0.7), 0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
         }}>{guestName || "Speaker Name"}</div>
         <div style={{
-          fontSize: "0.85em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.15em",
+          fontSize: "0.77em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.15em",
           textTransform: "uppercase", letterSpacing: "0.08em",
         }}>{guestTitle || "Speaker Title"}</div>
       </div>

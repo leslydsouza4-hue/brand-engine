@@ -29,7 +29,7 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "hz-nodate", name: "Horizontal - No Date", shortName: "No Date", width: 1920, height: 1080, variant: "nodate", size: "horizontal" },
   { id: "hz-day1", name: "Horizontal - Day 1", shortName: "Day 1", width: 941, height: 529, variant: "day1", size: "horizontal" },
   { id: "hz-day2", name: "Horizontal - Day 2", shortName: "Day 2", width: 941, height: 529, variant: "day2", size: "horizontal" },
-  { id: "hz-replays", name: "Horizontal - Replays", shortName: "Replays", width: 565, height: 317, variant: "replays", size: "horizontal" },
+  { id: "hz-replays", name: "Horizontal - Replays", shortName: "Replays", width: 1920, height: 1080, variant: "replays", size: "horizontal" },
   { id: "vt-dates", name: "Vertical - Dates", shortName: "Dates", width: 1080, height: 1920, variant: "dates", size: "vertical" },
   { id: "vt-nodate", name: "Vertical - No Date", shortName: "No Date", width: 1080, height: 1920, variant: "nodate", size: "vertical" },
   { id: "vt-replays", name: "Vertical - Replays", shortName: "Replays", width: 1080, height: 1920, variant: "replays", size: "vertical" },
@@ -224,13 +224,13 @@ function HorizontalTemplate({
 
         {showReplays && (
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: "0.18em",
-            padding: "0.18em 0.48em",
+            display: "inline-flex", alignItems: "center", gap: "0.23em",
+            padding: "0.23em 0.62em",
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
-            borderRadius: "0.15em",
+            borderRadius: "0.2em",
             alignSelf: "flex-start",
           }}>
-            <svg width="0.72em" height="0.72em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+            <svg width="0.94em" height="0.94em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
               <defs>
                 <linearGradient id="replay-grad-hz" x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0%" stopColor="#62E8FF" />
@@ -241,7 +241,7 @@ function HorizontalTemplate({
               <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-hz)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{
-              fontSize: "0.84em", fontWeight: 800, lineHeight: 1,
+              fontSize: "1.09em", fontWeight: 800, lineHeight: 1,
               letterSpacing: "0.04em",
               background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",

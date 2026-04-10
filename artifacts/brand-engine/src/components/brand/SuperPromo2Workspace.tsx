@@ -190,8 +190,8 @@ function HorizontalTemplate({
           <div>
             <span style={{
               display: "inline-block", padding: "0.4em 1.4em",
-              fontSize: "0.52em", fontWeight: 800, color: "#0F1A3E",
-              background: "linear-gradient(180deg, #A8EEFF 0%, #FFFFFF 100%)",
+              fontSize: "0.52em", fontWeight: 800, color: "#1A1A1A",
+              background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
               borderRadius: "0.35em", letterSpacing: "0.03em",
             }}>{ctaText}</span>
           </div>
@@ -208,9 +208,7 @@ function HorizontalTemplate({
             <span style={{
               fontSize: "1.12em", fontWeight: 800, lineHeight: 1,
               letterSpacing: "0.04em",
-              background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              color: "transparent",
+              color: "#FFD000",
               display: "flex", alignItems: "center",
             }}>{dayLabel}</span>
           </div>
@@ -220,26 +218,18 @@ function HorizontalTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.23em",
             padding: "0.23em 0.62em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
             borderRadius: "0.2em",
             alignSelf: "flex-start",
           }}>
             <svg width="0.94em" height="0.94em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <defs>
-                <linearGradient id="replay-grad-hz" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#62E8FF" />
-                  <stop offset="100%" stopColor="#FFFFFF" />
-                </linearGradient>
-              </defs>
-              <path d="M1 4v6h6" stroke="url(#replay-grad-hz)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-hz)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M1 4v6h6" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{
               fontSize: "1.09em", fontWeight: 800, lineHeight: 1,
               letterSpacing: "0.04em",
-              background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              color: "transparent",
+              color: "#1A1A1A",
             }}>REPLAYS</span>
           </div>
         )}
@@ -389,25 +379,17 @@ function VerticalTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.3em",
             padding: "0.35em 1em", marginTop: "1em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <defs>
-                <linearGradient id="replay-grad-vt" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#62E8FF" />
-                  <stop offset="100%" stopColor="#FFFFFF" />
-                </linearGradient>
-              </defs>
-              <path d="M1 4v6h6" stroke="url(#replay-grad-vt)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-vt)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M1 4v6h6" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{
               fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
               letterSpacing: "0.04em",
-              background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              color: "transparent",
+              color: "#1A1A1A",
             }}>REPLAYS</span>
           </div>
         )}
@@ -559,25 +541,17 @@ function PortraitTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.3em",
             padding: "0.35em 1em", marginTop: "0.4em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <defs>
-                <linearGradient id="replay-grad-pt" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#62E8FF" />
-                  <stop offset="100%" stopColor="#FFFFFF" />
-                </linearGradient>
-              </defs>
-              <path d="M1 4v6h6" stroke="url(#replay-grad-pt)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-pt)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M1 4v6h6" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{
               fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
               letterSpacing: "0.04em",
-              background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              color: "transparent",
+              color: "#1A1A1A",
             }}>REPLAYS</span>
           </div>
         )}
@@ -727,25 +701,17 @@ function QuickLinksTemplate({
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.3em",
             padding: "0.35em 1em", marginTop: "0.3em",
-            background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFC107 100%)",
             borderRadius: "0.25em",
           }}>
             <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <defs>
-                <linearGradient id="replay-grad-ql" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#62E8FF" />
-                  <stop offset="100%" stopColor="#FFFFFF" />
-                </linearGradient>
-              </defs>
-              <path d="M1 4v6h6" stroke="url(#replay-grad-ql)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="url(#replay-grad-ql)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M1 4v6h6" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{
               fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
               letterSpacing: "0.04em",
-              background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              color: "transparent",
+              color: "#1A1A1A",
             }}>REPLAYS</span>
           </div>
         )}

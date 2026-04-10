@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw, PackageOpen
+  UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw, PackageOpen, Eraser
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
@@ -755,6 +755,8 @@ export function SuperPromo2Workspace() {
   const [guestImage, setGuestImage] = useState<string | null>(null);
   const [guestSettings, setGuestSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
   const [isLoadingGuest, setIsLoadingGuest] = useState(false);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [originalGuestImage, setOriginalGuestImage] = useState<string | null>(null);
   const [sizeMode, setSizeMode] = useState<SizeMode>("horizontal");
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0].id);
   const [showGallery, setShowGallery] = useState(false);
@@ -773,13 +775,42 @@ export function SuperPromo2Workspace() {
   const filteredTemplates = TEMPLATES.filter((t) => t.size === sizeMode);
   const currentConfig = filteredTemplates.find((t) => t.id === selectedTemplate) || filteredTemplates[0];
 
-  const handleGuestUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGuestUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsLoadingGuest(true);
-    setGuestImage(URL.createObjectURL(file));
-    setIsLoadingGuest(false);
+    setIsRemovingBg(true);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const src = reader.result as string;
+      setOriginalGuestImage(src);
+      try {
+        const { removeBackground } = await import("@imgly/background-removal");
+        const blob = await removeBackground(src, { model: "medium", output: { format: "image/png" } });
+        setGuestImage(URL.createObjectURL(blob));
+      } catch {
+        setGuestImage(src);
+      } finally {
+        setIsLoadingGuest(false);
+        setIsRemovingBg(false);
+      }
+    };
+    reader.readAsDataURL(file);
   }, []);
+
+  const handleRemoveBg = useCallback(async () => {
+    const src = originalGuestImage || guestImage;
+    if (!src) return;
+    setIsRemovingBg(true);
+    try {
+      const { removeBackground } = await import("@imgly/background-removal");
+      const blob = await removeBackground(src, { model: "medium", output: { format: "image/png" } });
+      setGuestImage(URL.createObjectURL(blob));
+    } catch {
+    } finally {
+      setIsRemovingBg(false);
+    }
+  }, [originalGuestImage, guestImage]);
 
   const dataUrlToBlob = useCallback((dataUrl: string): Blob => {
     const [header, base64] = dataUrl.split(",");
@@ -888,7 +919,7 @@ export function SuperPromo2Workspace() {
           {isLoading ? (
             <>
               <Loader2 className="w-[18px] h-[18px] text-[#2896FB] animate-spin" />
-              <div className="text-[9px] font-medium text-[#94A3B8]">Loading...</div>
+              <div className="text-[9px] font-medium text-[#94A3B8]">{isRemovingBg ? "Removing background..." : "Loading..."}</div>
             </>
           ) : (
             <>
@@ -902,9 +933,16 @@ export function SuperPromo2Workspace() {
           <div className="flex items-center gap-[8px] p-[8px] border-b border-[rgba(255,255,255,0.04)]">
             <img src={image} alt="" className="w-[32px] h-[32px] rounded-full object-cover bg-[rgba(255,255,255,0.04)]" />
             <div className="flex-1 min-w-0">
-              <div className="text-[9px] font-semibold text-[#00B2A9] flex items-center gap-[3px]"><Check className="w-[9px] h-[9px]" /> Ready</div>
+              {isRemovingBg ? (
+                <div className="text-[9px] font-semibold text-[#2896FB] flex items-center gap-[3px]"><Loader2 className="w-[9px] h-[9px] animate-spin" /> Removing BG...</div>
+              ) : (
+                <div className="text-[9px] font-semibold text-[#00B2A9] flex items-center gap-[3px]"><Check className="w-[9px] h-[9px]" /> Ready</div>
+              )}
             </div>
             <div className="flex items-center gap-[2px] shrink-0">
+              <button onClick={handleRemoveBg} disabled={isRemovingBg} className="w-[22px] h-[22px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#94A3B8] flex items-center justify-center cursor-pointer hover:bg-[rgba(0,178,169,0.15)] hover:text-[#00B2A9] transition-all disabled:opacity-40 disabled:cursor-not-allowed" title="Remove Background">
+                <Eraser className="w-[9px] h-[9px]" />
+              </button>
               <button onClick={() => fileRef.current?.click()} className="w-[22px] h-[22px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#94A3B8] flex items-center justify-center cursor-pointer hover:bg-[rgba(40,150,251,0.15)] hover:text-[#2896FB] transition-all" title="Replace">
                 <RefreshCw className="w-[9px] h-[9px]" />
               </button>
@@ -1055,7 +1093,7 @@ export function SuperPromo2Workspace() {
             <label className={labelCls}>Speaker Title</label>
             <input type="text" value={guestTitle} onChange={(e) => setGuestTitle(e.target.value)} placeholder="Head of Sales" className={inputCls} />
           </div>
-          {renderImageUpload("Speaker Image", guestImage, isLoadingGuest, guestFileRef, handleGuestUpload, () => { setGuestImage(null); setGuestSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (guestFileRef.current) guestFileRef.current.value = ""; }, guestSettings, setGuestSettings)}
+          {renderImageUpload("Speaker Image", guestImage, isLoadingGuest, guestFileRef, handleGuestUpload, () => { setGuestImage(null); setOriginalGuestImage(null); setGuestSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (guestFileRef.current) guestFileRef.current.value = ""; }, guestSettings, setGuestSettings)}
 
           <div className="flex flex-col gap-[6px] mt-[4px]">
             <button onClick={() => exportTemplate(currentConfig.id, previewRef.current || undefined)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">

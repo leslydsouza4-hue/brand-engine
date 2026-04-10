@@ -4,10 +4,10 @@ import {
   User, 
   Video, 
   Gift, 
-  Settings, 
   FolderOpen,
   MonitorPlay,
-  X
+  X,
+  Package
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -140,15 +140,15 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
 
         <div className="mt-auto shrink-0 px-[12px] pt-[12px] pb-[20px] border-t border-white/5">
           <button 
-            onClick={() => handleSetMode('settings')}
+            onClick={() => handleSetMode('my-exports')}
             className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px]
-              ${currentMode === 'settings'
+              ${currentMode === 'my-exports'
                 ? 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)]'
                 : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]'
               }`}
           >
-            <Settings className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'settings' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60'}`} />
-            Settings
+            <Package className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'my-exports' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60'}`} />
+            My Exports
           </button>
           <button 
             onClick={() => handleSetMode('brand-directory')}

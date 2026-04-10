@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { toPng, toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
+import { addExport, createThumbnail } from "./exportStore";
 
 function stripRadii(root: HTMLElement): Array<{ el: HTMLElement; orig: string }> {
   const saved: Array<{ el: HTMLElement; orig: string }> = [];
@@ -54,6 +55,7 @@ export function useExport() {
         const pdf = new jsPDF({ orientation, unit: "px", format: [img.width, img.height] });
         pdf.addImage(dataUrl, "PNG", 0, 0, img.width, img.height);
         pdf.save(`${safeName}.pdf`);
+        createThumbnail(dataUrl).then((thumb) => addExport({ name: `${safeName}.pdf`, source: "Custom Design", format: "pdf", thumbnail: thumb, dimensions: `${img.width}x${img.height}` }));
       } else if (format === "jpeg") {
         const dataUrl = await toJpeg(target, { ...opts, quality: 0.92, backgroundColor: "#060B16" });
         const a = document.createElement("a");
@@ -62,6 +64,7 @@ export function useExport() {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        createThumbnail(dataUrl).then((thumb) => addExport({ name: `${safeName}.jpg`, source: "Custom Design", format: "jpeg", thumbnail: thumb, dimensions: `${Math.round(target.offsetWidth * scale)}x${Math.round(target.offsetHeight * scale)}` }));
       } else {
         const dataUrl = await toPng(target, opts);
         const a = document.createElement("a");
@@ -70,6 +73,7 @@ export function useExport() {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        createThumbnail(dataUrl).then((thumb) => addExport({ name: `${safeName}.png`, source: "Custom Design", format: "png", thumbnail: thumb, dimensions: `${Math.round(target.offsetWidth * scale)}x${Math.round(target.offsetHeight * scale)}` }));
       }
     } catch (err) {
       console.error("Export failed:", err);

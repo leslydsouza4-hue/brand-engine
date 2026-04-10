@@ -7,16 +7,17 @@ import { ZoomWorkspace } from "@/components/brand/ZoomWorkspace";
 import { AIImageWorkspace } from "@/components/brand/AIImageWorkspace";
 import { BrandDirectoryWorkspace } from "@/components/brand/BrandDirectoryWorkspace";
 import { SettingsWorkspace } from "@/components/brand/SettingsWorkspace";
+import { MyExportsWorkspace } from "@/components/brand/MyExportsWorkspace";
 import { BizDevWorkspace } from "@/components/brand/BizDevWorkspace";
 import { SuperPromo2Workspace } from "@/components/brand/SuperPromo2Workspace";
 
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    const valid = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings"];
+    const valid = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "my-exports"];
     return valid.includes(hash) ? hash : "templates";
   });
-  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings"];
+  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "my-exports"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -52,6 +53,7 @@ export default function BrandEngine() {
         {currentMode === "ai-image" && <AIImageWorkspace />}
         {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
         {currentMode === "settings" && <SettingsWorkspace />}
+        {currentMode === "my-exports" && <MyExportsWorkspace />}
       </div>
     </div>
   );

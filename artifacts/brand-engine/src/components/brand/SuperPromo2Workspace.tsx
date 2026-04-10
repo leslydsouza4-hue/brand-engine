@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
+import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
@@ -858,7 +859,9 @@ export function SuperPromo2Workspace() {
         style: { borderRadius: "0" },
       });
       const blob = dataUrlToBlob(dataUrl);
-      triggerDownload(blob, `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`);
+      const filename = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
+      triggerDownload(blob, filename);
+      createThumbnail(dataUrl).then((thumb) => addExport({ name: filename, source: "Super Promo", format: "png", thumbnail: thumb, dimensions: `${config.width}x${config.height}` }));
     } catch (err) {
       console.error("Export error:", err);
     } finally {

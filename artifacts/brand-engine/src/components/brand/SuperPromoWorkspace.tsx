@@ -1041,7 +1041,7 @@ export function SuperPromoWorkspace() {
     try {
       const container = galleryRef.current || document;
       const zip = new JSZip();
-      for (const t of filteredTemplates) {
+      for (const t of TEMPLATES) {
         const el = container.querySelector(`[data-template-id="${t.id}"]`) as HTMLElement;
         if (!el) continue;
         const origRadius = stripOuterRadius(el);
@@ -1062,7 +1062,7 @@ export function SuperPromoWorkspace() {
     } finally {
       setIsExportingAll(false);
     }
-  }, [hostName, filteredTemplates, triggerDownload, stripOuterRadius, restoreOuterRadius]);
+  }, [hostName, triggerDownload, stripOuterRadius, restoreOuterRadius]);
 
   const inputCls = "w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] transition-all";
   const labelCls = "text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[6px]";
@@ -1276,7 +1276,7 @@ export function SuperPromoWorkspace() {
             </button>
             <button onClick={() => setShowGallery(true)} disabled={!headline.trim()} className="w-full py-[9px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] text-[#94A3B8] text-[10px] font-medium flex items-center justify-center gap-[5px] cursor-pointer transition-all hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed">
               <Sparkles className="w-[11px] h-[11px]" />
-              Preview & Download All ({filteredTemplates.length})
+              Preview & Download All ({TEMPLATES.length})
             </button>
           </div>
         </div>
@@ -1295,7 +1295,7 @@ export function SuperPromoWorkspace() {
               <div className="flex items-center justify-between mb-[20px] flex-wrap gap-[10px]">
                 <div>
                   <h3 className="text-[16px] font-bold text-white mb-[2px]">All Templates</h3>
-                  <p className="text-[11px] text-[#64748B]">{filteredTemplates.length} templates ready</p>
+                  <p className="text-[11px] text-[#64748B]">{TEMPLATES.length} templates ready</p>
                 </div>
                 <div className="flex gap-[8px]">
                   <button onClick={() => setShowGallery(false)} className="h-[32px] px-[14px] rounded-[8px] bg-[rgba(255,255,255,0.06)] border-none text-[#94A3B8] text-[11px] font-medium flex items-center gap-[5px] cursor-pointer hover:bg-[rgba(255,255,255,0.1)] transition-all">Back to Editor</button>
@@ -1306,7 +1306,7 @@ export function SuperPromoWorkspace() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-                {filteredTemplates.map((t) => (
+                {TEMPLATES.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
                       <TemplatePreview config={t} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} />

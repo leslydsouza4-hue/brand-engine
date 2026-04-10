@@ -27,8 +27,8 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "hz-dates", name: "Horizontal - Dates", shortName: "Dates", width: 1920, height: 1080, variant: "dates", size: "horizontal" },
   { id: "hz-cta", name: "Horizontal - CTA", shortName: "CTA", width: 1920, height: 1080, variant: "cta", size: "horizontal" },
   { id: "hz-nodate", name: "Horizontal - No Date", shortName: "No Date", width: 1920, height: 1080, variant: "nodate", size: "horizontal" },
-  { id: "hz-day1", name: "Horizontal - Day 1", shortName: "Day 1", width: 941, height: 529, variant: "day1", size: "horizontal" },
-  { id: "hz-day2", name: "Horizontal - Day 2", shortName: "Day 2", width: 941, height: 529, variant: "day2", size: "horizontal" },
+  { id: "hz-day1", name: "Horizontal - Day 1", shortName: "Day 1", width: 1920, height: 1080, variant: "day1", size: "horizontal" },
+  { id: "hz-day2", name: "Horizontal - Day 2", shortName: "Day 2", width: 1920, height: 1080, variant: "day2", size: "horizontal" },
   { id: "hz-replays", name: "Horizontal - Replays", shortName: "Replays", width: 1920, height: 1080, variant: "replays", size: "horizontal" },
   { id: "vt-dates", name: "Vertical - Dates", shortName: "Dates", width: 1080, height: 1920, variant: "dates", size: "vertical" },
   { id: "vt-nodate", name: "Vertical - No Date", shortName: "No Date", width: 1080, height: 1920, variant: "nodate", size: "vertical" },
@@ -196,7 +196,6 @@ function HorizontalTemplate({
               fontSize: "0.52em", fontWeight: 800, color: "#0F1A3E",
               background: "linear-gradient(180deg, #A8EEFF 0%, #FFFFFF 100%)",
               borderRadius: "0.35em", letterSpacing: "0.03em",
-              boxShadow: "0 0.2em 0.8em rgba(0,0,0,0.2)",
             }}>{ctaText}</span>
           </div>
         )}
@@ -275,8 +274,8 @@ function HorizontalTemplate({
           )}
         </div>
         <div style={{ marginTop: "0.35em", textAlign: "center", maxWidth: circleSize }}>
-          <div style={{ fontSize: "0.42em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{hostName || "Host Name"}</div>
-          <div style={{ fontSize: "0.2em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
+          <div style={{ fontSize: "0.5em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{hostName || "Host Name"}</div>
+          <div style={{ fontSize: "0.24em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
         </div>
       </div>
 
@@ -306,8 +305,8 @@ function HorizontalTemplate({
           )}
         </div>
         <div style={{ marginTop: "0.35em", textAlign: "center", maxWidth: circleSize }}>
-          <div style={{ fontSize: "0.42em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{guestName || "Guest Name"}</div>
-          <div style={{ fontSize: "0.2em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
+          <div style={{ fontSize: "0.5em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{guestName || "Guest Name"}</div>
+          <div style={{ fontSize: "0.24em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.2em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
         </div>
       </div>
 

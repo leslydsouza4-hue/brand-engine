@@ -544,7 +544,7 @@ function PortraitTemplate({
   const showDate = variant === "dates";
   const showReplays = variant === "replays";
   const contentTop = (showDate || showReplays) ? "18%" : "24%";
-  const headlineSize = variant === "nodate" ? "3em" : "2.5em";
+  const headlineSize = variant === "nodate" ? "2.1em" : "2.5em";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 

@@ -638,12 +638,29 @@ function QuickLinksTemplate({
       </div>
 
       <div style={{
-        position: "absolute", left: "6%", right: "6%", top: "24%", zIndex: 3,
-        display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
+        position: "absolute", left: "6%", right: "6%", top: "16%", zIndex: 3,
+        display: "flex", flexDirection: "column", alignItems: "center", gap: "0.4em",
       }}>
+        {showDate && dateText && (
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "0.25em",
+            padding: "0.28em 0.6em",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
+            borderRadius: "0.25em",
+          }}>
+            <svg width="0.8em" height="0.8em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span style={{ fontSize: "0.52em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
+          </div>
+        )}
+
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: "2.1em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: "1.47em", fontWeight: 700, lineHeight: 1.08,
             color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
@@ -653,23 +670,6 @@ function QuickLinksTemplate({
             )) : "Enter Headline"}
           </span>
         </div>
-
-        {showDate && dateText && (
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: "0.25em",
-            padding: "0.32em 0.7em", marginTop: "0.3em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
-            borderRadius: "0.25em",
-          }}>
-            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span style={{ fontSize: "0.75em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
-          </div>
-        )}
 
         {showReplays && (
           <div style={{
@@ -693,7 +693,7 @@ function QuickLinksTemplate({
 
       <div style={{
         position: "absolute", bottom: 0, left: "10%", right: "10%",
-        height: "38%",
+        height: "48%",
         zIndex: 2,
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
@@ -716,11 +716,11 @@ function QuickLinksTemplate({
         zIndex: 3, textAlign: "center",
       }}>
         <div style={{
-          fontSize: "0.48em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
-          textShadow: "0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
+          fontSize: "1.08em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
+          textShadow: "0 0.06em 0.15em rgba(0,0,0,0.7), 0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
         }}>{guestName || "Speaker Name"}</div>
         <div style={{
-          fontSize: "0.24em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.12em",
+          fontSize: "0.54em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.12em",
           textTransform: "uppercase", letterSpacing: "0.08em",
         }}>{guestTitle || "Speaker Title"}</div>
       </div>

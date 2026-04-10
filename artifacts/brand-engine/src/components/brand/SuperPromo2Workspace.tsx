@@ -90,9 +90,7 @@ function HorizontalTemplate({
   const showCta = variant === "cta";
   const showDay = variant === "day1" || variant === "day2";
   const showReplays = variant === "replays";
-  const showBadge = variant === "nodate";
   const dayLabel = variant === "day1" ? "DAY 1" : variant === "day2" ? "DAY 2" : "";
-  const contentTop = (variant === "dates" || variant === "day1" || variant === "day2" || variant === "nodate" || variant === "replays") ? "28%" : "20%";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
@@ -115,38 +113,20 @@ function HorizontalTemplate({
 
       <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "7%", left: "5%", height: "7.5%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
-      {!showBadge && (
+      <div style={{ position: "absolute", left: "5%", top: "20%", width: "45%", zIndex: 3, display: "flex", flexDirection: "column", gap: "0.4em" }}>
         <div style={{
-          position: "absolute", top: "7%", right: "5%", zIndex: 3,
-          display: "inline-flex", alignItems: "center", gap: "0.25em",
+          display: "inline-flex", alignItems: "center", gap: "0.3em", marginBottom: "0.15em",
+          alignSelf: "flex-start",
         }}>
-          <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
+          <svg width="0.9em" height="0.9em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)", flexShrink: 0 }}>
             <circle cx="16" cy="16" r="3" fill="#FFD000" />
             <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.23em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.38em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
-      )}
-
-      <div style={{ position: "absolute", left: "5%", top: contentTop, width: "45%", zIndex: 3, display: "flex", flexDirection: "column", gap: "0.4em" }}>
-        {showBadge && (
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: "0.3em", marginBottom: "0.15em",
-            alignSelf: "flex-start",
-          }}>
-            <svg width="0.9em" height="0.9em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)", flexShrink: 0 }}>
-              <circle cx="16" cy="16" r="3" fill="#FFD000" />
-              <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
-              <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
-              <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
-              <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
-            </svg>
-            <span style={{ fontSize: "0.38em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
-          </div>
-        )}
         <div>
           <span style={{
             fontSize: "1.24em", fontWeight: 700, lineHeight: 1.08,

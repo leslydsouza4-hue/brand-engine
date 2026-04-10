@@ -639,6 +639,19 @@ function QuickLinksTemplate({
         position: "absolute", left: "6%", right: "6%", top: "16%", zIndex: 3,
         display: "flex", flexDirection: "column", alignItems: "center", gap: "0.4em",
       }}>
+        <div style={{ textAlign: "center" }}>
+          <span style={{
+            fontSize: "1.47em", fontWeight: 700, lineHeight: 1.08,
+            color: "#FFFFFF",
+            letterSpacing: "-0.02em",
+            display: "inline",
+          }}>
+            {headline ? headline.split("\n").map((line, i, arr) => (
+              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
+            )) : "Enter Headline"}
+          </span>
+        </div>
+
         {showDate && dateText && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
@@ -655,19 +668,6 @@ function QuickLinksTemplate({
             <span style={{ fontSize: "0.52em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
         )}
-
-        <div style={{ textAlign: "center" }}>
-          <span style={{
-            fontSize: "1.47em", fontWeight: 700, lineHeight: 1.08,
-            color: "#FFFFFF",
-            letterSpacing: "-0.02em",
-            display: "inline",
-          }}>
-            {headline ? headline.split("\n").map((line, i, arr) => (
-              <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
-            )) : "Enter Headline"}
-          </span>
-        </div>
 
         {showReplays && (
           <div style={{

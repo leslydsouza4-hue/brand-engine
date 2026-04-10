@@ -91,6 +91,7 @@ function HorizontalTemplate({
   const showDay = variant === "day1" || variant === "day2";
   const showReplays = variant === "replays";
   const dayLabel = variant === "day1" ? "DAY 1" : variant === "day2" ? "DAY 2" : "";
+  const contentTop = variant === "nodate" ? "28%" : "20%";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
@@ -113,7 +114,7 @@ function HorizontalTemplate({
 
       <img src={LOGO_URL} alt="" crossOrigin="anonymous" style={{ position: "absolute", top: "7%", left: "5%", height: "7.5%", width: "auto", objectFit: "contain", zIndex: 3 }} />
 
-      <div style={{ position: "absolute", left: "5%", top: "20%", width: "45%", zIndex: 3, display: "flex", flexDirection: "column", gap: "0.4em" }}>
+      <div style={{ position: "absolute", left: "5%", top: contentTop, width: "45%", zIndex: 3, display: "flex", flexDirection: "column", gap: "0.4em" }}>
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.3em", marginBottom: "0.15em",
           alignSelf: "flex-start",

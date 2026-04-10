@@ -714,11 +714,11 @@ function QuickLinksTemplate({
         zIndex: 3, textAlign: "center",
       }}>
         <div style={{
-          fontSize: "1.08em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
+          fontSize: "1.19em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
           textShadow: "0 0.06em 0.15em rgba(0,0,0,0.7), 0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
         }}>{guestName || "Speaker Name"}</div>
         <div style={{
-          fontSize: "0.54em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.12em",
+          fontSize: "0.59em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.12em",
           textTransform: "uppercase", letterSpacing: "0.08em",
         }}>{guestTitle || "Speaker Title"}</div>
       </div>

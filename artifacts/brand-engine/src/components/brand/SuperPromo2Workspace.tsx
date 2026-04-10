@@ -241,11 +241,11 @@ function HorizontalTemplate({
         zIndex: 3, textAlign: "center",
       }}>
         <div style={{
-          fontSize: "0.68em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap",
+          fontSize: "0.88em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap",
           textShadow: "0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
         }}>{guestName || "Speaker Name"}</div>
         <div style={{
-          fontSize: "0.29em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.3em",
+          fontSize: "0.38em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.3em",
           textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap",
         }}>{guestTitle || "Speaker Title"}</div>
       </div>

@@ -471,14 +471,14 @@ function PortraitTemplate({
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.25em",
         }}>
-          <svg width="0.66em" height="0.66em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
+          <svg width="0.79em" height="0.79em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
             <circle cx="16" cy="16" r="3" fill="#FFD000" />
             <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.3em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
         <div style={{ textAlign: "center" }}>
           <span style={{
@@ -500,13 +500,13 @@ function PortraitTemplate({
             background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
             borderRadius: "0.25em",
           }}>
-            <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="1.12em" height="1.12em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span style={{ fontSize: "0.84em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.67em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
         )}
 

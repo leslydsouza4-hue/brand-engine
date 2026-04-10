@@ -288,24 +288,24 @@ function VerticalTemplate({
       }} />
 
       <div style={{
-        position: "absolute", left: "7%", right: "7%", top: "20%", zIndex: 3,
+        position: "absolute", left: "7%", right: "7%", top: "14%", zIndex: 3,
         display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5em",
       }}>
         <div style={{
           display: "inline-flex", alignItems: "center", gap: "0.3em",
         }}>
-          <svg width="1.2em" height="1.2em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
+          <svg width="1.56em" height="1.56em" viewBox="0 0 32 32" fill="none" style={{ transform: "rotate(90deg)" }}>
             <circle cx="16" cy="16" r="3" fill="#FFD000" />
             <path d="M11 11a7.07 7.07 0 0 1 10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M21 21a7.07 7.07 0 0 1-10 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M8 8a11.3 11.3 0 0 1 16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
             <path d="M24 24a11.3 11.3 0 0 1-16 0" stroke="#FFD000" strokeWidth="2" strokeLinecap="round" fill="none" />
           </svg>
-          <span style={{ fontSize: "0.42em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
+          <span style={{ fontSize: "0.55em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.2em", textTransform: "uppercase" }}>Free Virtual Event</span>
         </div>
         <div style={{ textAlign: "center", marginTop: "0.4em" }}>
           <span style={{
-            fontSize: "2.9em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: "2.03em", fontWeight: 700, lineHeight: 1.08,
             color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
@@ -317,20 +317,7 @@ function VerticalTemplate({
         </div>
 
         {showDate && dateText && (
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: "0.25em",
-            padding: "0.32em 0.7em", marginTop: "0.6em",
-            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
-            borderRadius: "0.25em",
-          }}>
-            <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            <span style={{ fontSize: "0.84em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
-          </div>
+          <span style={{ fontSize: "0.55em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.02em", marginTop: "0.3em" }}>{dateText}</span>
         )}
 
         {showReplays && (
@@ -378,11 +365,11 @@ function VerticalTemplate({
         zIndex: 3, textAlign: "center",
       }}>
         <div style={{
-          fontSize: "0.83em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap",
-          textShadow: "0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
+          fontSize: "1.08em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap",
+          textShadow: "0 0.06em 0.15em rgba(0,0,0,0.7), 0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
         }}>{guestName || "Speaker Name"}</div>
         <div style={{
-          fontSize: "0.53em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.15em",
+          fontSize: "0.69em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.15em",
           textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap",
         }}>{guestTitle || "Speaker Title"}</div>
       </div>

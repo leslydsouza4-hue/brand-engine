@@ -160,7 +160,7 @@ function HorizontalTemplate({
           </span>
         </div>
 
-        {showDate && dateText && (
+        {variant === "dates" && dateText && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.25em",
             padding: "0.32em 0.7em",
@@ -176,6 +176,10 @@ function HorizontalTemplate({
             </svg>
             <span style={{ fontSize: "0.36em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
+        )}
+
+        {showCta && dateText && (
+          <span style={{ fontSize: "0.36em", fontWeight: 600, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
         )}
 
         {showCta && ctaText && (

@@ -37,8 +37,6 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "pt-nodate", name: "Portrait - No Date", shortName: "No Date", width: 1080, height: 1350, variant: "nodate", size: "portrait" },
   { id: "pt-replays", name: "Portrait - Replays", shortName: "Replays", width: 1080, height: 1350, variant: "replays", size: "portrait" },
   { id: "ql-dates", name: "Quick Links - Dates", shortName: "Dates", width: 1080, height: 1080, variant: "dates", size: "quicklinks" },
-  { id: "ql-nodate", name: "Quick Links - No Date", shortName: "No Date", width: 1080, height: 1080, variant: "nodate", size: "quicklinks" },
-  { id: "ql-replays", name: "Quick Links - Replays", shortName: "Replays", width: 1080, height: 1080, variant: "replays", size: "quicklinks" },
 ];
 
 function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base: number = 0.045) {
@@ -395,7 +393,7 @@ function VerticalTemplate({
         </div>
         <div style={{ textAlign: "center", marginTop: "0.4em" }}>
           <span style={{
-            fontSize: "2.08em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: "2.9em", fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
@@ -428,7 +426,7 @@ function VerticalTemplate({
         {showReplays && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: "0.3em",
-            padding: "0.35em 1em",
+            padding: "0.35em 1em", marginTop: "1em",
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
             borderRadius: "0.25em",
           }}>
@@ -479,9 +477,9 @@ function VerticalTemplate({
               </div>
             )}
           </div>
-          <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
-            <div style={{ fontSize: "0.84em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{hostName || "Host Name"}</div>
-            <div style={{ fontSize: "0.54em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{hostTitle || "Host Title"}</div>
+          <div style={{ marginTop: "0.4em", textAlign: "center" }}>
+            <div style={{ fontSize: "1.18em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{hostName || "Host Name"}</div>
+            <div style={{ fontSize: "0.76em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{hostTitle || "Host Title"}</div>
           </div>
         </div>
 
@@ -506,9 +504,9 @@ function VerticalTemplate({
               </div>
             )}
           </div>
-          <div style={{ marginTop: "0.4em", textAlign: "center", maxWidth: circleSize }}>
-            <div style={{ fontSize: "0.84em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15 }}>{guestName || "Guest Name"}</div>
-            <div style={{ fontSize: "0.54em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em" }}>{guestTitle || "Guest Title"}</div>
+          <div style={{ marginTop: "0.4em", textAlign: "center" }}>
+            <div style={{ fontSize: "1.18em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15, whiteSpace: "nowrap" }}>{guestName || "Guest Name"}</div>
+            <div style={{ fontSize: "0.76em", fontWeight: 500, color: "rgba(255,255,255,0.75)", lineHeight: 1.3, marginTop: "0.15em", textTransform: "uppercase", letterSpacing: "0.08em", whiteSpace: "nowrap" }}>{guestTitle || "Guest Title"}</div>
           </div>
         </div>
       </div>
@@ -546,6 +544,7 @@ function PortraitTemplate({
   const showDate = variant === "dates";
   const showReplays = variant === "replays";
   const contentTop = (showDate || showReplays) ? "18%" : "24%";
+  const headlineSize = variant === "nodate" ? "3em" : "2.5em";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
@@ -597,7 +596,7 @@ function PortraitTemplate({
       }}>
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: "2.09em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineSize, fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
@@ -617,13 +616,13 @@ function PortraitTemplate({
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
             borderRadius: "0.25em",
           }}>
-            <svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="1.4em" height="1.4em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span style={{ fontSize: "0.6em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.84em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
         )}
 
@@ -798,7 +797,7 @@ function QuickLinksTemplate({
       }}>
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: "1.7em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: "2.1em", fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
@@ -818,13 +817,13 @@ function QuickLinksTemplate({
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
             borderRadius: "0.25em",
           }}>
-            <svg width="0.9em" height="0.9em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <svg width="1.2em" height="1.2em" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
               <line x1="8" y1="2" x2="8" y2="6" />
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
-            <span style={{ fontSize: "0.55em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
+            <span style={{ fontSize: "0.75em", fontWeight: 700, color: "#FFFFFF", letterSpacing: "0.02em" }}>{dateText}</span>
           </div>
         )}
 

@@ -203,13 +203,13 @@ function HorizontalTemplate({
         {showDay && (
           <div style={{
             display: "inline-flex", alignItems: "center", justifyContent: "center",
-            padding: "0.35em 1em",
+            padding: "0.28em 0.8em",
             background: "linear-gradient(135deg, #16204F 0%, #3249B5 100%)",
-            borderRadius: "0.25em",
+            borderRadius: "0.2em",
             alignSelf: "flex-start",
           }}>
             <span style={{
-              fontSize: "1.4em", fontWeight: 800, lineHeight: 1,
+              fontSize: "1.12em", fontWeight: 800, lineHeight: 1,
               letterSpacing: "0.04em",
               background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",

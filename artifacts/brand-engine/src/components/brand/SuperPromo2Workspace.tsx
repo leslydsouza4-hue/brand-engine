@@ -9,6 +9,7 @@ import { LivePreview } from "./LivePreview";
 const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/superpromo2/background.png`;
 const LOGO_URL = `${BASE}assets/superpromo2/logo-light.png`;
+const SILHOUETTE_URL = `${BASE}assets/superpromo2/silhouette.png`;
 
 type Variant = "dates" | "cta" | "nodate" | "day1" | "day2" | "replays";
 type SizeMode = "horizontal" | "vertical" | "portrait" | "quicklinks";
@@ -257,12 +258,7 @@ function HorizontalTemplate({
             filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
           }} />
         ) : (
-          <svg width="70%" viewBox="0 0 200 350" fill="none" style={{ opacity: 0.5 }}>
-            <circle cx="100" cy="60" r="40" fill="#1a1a2e" />
-            <path d="M50 350 L50 180 Q50 130 100 130 Q150 130 150 180 L150 350 Z" fill="#1a1a2e" />
-            <path d="M50 180 L20 280" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
-            <path d="M150 180 L180 260" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
-          </svg>
+          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "70%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.55, filter: "drop-shadow(0 0 0.5em rgba(0,0,0,0.3))" }} />
         )}
       </div>
 
@@ -429,12 +425,7 @@ function VerticalTemplate({
             filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
           }} />
         ) : (
-          <svg width="50%" viewBox="0 0 200 350" fill="none" style={{ opacity: 0.5 }}>
-            <circle cx="100" cy="60" r="40" fill="#1a1a2e" />
-            <path d="M50 350 L50 180 Q50 130 100 130 Q150 130 150 180 L150 350 Z" fill="#1a1a2e" />
-            <path d="M50 180 L20 280" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
-            <path d="M150 180 L180 260" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
-          </svg>
+          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "50%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.55, filter: "drop-shadow(0 0 0.5em rgba(0,0,0,0.3))" }} />
         )}
       </div>
 
@@ -604,12 +595,7 @@ function PortraitTemplate({
             filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
           }} />
         ) : (
-          <svg width="45%" viewBox="0 0 200 350" fill="none" style={{ opacity: 0.5 }}>
-            <circle cx="100" cy="60" r="40" fill="#1a1a2e" />
-            <path d="M50 350 L50 180 Q50 130 100 130 Q150 130 150 180 L150 350 Z" fill="#1a1a2e" />
-            <path d="M50 180 L20 280" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
-            <path d="M150 180 L180 260" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
-          </svg>
+          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "45%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.55, filter: "drop-shadow(0 0 0.5em rgba(0,0,0,0.3))" }} />
         )}
       </div>
 
@@ -777,12 +763,7 @@ function QuickLinksTemplate({
             filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
           }} />
         ) : (
-          <svg width="45%" viewBox="0 0 200 350" fill="none" style={{ opacity: 0.5 }}>
-            <circle cx="100" cy="60" r="40" fill="#1a1a2e" />
-            <path d="M50 350 L50 180 Q50 130 100 130 Q150 130 150 180 L150 350 Z" fill="#1a1a2e" />
-            <path d="M50 180 L20 280" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
-            <path d="M150 180 L180 260" stroke="#1a1a2e" strokeWidth="18" strokeLinecap="round" />
-          </svg>
+          <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "45%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.55, filter: "drop-shadow(0 0 0.5em rgba(0,0,0,0.3))" }} />
         )}
       </div>
 

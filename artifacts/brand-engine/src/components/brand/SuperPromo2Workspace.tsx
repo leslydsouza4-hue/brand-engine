@@ -360,7 +360,7 @@ function VerticalTemplate({
 
       <div style={{
         position: "absolute", bottom: 0, left: "10%", right: "10%",
-        height: "42%",
+        height: "55%",
         zIndex: 2,
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>

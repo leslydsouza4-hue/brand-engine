@@ -856,7 +856,7 @@ export function SuperPromo2Workspace() {
         await new Promise((r) => setTimeout(r, 200));
       }
       const blob = await zip.generateAsync({ type: "blob" });
-      triggerDownload(blob, `SuperPromo2_${guestName.trim().replace(/\s+/g, "_") || "export"}.zip`);
+      triggerDownload(blob, `SuperPromo_${guestName.trim().replace(/\s+/g, "_") || "export"}.zip`);
     } catch (err) {
       console.error("ZIP error:", err);
     } finally {
@@ -943,7 +943,7 @@ export function SuperPromo2Workspace() {
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
       <div className="w-full md:w-[340px] md:min-w-[340px] overflow-y-auto pt-[20px] px-[16px] md:px-[24px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.06)] flex flex-col max-h-[50vh] md:max-h-none">
         <div className="mb-[16px]">
-          <h2 className="text-[16px] font-bold text-white mb-[4px]">Super Promo 2</h2>
+          <h2 className="text-[16px] font-bold text-white mb-[4px]">Super Promo</h2>
           <p className="text-[11px] text-[#64748B]">Guest-only campaign templates. Fill in details, preview live, then generate all.</p>
         </div>
 

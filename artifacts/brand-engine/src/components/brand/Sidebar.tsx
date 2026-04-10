@@ -114,14 +114,6 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             <Gift className={iconCls(currentMode === 'super-promo')} />
             Super Promo
           </button>
-
-          <button 
-            onClick={() => handleSetMode('super-promo-2')}
-            className={`${btnBase} cursor-pointer ${currentMode === 'super-promo-2' ? activeClass : inactiveClass}`}
-          >
-            <Gift className={iconCls(currentMode === 'super-promo-2')} />
-            Super Promo 2
-          </button>
         </div>
 
         <div className="px-[12px] mb-[10px] relative">

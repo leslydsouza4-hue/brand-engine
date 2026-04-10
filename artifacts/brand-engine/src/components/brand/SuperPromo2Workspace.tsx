@@ -222,7 +222,6 @@ function HorizontalTemplate({
             <img src={guestImage} alt="" crossOrigin="anonymous" style={{
               maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
               WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
               maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
             }} />
@@ -382,7 +381,6 @@ function VerticalTemplate({
             <img src={guestImage} alt="" crossOrigin="anonymous" style={{
               maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
               WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
               maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
             }} />
@@ -544,7 +542,6 @@ function PortraitTemplate({
             <img src={guestImage} alt="" crossOrigin="anonymous" style={{
               maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
               WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
               maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
             }} />
@@ -704,7 +701,6 @@ function QuickLinksTemplate({
             <img src={guestImage} alt="" crossOrigin="anonymous" style={{
               maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
               WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
               maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
             }} />

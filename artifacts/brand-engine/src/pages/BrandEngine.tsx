@@ -9,14 +9,15 @@ import { BrandDirectoryWorkspace } from "@/components/brand/BrandDirectoryWorksp
 import { SettingsWorkspace } from "@/components/brand/SettingsWorkspace";
 import { BizDevWorkspace } from "@/components/brand/BizDevWorkspace";
 import { SuperPromoWorkspace } from "@/components/brand/SuperPromoWorkspace";
+import { SuperPromo2Workspace } from "@/components/brand/SuperPromo2Workspace";
 
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    const valid = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings"];
+    const valid = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "super-promo-2", "zoom-backgrounds", "brand-directory", "settings"];
     return valid.includes(hash) ? hash : "templates";
   });
-  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings"];
+  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "super-promo-2", "zoom-backgrounds", "brand-directory", "settings"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -49,6 +50,7 @@ export default function BrandEngine() {
         
         {currentMode === "bizdev-templates" && <BizDevWorkspace />}
         {currentMode === "super-promo" && <SuperPromoWorkspace />}
+        {currentMode === "super-promo-2" && <SuperPromo2Workspace />}
         {currentMode === "ai-image" && <AIImageWorkspace />}
         {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
         {currentMode === "settings" && <SettingsWorkspace />}

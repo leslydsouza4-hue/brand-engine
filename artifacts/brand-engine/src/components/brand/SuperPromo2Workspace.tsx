@@ -424,8 +424,8 @@ function PortraitTemplate({
   const { variant } = config;
   const showDate = variant === "dates";
   const showReplays = variant === "replays";
-  const contentTop = (showDate || showReplays) ? "18%" : "24%";
-  const headlineSize = variant === "nodate" ? "2.52em" : "2.5em";
+  const contentTop = (showDate || showReplays) ? "15%" : "21%";
+  const headlineSize = variant === "nodate" ? "2.02em" : "2.0em";
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
@@ -521,7 +521,7 @@ function PortraitTemplate({
 
       <div style={{
         position: "absolute", bottom: 0, left: "10%", right: "10%",
-        height: "40%",
+        height: "48%",
         zIndex: 2,
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
@@ -544,11 +544,11 @@ function PortraitTemplate({
         zIndex: 3, textAlign: "center",
       }}>
         <div style={{
-          fontSize: "0.6em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
-          textShadow: "0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
+          fontSize: "2.64em", fontWeight: 800, color: "#FFFFFF", lineHeight: 1.15,
+          textShadow: "0 0.06em 0.15em rgba(0,0,0,0.7), 0.4em 0 1.2em rgba(130,200,255,0.6), 0 0 0.8em rgba(130,200,255,0.3)",
         }}>{guestName || "Speaker Name"}</div>
         <div style={{
-          fontSize: "0.32em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.15em",
+          fontSize: "1.41em", fontWeight: 500, color: "rgba(255,255,255,0.8)", lineHeight: 1.3, marginTop: "0.15em",
           textTransform: "uppercase", letterSpacing: "0.08em",
         }}>{guestTitle || "Speaker Title"}</div>
       </div>

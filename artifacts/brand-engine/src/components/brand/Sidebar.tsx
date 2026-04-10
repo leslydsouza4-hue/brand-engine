@@ -66,7 +66,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             className={`${btnBase} cursor-pointer ${currentMode === 'templates' ? activeClass : inactiveClass}`}
           >
             <LayoutTemplate className={iconCls(currentMode === 'templates')} />
-            Templates
+            Custom Design
           </button>
           
           <button 

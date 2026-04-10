@@ -335,7 +335,20 @@ function VerticalTemplate({
         </div>
 
         {showDate && dateText && (
-          <span style={{ fontSize: "0.55em", fontWeight: 700, color: "#FFD000", letterSpacing: "0.02em", marginTop: "0.3em" }}>{dateText}</span>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: "0.25em",
+            padding: "0.32em 0.7em", marginTop: "0.3em",
+            background: "linear-gradient(135deg, #FFD000 0%, #FFEEA3 100%)",
+            borderRadius: "0.25em",
+          }}>
+            <svg width="0.9em" height="0.9em" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span style={{ fontSize: "0.66em", fontWeight: 700, color: "#1A1A1A", letterSpacing: "0.02em" }}>{dateText}</span>
+          </div>
         )}
 
         {showReplays && (

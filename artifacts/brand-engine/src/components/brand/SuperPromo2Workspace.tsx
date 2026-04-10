@@ -218,11 +218,18 @@ function HorizontalTemplate({
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
         {guestImage ? (
-          <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-            maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
-            transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-            filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
-          }} />
+          <>
+            <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+              maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
+              transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
+            }} />
+            <div style={{
+              position: "absolute", bottom: 0, left: 0, width: "60%", height: "35%",
+              background: "radial-gradient(ellipse at bottom left, rgba(30,80,180,0.45) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }} />
+          </>
         ) : (
           <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "90%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}
@@ -374,11 +381,18 @@ function VerticalTemplate({
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
         {guestImage ? (
-          <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-            maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
-            transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-            filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
-          }} />
+          <>
+            <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+              maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
+              transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
+            }} />
+            <div style={{
+              position: "absolute", bottom: 0, left: 0, width: "60%", height: "35%",
+              background: "radial-gradient(ellipse at bottom left, rgba(30,80,180,0.45) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }} />
+          </>
         ) : (
           <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "70%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}
@@ -532,11 +546,18 @@ function PortraitTemplate({
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
         {guestImage ? (
-          <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-            maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
-            transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-            filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
-          }} />
+          <>
+            <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+              maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
+              transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
+            }} />
+            <div style={{
+              position: "absolute", bottom: 0, left: 0, width: "60%", height: "35%",
+              background: "radial-gradient(ellipse at bottom left, rgba(30,80,180,0.45) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }} />
+          </>
         ) : (
           <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "65%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}
@@ -688,11 +709,18 @@ function QuickLinksTemplate({
         display: "flex", alignItems: "flex-end", justifyContent: "center",
       }}>
         {guestImage ? (
-          <img src={guestImage} alt="" crossOrigin="anonymous" style={{
-            maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
-            transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-            filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
-          }} />
+          <>
+            <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+              maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
+              transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              filter: "drop-shadow(0 0 1.5em rgba(130,200,255,0.4))",
+            }} />
+            <div style={{
+              position: "absolute", bottom: 0, left: 0, width: "60%", height: "35%",
+              background: "radial-gradient(ellipse at bottom left, rgba(30,80,180,0.45) 0%, transparent 70%)",
+              pointerEvents: "none",
+            }} />
+          </>
         ) : (
           <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "65%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}

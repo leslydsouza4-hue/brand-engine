@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Download, Loader2, Edit3, RotateCcw } from "lucide-react";
+import { Download, Loader2, Edit3, RotateCcw, Sun, Moon } from "lucide-react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { addExport, createThumbnail } from "./exportStore";
@@ -48,17 +48,77 @@ const ICONS_3 = [
   <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>,
 ];
 
+const dark = {
+  bg: "#060B16",
+  bgGlow1: "rgba(40,150,251,0.08)",
+  bgGlow2: "rgba(9,93,195,0.06)",
+  cardBg: "rgba(255,255,255,0.04)",
+  cardBorder: "rgba(40,150,251,0.12)",
+  itemBg: "rgba(255,255,255,0.05)",
+  itemBorder: "rgba(40,150,251,0.10)",
+  heading: "#FFFFFF",
+  title: "#FFFFFF",
+  body: "rgba(255,255,255,0.5)",
+  muted: "rgba(255,255,255,0.25)",
+  tableBorder: "rgba(255,255,255,0.06)",
+  tableHeaderBg: "rgba(40,150,251,0.08)",
+  tableRowBg: "rgba(255,255,255,0.02)",
+  tableRowAlt: "transparent",
+  tableText: "rgba(255,255,255,0.65)",
+  tableMuted: "rgba(255,255,255,0.35)",
+  footerBg: "transparent",
+  footerText: "rgba(255,255,255,0.2)",
+  dotPattern: "rgba(255,255,255,0.025)",
+  lineBg: "rgba(40,150,251,0.2)",
+  markerRing: "#060B16",
+  logo: "Lockup=Full Horizontal, Color=AllWhite.png",
+  logoIcon: "Lockup=Icon, Color=Light.png",
+};
+
+const light = {
+  bg: "#FFFFFF",
+  bgGlow1: "rgba(40,150,251,0.06)",
+  bgGlow2: "rgba(9,93,195,0.04)",
+  cardBg: "rgba(40,150,251,0.03)",
+  cardBorder: "rgba(40,150,251,0.10)",
+  itemBg: "#FFFFFF",
+  itemBorder: "rgba(40,150,251,0.10)",
+  heading: "#060B16",
+  title: "#060B16",
+  body: "#475569",
+  muted: "#94A3B8",
+  tableBorder: "rgba(0,0,0,0.06)",
+  tableHeaderBg: "rgba(40,150,251,0.06)",
+  tableRowBg: "#FFFFFF",
+  tableRowAlt: "#F8FAFC",
+  tableText: "#1E293B",
+  tableMuted: "#64748B",
+  footerBg: "#F1F5F9",
+  footerText: "#94A3B8",
+  dotPattern: "rgba(0,0,0,0.025)",
+  lineBg: "rgba(40,150,251,0.15)",
+  markerRing: "#FFFFFF",
+  logo: "Lockup=Full Horizontal, Color=Dark.png",
+  logoIcon: "Lockup=Icon, Color=Full.png",
+};
+
+const BLUE = "#2896FB";
+const ROYAL = "#095DC3";
+
 export function CustomerJourneyWorkspace() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<"pdf" | "png">("pdf");
   const [isEditing, setIsEditing] = useState(false);
+  const [isDark, setIsDark] = useState(true);
   const [title, setTitle] = useState(DEFAULT_TITLE);
   const [subtitle, setSubtitle] = useState(DEFAULT_SUBTITLE);
   const [phase1Items, setPhase1Items] = useState<PhaseItem[]>(DEFAULT_PHASE1);
   const [phase2Items, setPhase2Items] = useState<PhaseItem[]>(DEFAULT_PHASE2);
   const [phase3Items, setPhase3Items] = useState<PhaseItem[]>(DEFAULT_PHASE3);
   const [quickRef, setQuickRef] = useState<QuickRefRow[]>(DEFAULT_QUICKREF);
+
+  const th = isDark ? dark : light;
 
   const up = (phase: 1|2|3, idx: number, field: keyof PhaseItem, val: string) => {
     const s = phase === 1 ? setPhase1Items : phase === 2 ? setPhase2Items : setPhase3Items;
@@ -79,33 +139,32 @@ export function CustomerJourneyWorkspace() {
       const safeName = title.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
       const d = new Date();
       const dp = `${d.getMonth()+1}_${d.getDate()}_${String(d.getFullYear()).slice(-2)}`;
+      const mode = isDark ? "Dark" : "Light";
       if (exportFormat === "pdf") {
         const img = new Image(); img.src = dataUrl;
         await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
         const pdf = new jsPDF({ orientation: "portrait", unit: "in", format: "letter" });
         pdf.addImage(dataUrl, "PNG", 0, 0, 8.5, 11);
-        pdf.save(`${safeName}_${dp}.pdf`);
-        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${dp}.pdf`, source: "Print Templates", format: "pdf", thumbnail: t, dimensions: "8.5x11in" }));
+        pdf.save(`${safeName}_${mode}_${dp}.pdf`);
+        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.pdf`, source: "Print Templates", format: "pdf", thumbnail: t, dimensions: "8.5x11in" }));
       } else {
-        const a = document.createElement("a"); a.href = dataUrl; a.download = `${safeName}_${dp}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${dp}.png`, source: "Print Templates", format: "png", thumbnail: t, dimensions: "2550x3300" }));
+        const a = document.createElement("a"); a.href = dataUrl; a.download = `${safeName}_${mode}_${dp}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.png`, source: "Print Templates", format: "png", thumbnail: t, dimensions: "2550x3300" }));
       }
     } catch (err) { console.error("Export failed:", err); } finally { setIsExporting(false); }
-  }, [title, exportFormat]);
+  }, [title, exportFormat, isDark]);
 
-  const T = ({ value, onChange, className, multiline }: { value: string; onChange: (v: string) => void; className?: string; multiline?: boolean }) => {
-    if (!isEditing) return <span className={className}>{value}</span>;
-    if (multiline) return <textarea value={value} onChange={e => onChange(e.target.value)} className={`${className} bg-[rgba(40,150,251,0.08)] border border-[rgba(40,150,251,0.3)] rounded-[3px] px-[3px] outline-none resize-none`} rows={2} />;
-    return <input value={value} onChange={e => onChange(e.target.value)} className={`${className} bg-[rgba(40,150,251,0.08)] border border-[rgba(40,150,251,0.3)] rounded-[3px] px-[3px] outline-none w-full`} />;
+  const T = ({ value, onChange, className, multiline, style }: { value: string; onChange: (v: string) => void; className?: string; multiline?: boolean; style?: React.CSSProperties }) => {
+    if (!isEditing) return <span className={className} style={style}>{value}</span>;
+    if (multiline) return <textarea value={value} onChange={e => onChange(e.target.value)} className={`${className} bg-[rgba(40,150,251,0.08)] border border-[rgba(40,150,251,0.3)] rounded-[3px] px-[3px] outline-none resize-none`} style={style} rows={2} />;
+    return <input value={value} onChange={e => onChange(e.target.value)} className={`${className} bg-[rgba(40,150,251,0.08)] border border-[rgba(40,150,251,0.3)] rounded-[3px] px-[3px] outline-none w-full`} style={style} />;
   };
 
-  const phaseColors = [
-    { accent: "#00B2A9", bg: "rgba(0,178,169,0.06)", border: "rgba(0,178,169,0.12)", glow: "rgba(0,178,169,0.25)", label: "Phase 1", time: "Day 0 – Trial Start", heading: "Trial & Conversion" },
-    { accent: "#2896FB", bg: "rgba(40,150,251,0.06)", border: "rgba(40,150,251,0.12)", glow: "rgba(40,150,251,0.25)", label: "Phase 2", time: "Day 1 – Day 90", heading: "Customer Success" },
-    { accent: "#00B2A9", bg: "rgba(0,178,169,0.06)", border: "rgba(0,178,169,0.12)", glow: "rgba(0,178,169,0.25)", label: "Phase 3", time: "Day 91+", heading: "Account Management" },
+  const phases = [
+    { label: "Phase 1", time: "Day 0 – Trial Start", heading: "Trial & Conversion", items: phase1Items, icons: ICONS_1, pn: 1 as const },
+    { label: "Phase 2", time: "Day 1 – Day 90", heading: "Customer Success", items: phase2Items, icons: ICONS_2, pn: 2 as const },
+    { label: "Phase 3", time: "Day 91+", heading: "Account Management", items: phase3Items, icons: ICONS_3, pn: 3 as const },
   ];
-  const allIcons = [ICONS_1, ICONS_2, ICONS_3];
-  const allItems = [phase1Items, phase2Items, phase3Items];
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -121,14 +180,28 @@ export function CustomerJourneyWorkspace() {
           </button>
           <button onClick={resetAll} className="w-[34px] h-[34px] flex items-center justify-center rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[#64748B] hover:text-[#FF4D4D] hover:border-[rgba(255,77,77,0.3)] cursor-pointer transition-all" title="Reset"><RotateCcw className="w-[12px] h-[12px]" /></button>
         </div>
+
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">Theme</div>
+          <div className="flex gap-[4px]">
+            <button onClick={() => setIsDark(true)} className={`flex-1 flex items-center justify-center gap-[5px] py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all ${isDark ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>
+              <Moon className="w-[11px] h-[11px]" /> Dark
+            </button>
+            <button onClick={() => setIsDark(false)} className={`flex-1 flex items-center justify-center gap-[5px] py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all ${!isDark ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>
+              <Sun className="w-[11px] h-[11px]" /> Light
+            </button>
+          </div>
+        </div>
+
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">Export Format</div>
           <div className="flex gap-[4px]">
             {(["pdf","png"] as const).map(f => (
-              <button key={f} onClick={() => setExportFormat(f)} className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all uppercase ${exportFormat===f ? "bg-[rgba(0,178,169,0.15)] border-[rgba(0,178,169,0.3)] text-[#00B2A9]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>{f}</button>
+              <button key={f} onClick={() => setExportFormat(f)} className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all uppercase ${exportFormat===f ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>{f}</button>
             ))}
           </div>
         </div>
+
         {[{l:"Phase 1 — Trial",items:phase1Items},{l:"Phase 2 — Success",items:phase2Items},{l:"Phase 3 — Growth",items:phase3Items}].map((s,si) => (
           <div key={si}>
             <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">{s.l}</div>
@@ -136,7 +209,7 @@ export function CustomerJourneyWorkspace() {
           </div>
         ))}
         <div className="mt-auto pt-[16px]">
-          <button onClick={handleExport} disabled={isExporting} className="w-full flex items-center justify-center gap-[8px] py-[12px] rounded-[14px] text-[13px] font-bold cursor-pointer transition-all bg-gradient-to-r from-[#00B2A9] to-[#2896FB] text-white shadow-[0_4px_20px_rgba(0,178,169,0.3)] hover:shadow-[0_6px_28px_rgba(0,178,169,0.4)] disabled:opacity-50 disabled:cursor-not-allowed border-none">
+          <button onClick={handleExport} disabled={isExporting} className="w-full flex items-center justify-center gap-[8px] py-[12px] rounded-[14px] text-[13px] font-bold cursor-pointer transition-all bg-gradient-to-r from-[#2896FB] to-[#095DC3] text-white shadow-[0_4px_20px_rgba(40,150,251,0.3)] hover:shadow-[0_6px_28px_rgba(40,150,251,0.4)] disabled:opacity-50 disabled:cursor-not-allowed border-none">
             {isExporting ? <Loader2 className="w-[16px] h-[16px] animate-spin" /> : <Download className="w-[16px] h-[16px]" />} Export as {exportFormat.toUpperCase()}
           </button>
         </div>
@@ -144,137 +217,116 @@ export function CustomerJourneyWorkspace() {
 
       {/* PREVIEW */}
       <div className="flex-1 overflow-auto flex items-start justify-center p-[30px] bg-[rgba(6,11,22,0.5)]">
-        <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", height: "880px", position: "relative", overflow: "hidden", background: "#060B16", boxShadow: "0 25px 80px rgba(0,0,0,0.5)" }}>
+        <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", height: "880px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)" }}>
 
-          {/* FULL-PAGE BG */}
-          <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 20% 10%, rgba(0,178,169,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 50%, rgba(40,150,251,0.06) 0%, transparent 50%), radial-gradient(ellipse at 30% 90%, rgba(0,178,169,0.05) 0%, transparent 40%)" }} />
-          <div style={{ position: "absolute", inset: 0, backgroundImage: "radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
+          {/* BG effects */}
+          <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 20% 15%, ${th.bgGlow1} 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, ${th.bgGlow2} 0%, transparent 50%)` }} />
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${th.dotPattern} 1px, transparent 1px)`, backgroundSize: "24px 24px" }} />
 
           {/* HEADER */}
-          <div style={{ position: "relative", zIndex: 2, padding: "22px 32px 0" }}>
+          <div style={{ position: "relative", zIndex: 2, padding: "24px 36px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "28px", height: "28px", borderRadius: "9px", background: "linear-gradient(135deg, #00B2A9, #2896FB)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(0,178,169,0.4)" }}>
-                  <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HL" style={{ width: "16px", height: "16px", objectFit: "contain", filter: "brightness(10)" }} />
-                </div>
-                <span style={{ fontSize: "7px", fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "3px", textTransform: "uppercase" }}>HighLevel</span>
-              </div>
-              <div style={{ display: "flex", gap: "4px" }}>
-                {[0.15,0.3,0.5,0.3,0.15].map((o,i) => <div key={i} style={{ width: "4px", height: "4px", borderRadius: "50%", background: `rgba(0,178,169,${o})` }} />)}
+              <img src={`${BASE}assets/logos/${th.logo}`} alt="HighLevel" style={{ height: "22px", objectFit: "contain" }} />
+              <div style={{ display: "flex", gap: "5px" }}>
+                {[0.2,0.4,0.7,0.4,0.2].map((o,i) => <div key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: `rgba(40,150,251,${o})` }} />)}
               </div>
             </div>
-            <div style={{ marginTop: "14px" }}>
-              <T value={title} onChange={setTitle} className="block text-[26px] font-black text-white leading-[1.05] tracking-[-1px]" />
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "6px" }}>
-                <div style={{ height: "2px", width: "40px", borderRadius: "2px", background: "linear-gradient(90deg, #00B2A9, #2896FB)" }} />
-                <T value={subtitle} onChange={setSubtitle} className="text-[11px] font-semibold text-[rgba(255,255,255,0.35)] tracking-[1px] uppercase" />
+            <div style={{ marginTop: "18px" }}>
+              <T value={title} onChange={setTitle} className="block text-[28px] font-black leading-[1.1] tracking-[-1px]" style={{ color: th.title }} />
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+                <div style={{ height: "3px", width: "44px", borderRadius: "2px", background: `linear-gradient(90deg, ${BLUE}, ${ROYAL})` }} />
+                <T value={subtitle} onChange={setSubtitle} className="text-[13px] font-semibold tracking-[1.5px] uppercase" style={{ color: th.muted }} />
               </div>
             </div>
           </div>
 
-          {/* VERTICAL JOURNEY LINE */}
-          <div style={{ position: "absolute", top: "110px", bottom: "120px", left: "52px", width: "2px", background: "linear-gradient(180deg, #00B2A9, #2896FB 50%, #00B2A9)", zIndex: 1, opacity: 0.3 }} />
+          {/* VERTICAL JOURNEY LINE — from Phase 1 marker to Phase 3 marker only */}
+          <div style={{ position: "absolute", top: "150px", height: "432px", left: "56px", width: "2px", background: `linear-gradient(180deg, ${BLUE}50, ${ROYAL}40, ${BLUE}20)`, zIndex: 1 }} />
 
           {/* PHASE SECTIONS */}
-          <div style={{ position: "relative", zIndex: 2, marginTop: "18px", display: "flex", flexDirection: "column", gap: "0px" }}>
+          <div style={{ position: "relative", zIndex: 2, marginTop: "16px", display: "flex", flexDirection: "column", gap: "0px" }}>
+            {phases.map((ph, pi) => (
+              <div key={pi} style={{ position: "relative", padding: "8px 36px 6px 36px" }}>
+                {/* Phase marker dot */}
+                <div style={{ position: "absolute", left: "43px", top: "12px", width: "28px", height: "28px", borderRadius: "50%", background: `linear-gradient(135deg, ${BLUE}, ${ROYAL})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 20px ${BLUE}40, 0 0 0 4px ${th.markerRing}, 0 0 0 6px ${BLUE}25`, zIndex: 3 }}>
+                  <span style={{ color: "white", fontSize: "13px", fontWeight: 900 }}>{pi+1}</span>
+                </div>
 
-            {[0, 1, 2].map(pi => {
-              const c = phaseColors[pi];
-              const icons = allIcons[pi];
-              const items = allItems[pi];
-              return (
-                <div key={pi} style={{ position: "relative", padding: "10px 32px 10px 32px" }}>
-                  {/* Phase marker on the line */}
-                  <div style={{ position: "absolute", left: "40px", top: "12px", width: "24px", height: "24px", borderRadius: "50%", background: `linear-gradient(135deg, ${c.accent}, ${pi===1?'#1E7FE0':'#009E96'})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 20px ${c.glow}, 0 0 0 4px rgba(6,11,22,1), 0 0 0 6px ${c.accent}30`, zIndex: 3 }}>
-                    <span style={{ color: "white", fontSize: "11px", fontWeight: 900 }}>{pi+1}</span>
+                {/* Phase content */}
+                <div style={{ marginLeft: "48px", background: th.cardBg, border: `1px solid ${th.cardBorder}`, borderRadius: "16px", padding: "12px 16px", backdropFilter: "blur(10px)", position: "relative", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", top: "-20px", left: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: `radial-gradient(circle, ${BLUE}08 0%, transparent 70%)` }} />
+
+                  {/* Header */}
+                  <div style={{ marginBottom: "8px", position: "relative" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "2px" }}>
+                      <span style={{ fontSize: "8px", fontWeight: 800, color: BLUE, letterSpacing: "2px", textTransform: "uppercase" }}>{ph.label}</span>
+                      <div style={{ height: "1px", width: "20px", background: `${BLUE}35` }} />
+                      <span style={{ fontSize: "8px", fontWeight: 600, color: th.muted, letterSpacing: "1px" }}>{ph.time}</span>
+                    </div>
+                    <div style={{ fontSize: "15px", fontWeight: 800, color: th.heading, lineHeight: 1.15 }}>{ph.heading}</div>
                   </div>
 
-                  {/* Phase content card */}
-                  <div style={{ marginLeft: "42px", background: "rgba(255,255,255,0.03)", border: `1px solid ${c.border}`, borderRadius: "16px", padding: "14px 18px 14px 18px", backdropFilter: "blur(10px)", position: "relative", overflow: "hidden" }}>
-                    {/* Subtle accent glow top-left */}
-                    <div style={{ position: "absolute", top: "-20px", left: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: `radial-gradient(circle, ${c.accent}10 0%, transparent 70%)` }} />
-
-                    {/* Header row */}
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", position: "relative" }}>
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-                          <span style={{ fontSize: "7px", fontWeight: 800, color: c.accent, letterSpacing: "2px", textTransform: "uppercase" }}>{c.label}</span>
-                          <div style={{ height: "1px", width: "20px", background: `${c.accent}40` }} />
-                          <span style={{ fontSize: "7px", fontWeight: 600, color: "rgba(255,255,255,0.25)", letterSpacing: "1px" }}>{c.time}</span>
-                        </div>
-                        <div style={{ fontSize: "14px", fontWeight: 800, color: "white", lineHeight: 1.15 }}>{c.heading}</div>
-                      </div>
-                      {/* Decorative ring */}
-                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", border: `2px solid ${c.accent}20`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <div style={{ width: "16px", height: "16px", borderRadius: "50%", background: `${c.accent}10`, border: `1px solid ${c.accent}15` }} />
-                      </div>
-                    </div>
-
-                    {/* Items row - horizontal layout */}
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      {items.map((item, i) => (
-                        <div key={i} style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: `1px solid ${c.border}`, borderRadius: "12px", padding: "10px", position: "relative", overflow: "hidden" }}>
-                          {/* Top accent line */}
-                          <div style={{ position: "absolute", top: 0, left: "12px", right: "12px", height: "2px", borderRadius: "0 0 2px 2px", background: `linear-gradient(90deg, ${c.accent}60, ${c.accent}20)` }} />
-
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "5px" }}>
-                            <div style={{ width: "22px", height: "22px", borderRadius: "7px", background: `${c.accent}12`, border: `1px solid ${c.accent}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                              <svg viewBox="0 0 24 24" fill="none" stroke={c.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "11px", height: "11px" }}>{icons[i]}</svg>
-                            </div>
-                            <T value={item.title} onChange={v => up((pi+1) as 1|2|3, i, "title", v)} className="block text-[7.5px] font-bold text-white leading-[1.2]" />
+                  {/* Items */}
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    {ph.items.map((item, i) => (
+                      <div key={i} style={{ flex: 1, background: th.itemBg, border: `1px solid ${th.itemBorder}`, borderRadius: "12px", padding: "10px", position: "relative", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", top: 0, left: "12px", right: "12px", height: "2px", borderRadius: "0 0 2px 2px", background: `linear-gradient(90deg, ${BLUE}60, ${BLUE}15)` }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                          <div style={{ width: "22px", height: "22px", borderRadius: "7px", background: `${BLUE}12`, border: `1px solid ${BLUE}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "12px", height: "12px" }}>{ph.icons[i]}</svg>
                           </div>
-                          <T value={item.desc} onChange={v => up((pi+1) as 1|2|3, i, "desc", v)} className="block text-[6.5px] text-[rgba(255,255,255,0.4)] leading-[1.5]" multiline />
+                          <T value={item.title} onChange={v => up(ph.pn, i, "title", v)} className="block text-[8.5px] font-bold leading-[1.25]" style={{ color: th.heading }} />
+                        </div>
+                        <T value={item.desc} onChange={v => up(ph.pn, i, "desc", v)} className="block text-[7.5px] leading-[1.5]" style={{ color: th.body }} multiline />
+                      </div>
+                    ))}
+                  </div>
+
+                  {pi === 1 && (
+                    <div style={{ display: "flex", gap: "8px", marginTop: "8px", justifyContent: "center" }}>
+                      {["Dreamers", "Agencies", "End Users"].map(p => (
+                        <div key={p} style={{ display: "flex", alignItems: "center", gap: "4px", background: `${BLUE}0D`, border: `1px solid ${BLUE}18`, borderRadius: "20px", padding: "3px 10px 3px 6px" }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "11px", height: "11px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          <span style={{ fontSize: "7.5px", fontWeight: 700, color: BLUE }}>{p}</span>
                         </div>
                       ))}
                     </div>
-
-                    {/* Persona pills for Phase 2 */}
-                    {pi === 1 && (
-                      <div style={{ display: "flex", gap: "8px", marginTop: "8px", justifyContent: "center" }}>
-                        {["Dreamers", "Agencies", "End Users"].map(p => (
-                          <div key={p} style={{ display: "flex", alignItems: "center", gap: "4px", background: "rgba(40,150,251,0.08)", border: "1px solid rgba(40,150,251,0.15)", borderRadius: "20px", padding: "3px 10px 3px 5px" }}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#2896FB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "10px", height: "10px" }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            <span style={{ fontSize: "6.5px", fontWeight: 700, color: "#2896FB" }}>{p}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Flowing connector between phases */}
-                  {pi < 2 && (
-                    <div style={{ position: "absolute", left: "49px", bottom: "-8px", zIndex: 4, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                      <svg width="6" height="16" viewBox="0 0 6 16"><path d="M3 0 L3 10 L1 8 M3 10 L5 8" stroke={pi === 0 ? "#00B2A9" : "#2896FB"} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" /></svg>
-                    </div>
                   )}
                 </div>
-              );
-            })}
+
+                {/* Arrow connector between phases */}
+                {pi < 2 && (
+                  <div style={{ position: "absolute", left: "53px", bottom: "-4px", zIndex: 4 }}>
+                    <svg width="8" height="12" viewBox="0 0 8 12"><path d="M4 0 L4 8 L2 5.5 M4 8 L6 5.5" stroke={BLUE} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" /></svg>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* QUICK REFERENCE */}
-          <div style={{ position: "absolute", bottom: "28px", left: "28px", right: "28px", zIndex: 2 }}>
-            <div style={{ borderRadius: "14px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)", backdropFilter: "blur(10px)" }}>
-              <div style={{ padding: "7px 14px", background: "linear-gradient(90deg, rgba(0,178,169,0.08), rgba(40,150,251,0.08))", display: "flex", alignItems: "center", gap: "8px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ width: "16px", height: "16px", borderRadius: "5px", background: "rgba(0,178,169,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#00B2A9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "9px", height: "9px" }}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <div style={{ position: "absolute", bottom: "30px", left: "36px", right: "36px", zIndex: 2 }}>
+            <div style={{ borderRadius: "14px", overflow: "hidden", border: `1px solid ${th.tableBorder}` }}>
+              <div style={{ padding: "8px 16px", background: th.tableHeaderBg, display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${th.tableBorder}` }}>
+                <div style={{ width: "18px", height: "18px", borderRadius: "6px", background: `${BLUE}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "10px", height: "10px" }}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 </div>
-                <span style={{ fontSize: "7px", fontWeight: 800, color: "rgba(255,255,255,0.5)", letterSpacing: "2px", textTransform: "uppercase" }}>Quick Reference — Find Your Team</span>
+                <span style={{ fontSize: "9px", fontWeight: 800, color: th.tableText, letterSpacing: "2px", textTransform: "uppercase" }}>Quick Reference — Find Your Team</span>
               </div>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
                     {["Stage","Interaction Link","Responsible Team"].map(h => (
-                      <th key={h} style={{ textAlign: "left", padding: "5px 14px", fontWeight: 800, color: "rgba(255,255,255,0.35)", fontSize: "6.5px", letterSpacing: "1.5px", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>{h}</th>
+                      <th key={h} style={{ textAlign: "left", padding: "7px 16px", fontWeight: 800, color: th.tableMuted, fontSize: "8px", letterSpacing: "1.5px", textTransform: "uppercase", borderBottom: `1px solid ${th.tableBorder}` }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {quickRef.map((row, i) => (
-                    <tr key={i}>
-                      <td style={{ padding: "5px 14px", fontWeight: 700, color: "rgba(255,255,255,0.7)", fontSize: "7px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}><T value={row.stage} onChange={v => uq(i,"stage",v)} className="text-[7px]" /></td>
-                      <td style={{ padding: "5px 14px", fontSize: "7px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}><T value={row.link} onChange={v => uq(i,"link",v)} className="text-[7px] text-[#2896FB] font-bold" /></td>
-                      <td style={{ padding: "5px 14px", color: "rgba(255,255,255,0.35)", fontSize: "7px", borderBottom: "1px solid rgba(255,255,255,0.03)" }}><T value={row.team} onChange={v => uq(i,"team",v)} className="text-[7px]" /></td>
+                    <tr key={i} style={{ background: i%2===0 ? th.tableRowBg : th.tableRowAlt }}>
+                      <td style={{ padding: "7px 16px", fontWeight: 700, fontSize: "9px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.stage} onChange={v => uq(i,"stage",v)} className="text-[9px]" style={{ color: th.tableText }} /></td>
+                      <td style={{ padding: "7px 16px", fontSize: "9px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.link} onChange={v => uq(i,"link",v)} className="text-[9px] font-bold" style={{ color: BLUE }} /></td>
+                      <td style={{ padding: "7px 16px", fontSize: "9px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.team} onChange={v => uq(i,"team",v)} className="text-[9px]" style={{ color: th.tableMuted }} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -283,13 +335,14 @@ export function CustomerJourneyWorkspace() {
           </div>
 
           {/* FOOTER */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "24px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 30px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HL" style={{ width: "10px", height: "10px", objectFit: "contain" }} />
-              <span style={{ fontSize: "6px", fontWeight: 600, color: "rgba(255,255,255,0.2)" }}>HighLevel — Internal Use Only</span>
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "26px", background: th.footerBg, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 36px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <img src={`${BASE}assets/logos/${th.logoIcon}`} alt="HL" style={{ width: "12px", height: "12px", objectFit: "contain" }} />
+              <span style={{ fontSize: "7px", fontWeight: 600, color: th.footerText }}>HighLevel — Internal Use Only</span>
             </div>
-            <span style={{ fontSize: "6px", fontWeight: 500, color: "rgba(255,255,255,0.12)" }}>gohighlevel.com</span>
+            <span style={{ fontSize: "7px", fontWeight: 500, color: th.footerText }}>gohighlevel.com</span>
           </div>
+
         </div>
       </div>
     </div>

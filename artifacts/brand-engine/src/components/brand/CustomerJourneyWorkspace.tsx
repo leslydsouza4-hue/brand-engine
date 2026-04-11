@@ -217,7 +217,7 @@ export function CustomerJourneyWorkspace() {
 
       {/* PREVIEW */}
       <div className="flex-1 overflow-auto flex items-start justify-center p-[30px] bg-[rgba(6,11,22,0.5)]">
-        <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", height: "880px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)" }}>
+        <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", height: "960px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)" }}>
 
           {/* BG effects */}
           <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 20% 15%, ${th.bgGlow1} 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, ${th.bgGlow2} 0%, transparent 50%)` }} />
@@ -241,7 +241,7 @@ export function CustomerJourneyWorkspace() {
           </div>
 
           {/* VERTICAL JOURNEY LINE — from Phase 1 marker to Phase 3 marker only */}
-          <div style={{ position: "absolute", top: "150px", height: "432px", left: "56px", width: "2px", background: `linear-gradient(180deg, ${BLUE}50, ${ROYAL}40, ${BLUE}20)`, zIndex: 1 }} />
+          <div style={{ position: "absolute", top: "150px", height: "500px", left: "56px", width: "2px", background: `linear-gradient(180deg, ${BLUE}50, ${ROYAL}40, ${BLUE}20)`, zIndex: 1 }} />
 
           {/* PHASE SECTIONS */}
           <div style={{ position: "relative", zIndex: 2, marginTop: "16px", display: "flex", flexDirection: "column", gap: "0px" }}>

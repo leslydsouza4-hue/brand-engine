@@ -7,7 +7,8 @@ import {
   FolderOpen,
   MonitorPlay,
   X,
-  Package
+  Package,
+  FileText
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -113,6 +114,18 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           >
             <Gift className={iconCls(currentMode === 'super-promo')} />
             Super Promo
+          </button>
+        </div>
+
+        <div className="px-[12px] mb-[10px] relative">
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Documents</div>
+
+          <button 
+            onClick={() => handleSetMode('print-templates')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'print-templates' ? activeClass : inactiveClass}`}
+          >
+            <FileText className={iconCls(currentMode === 'print-templates')} />
+            Print Templates
           </button>
         </div>
 

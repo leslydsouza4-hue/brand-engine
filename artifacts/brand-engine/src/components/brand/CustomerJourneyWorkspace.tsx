@@ -134,8 +134,13 @@ export function CustomerJourneyWorkspace() {
     setIsExporting(true);
     try {
       const el = previewRef.current;
-      const scale = 2550 / el.offsetWidth;
-      const dataUrl = await toPng(el, { width: el.offsetWidth, height: el.offsetHeight, pixelRatio: scale, cacheBust: true, skipAutoScale: true, style: { borderRadius: "0" } });
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+      const DPI = 300;
+      const pxW = 8.5 * DPI;
+      const pxH = 11 * DPI;
+      const scale = pxW / w;
+      const dataUrl = await toPng(el, { width: w, height: h, pixelRatio: scale, cacheBust: true, skipAutoScale: true, style: { borderRadius: "0" } });
       const safeName = title.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
       const d = new Date();
       const dp = `${d.getMonth()+1}_${d.getDate()}_${String(d.getFullYear()).slice(-2)}`;
@@ -143,13 +148,17 @@ export function CustomerJourneyWorkspace() {
       if (exportFormat === "pdf") {
         const img = new Image(); img.src = dataUrl;
         await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-        const pdf = new jsPDF({ orientation: "portrait", unit: "in", format: "letter" });
-        pdf.addImage(dataUrl, "PNG", 0, 0, 8.5, 11);
+        const imgW = img.naturalWidth;
+        const imgH = img.naturalHeight;
+        const pageW = 8.5;
+        const pageH = (imgH / imgW) * pageW;
+        const pdf = new jsPDF({ orientation: "portrait", unit: "in", format: [pageW, pageH] });
+        pdf.addImage(dataUrl, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
         pdf.save(`${safeName}_${mode}_${dp}.pdf`);
-        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.pdf`, source: "Events", format: "pdf", thumbnail: t, dimensions: "8.5x11in" }));
+        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.pdf`, source: "Events", format: "pdf", thumbnail: t, dimensions: `${pageW}x${pageH.toFixed(1)}in` }));
       } else {
         const a = document.createElement("a"); a.href = dataUrl; a.download = `${safeName}_${mode}_${dp}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.png`, source: "Events", format: "png", thumbnail: t, dimensions: "2550x3300" }));
+        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.png`, source: "Events", format: "png", thumbnail: t, dimensions: `${pxW}x${Math.round(pxH)}` }));
       }
     } catch (err) { console.error("Export failed:", err); } finally { setIsExporting(false); }
   }, [title, exportFormat, isDark]);
@@ -216,7 +225,7 @@ export function CustomerJourneyWorkspace() {
       </div>
       {/* PREVIEW */}
       <div className="flex-1 overflow-auto flex items-start justify-center p-[30px] bg-[rgba(6,11,22,0.5)]">
-        <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", minHeight: "880px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column" }}>
+        <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", height: "880px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column" }}>
 
           {/* BG effects */}
           <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 20% 15%, ${th.bgGlow1} 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, ${th.bgGlow2} 0%, transparent 50%)`, pointerEvents: "none" }} />

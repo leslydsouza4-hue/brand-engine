@@ -8,7 +8,12 @@ import {
   MonitorPlay,
   X,
   Package,
-  FileText
+  FileText,
+  Map,
+  CalendarDays,
+  Mic2,
+  Award,
+  Clock
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -118,15 +123,45 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         </div>
 
         <div className="px-[12px] mb-[10px] relative">
-          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Print</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Events</div>
 
           <button 
             onClick={() => handleSetMode('events')}
             className={`${btnBase} cursor-pointer ${currentMode === 'events' ? activeClass : inactiveClass}`}
           >
-            <FileText className={iconCls(currentMode === 'events')} />
-            Events
+            <Map className={iconCls(currentMode === 'events')} />
+            Customer Journey
           </button>
+
+          <div className={`${btnBase} ${disabledClass}`}>
+            <CalendarDays className="w-[18px] h-[18px] shrink-0" />
+            Event Agenda
+            <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+          </div>
+
+          <div className={`${btnBase} ${disabledClass}`}>
+            <Mic2 className="w-[18px] h-[18px] shrink-0" />
+            Speaker Cards
+            <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+          </div>
+
+          <div className={`${btnBase} ${disabledClass}`}>
+            <Award className="w-[18px] h-[18px] shrink-0" />
+            Certificates
+            <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+          </div>
+
+          <div className={`${btnBase} ${disabledClass}`}>
+            <Clock className="w-[18px] h-[18px] shrink-0" />
+            Event Schedule
+            <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+          </div>
+
+          <div className={`${btnBase} ${disabledClass}`}>
+            <FileText className="w-[18px] h-[18px] shrink-0" />
+            Event Flyer
+            <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
+          </div>
         </div>
 
         <div className="px-[12px] mb-[10px] relative">

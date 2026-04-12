@@ -39,6 +39,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - Background removal via `@imgly/background-removal` (npm package, runs client-side)
   - AI image generation via Gemini (default) and OpenAI gpt-image-1, Replit AI Integration (no API key required, billed to Replit credits)
   - Model picker with animated dropdown in prompt bar (primary) and inline select in regenerate bar
+- **CMYK Export**: Customer Journey PDF export uses server-side Sharp CMYK conversion → DeviceCMYK PDF (true print-ready CMYK color space)
 - **API Proxy**: Vite dev server proxies `/api` to API server at `http://localhost:8080`
 - **Assets**: Shaun images from GitHub raw URLs
 
@@ -50,6 +51,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - `POST /api/openai/generate-image` — OpenAI gpt-image-1 generation (prompt, size, count); basic rate limiting (5s between requests)
   - `POST /api/gemini/generate-image` — Gemini image generation (prompt, aspectRatio, style); supports Nano Banana 2 and Pro models
   - `POST /api/descript/fetch-meta` — Fetch OG metadata (title, thumbnail as base64) from a Descript share URL; frontend opens crop modal for manual UI area selection
+  - `POST /api/convert-cmyk` — Convert RGB PNG to CMYK PDF using Sharp (toColorspace cmyk → JPEG → pdf-lib embedJpg with DeviceCMYK); 40MB limit; 300 DPI print-ready
 - **Dependencies**: `@workspace/integrations-openai-ai-server` for OpenAI, `@workspace/integrations-gemini-ai` for Gemini
 
 ## Key Commands

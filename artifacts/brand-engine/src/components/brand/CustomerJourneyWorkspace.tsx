@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { Download, Loader2, Edit3, RotateCcw, Sun, Moon } from "lucide-react";
 import { toPng } from "html-to-image";
-import { jsPDF } from "jspdf";
 import { addExport, createThumbnail } from "./exportStore";
 
 const BASE = import.meta.env.BASE_URL;
@@ -138,27 +137,32 @@ export function CustomerJourneyWorkspace() {
       const h = el.offsetHeight;
       const DPI = 300;
       const pxW = 8.5 * DPI;
-      const pxH = 11 * DPI;
       const scale = pxW / w;
       const dataUrl = await toPng(el, { width: w, height: h, pixelRatio: scale, cacheBust: true, skipAutoScale: true, style: { borderRadius: "0" } });
       const safeName = title.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
       const d = new Date();
       const dp = `${d.getMonth()+1}_${d.getDate()}_${String(d.getFullYear()).slice(-2)}`;
       const mode = isDark ? "Dark" : "Light";
+      const fname = `${safeName}_${mode}_CMYK_${dp}`;
       if (exportFormat === "pdf") {
-        const img = new Image(); img.src = dataUrl;
-        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
-        const imgW = img.naturalWidth;
-        const imgH = img.naturalHeight;
         const pageW = 8.5;
-        const pageH = (imgH / imgW) * pageW;
-        const pdf = new jsPDF({ orientation: "portrait", unit: "in", format: [pageW, pageH] });
-        pdf.addImage(dataUrl, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
-        pdf.save(`${safeName}_${mode}_${dp}.pdf`);
-        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.pdf`, source: "Events", format: "pdf", thumbnail: t, dimensions: `${pageW}x${pageH.toFixed(1)}in` }));
+        const pageH = (h / w) * pageW;
+        const resp = await fetch(`${BASE}api/convert-cmyk`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ imageData: dataUrl, filename: `${fname}.pdf`, pageWidth: pageW, pageHeight: pageH }),
+        });
+        if (!resp.ok) throw new Error(`CMYK conversion failed: ${resp.statusText}`);
+        const { pdf: pdfBase64 } = await resp.json();
+        const pdfBytes = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a"); a.href = url; a.download = `${fname}.pdf`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        createThumbnail(dataUrl).then(t => addExport({ name: `${fname}.pdf`, source: "Events", format: "pdf", thumbnail: t, dimensions: `${pageW}x${pageH.toFixed(1)}in (CMYK)` }));
       } else {
-        const a = document.createElement("a"); a.href = dataUrl; a.download = `${safeName}_${mode}_${dp}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.png`, source: "Events", format: "png", thumbnail: t, dimensions: `${pxW}x${Math.round(pxH)}` }));
+        const a = document.createElement("a"); a.href = dataUrl; a.download = `${fname}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        createThumbnail(dataUrl).then(t => addExport({ name: `${fname}.png`, source: "Events", format: "png", thumbnail: t, dimensions: `${Math.round(pxW)}x${Math.round(h * scale)}` }));
       }
     } catch (err) { console.error("Export failed:", err); } finally { setIsExporting(false); }
   }, [title, exportFormat, isDark]);

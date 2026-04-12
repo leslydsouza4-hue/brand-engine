@@ -322,15 +322,6 @@ export function CustomerJourneyWorkspace() {
             </div>
           </div>
 
-          {/* FOOTER — pushes to bottom via flex spacer */}
-          <div style={{ flex: 1 }} />
-          <div style={{ position: "relative", zIndex: 2, height: "26px", background: th.footerBg, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 36px", flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <img src={`${BASE}assets/logos/${th.logoIcon}`} alt="HL" style={{ width: "12px", height: "12px", objectFit: "contain" }} />
-              <span style={{ fontSize: "7px", fontWeight: 600, color: th.footerText }}>HighLevel — Internal Use Only</span>
-            </div>
-            <span style={{ fontSize: "7px", fontWeight: 500, color: th.footerText }}>gohighlevel.com</span>
-          </div>
 
         </div>
       </div>

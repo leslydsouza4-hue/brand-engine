@@ -49,6 +49,7 @@ const ICONS_3 = [
 
 const dark = {
   bg: "#060B16",
+  bgImage: "backgrounds-dark/Type=Core Gradient.png",
   bgGlow1: "rgba(40,150,251,0.08)",
   bgGlow2: "rgba(9,93,195,0.06)",
   cardBg: "rgba(255,255,255,0.04)",
@@ -76,6 +77,7 @@ const dark = {
 
 const light = {
   bg: "#FFFFFF",
+  bgImage: "backgrounds-light/Property 1=Neutral.png",
   bgGlow1: "rgba(40,150,251,0.06)",
   bgGlow2: "rgba(9,93,195,0.04)",
   cardBg: "rgba(40,150,251,0.03)",
@@ -231,7 +233,9 @@ export function CustomerJourneyWorkspace() {
       <div className="flex-1 overflow-auto flex items-start justify-center p-[30px] bg-[rgba(6,11,22,0.5)]">
         <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", height: "880px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
 
-          {/* BG effects */}
+          {/* BG image */}
+          <img src={`${BASE}assets/${th.bgImage}`} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }} />
+          {/* BG overlay effects */}
           <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 20% 15%, ${th.bgGlow1} 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, ${th.bgGlow2} 0%, transparent 50%)`, pointerEvents: "none" }} />
           <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${th.dotPattern} 1px, transparent 1px)`, backgroundSize: "24px 24px", pointerEvents: "none" }} />
 

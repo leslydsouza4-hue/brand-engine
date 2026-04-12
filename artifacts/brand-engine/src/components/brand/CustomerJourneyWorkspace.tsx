@@ -76,7 +76,7 @@ const dark = {
 };
 
 const light = {
-  bg: "linear-gradient(160deg, #F0F7FF 0%, #E8F1FC 30%, #FFFFFF 60%, #EEF4FB 100%)",
+  bg: "#FFFFFF",
   bgImage: "backgrounds-light/Property 1=Neutral.png",
   bgGlow1: "rgba(40,150,251,0.05)",
   bgGlow2: "rgba(9,93,195,0.03)",

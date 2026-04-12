@@ -76,10 +76,10 @@ const dark = {
 };
 
 const light = {
-  bg: "#FFFFFF",
+  bg: "linear-gradient(160deg, #F0F7FF 0%, #E8F1FC 30%, #FFFFFF 60%, #EEF4FB 100%)",
   bgImage: "backgrounds-light/Property 1=Neutral.png",
-  bgGlow1: "rgba(40,150,251,0.06)",
-  bgGlow2: "rgba(9,93,195,0.04)",
+  bgGlow1: "rgba(40,150,251,0.05)",
+  bgGlow2: "rgba(9,93,195,0.03)",
   cardBg: "rgba(40,150,251,0.03)",
   cardBorder: "rgba(40,150,251,0.10)",
   itemBg: "#FFFFFF",

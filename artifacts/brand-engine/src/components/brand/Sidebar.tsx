@@ -118,14 +118,14 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         </div>
 
         <div className="px-[12px] mb-[10px] relative">
-          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Events</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Print</div>
 
           <button 
-            onClick={() => handleSetMode('events-customer-journey')}
-            className={`${btnBase} cursor-pointer ${currentMode === 'events-customer-journey' ? activeClass : inactiveClass}`}
+            onClick={() => handleSetMode('events')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'events' ? activeClass : inactiveClass}`}
           >
-            <FileText className={iconCls(currentMode === 'events-customer-journey')} />
-            Customer Journey
+            <FileText className={iconCls(currentMode === 'events')} />
+            Events
           </button>
         </div>
 

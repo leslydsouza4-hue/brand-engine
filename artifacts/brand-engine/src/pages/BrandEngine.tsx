@@ -10,15 +10,15 @@ import { SettingsWorkspace } from "@/components/brand/SettingsWorkspace";
 import { MyExportsWorkspace } from "@/components/brand/MyExportsWorkspace";
 import { BizDevWorkspace } from "@/components/brand/BizDevWorkspace";
 import { SuperPromo2Workspace } from "@/components/brand/SuperPromo2Workspace";
-import { CustomerJourneyWorkspace } from "@/components/brand/CustomerJourneyWorkspace";
+import { EventsWorkspace } from "@/components/brand/EventsWorkspace";
 
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    const valid = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "my-exports", "events-customer-journey"];
+    const valid = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "my-exports", "events"];
     return valid.includes(hash) ? hash : "templates";
   });
-  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "my-exports", "events-customer-journey"];
+  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "my-exports", "events"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -55,7 +55,7 @@ export default function BrandEngine() {
         {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
         {currentMode === "settings" && <SettingsWorkspace />}
         {currentMode === "my-exports" && <MyExportsWorkspace />}
-        {currentMode === "events-customer-journey" && <CustomerJourneyWorkspace />}
+        {currentMode === "events" && <EventsWorkspace />}
       </div>
     </div>
   );

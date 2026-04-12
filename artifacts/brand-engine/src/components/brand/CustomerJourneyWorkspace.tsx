@@ -294,7 +294,7 @@ export function CustomerJourneyWorkspace() {
           </div>
 
           {/* QUICK REFERENCE */}
-          <div style={{ position: "absolute", bottom: "38px", left: "36px", right: "36px", zIndex: 2 }}>
+          <div style={{ position: "absolute", bottom: "86px", left: "36px", right: "36px", zIndex: 2 }}>
             <div style={{ borderRadius: "14px", overflow: "hidden", border: `1px solid ${th.tableBorder}` }}>
               <div style={{ padding: "8px 16px", background: th.tableHeaderBg, display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${th.tableBorder}` }}>
                 <div style={{ width: "18px", height: "18px", borderRadius: "6px", background: `${BLUE}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>

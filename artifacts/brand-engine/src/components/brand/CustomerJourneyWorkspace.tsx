@@ -216,11 +216,11 @@ export function CustomerJourneyWorkspace() {
       </div>
       {/* PREVIEW */}
       <div className="flex-1 overflow-auto flex items-start justify-center p-[30px] bg-[rgba(6,11,22,0.5)]">
-        <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", height: "960px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)" }}>
+        <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", minHeight: "880px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column" }}>
 
           {/* BG effects */}
-          <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 20% 15%, ${th.bgGlow1} 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, ${th.bgGlow2} 0%, transparent 50%)` }} />
-          <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${th.dotPattern} 1px, transparent 1px)`, backgroundSize: "24px 24px" }} />
+          <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 20% 15%, ${th.bgGlow1} 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, ${th.bgGlow2} 0%, transparent 50%)`, pointerEvents: "none" }} />
+          <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${th.dotPattern} 1px, transparent 1px)`, backgroundSize: "24px 24px", pointerEvents: "none" }} />
 
           {/* HEADER */}
           <div style={{ position: "relative", zIndex: 2, padding: "24px 36px 0" }}>
@@ -239,11 +239,11 @@ export function CustomerJourneyWorkspace() {
             </div>
           </div>
 
-          {/* VERTICAL JOURNEY LINE — from Phase 1 marker to Phase 3 marker only */}
-          <div style={{ position: "absolute", top: "150px", height: "500px", left: "56px", width: "2px", background: `linear-gradient(180deg, ${BLUE}50, ${ROYAL}40, ${BLUE}20)`, zIndex: 1 }} />
-
-          {/* PHASE SECTIONS */}
+          {/* PHASE SECTIONS — uses relative container for timeline line */}
           <div style={{ position: "relative", zIndex: 2, marginTop: "16px", display: "flex", flexDirection: "column", gap: "0px" }}>
+            {/* VERTICAL JOURNEY LINE — spans from first to last marker */}
+            <div style={{ position: "absolute", top: "12px", bottom: "12px", left: "56px", width: "2px", background: `linear-gradient(180deg, ${BLUE}50, ${ROYAL}40, ${BLUE}20)`, zIndex: 1 }} />
+
             {phases.map((ph, pi) => (
               <div key={pi} style={{ position: "relative", padding: "8px 36px 6px 36px" }}>
                 {/* Phase marker dot */}
@@ -292,10 +292,8 @@ export function CustomerJourneyWorkspace() {
             ))}
           </div>
 
-          {/* QUICK REFERENCE */}
-          <div
-            style={{ position: "absolute", bottom: "86px", left: "36px", right: "36px", zIndex: 2 }}
-            className="mt-[25px] mb-[25px]">
+          {/* QUICK REFERENCE — flows naturally after phases */}
+          <div style={{ position: "relative", zIndex: 2, margin: "12px 36px 0" }}>
             <div style={{ borderRadius: "14px", overflow: "hidden", border: `1px solid ${th.tableBorder}` }}>
               <div style={{ padding: "8px 16px", background: th.tableHeaderBg, display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${th.tableBorder}` }}>
                 <div style={{ width: "18px", height: "18px", borderRadius: "6px", background: `${BLUE}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -324,8 +322,9 @@ export function CustomerJourneyWorkspace() {
             </div>
           </div>
 
-          {/* FOOTER */}
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "26px", background: th.footerBg, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 36px" }}>
+          {/* FOOTER — pushes to bottom via flex spacer */}
+          <div style={{ flex: 1 }} />
+          <div style={{ position: "relative", zIndex: 2, height: "26px", background: th.footerBg, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 36px", flexShrink: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <img src={`${BASE}assets/logos/${th.logoIcon}`} alt="HL" style={{ width: "12px", height: "12px", objectFit: "contain" }} />
               <span style={{ fontSize: "7px", fontWeight: 600, color: th.footerText }}>HighLevel — Internal Use Only</span>

@@ -71,7 +71,7 @@ const dark = {
   dotPattern: "rgba(255,255,255,0.025)",
   lineBg: "rgba(40,150,251,0.2)",
   markerRing: "#060B16",
-  logo: "Lockup=Full Horizontal, Color=AllWhite.png",
+  logo: "Lockup=Full Horizontal, Color=Light.png",
   logoIcon: "Lockup=Icon, Color=Light.png",
 };
 

@@ -236,59 +236,59 @@ export function CustomerJourneyWorkspace() {
           <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${th.dotPattern} 1px, transparent 1px)`, backgroundSize: "24px 24px", pointerEvents: "none" }} />
 
           {/* HEADER */}
-          <div style={{ position: "relative", zIndex: 2, padding: "24px 36px 0" }}>
+          <div style={{ position: "relative", zIndex: 2, padding: "18px 36px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <img src={`${BASE}assets/logos/${th.logo}`} alt="HighLevel" style={{ height: "22px", objectFit: "contain" }} />
+              <img src={`${BASE}assets/logos/${th.logo}`} alt="HighLevel" style={{ height: "20px", objectFit: "contain" }} />
               <div style={{ display: "flex", gap: "5px" }}>
                 {[0.2,0.4,0.7,0.4,0.2].map((o,i) => <div key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: `rgba(40,150,251,${o})` }} />)}
               </div>
             </div>
-            <div style={{ marginTop: "18px" }}>
-              <T value={title} onChange={setTitle} className="block text-[32px] font-black leading-[1.1] tracking-[-1px]" style={{ color: th.title }} />
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
+            <div style={{ marginTop: "12px" }}>
+              <T value={title} onChange={setTitle} className="block text-[28px] font-black leading-[1.1] tracking-[-1px]" style={{ color: th.title }} />
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "6px" }}>
                 <div style={{ height: "3px", width: "44px", borderRadius: "2px", background: `linear-gradient(90deg, ${BLUE}, ${ROYAL})` }} />
-                <T value={subtitle} onChange={setSubtitle} className="text-[14px] font-semibold tracking-[1.5px] uppercase" style={{ color: th.muted }} />
+                <T value={subtitle} onChange={setSubtitle} className="text-[12px] font-semibold tracking-[1.5px] uppercase" style={{ color: th.muted }} />
               </div>
             </div>
           </div>
 
           {/* PHASE SECTIONS — uses relative container for timeline line */}
-          <div style={{ position: "relative", zIndex: 2, marginTop: "16px", display: "flex", flexDirection: "column", gap: "0px" }}>
+          <div style={{ position: "relative", zIndex: 2, marginTop: "10px", display: "flex", flexDirection: "column", gap: "0px" }}>
             {/* VERTICAL JOURNEY LINE — spans from first to last marker */}
             <div style={{ position: "absolute", top: "12px", bottom: "12px", left: "56px", width: "2px", background: `linear-gradient(180deg, ${BLUE}50, ${ROYAL}40, ${BLUE}20)`, zIndex: 1 }} />
 
             {phases.map((ph, pi) => (
-              <div key={pi} style={{ position: "relative", padding: "8px 36px 6px 36px" }}>
+              <div key={pi} style={{ position: "relative", padding: "6px 36px 4px 36px" }}>
                 {/* Phase marker dot */}
-                <div style={{ position: "absolute", left: "43px", top: "12px", width: "28px", height: "28px", borderRadius: "50%", background: `linear-gradient(135deg, ${BLUE}, ${ROYAL})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 20px ${BLUE}40, 0 0 0 4px ${th.markerRing}, 0 0 0 6px ${BLUE}25`, zIndex: 3 }}>
-                  <span style={{ color: "white", fontSize: "13px", fontWeight: 900 }}>{pi+1}</span>
+                <div style={{ position: "absolute", left: "45px", top: "10px", width: "24px", height: "24px", borderRadius: "50%", background: `linear-gradient(135deg, ${BLUE}, ${ROYAL})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 16px ${BLUE}40, 0 0 0 3px ${th.markerRing}, 0 0 0 5px ${BLUE}25`, zIndex: 3 }}>
+                  <span style={{ color: "white", fontSize: "11px", fontWeight: 900 }}>{pi+1}</span>
                 </div>
 
                 {/* Phase content */}
-                <div style={{ marginLeft: "48px", background: th.cardBg, border: `1px solid ${th.cardBorder}`, borderRadius: "16px", padding: "12px 16px", backdropFilter: "blur(10px)", position: "relative", overflow: "hidden" }}>
+                <div style={{ marginLeft: "48px", background: th.cardBg, border: `1px solid ${th.cardBorder}`, borderRadius: "12px", padding: "8px 12px", backdropFilter: "blur(10px)", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: "-20px", left: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: `radial-gradient(circle, ${BLUE}08 0%, transparent 70%)` }} />
 
                   {/* Header */}
-                  <div style={{ marginBottom: "8px", position: "relative" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "2px" }}>
-                      <span style={{ fontSize: "10px", fontWeight: 800, color: BLUE, letterSpacing: "2px", textTransform: "uppercase" }}>{ph.label}</span>
+                  <div style={{ marginBottom: "5px", position: "relative" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "1px" }}>
+                      <span style={{ fontSize: "8px", fontWeight: 800, color: BLUE, letterSpacing: "2px", textTransform: "uppercase" }}>{ph.label}</span>
                       <div style={{ height: "1px", width: "20px", background: `${BLUE}35` }} />
-                      <span style={{ fontSize: "10px", fontWeight: 600, color: th.muted, letterSpacing: "1px" }}>{ph.time}</span>
+                      <span style={{ fontSize: "8px", fontWeight: 600, color: th.muted, letterSpacing: "1px" }}>{ph.time}</span>
                     </div>
-                    <div style={{ fontSize: "18px", fontWeight: 800, color: th.heading, lineHeight: 1.15 }}>{ph.heading}</div>
+                    <div style={{ fontSize: "15px", fontWeight: 800, color: th.heading, lineHeight: 1.15 }}>{ph.heading}</div>
                   </div>
 
                   {/* Items */}
-                  <div style={{ display: "flex", gap: "8px" }}>
+                  <div style={{ display: "flex", gap: "6px" }}>
                     {ph.items.map((item, i) => (
-                      <div key={i} style={{ flex: 1, background: th.itemBg, border: `1px solid ${th.itemBorder}`, borderRadius: "12px", padding: "10px", position: "relative", overflow: "hidden" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-                          <div style={{ width: "22px", height: "22px", borderRadius: "7px", background: `${BLUE}12`, border: `1px solid ${BLUE}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "12px", height: "12px" }}>{ph.icons[i]}</svg>
+                      <div key={i} style={{ flex: 1, background: th.itemBg, border: `1px solid ${th.itemBorder}`, borderRadius: "8px", padding: "7px", position: "relative", overflow: "hidden" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "3px" }}>
+                          <div style={{ width: "18px", height: "18px", borderRadius: "5px", background: `${BLUE}12`, border: `1px solid ${BLUE}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "10px", height: "10px" }}>{ph.icons[i]}</svg>
                           </div>
-                          <T value={item.title} onChange={v => up(ph.pn, i, "title", v)} className="block text-[10px] font-bold leading-[1.25]" style={{ color: th.heading }} />
+                          <T value={item.title} onChange={v => up(ph.pn, i, "title", v)} className="block text-[9px] font-bold leading-[1.25]" style={{ color: th.heading }} />
                         </div>
-                        <T value={item.desc} onChange={v => up(ph.pn, i, "desc", v)} className="block text-[9px] leading-[1.5]" style={{ color: th.body }} multiline />
+                        <T value={item.desc} onChange={v => up(ph.pn, i, "desc", v)} className="block text-[8px] leading-[1.45]" style={{ color: th.body }} multiline />
                       </div>
                     ))}
                   </div>
@@ -306,9 +306,9 @@ export function CustomerJourneyWorkspace() {
           </div>
 
           {/* QUICK REFERENCE — flows naturally after phases */}
-          <div style={{ position: "relative", zIndex: 2, margin: "12px 36px 0" }}>
+          <div style={{ position: "relative", zIndex: 2, margin: "8px 36px 12px" }}>
             <div style={{ borderRadius: "14px", overflow: "hidden", border: `1px solid ${th.tableBorder}` }}>
-              <div style={{ padding: "8px 16px", background: th.tableHeaderBg, display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${th.tableBorder}` }}>
+              <div style={{ padding: "6px 14px", background: th.tableHeaderBg, display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${th.tableBorder}` }}>
                 <div style={{ width: "18px", height: "18px", borderRadius: "6px", background: `${BLUE}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "10px", height: "10px" }}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 </div>
@@ -318,16 +318,16 @@ export function CustomerJourneyWorkspace() {
                 <thead>
                   <tr>
                     {["Stage","Interaction Link","Responsible Team"].map(h => (
-                      <th key={h} style={{ textAlign: "left", padding: "7px 16px", fontWeight: 800, color: th.tableMuted, fontSize: "9px", letterSpacing: "1.5px", textTransform: "uppercase", borderBottom: `1px solid ${th.tableBorder}` }}>{h}</th>
+                      <th key={h} style={{ textAlign: "left", padding: "5px 14px", fontWeight: 800, color: th.tableMuted, fontSize: "9px", letterSpacing: "1.5px", textTransform: "uppercase", borderBottom: `1px solid ${th.tableBorder}` }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {quickRef.map((row, i) => (
                     <tr key={i} style={{ background: i%2===0 ? th.tableRowBg : th.tableRowAlt }}>
-                      <td style={{ padding: "7px 16px", fontWeight: 700, fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.stage} onChange={v => uq(i,"stage",v)} className="text-[10px]" style={{ color: th.tableText }} /></td>
-                      <td style={{ padding: "7px 16px", fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.link} onChange={v => uq(i,"link",v)} className="text-[10px] font-bold" style={{ color: BLUE }} /></td>
-                      <td style={{ padding: "7px 16px", fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.team} onChange={v => uq(i,"team",v)} className="text-[10px]" style={{ color: th.tableMuted }} /></td>
+                      <td style={{ padding: "5px 14px", fontWeight: 700, fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.stage} onChange={v => uq(i,"stage",v)} className="text-[10px]" style={{ color: th.tableText }} /></td>
+                      <td style={{ padding: "5px 14px", fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.link} onChange={v => uq(i,"link",v)} className="text-[10px] font-bold" style={{ color: BLUE }} /></td>
+                      <td style={{ padding: "5px 14px", fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.team} onChange={v => uq(i,"team",v)} className="text-[10px]" style={{ color: th.tableMuted }} /></td>
                     </tr>
                   ))}
                 </tbody>

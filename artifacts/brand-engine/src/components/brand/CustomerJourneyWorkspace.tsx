@@ -248,7 +248,7 @@ export function CustomerJourneyWorkspace() {
               </div>
             </div>
             <div style={{ marginTop: "16px" }}>
-              <T value={title} onChange={setTitle} className="block text-[30px] font-black leading-[1.1] tracking-[-1px]" style={{ color: th.title }} />
+              <T value={title} onChange={setTitle} className="block text-[30px] font-semibold leading-[1.1] tracking-[-1px]" style={{ color: th.title }} />
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
                 <div style={{ height: "3px", width: "44px", borderRadius: "2px", background: `linear-gradient(90deg, ${BLUE}, ${ROYAL})` }} />
                 <T value={subtitle} onChange={setSubtitle} className="text-[13px] font-semibold tracking-[1.5px] uppercase" style={{ color: th.muted }} />

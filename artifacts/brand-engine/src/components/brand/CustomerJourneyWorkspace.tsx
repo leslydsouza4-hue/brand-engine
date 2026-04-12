@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from "react";
-import { Download, Loader2, Edit3, RotateCcw, Sun, Moon } from "lucide-react";
+import { Download, Loader2, Edit3, RotateCcw, Sun, Moon, ChevronDown } from "lucide-react";
 import { toPng } from "html-to-image";
 import { addExport, createThumbnail } from "./exportStore";
 
@@ -118,6 +118,8 @@ export function CustomerJourneyWorkspace() {
   const [phase2Items, setPhase2Items] = useState<PhaseItem[]>(DEFAULT_PHASE2);
   const [phase3Items, setPhase3Items] = useState<PhaseItem[]>(DEFAULT_PHASE3);
   const [quickRef, setQuickRef] = useState<QuickRefRow[]>(DEFAULT_QUICKREF);
+  const [openPhases, setOpenPhases] = useState<Record<number, boolean>>({ 0: false, 1: false, 2: false });
+  const togglePhase = (i: number) => setOpenPhases(prev => ({ ...prev, [i]: !prev[i] }));
 
   const th = isDark ? dark : light;
 
@@ -219,8 +221,13 @@ export function CustomerJourneyWorkspace() {
 
         {[{l:"Phase 1 — Trial",items:phase1Items},{l:"Phase 2 — Success",items:phase2Items},{l:"Phase 3 — Growth",items:phase3Items}].map((s,si) => (
           <div key={si}>
-            <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">{s.l}</div>
-            {s.items.map((it,i) => (<div key={i} className="mb-[8px] p-[8px] rounded-[8px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]"><div className="text-[11px] font-semibold text-[#E2E8F0] mb-[2px]">{it.title}</div><div className="text-[10px] text-[#64748B] leading-[1.4]">{it.desc}</div></div>))}
+            <button onClick={() => togglePhase(si)} className="w-full flex items-center justify-between py-[6px] cursor-pointer bg-transparent border-none outline-none">
+              <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880]">{s.l}</span>
+              <ChevronDown className={`w-[12px] h-[12px] text-[#94a3b880] transition-transform duration-200 ${openPhases[si] ? "rotate-180" : ""}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-200 ${openPhases[si] ? "max-h-[600px] opacity-100 mt-[4px]" : "max-h-0 opacity-0"}`}>
+              {s.items.map((it,i) => (<div key={i} className="mb-[8px] p-[8px] rounded-[8px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]"><div className="text-[11px] font-semibold text-[#E2E8F0] mb-[2px]">{it.title}</div><div className="text-[10px] text-[#64748B] leading-[1.4]">{it.desc}</div></div>))}
+            </div>
           </div>
         ))}
         <div className="mt-auto pt-[16px]">

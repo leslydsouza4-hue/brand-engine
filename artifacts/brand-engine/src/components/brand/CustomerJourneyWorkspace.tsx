@@ -146,10 +146,10 @@ export function CustomerJourneyWorkspace() {
         const pdf = new jsPDF({ orientation: "portrait", unit: "in", format: "letter" });
         pdf.addImage(dataUrl, "PNG", 0, 0, 8.5, 11);
         pdf.save(`${safeName}_${mode}_${dp}.pdf`);
-        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.pdf`, source: "Print Templates", format: "pdf", thumbnail: t, dimensions: "8.5x11in" }));
+        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.pdf`, source: "Events", format: "pdf", thumbnail: t, dimensions: "8.5x11in" }));
       } else {
         const a = document.createElement("a"); a.href = dataUrl; a.download = `${safeName}_${mode}_${dp}.png`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.png`, source: "Print Templates", format: "png", thumbnail: t, dimensions: "2550x3300" }));
+        createThumbnail(dataUrl).then(t => addExport({ name: `${safeName}_${mode}_${dp}.png`, source: "Events", format: "png", thumbnail: t, dimensions: "2550x3300" }));
       }
     } catch (err) { console.error("Export failed:", err); } finally { setIsExporting(false); }
   }, [title, exportFormat, isDark]);

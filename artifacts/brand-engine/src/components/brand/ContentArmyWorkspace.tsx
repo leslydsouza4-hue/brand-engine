@@ -616,6 +616,12 @@ export function ContentArmyWorkspace() {
             className="absolute inset-0 w-full h-full object-cover z-0"
           />
 
+          <img
+            src={`${import.meta.env.BASE_URL}assets/logos/Lockup=Full Horizontal, Color=Light.png`}
+            alt="HighLevel"
+            className="absolute top-[5%] left-[4%] z-[5] h-[8%] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+          />
+
           {stripText && (
             <div className="absolute top-[16%] left-0 z-[6] whitespace-nowrap rounded-r-[6px] overflow-hidden shadow-[2px_2px_12px_rgba(0,0,0,0.3)]"
               style={{ background: 'linear-gradient(135deg, #095DC3 0%, #2896FB 40%, #00B2A9 100%)' }}

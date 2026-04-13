@@ -101,15 +101,25 @@ function extractOgMeta(html: string) {
   };
 }
 
-function extractAllImages(html: string): string[] {
+function extractUIImages(html: string): string[] {
   const imgSrcs: string[] = [];
   const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+  const skipPatterns = [
+    "data:", "svg", "favicon", "logo", "icon", "avatar",
+    "emoji", "badge", "arrow", "bullet", "spacer", "pixel",
+    "tracking", "analytics", "1x1", "widget", "button",
+    "social", "twitter", "facebook", "linkedin", "youtube",
+    "gravatar", "profile", "author", "user-",
+  ];
+  const uiExtensions = /\.(png|jpg|jpeg|webp|gif)(\?|$)/i;
   let match;
   while ((match = imgRegex.exec(html)) !== null) {
     const src = match[1];
-    if (src && !src.includes("data:") && !src.includes("svg") && !src.includes("favicon") && !src.includes("logo") && !src.includes("icon")) {
-      imgSrcs.push(src);
-    }
+    if (!src) continue;
+    const lower = src.toLowerCase();
+    if (skipPatterns.some(p => lower.includes(p))) continue;
+    if (!uiExtensions.test(lower)) continue;
+    imgSrcs.push(src);
   }
   return imgSrcs;
 }
@@ -144,7 +154,7 @@ router.post("/support-doc/fetch-meta", async (req, res) => {
     let title = og.title || extractTitle(html);
     title = title.replace(/\s*[-|]\s*(HighLevel|GoHighLevel|Support).*$/i, "").trim();
 
-    const allImages = extractAllImages(html);
+    const allImages = extractUIImages(html);
     const contentImages: string[] = [];
 
     const imagesToFetch = allImages.slice(0, 10);

@@ -168,16 +168,6 @@ export function ContentArmyWorkspace() {
         throw new Error(err.error || "Failed to fetch");
       }
       const data = await res.json();
-      if (data.title) setHeadline(data.title);
-
-      if (data.ogImage) {
-        setScreenshotImage(data.ogImage);
-        setScreenshotOpacity(40);
-        setScreenshotScale(85);
-        setScreenshotRadius(16);
-        setScreenshotOffsetX(0);
-        setScreenshotOffsetY(0);
-      }
 
       if (data.images && data.images.length > 0) {
         setSupportImages(data.images);

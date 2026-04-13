@@ -250,9 +250,6 @@ export function CustomerJourneyWorkspace() {
           <div style={{ position: "relative", zIndex: 2, padding: "24px 36px 0" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <img src={`${BASE}assets/logos/${th.logo}`} alt="HighLevel" style={{ height: "22px", objectFit: "contain" }} />
-              <div style={{ display: "flex", gap: "5px" }}>
-                {[0.2,0.4,0.7,0.4,0.2].map((o,i) => <div key={i} style={{ width: "5px", height: "5px", borderRadius: "50%", background: `rgba(40,150,251,${o})` }} />)}
-              </div>
             </div>
             <div style={{ marginTop: "16px" }}>
               <T value={title} onChange={setTitle} className="block text-[30px] font-semibold leading-[1.1] tracking-[-1px]" style={{ color: th.title }} />

@@ -448,7 +448,15 @@ export function ContentArmyWorkspace() {
                       onClick={() => useSupportImage(img)}
                       className="aspect-video rounded-[8px] overflow-hidden cursor-pointer border border-[rgba(255,255,255,0.06)] hover:border-[#2896FB] transition-all relative group"
                     >
-                      <img src={img} alt={`Doc image ${i+1}`} className="w-full h-full object-cover" />
+                      <img
+                        src={img}
+                        alt={`Doc image ${i+1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const parent = (e.target as HTMLElement).closest('[class*="aspect-video"]');
+                          if (parent) (parent as HTMLElement).style.display = 'none';
+                        }}
+                      />
                       <div className="absolute inset-0 bg-[rgba(0,0,0,0.5)] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <span className="text-[9px] font-semibold text-white uppercase tracking-[0.5px]">Use</span>
                       </div>

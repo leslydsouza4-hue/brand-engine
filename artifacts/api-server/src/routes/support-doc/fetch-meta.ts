@@ -72,9 +72,10 @@ function fetchImageAsBase64(url: string): Promise<string> {
         res.on("data", (chunk) => chunks.push(chunk));
         res.on("end", () => {
           const buffer = Buffer.concat(chunks);
-          if (buffer.length < 5000) return reject(new Error("Image too small"));
+          if (buffer.length < 10000) return reject(new Error("Image too small"));
           const ct = res.headers["content-type"] || "";
-          if (ct.includes("gif") || ct.includes("video") || ct.includes("svg")) return reject(new Error("Not a static image"));
+          if (ct.includes("gif") || ct.includes("video") || ct.includes("svg") || ct.includes("xml") || ct.includes("html") || ct.includes("json")) return reject(new Error("Not a static image"));
+          if (!ct.includes("image/png") && !ct.includes("image/jpeg") && !ct.includes("image/webp") && !ct.includes("image/jpg") && !ct.startsWith("image/")) return reject(new Error("Not an image content-type"));
           let mime = "image/jpeg";
           if (ct.includes("png")) mime = "image/png";
           else if (ct.includes("webp")) mime = "image/webp";

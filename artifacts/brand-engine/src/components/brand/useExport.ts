@@ -22,6 +22,24 @@ function restoreRadii(saved: Array<{ el: HTMLElement; orig: string }>) {
   }
 }
 
+async function preloadImages(root: HTMLElement): Promise<void> {
+  const imgs = root.querySelectorAll("img");
+  const promises: Promise<void>[] = [];
+  imgs.forEach((img) => {
+    if (img.complete && img.naturalWidth > 0) return;
+    promises.push(
+      new Promise((resolve) => {
+        const i = new Image();
+        i.crossOrigin = "anonymous";
+        i.onload = () => resolve();
+        i.onerror = () => resolve();
+        i.src = img.src;
+      })
+    );
+  });
+  await Promise.all(promises);
+}
+
 export function useExport() {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -31,6 +49,8 @@ export function useExport() {
 
     setIsExporting(true);
     const saved = stripRadii(target);
+
+    await preloadImages(target);
 
     const scale = 3840 / target.offsetWidth;
     const opts = {
@@ -42,9 +62,18 @@ export function useExport() {
       imagePlaceholder: undefined,
       includeQueryParams: true,
       style: { borderRadius: "0" },
+      filter: (node: HTMLElement) => {
+        if (node.tagName === "IMG") {
+          node.setAttribute("crossorigin", "anonymous");
+        }
+        return true;
+      },
     };
 
     try {
+      await toPng(target, opts);
+      await toPng(target, opts);
+
       const exportName = target.getAttribute("data-export-name") || "brand-engine-export";
       const safeName = exportName.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
 
@@ -59,7 +88,7 @@ export function useExport() {
         pdf.save(`${safeName}.pdf`);
         createThumbnail(dataUrl).then((thumb) => addExport({ name: `${safeName}.pdf`, source: "Custom Design", format: "pdf", thumbnail: thumb, dimensions: `${img.width}x${img.height}` }));
       } else if (format === "jpeg") {
-        const dataUrl = await toJpeg(target, { ...opts, quality: 0.92, backgroundColor: "#060B16" });
+        const dataUrl = await toJpeg(target, { ...opts, quality: 0.95, backgroundColor: "#060B16" });
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = `${safeName}.jpg`;

@@ -32,13 +32,15 @@ export function useExport() {
     setIsExporting(true);
     const saved = stripRadii(target);
 
-    const scale = 1920 / target.offsetWidth;
+    const scale = 3840 / target.offsetWidth;
     const opts = {
       width: target.offsetWidth,
       height: target.offsetHeight,
       pixelRatio: scale,
       cacheBust: true,
       skipAutoScale: true,
+      imagePlaceholder: undefined,
+      includeQueryParams: true,
       style: { borderRadius: "0" },
     };
 

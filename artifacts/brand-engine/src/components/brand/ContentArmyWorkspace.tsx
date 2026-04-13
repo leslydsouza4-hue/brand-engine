@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles, Crop, FileText, ChevronDown } from "lucide-react";
+import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles, Crop, FileText, ChevronDown, LayoutGrid } from "lucide-react";
 import { CropModal } from "./CropModal";
 import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
@@ -42,9 +42,18 @@ const TEAM: TeamMember[] = [
 const ASSET_BASE = `${import.meta.env.BASE_URL}assets/content-army/`;
 const BG_URL = `${import.meta.env.BASE_URL}assets/content-army/bg-content-army.png`;
 
+type ThumbnailLayout = "classic" | "person-left" | "person-right";
+
+const LAYOUT_PRESETS: Record<ThumbnailLayout, { personX: number; personY: number; label: string; desc: string }> = {
+  "classic": { personX: 75, personY: 50, label: "Classic", desc: "Bottom text" },
+  "person-left": { personX: 22, personY: 55, label: "Left", desc: "Text right" },
+  "person-right": { personX: 78, personY: 50, label: "Right", desc: "Text left" },
+};
+
 export function ContentArmyWorkspace() {
   const { isExporting, handleExport } = useExport();
 
+  const [layout, setLayout] = useState<ThumbnailLayout>("classic");
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [headline, setHeadline] = useState("");
@@ -54,6 +63,13 @@ export function ContentArmyWorkspace() {
   const [personX, setPersonX] = useState(75);
   const [personY, setPersonY] = useState(50);
   const [personScale, setPersonScale] = useState(95);
+
+  const handleLayoutChange = (l: ThumbnailLayout) => {
+    setLayout(l);
+    const preset = LAYOUT_PRESETS[l];
+    setPersonX(preset.personX);
+    setPersonY(preset.personY);
+  };
   const [isDragging, setIsDragging] = useState(false);
 
   const [screenshotImage, setScreenshotImage] = useState<string | null>(null);
@@ -335,6 +351,32 @@ export function ContentArmyWorkspace() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="border-t border-[rgba(255,255,255,0.04)] pt-[16px] pb-[12px]">
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px] flex items-center gap-[6px]">
+            <LayoutGrid className="w-[12px] h-[12px] text-[#2896FB]" />
+            Layout
+          </div>
+          <div className="flex gap-[6px] mb-[4px]">
+            {(["classic", "person-left", "person-right"] as ThumbnailLayout[]).map((l) => {
+              const preset = LAYOUT_PRESETS[l];
+              const isActive = layout === l;
+              return (
+                <button
+                  key={l}
+                  onClick={() => handleLayoutChange(l)}
+                  className={`flex-1 py-[8px] px-[6px] border rounded-[10px] font-inherit cursor-pointer text-center transition-all flex flex-col items-center gap-[2px]
+                    ${isActive
+                      ? 'border-[rgba(40,150,251,0.25)] text-[#2896FB] bg-[rgba(40,150,251,0.08)]'
+                      : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(40,150,251,0.15)] hover:text-[#CBD5E1]'}`}
+                >
+                  <span className="text-[11px] font-semibold">{preset.label}</span>
+                  <span className="text-[8px] opacity-60">{preset.desc}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="border-t border-[rgba(255,255,255,0.04)] pt-[16px] pb-[12px]">
@@ -623,8 +665,41 @@ export function ContentArmyWorkspace() {
             </div>
           )}
 
+          {layout !== "classic" && (
+            <div
+              className="absolute z-[1] pointer-events-none"
+              style={{
+                ...(layout === "person-left" ? {
+                  right: '-5%',
+                  bottom: '-10%',
+                  width: '65%',
+                  height: '75%',
+                  background: 'white',
+                  transform: 'rotate(-4deg)',
+                  borderRadius: '18px',
+                  boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
+                } : {
+                  left: '-2%',
+                  bottom: '-15%',
+                  width: '65%',
+                  height: '80%',
+                  background: 'white',
+                  transform: 'rotate(4deg)',
+                  borderRadius: '18px',
+                  boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
+                }),
+              }}
+            />
+          )}
+
           {screenshotImage && (() => {
-            const baseTransform = `translate(-50%, -50%) scale(${screenshotScale / 100})`;
+            const scaleVal = screenshotScale / 100;
+            const layoutOffsets = layout === "person-left"
+              ? { top: 58, left: 62 }
+              : layout === "person-right"
+              ? { top: 55, left: 35 }
+              : { top: 50, left: 50 };
+            const baseTransform = `translate(-50%, -50%) scale(${scaleVal})`;
             const styleMap: Record<typeof screenshotStyle, { transform: string; border: string; boxShadow: string; outline?: string; outlineOffset?: string }> = {
               glow: {
                 transform: `${baseTransform} rotate(-3deg)`,
@@ -654,11 +729,11 @@ export function ContentArmyWorkspace() {
               <div
                 className="absolute z-[1] transition-all duration-300"
                 style={{
-                  top: `${50 + screenshotOffsetY}%`,
-                  left: `${50 + screenshotOffsetX}%`,
+                  top: `${layoutOffsets.top + screenshotOffsetY}%`,
+                  left: `${layoutOffsets.left + screenshotOffsetX}%`,
                   transform: s.transform,
                   opacity: screenshotOpacity / 100,
-                  width: '80%',
+                  width: layout !== "classic" ? '55%' : '80%',
                 }}
               >
                 <img
@@ -711,23 +786,59 @@ export function ContentArmyWorkspace() {
           ) : null}
 
           {(headline || subtext) ? (
-            <>
-              <div className="absolute bottom-0 left-0 right-0 h-[45%] z-[3] pointer-events-none"
-                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 50%, transparent 100%)" }}
-              />
-              <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
-                <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-white"
+            layout === "classic" ? (
+              <>
+                <div className="absolute bottom-0 left-0 right-0 h-[45%] z-[3] pointer-events-none"
+                  style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 50%, transparent 100%)" }}
+                />
+                <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
+                  <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-white"
+                    style={{
+                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5))",
+                    }}
+                  >
+                    {headline}
+                  </div>
+                  <div className="font-bold text-[clamp(7px,0.8vw,10px)] uppercase text-white mt-[6px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                    {subtext}
+                  </div>
+                </div>
+              </>
+            ) : layout === "person-left" ? (
+              <div className="absolute z-[4] top-[15%] right-[8%] w-[55%] text-left">
+                <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
                   style={{
-                    filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5))",
+                    color: '#2896FB',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
+                    WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
                   }}
                 >
                   {headline}
                 </div>
-                <div className="font-bold text-[clamp(7px,0.8vw,10px)] uppercase text-white mt-[6px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-                  {subtext}
-                </div>
+                {subtext && (
+                  <div className="font-bold text-[clamp(8px,1vw,12px)] uppercase text-white mt-[8px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                    {subtext}
+                  </div>
+                )}
               </div>
-            </>
+            ) : (
+              <div className="absolute z-[4] top-[18%] left-[4%] w-[55%] text-left">
+                <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
+                  style={{
+                    color: '#2896FB',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
+                    WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
+                  }}
+                >
+                  {headline}
+                </div>
+                {subtext && (
+                  <div className="font-bold text-[clamp(8px,1vw,12px)] uppercase text-white mt-[8px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                    {subtext}
+                  </div>
+                )}
+              </div>
+            )
           ) : null}
 
           {!activeImage && !headline && !subtext && !screenshotImage && (

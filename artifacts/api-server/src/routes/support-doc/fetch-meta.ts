@@ -72,11 +72,12 @@ function fetchImageAsBase64(url: string): Promise<string> {
         res.on("data", (chunk) => chunks.push(chunk));
         res.on("end", () => {
           const buffer = Buffer.concat(chunks);
+          if (buffer.length < 5000) return reject(new Error("Image too small"));
           const ct = res.headers["content-type"] || "";
+          if (ct.includes("gif") || ct.includes("video") || ct.includes("svg")) return reject(new Error("Not a static image"));
           let mime = "image/jpeg";
           if (ct.includes("png")) mime = "image/png";
           else if (ct.includes("webp")) mime = "image/webp";
-          else if (ct.includes("gif")) mime = "image/gif";
           else if (reqUrl.includes(".png")) mime = "image/png";
           resolve(`data:${mime};base64,${buffer.toString("base64")}`);
         });

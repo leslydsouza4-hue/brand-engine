@@ -95,11 +95,13 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             Shaun Comin Atcha
           </button>
 
-          <div className={`${btnBase} ${disabledClass}`}>
-            <MonitorPlay className="w-[18px] h-[18px] shrink-0" />
+          <button 
+            onClick={() => handleSetMode('content-army')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'content-army' ? activeClass : inactiveClass}`}
+          >
+            <MonitorPlay className={iconCls(currentMode === 'content-army')} />
             Content Army
-            <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
-          </div>
+          </button>
         </div>
 
         <div className="px-[12px] mb-[10px] relative">

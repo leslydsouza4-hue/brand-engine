@@ -781,7 +781,7 @@ export function ContentArmyWorkspace() {
               <div className="absolute z-[4] top-[15%] right-[8%] w-[55%] text-left">
                 <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
                   style={{
-                    color: '#2896FB',
+                    color: '#7CC8FF',
                     textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
                     WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
                   }}
@@ -798,7 +798,7 @@ export function ContentArmyWorkspace() {
               <div className="absolute z-[4] top-[18%] left-[4%] w-[55%] text-left">
                 <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
                   style={{
-                    color: '#2896FB',
+                    color: '#7CC8FF',
                     textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
                     WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
                   }}

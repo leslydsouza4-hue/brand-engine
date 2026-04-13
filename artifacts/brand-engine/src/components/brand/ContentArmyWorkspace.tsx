@@ -665,33 +665,6 @@ export function ContentArmyWorkspace() {
             </div>
           )}
 
-          {layout !== "classic" && (
-            <div
-              className="absolute z-[1] pointer-events-none"
-              style={{
-                ...(layout === "person-left" ? {
-                  right: '-5%',
-                  bottom: '-10%',
-                  width: '65%',
-                  height: '75%',
-                  background: 'white',
-                  transform: 'rotate(-4deg)',
-                  borderRadius: '18px',
-                  boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
-                } : {
-                  left: '-2%',
-                  bottom: '-15%',
-                  width: '65%',
-                  height: '80%',
-                  background: 'white',
-                  transform: 'rotate(4deg)',
-                  borderRadius: '18px',
-                  boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
-                }),
-              }}
-            />
-          )}
-
           {screenshotImage && (() => {
             const scaleVal = screenshotScale / 100;
             const layoutOffsets = layout === "person-left"

@@ -110,8 +110,9 @@ function extractUIImages(html: string): string[] {
     "tracking", "analytics", "1x1", "widget", "button",
     "social", "twitter", "facebook", "linkedin", "youtube",
     "gravatar", "profile", "author", "user-",
+    ".gif", ".mp4", ".webm", ".mov", ".avi", "video", "giphy", "tenor",
   ];
-  const uiExtensions = /\.(png|jpg|jpeg|webp|gif)(\?|$)/i;
+  const uiExtensions = /\.(png|jpg|jpeg|webp)(\?|$)/i;
   let match;
   while ((match = imgRegex.exec(html)) !== null) {
     const src = match[1];

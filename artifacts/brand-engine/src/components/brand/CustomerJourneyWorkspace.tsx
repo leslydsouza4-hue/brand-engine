@@ -49,7 +49,7 @@ const ICONS_3 = [
 
 const dark = {
   bg: "#060B16",
-  bgImage: "backgrounds-dark/Type=Core Gradient.png",
+  bgImage: "",
   bgGlow1: "rgba(40,150,251,0.08)",
   bgGlow2: "rgba(9,93,195,0.06)",
   cardBg: "rgba(255,255,255,0.04)",

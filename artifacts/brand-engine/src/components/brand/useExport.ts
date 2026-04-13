@@ -52,7 +52,7 @@ export function useExport() {
 
     await preloadImages(target);
 
-    const scale = 3840 / target.offsetWidth;
+    const scale = 2560 / target.offsetWidth;
     const opts = {
       width: target.offsetWidth,
       height: target.offsetHeight,

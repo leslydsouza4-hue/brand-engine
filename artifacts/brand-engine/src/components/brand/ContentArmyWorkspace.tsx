@@ -49,7 +49,7 @@ export function ContentArmyWorkspace() {
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
-  const [stripText, setStripText] = useState("CONTENT ARMY");
+  const [stripText, setStripText] = useState("");
 
   const [personX, setPersonX] = useState(75);
   const [personY, setPersonY] = useState(50);

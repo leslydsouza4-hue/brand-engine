@@ -496,19 +496,6 @@ export function ContentArmyWorkspace() {
               className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-inherit text-[13.5px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
             />
           </div>
-          <div className="flex flex-col">
-            <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px]">
-              Strip Banner
-            </label>
-            <input
-              type="text"
-              value={stripText}
-              onChange={e => setStripText(e.target.value)}
-              placeholder="e.g. CONTENT ARMY"
-              maxLength={30}
-              className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[13.5px] font-bold text-[#E2E8F0] uppercase outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] placeholder:normal-case placeholder:font-normal"
-            />
-          </div>
         </div>
 
         <div className="border-t border-[rgba(255,255,255,0.04)] pt-[16px]">

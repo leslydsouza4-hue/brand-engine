@@ -682,21 +682,36 @@ export function ContentArmyWorkspace() {
           })()}
 
           {activeImage && currentMember ? (
-            <img
-              src={`${ASSET_BASE}${currentMember.folder}/${activeImage}`}
-              alt={`${currentMember.name} Cutout`}
-              onMouseDown={(e) => { e.preventDefault(); handleDragStart(e.clientX, e.clientY); }}
-              onTouchStart={(e) => { if (e.touches[0]) handleDragStart(e.touches[0].clientX, e.touches[0].clientY); }}
-              draggable={false}
-              className={`absolute z-[2] object-contain drop-shadow-[0_0_30px_rgba(40,150,251,0.3)] drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] select-none
-                ${isDragging ? '' : 'transition-all duration-300 ease-out'}`}
-              style={{
-                left: `${personX}%`,
-                top: `${personY}%`,
-                transform: `translate(-50%, -50%) scale(${personScale / 100})`,
-                height: '95%',
-              }}
-            />
+            <>
+              <div
+                className={`absolute z-[1] pointer-events-none ${isDragging ? '' : 'transition-all duration-300 ease-out'}`}
+                style={{
+                  left: `${personX}%`,
+                  top: `${personY}%`,
+                  transform: `translate(-50%, -50%) scale(${personScale / 100})`,
+                  width: '60%',
+                  height: '80%',
+                  background: 'radial-gradient(ellipse at center, rgba(40,150,251,0.45) 0%, rgba(9,93,195,0.25) 35%, rgba(40,150,251,0.1) 55%, transparent 75%)',
+                  filter: 'blur(30px)',
+                }}
+              />
+              <img
+                src={`${ASSET_BASE}${currentMember.folder}/${activeImage}`}
+                alt={`${currentMember.name} Cutout`}
+                onMouseDown={(e) => { e.preventDefault(); handleDragStart(e.clientX, e.clientY); }}
+                onTouchStart={(e) => { if (e.touches[0]) handleDragStart(e.touches[0].clientX, e.touches[0].clientY); }}
+                draggable={false}
+                className={`absolute z-[2] object-contain select-none
+                  ${isDragging ? '' : 'transition-all duration-300 ease-out'}`}
+                style={{
+                  left: `${personX}%`,
+                  top: `${personY}%`,
+                  transform: `translate(-50%, -50%) scale(${personScale / 100})`,
+                  height: '95%',
+                  filter: 'drop-shadow(0 0 25px rgba(40,150,251,0.4)) drop-shadow(0 0 50px rgba(9,93,195,0.25)) drop-shadow(0 4px 20px rgba(0,0,0,0.5))',
+                }}
+              />
+            </>
           ) : null}
 
           {(headline || subtext) ? (

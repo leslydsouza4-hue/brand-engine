@@ -40,7 +40,7 @@ const TEAM: TeamMember[] = [
 ];
 
 const ASSET_BASE = `${import.meta.env.BASE_URL}assets/content-army/`;
-const BG_URL = `${import.meta.env.BASE_URL}assets/backgrounds-dark/Type=Core Gradient.png`;
+const BG_URL = `${import.meta.env.BASE_URL}assets/content-army/bg-content-army.png`;
 
 export function ContentArmyWorkspace() {
   const { isExporting, handleExport } = useExport();

@@ -609,7 +609,7 @@ export function ContentArmyWorkspace() {
           <img
             src={`${import.meta.env.BASE_URL}assets/logos/Lockup=Full Horizontal, Color=Light.png`}
             alt="HighLevel"
-            className="absolute top-[5%] left-[4%] z-[5] h-[8%] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+            className="absolute top-[8%] left-[4%] z-[5] h-[8%] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
           />
 
           {stripText && (

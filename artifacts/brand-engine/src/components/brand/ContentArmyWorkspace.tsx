@@ -252,10 +252,19 @@ export function ContentArmyWorkspace() {
                       : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] hover:border-[rgba(40,150,251,0.2)] hover:bg-[rgba(40,150,251,0.03)]'
                     }`}
                 >
-                  <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center text-[12px] font-bold shrink-0
-                    ${isActive ? 'bg-[#2896FB] text-white' : 'bg-[rgba(255,255,255,0.06)] text-[#64748B]'}`}>
-                    {member.name.charAt(0)}
-                  </div>
+                  {member.images.length > 0 ? (
+                    <img
+                      src={`${ASSET_BASE}${member.folder}/${member.images[0]}`}
+                      alt={member.name}
+                      className={`w-[32px] h-[32px] rounded-full object-cover shrink-0 border-[2px]
+                        ${isActive ? 'border-[#2896FB]' : 'border-[rgba(255,255,255,0.1)]'}`}
+                    />
+                  ) : (
+                    <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center text-[12px] font-bold shrink-0
+                      ${isActive ? 'bg-[#2896FB] text-white' : 'bg-[rgba(255,255,255,0.06)] text-[#64748B]'}`}>
+                      {member.name.charAt(0)}
+                    </div>
+                  )}
                   <div className="flex flex-col min-w-0">
                     <span className={`text-[12px] font-semibold truncate ${isActive ? 'text-[#E2E8F0]' : 'text-[#94A3B8]'}`}>
                       {member.name}

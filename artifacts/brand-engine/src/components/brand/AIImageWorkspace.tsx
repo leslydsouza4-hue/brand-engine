@@ -20,26 +20,32 @@ const HIGHLY_CHARACTER_SHEET = `"Highly" is the official HighLevel mascot robot.
 
 CRITICAL: Do NOT draw a generic robot. Highly must match EXACTLY the description above — oversized head with black visor, teal eyes, three colored arrows on top, floating detached hands, single jet-cone bottom, no legs.`;
 
-const BRAND_SYSTEM_PROMPT = `Create a premium marketing image in HighLevel brand style.
+const STYLE_INSTRUCTIONS: Record<string, string> = {
+  "Auto": "",
+  "Photorealistic": `STYLE: Photorealistic. This MUST look like a real photograph taken with a professional DSLR camera. Use natural lighting (golden hour, studio lighting, or natural ambient light). Include realistic depth of field, lens bokeh, subtle film grain, and natural color grading. Surfaces should have real-world textures — scratches, reflections, imperfections. NO 3D renders, NO illustrations, NO cartoon or stylized elements. Think editorial photography, commercial product shots, or cinematic stills.`,
+  "3D Render": `STYLE: High-end 3D render. Clean, polished 3D graphics with smooth surfaces, volumetric lighting, global illumination, and soft ambient occlusion. Think Pixar/Blender Cycles quality. Professional studio lighting setup with rim lights and subtle caustics.`,
+  "Illustration": `STYLE: Modern digital illustration. Clean vector-like aesthetic with bold shapes, flat areas of color, and subtle gradients. Think Dribbble/Behance top illustration style — stylized but polished and professional.`,
+  "Cinematic": `STYLE: Cinematic film still. This should look like a frame from a high-budget movie or TV commercial. Use dramatic lighting with strong contrast, atmospheric haze or fog, anamorphic lens characteristics, and cinematic color grading (teal and orange, moody blues). Wide aspect composition with cinematic depth.`,
+  "Abstract": `STYLE: Abstract art composition. Bold geometric shapes, fluid gradients, organic flowing forms, and dynamic compositions. Think modern generative art or contemporary gallery pieces — visually striking and conceptual.`,
+};
 
-Use a modern SaaS design aesthetic with clean composition, strong visual hierarchy, and minimal clutter.
+const BRAND_SYSTEM_PROMPT = `Create a premium marketing image for the HighLevel brand.
 
-Apply HighLevel visual identity:
-- deep blue to electric blue gradients
-- subtle teal and green accents
-- soft glow lighting and radial highlights
-- smooth gradients and polished surfaces
-- futuristic, high-end, and professional look
+{{STYLE_INSTRUCTION}}
 
-IMPORTANT: Do NOT draw, render, or include any logos, wordmarks, brand names, or text overlays in the image. Leave clean open space in the bottom-left or bottom-right corner where a logo can be placed later. The image should be a clean background/scene with NO text or logo elements whatsoever.
+Brand color palette (use as accents, not dominant):
+- Electric Blue #2896FB, Deep Navy #060B16, Royal Blue #095DC3
+- These are accent colors — do NOT make the entire image blue unless it fits naturally
 
-Keep the design clean, spacious, and campaign-ready.
-Avoid random colors, avoid clutter, avoid generic AI styles.
+Composition guidelines:
+- Clean, professional composition with strong visual hierarchy
+- Leave open space in one corner for logo placement later
+- NO logos, NO text, NO watermarks, NO wordmarks in the image
 
 User request:
 {{USER_PROMPT}}
 
-Make the final result look like a real HighLevel campaign asset, suitable for ads, social media, or product marketing. Remember: absolutely NO logos or text in the image.`;
+The final image must look premium and campaign-ready. Remember: absolutely NO text or logos in the image.`;
 
 const BASE = import.meta.env.BASE_URL;
 const LOGO_VARIANTS = [
@@ -102,7 +108,7 @@ function applyLogoOverlay(imageDataUrl: string, logoSrc: string, position: strin
 
 const ROBOT_KEYWORDS = /\b(highly|robot|mascot|bot|character)\b/i;
 
-const buildFullPrompt = (userPrompt: string, highlyDescription?: string, hasReferenceImage?: boolean) => {
+const buildFullPrompt = (userPrompt: string, stylePreset: string, highlyDescription?: string, hasReferenceImage?: boolean) => {
   let enrichedPrompt = userPrompt;
 
   const mentionsHighly = ROBOT_KEYWORDS.test(userPrompt);
@@ -114,16 +120,20 @@ const buildFullPrompt = (userPrompt: string, highlyDescription?: string, hasRefe
     enrichedPrompt += `\n\n${HIGHLY_CHARACTER_SHEET}\n\nThe user mentioned a robot/mascot — they mean Highly, the HighLevel mascot described above. Render Highly exactly as described. Do NOT use any generic robot design.`;
   }
 
-  return BRAND_SYSTEM_PROMPT.replace("{{USER_PROMPT}}", enrichedPrompt);
+  const styleInstruction = STYLE_INSTRUCTIONS[stylePreset] || "";
+
+  return BRAND_SYSTEM_PROMPT
+    .replace("{{STYLE_INSTRUCTION}}", styleInstruction)
+    .replace("{{USER_PROMPT}}", enrichedPrompt);
 };
 
 const PROMPT_SUGGESTIONS = [
-  "A futuristic city skyline at sunset with HighLevel branding",
-  "3D robot mascot holding a glowing orb in space",
-  "Summer campaign hero with tropical gradient",
-  "Minimal product mockup on dark marble surface",
-  "Abstract brand pattern with electric blue waves",
-  "Social media ad with bold typography and gradients",
+  "Laptop on a modern desk in a sunlit co-working space",
+  "Aerial view of a city skyline at golden hour",
+  "Close-up of hands typing on a keyboard with soft bokeh",
+  "Conference room with a large screen showing analytics",
+  "Team celebrating success with high-fives in a modern office",
+  "Smartphone on marble table next to a cup of coffee",
 ];
 
 const ASPECT_RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:2"];
@@ -231,7 +241,7 @@ function FloatingParticles() {
 export function AIImageWorkspace() {
   const [prompt, setPrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState("1:1");
-  const [style, setStyle] = useState("Auto");
+  const [style, setStyle] = useState("Photorealistic");
   const [isGenerating, setIsGenerating] = useState(false);
   const [results, setResults] = useState<GeneratedImage[]>([]);
   const [selectedResult, setSelectedResult] = useState<number | null>(null);
@@ -260,7 +270,7 @@ export function AIImageWorkspace() {
     setSelectedResult(null);
 
     const hasReference = !!activeHighly;
-    const fullPrompt = buildFullPrompt(prompt, activeHighly?.description, hasReference);
+    const fullPrompt = buildFullPrompt(prompt, style, activeHighly?.description, hasReference);
     const size = ASPECT_TO_SIZE[aspectRatio] || "1024x1024";
 
     try {

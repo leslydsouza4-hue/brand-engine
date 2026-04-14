@@ -734,10 +734,10 @@ export function ContentArmyWorkspace() {
                   left: `${personX}%`,
                   top: `${personY}%`,
                   transform: `translate(-50%, -50%) scale(${personScale / 100})`,
-                  width: '60%',
-                  height: '80%',
-                  background: 'radial-gradient(ellipse at center, rgba(40,150,251,0.45) 0%, rgba(9,93,195,0.25) 35%, rgba(40,150,251,0.1) 55%, transparent 75%)',
-                  filter: 'blur(30px)',
+                  width: '80%',
+                  height: '100%',
+                  background: 'radial-gradient(ellipse at center, rgba(100,180,255,0.7) 0%, rgba(40,150,251,0.5) 25%, rgba(9,93,195,0.35) 45%, rgba(40,150,251,0.15) 65%, transparent 85%)',
+                  filter: 'blur(40px)',
                 }}
               />
               <img
@@ -753,7 +753,7 @@ export function ContentArmyWorkspace() {
                   top: `${personY}%`,
                   transform: `translate(-50%, -50%) scale(${personScale / 100})`,
                   height: '95%',
-                  filter: 'drop-shadow(0 0 25px rgba(40,150,251,0.4)) drop-shadow(0 0 50px rgba(9,93,195,0.25)) drop-shadow(0 4px 20px rgba(0,0,0,0.5))',
+                  filter: 'drop-shadow(0 0 35px rgba(100,180,255,0.5)) drop-shadow(0 0 70px rgba(40,150,251,0.4)) drop-shadow(0 0 100px rgba(9,93,195,0.3)) drop-shadow(0 4px 20px rgba(0,0,0,0.5))',
                 }}
               />
             </>

@@ -84,7 +84,7 @@ export function ContentArmyWorkspace() {
   const [screenshotRadius, setScreenshotRadius] = useState(16);
   const [screenshotOffsetX, setScreenshotOffsetX] = useState(0);
   const [screenshotOffsetY, setScreenshotOffsetY] = useState(0);
-  const [screenshotStyle, setScreenshotStyle] = useState<"glow" | "float" | "neon" | "minimal">("glow");
+  const [screenshotStyle, setScreenshotStyle] = useState<"glow" | "float" | "neon" | "minimal" | "tilt" | "shadow" | "cinematic" | "glass">("glow");
 
   const [supportUrl, setSupportUrl] = useState("");
   const [supportLoading, setSupportLoading] = useState(false);
@@ -559,7 +559,7 @@ export function ContentArmyWorkspace() {
               <div>
                 <div className="text-[11px] font-medium text-[#64748B] mb-[6px]">Style</div>
                 <div className="grid grid-cols-4 gap-[4px]">
-                  {(["glow", "float", "neon", "minimal"] as const).map((s) => (
+                  {(["glow", "float", "neon", "minimal", "tilt", "shadow", "cinematic", "glass"] as const).map((s) => (
                     <button
                       key={s}
                       onClick={() => setScreenshotStyle(s)}
@@ -696,6 +696,28 @@ export function ContentArmyWorkspace() {
                 transform: baseTransform,
                 border: "none",
                 boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
+              },
+              tilt: {
+                transform: `${baseTransform} perspective(600px) rotateY(-8deg) rotateX(3deg)`,
+                border: "2px solid rgba(255,255,255,0.12)",
+                boxShadow: "20px 20px 60px rgba(0,0,0,0.6), -5px -5px 20px rgba(40,150,251,0.1)",
+              },
+              shadow: {
+                transform: `${baseTransform} rotate(-2deg)`,
+                border: "none",
+                boxShadow: "0 25px 80px rgba(0,0,0,0.7), 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)",
+              },
+              cinematic: {
+                transform: `${baseTransform} rotate(1deg)`,
+                border: "3px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 0 0 6px rgba(0,0,0,0.3), 0 20px 60px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.2)",
+              },
+              glass: {
+                transform: baseTransform,
+                border: "1px solid rgba(255,255,255,0.2)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.1), 0 0 40px rgba(40,150,251,0.15)",
+                outline: "1px solid rgba(255,255,255,0.08)",
+                outlineOffset: "4px",
               },
             };
             const s = styleMap[screenshotStyle];

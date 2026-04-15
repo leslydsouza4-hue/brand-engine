@@ -184,15 +184,35 @@ export function DidYouKnowWorkspace() {
     return all.length;
   }, [headlineWhite, headlineHighlight]);
 
-  const dynamicFontSize = useMemo(() => {
-    const totalChars = (headlineWhite + headlineHighlight).length;
-    if (totalChars <= 20) return 'clamp(13px, 2.56vw, 30px)';
-    if (totalChars <= 40) return 'clamp(11px, 2.1vw, 25px)';
-    if (totalChars <= 60) return 'clamp(10px, 1.8vw, 22px)';
-    if (totalChars <= 80) return 'clamp(9px, 1.5vw, 19px)';
-    if (totalChars <= 100) return 'clamp(8px, 1.3vw, 16px)';
-    return 'clamp(7px, 1.1vw, 14px)';
-  }, [headlineWhite, headlineHighlight]);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [headlineFontPx, setHeadlineFontPx] = useState(30);
+
+  useEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    const container = el.parentElement;
+    if (!container) return;
+    const containerH = container.offsetHeight;
+    const maxBottom = containerH * 0.88;
+    const textTop = el.offsetTop;
+    const maxTextH = maxBottom - textTop;
+    if (maxTextH <= 0) return;
+
+    let lo = 10, hi = 38, best = 10;
+    const origSize = el.style.fontSize;
+    for (let iter = 0; iter < 12; iter++) {
+      const mid = (lo + hi) / 2;
+      el.style.fontSize = `${mid}px`;
+      if (el.scrollHeight <= maxTextH) {
+        best = mid;
+        lo = mid + 0.5;
+      } else {
+        hi = mid - 0.5;
+      }
+    }
+    el.style.fontSize = origSize;
+    setHeadlineFontPx(Math.floor(best));
+  }, [headlineWhite, headlineHighlight, layout]);
 
   const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -233,14 +253,15 @@ export function DidYouKnowWorkspace() {
 
     return (
       <div
+        ref={textRef}
         className="absolute z-[4]"
-        style={{ top: tp.top, left: tp.left, right: tp.right, textAlign: tp.textAlign as any, width: tp.width }}
+        style={{ top: tp.top, left: tp.left, right: tp.right, textAlign: tp.textAlign as any, width: tp.width, fontSize: `${headlineFontPx}px` }}
       >
         {headlineWhite && (
           <div
             className="font-['Poppins'] font-black text-white uppercase leading-[0.95]"
             style={{
-              fontSize: dynamicFontSize,
+              fontSize: 'inherit',
               textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3)',
             }}
           >
@@ -251,7 +272,7 @@ export function DidYouKnowWorkspace() {
           <div
             className="font-['Poppins'] font-black uppercase leading-[0.95]"
             style={{
-              fontSize: dynamicFontSize,
+              fontSize: 'inherit',
               color: '#7CC8FF',
               textShadow: '0 2px 8px rgba(40,150,251,0.4), 0 0 30px rgba(40,150,251,0.2)',
               marginTop: headlineWhite ? '4px' : '0',

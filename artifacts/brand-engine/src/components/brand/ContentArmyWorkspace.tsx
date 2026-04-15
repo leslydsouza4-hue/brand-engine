@@ -3,7 +3,8 @@ import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Li
 import { CropModal } from "./CropModal";
 import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
-import { useExport } from "./useExport";
+import { BatchExportQueue } from "./BatchExportQueue";
+import { useExport, type QueuedThumbnail } from "./useExport";
 
 interface TeamMember {
   id: string;
@@ -57,7 +58,8 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, { personX: number; personY: number
 };
 
 export function ContentArmyWorkspace() {
-  const { isExporting, handleExport } = useExport();
+  const { isExporting, handleExport, captureToQueue } = useExport();
+  const [batchQueue, setBatchQueue] = useState<QueuedThumbnail[]>([]);
 
   const [layout, setLayout] = useState<ThumbnailLayout>("classic");
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
@@ -636,6 +638,16 @@ export function ContentArmyWorkspace() {
 
           <div className="mt-auto pt-[16px]">
             <DownloadButton onExport={handleExport} isExporting={isExporting} label="Download Current" />
+            <BatchExportQueue
+              queue={batchQueue}
+              onAdd={async () => {
+                const item = await captureToQueue();
+                if (item) setBatchQueue(prev => [...prev, item]);
+              }}
+              onRemove={(id) => setBatchQueue(prev => prev.filter(q => q.id !== id))}
+              onClear={() => setBatchQueue([])}
+              isCapturing={isExporting}
+            />
           </div>
         </div>
       </div>

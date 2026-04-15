@@ -6,3 +6,9 @@ id = "8mRNEC_RSuGZZqqEgFBlx"
 uri = "file://artifacts/brand-engine/Design.md"
 type = "text"
 title = "HighLevel Brand Engine Design System"
+
+[[outputs]]
+id = "IsFUrGvK0AijuqMLMBntp"
+uri = "file://did-you-know-docs.md"
+type = "text"
+title = "Did You Know — Feature Documentation"

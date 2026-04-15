@@ -38,8 +38,8 @@ const TEAM: TeamMember[] = [
   {
     id: "usma",
     name: "Usma",
-    assetBase: `${BASE}assets/content-army/usma/`,
-    images: Array.from({ length: 8 }, (_, i) => `Usma_${String(i + 1).padStart(2, '0')}.png`),
+    assetBase: `${BASE}assets/did-you-know/usma/`,
+    images: Array.from({ length: 4 }, (_, i) => `usma-pose-${i + 1}.png`),
   },
 ];
 

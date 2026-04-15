@@ -67,7 +67,7 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
   "text-left": {
     personX: 78, personY: 55, orbitX: 78, orbitY: 85,
     label: "Classic Left", desc: "Text left, person right",
-    textPos: { top: "28%", left: "5%", right: "auto", textAlign: "left", width: "50%" },
+    textPos: { top: "32%", left: "5%", right: "auto", textAlign: "left", width: "50%" },
     badgePos: { top: "8%", left: "4%", right: "auto" },
     logoPos: { bottom: "6%", left: "4%", right: "auto" },
     personHeight: "95%", orbitWidth: "65%", orbitOpacity: 0.35,
@@ -75,7 +75,7 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
   "text-right": {
     personX: 22, personY: 55, orbitX: 22, orbitY: 85,
     label: "Classic Right", desc: "Text right, person left",
-    textPos: { top: "28%", left: "auto", right: "5%", textAlign: "right", width: "50%" },
+    textPos: { top: "32%", left: "auto", right: "5%", textAlign: "right", width: "50%" },
     badgePos: { top: "8%", left: "auto", right: "4%" },
     logoPos: { bottom: "6%", left: "auto", right: "4%" },
     personHeight: "95%", orbitWidth: "65%", orbitOpacity: 0.35,
@@ -83,7 +83,7 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
   "centered": {
     personX: 50, personY: 58, orbitX: 50, orbitY: 88,
     label: "Centered", desc: "Person center, text top",
-    textPos: { top: "18%", left: "15%", right: "15%", textAlign: "center", width: "70%" },
+    textPos: { top: "22%", left: "15%", right: "15%", textAlign: "center", width: "70%" },
     badgePos: { top: "5%", left: "50%", right: "auto" },
     logoPos: { bottom: "5%", left: "50%", right: "auto" },
     personHeight: "88%", orbitWidth: "80%", orbitOpacity: 0.3,
@@ -91,15 +91,15 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
   "cinematic": {
     personX: 50, personY: 62, orbitX: 50, orbitY: 92,
     label: "Cinematic", desc: "Dramatic centered",
-    textPos: { top: "8%", left: "10%", right: "10%", textAlign: "center", width: "80%" },
-    badgePos: { top: "2%", left: "50%", right: "auto" },
+    textPos: { top: "14%", left: "10%", right: "10%", textAlign: "center", width: "80%" },
+    badgePos: { top: "3%", left: "50%", right: "auto" },
     logoPos: { bottom: "4%", left: "50%", right: "auto" },
     personHeight: "100%", orbitWidth: "90%", orbitOpacity: 0.25,
   },
   "hero-left": {
     personX: 25, personY: 50, orbitX: 25, orbitY: 80,
     label: "Hero Left", desc: "Big person left, text right",
-    textPos: { top: "25%", left: "48%", right: "4%", textAlign: "left", width: "48%" },
+    textPos: { top: "30%", left: "48%", right: "4%", textAlign: "left", width: "48%" },
     badgePos: { top: "8%", left: "48%", right: "auto" },
     logoPos: { bottom: "6%", left: "auto", right: "4%" },
     personHeight: "105%", orbitWidth: "55%", orbitOpacity: 0.3,
@@ -107,7 +107,7 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
   "hero-right": {
     personX: 75, personY: 50, orbitX: 75, orbitY: 80,
     label: "Hero Right", desc: "Big person right, text left",
-    textPos: { top: "25%", left: "4%", right: "48%", textAlign: "left", width: "48%" },
+    textPos: { top: "30%", left: "4%", right: "48%", textAlign: "left", width: "48%" },
     badgePos: { top: "8%", left: "4%", right: "auto" },
     logoPos: { bottom: "6%", left: "4%", right: "auto" },
     personHeight: "105%", orbitWidth: "55%", orbitOpacity: 0.3,
@@ -655,16 +655,16 @@ export function DidYouKnowWorkspace() {
               className="relative overflow-hidden"
               style={{
                 background: BADGE_STYLES[safeBadgeStyle].bg,
-                borderRadius: "16px",
+                borderRadius: "10px",
                 boxShadow: `0 6px 30px rgba(0,0,0,0.5), 0 0 50px ${safeBadgeStyle === 0 ? 'rgba(76,175,80,0.3)' : safeBadgeStyle === 1 ? 'rgba(40,150,251,0.3)' : 'rgba(0,0,0,0.2)'}, inset 0 1px 0 rgba(255,255,255,0.2)`,
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-[rgba(255,255,255,0.12)] via-transparent to-[rgba(0,0,0,0.08)]" />
-              <div className="relative py-[8px] px-[20px] flex items-center gap-[10px]">
-                <div className="w-[26px] h-[26px] rounded-[8px] bg-[rgba(255,255,255,0.2)] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.2)]">
-                  <Lightbulb className="w-[14px] h-[14px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
+              <div className="relative py-[5px] px-[14px] flex items-center gap-[7px]">
+                <div className="w-[20px] h-[20px] rounded-[6px] bg-[rgba(255,255,255,0.2)] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.2)]">
+                  <Lightbulb className="w-[11px] h-[11px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
                 </div>
-                <span className="font-['Poppins'] font-black text-white text-[13px] uppercase tracking-[3.5px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
+                <span className="font-['Poppins'] font-black text-white text-[9px] uppercase tracking-[2.5px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
                   Did You Know?
                 </span>
               </div>

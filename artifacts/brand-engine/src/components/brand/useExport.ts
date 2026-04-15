@@ -3,14 +3,36 @@ import { toPng, toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { addExport, createThumbnail } from "./exportStore";
 
-function stripRootRadius(root: HTMLElement): { orig: string } {
-  const orig = root.style.borderRadius;
-  root.style.borderRadius = "0";
-  return { orig };
+type RadiiEntry = { el: HTMLElement; origRadius: string; origClip: string };
+
+function convertRadiiToClipPath(root: HTMLElement): RadiiEntry[] {
+  const saved: RadiiEntry[] = [];
+  const all = [root, ...Array.from(root.querySelectorAll("*"))] as HTMLElement[];
+  for (const el of all) {
+    const cs = getComputedStyle(el);
+    if (cs.borderRadius && cs.borderRadius !== "0px") {
+      const radius = cs.borderRadius;
+      saved.push({
+        el,
+        origRadius: el.style.borderRadius,
+        origClip: el.style.clipPath,
+      });
+      if (el === root) {
+        el.style.borderRadius = "0";
+      } else {
+        el.style.clipPath = `inset(0 round ${radius})`;
+        el.style.borderRadius = "0";
+      }
+    }
+  }
+  return saved;
 }
 
-function restoreRootRadius(root: HTMLElement, saved: { orig: string }) {
-  root.style.borderRadius = saved.orig;
+function restoreRadii(saved: RadiiEntry[]) {
+  for (const { el, origRadius, origClip } of saved) {
+    el.style.borderRadius = origRadius;
+    el.style.clipPath = origClip;
+  }
 }
 
 async function preloadImages(root: HTMLElement): Promise<void> {
@@ -96,7 +118,7 @@ export function useExport() {
 
     await preloadImages(target);
 
-    const savedRadius = stripRootRadius(target);
+    const savedRadii = convertRadiiToClipPath(target);
     const savedLayout = blowUpForCapture(target, 1920);
 
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -118,7 +140,7 @@ export function useExport() {
       if (format === "pdf") {
         const dataUrl = await toPng(target, opts);
         restoreLayout(target, savedLayout);
-        restoreRootRadius(target, savedRadius);
+        restoreRadii(savedRadii);
         const img = new Image();
         img.src = dataUrl;
         await new Promise((r) => { img.onload = r; });
@@ -130,7 +152,7 @@ export function useExport() {
       } else if (format === "jpeg") {
         const dataUrl = await toJpeg(target, { ...opts, quality: 0.95, backgroundColor: "#060B16" });
         restoreLayout(target, savedLayout);
-        restoreRootRadius(target, savedRadius);
+        restoreRadii(savedRadii);
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = `${safeName}.jpg`;
@@ -141,7 +163,7 @@ export function useExport() {
       } else {
         const dataUrl = await toPng(target, opts);
         restoreLayout(target, savedLayout);
-        restoreRootRadius(target, savedRadius);
+        restoreRadii(savedRadii);
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = `${safeName}.png`;
@@ -153,7 +175,7 @@ export function useExport() {
     } catch (err) {
       console.error("Export failed:", err);
       restoreLayout(target, savedLayout);
-      restoreRootRadius(target, savedRadius);
+      restoreRadii(savedRadii);
     } finally {
       setIsExporting(false);
     }

@@ -3,35 +3,22 @@ import { toPng, toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { addExport, createThumbnail } from "./exportStore";
 
-type RadiiEntry = { el: HTMLElement; origRadius: string; origClip: string };
-
-function convertRadiiToClipPath(root: HTMLElement): RadiiEntry[] {
-  const saved: RadiiEntry[] = [];
+function stripRadii(root: HTMLElement): Array<{ el: HTMLElement; orig: string }> {
+  const saved: Array<{ el: HTMLElement; orig: string }> = [];
   const all = [root, ...Array.from(root.querySelectorAll("*"))] as HTMLElement[];
   for (const el of all) {
     const cs = getComputedStyle(el);
     if (cs.borderRadius && cs.borderRadius !== "0px") {
-      const radius = cs.borderRadius;
-      saved.push({
-        el,
-        origRadius: el.style.borderRadius,
-        origClip: el.style.clipPath,
-      });
-      if (el === root) {
-        el.style.borderRadius = "0";
-      } else {
-        el.style.clipPath = `inset(0 round ${radius})`;
-        el.style.borderRadius = "0";
-      }
+      saved.push({ el, orig: el.style.borderRadius });
+      el.style.borderRadius = "0";
     }
   }
   return saved;
 }
 
-function restoreRadii(saved: RadiiEntry[]) {
-  for (const { el, origRadius, origClip } of saved) {
-    el.style.borderRadius = origRadius;
-    el.style.clipPath = origClip;
+function restoreRadii(saved: Array<{ el: HTMLElement; orig: string }>) {
+  for (const { el, orig } of saved) {
+    el.style.borderRadius = orig;
   }
 }
 
@@ -118,7 +105,7 @@ export function useExport() {
 
     await preloadImages(target);
 
-    const savedRadii = convertRadiiToClipPath(target);
+    const savedRadii = stripRadii(target);
     const savedLayout = blowUpForCapture(target, 1920);
 
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -129,6 +116,7 @@ export function useExport() {
       pixelRatio: 1,
       cacheBust: true,
       skipAutoScale: true,
+      style: { borderRadius: "0" },
     };
 
     try {

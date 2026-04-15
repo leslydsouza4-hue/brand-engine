@@ -592,11 +592,11 @@ export function DidYouKnowWorkspace() {
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-[rgba(255,255,255,0.12)] via-transparent to-[rgba(0,0,0,0.08)]" />
-              <div className="relative py-[10px] px-[24px] flex items-center gap-[12px]">
-                <div className="w-[30px] h-[30px] rounded-[10px] bg-[rgba(255,255,255,0.2)] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.2)]">
-                  <Lightbulb className="w-[17px] h-[17px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
+              <div className="relative py-[8px] px-[20px] flex items-center gap-[10px]">
+                <div className="w-[26px] h-[26px] rounded-[8px] bg-[rgba(255,255,255,0.2)] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.2)]">
+                  <Lightbulb className="w-[14px] h-[14px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
                 </div>
-                <span className="font-['Poppins'] font-black text-white text-[16px] uppercase tracking-[4px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
+                <span className="font-['Poppins'] font-black text-white text-[13px] uppercase tracking-[3.5px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
                   Did You Know?
                 </span>
               </div>

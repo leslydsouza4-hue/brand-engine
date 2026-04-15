@@ -57,9 +57,6 @@ const BADGE_STYLES = [
   { label: "Green", bg: "linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)" },
   { label: "Electric Blue", bg: "linear-gradient(135deg, #2896FB 0%, #095DC3 100%)" },
   { label: "Teal", bg: "linear-gradient(135deg, #00B2A9 0%, #009688 100%)" },
-  { label: "Gold", bg: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)" },
-  { label: "Purple", bg: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)" },
-  { label: "Rose", bg: "linear-gradient(135deg, #F43F5E 0%, #BE123C 100%)" },
 ];
 
 export function DidYouKnowWorkspace() {
@@ -580,7 +577,7 @@ export function DidYouKnowWorkspace() {
           <div
             className="absolute z-[6] whitespace-nowrap"
             style={{
-              top: "5%",
+              top: "8%",
               left: layout === "text-right" ? "auto" : "4%",
               right: layout === "text-right" ? "4%" : "auto",
             }}

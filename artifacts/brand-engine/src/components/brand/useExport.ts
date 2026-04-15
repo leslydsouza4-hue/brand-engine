@@ -1,6 +1,26 @@
 import { useState, useCallback } from "react";
+import { toPng, toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { addExport, createThumbnail } from "./exportStore";
+
+function stripRadii(root: HTMLElement): Array<{ el: HTMLElement; orig: string }> {
+  const saved: Array<{ el: HTMLElement; orig: string }> = [];
+  const all = [root, ...Array.from(root.querySelectorAll("*"))] as HTMLElement[];
+  for (const el of all) {
+    const cs = getComputedStyle(el);
+    if (cs.borderRadius && cs.borderRadius !== "0px") {
+      saved.push({ el, orig: el.style.borderRadius });
+      el.style.borderRadius = "0";
+    }
+  }
+  return saved;
+}
+
+function restoreRadii(saved: Array<{ el: HTMLElement; orig: string }>) {
+  for (const { el, orig } of saved) {
+    el.style.borderRadius = orig;
+  }
+}
 
 async function preloadImages(root: HTMLElement): Promise<void> {
   const imgs = root.querySelectorAll("img");
@@ -30,7 +50,6 @@ interface SavedLayout {
   transform: string;
   zIndex: string;
   overflow: string;
-  borderRadius: string;
 }
 
 function blowUpForCapture(el: HTMLElement, targetW: number): SavedLayout {
@@ -48,7 +67,6 @@ function blowUpForCapture(el: HTMLElement, targetW: number): SavedLayout {
     transform: el.style.transform,
     zIndex: el.style.zIndex,
     overflow: el.style.overflow,
-    borderRadius: el.style.borderRadius,
   };
 
   el.style.width = `${targetW}px`;
@@ -60,7 +78,6 @@ function blowUpForCapture(el: HTMLElement, targetW: number): SavedLayout {
   el.style.transform = "none";
   el.style.zIndex = "-1";
   el.style.overflow = "hidden";
-  el.style.borderRadius = "0";
 
   return saved;
 }
@@ -75,30 +92,6 @@ function restoreLayout(el: HTMLElement, saved: SavedLayout) {
   el.style.transform = saved.transform;
   el.style.zIndex = saved.zIndex;
   el.style.overflow = saved.overflow;
-  el.style.borderRadius = saved.borderRadius;
-}
-
-async function captureElement(el: HTMLElement, format: "png" | "jpeg"): Promise<string> {
-  const w = el.offsetWidth;
-  const h = el.offsetHeight;
-
-  const { default: html2canvas } = await import("html2canvas");
-
-  const canvas = await html2canvas(el, {
-    width: w,
-    height: h,
-    scale: 1,
-    useCORS: true,
-    allowTaint: true,
-    backgroundColor: "#060B16",
-    logging: false,
-    removeContainer: true,
-  });
-
-  if (format === "jpeg") {
-    return canvas.toDataURL("image/jpeg", 0.95);
-  }
-  return canvas.toDataURL("image/png");
 }
 
 export function useExport() {
@@ -112,20 +105,30 @@ export function useExport() {
 
     await preloadImages(target);
 
+    const savedRadii = stripRadii(target);
     const savedLayout = blowUpForCapture(target, 1920);
 
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-    await new Promise((r) => setTimeout(r, 100));
+
+    const opts = {
+      width: target.offsetWidth,
+      height: target.offsetHeight,
+      pixelRatio: 1,
+      cacheBust: true,
+      skipAutoScale: true,
+      style: { borderRadius: "0" },
+    };
 
     try {
+      await toPng(target, opts);
+
       const exportName = target.getAttribute("data-export-name") || "brand-engine-export";
       const safeName = exportName.replace(/[^a-zA-Z0-9\s\-_]/g, "").replace(/\s+/g, "_");
 
-      const dataUrl = await captureElement(target, format === "jpeg" ? "jpeg" : "png");
-
-      restoreLayout(target, savedLayout);
-
       if (format === "pdf") {
+        const dataUrl = await toPng(target, opts);
+        restoreLayout(target, savedLayout);
+        restoreRadii(savedRadii);
         const img = new Image();
         img.src = dataUrl;
         await new Promise((r) => { img.onload = r; });
@@ -135,6 +138,9 @@ export function useExport() {
         pdf.save(`${safeName}.pdf`);
         createThumbnail(dataUrl).then((thumb) => addExport({ name: `${safeName}.pdf`, source: "Custom Design", format: "pdf", thumbnail: thumb, dimensions: `${img.width}x${img.height}` }));
       } else if (format === "jpeg") {
+        const dataUrl = await toJpeg(target, { ...opts, quality: 0.95, backgroundColor: "#060B16" });
+        restoreLayout(target, savedLayout);
+        restoreRadii(savedRadii);
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = `${safeName}.jpg`;
@@ -143,6 +149,9 @@ export function useExport() {
         document.body.removeChild(a);
         createThumbnail(dataUrl).then((thumb) => addExport({ name: `${safeName}.jpg`, source: "Custom Design", format: "jpeg", thumbnail: thumb, dimensions: `${target.offsetWidth}x${target.offsetHeight}` }));
       } else {
+        const dataUrl = await toPng(target, opts);
+        restoreLayout(target, savedLayout);
+        restoreRadii(savedRadii);
         const a = document.createElement("a");
         a.href = dataUrl;
         a.download = `${safeName}.png`;
@@ -154,6 +163,7 @@ export function useExport() {
     } catch (err) {
       console.error("Export failed:", err);
       restoreLayout(target, savedLayout);
+      restoreRadii(savedRadii);
     } finally {
       setIsExporting(false);
     }

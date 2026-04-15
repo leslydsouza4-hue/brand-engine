@@ -171,12 +171,6 @@ export function CustomerJourneyWorkspace() {
     } catch (err) { console.error("Export failed:", err); } finally { setIsExporting(false); }
   }, [title, exportFormat, isDark]);
 
-  const T = ({ value, onChange, className, multiline, style }: { value: string; onChange: (v: string) => void; className?: string; multiline?: boolean; style?: React.CSSProperties }) => {
-    if (!isEditing) return <span className={className} style={style}>{value}</span>;
-    if (multiline) return <textarea value={value} onChange={e => onChange(e.target.value)} className={`${className} bg-[rgba(40,150,251,0.08)] border border-[rgba(40,150,251,0.3)] rounded-[3px] px-[3px] outline-none resize-none`} style={style} rows={2} />;
-    return <input value={value} onChange={e => onChange(e.target.value)} className={`${className} bg-[rgba(40,150,251,0.08)] border border-[rgba(40,150,251,0.3)] rounded-[3px] px-[3px] outline-none w-full`} style={style} />;
-  };
-
   const phases = [
     { label: "Phase 1", time: "Day 0 – Trial Start", heading: "Trial & Conversion", items: phase1Items, icons: ICONS_1, pn: 1 as const },
     { label: "Phase 2", time: "Day 1 – Day 90", heading: "Customer Success", items: phase2Items, icons: ICONS_2, pn: 2 as const },
@@ -198,38 +192,141 @@ export function CustomerJourneyWorkspace() {
           <button onClick={resetAll} className="w-[34px] h-[34px] flex items-center justify-center rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[#64748B] hover:text-[#FF4D4D] hover:border-[rgba(255,77,77,0.3)] cursor-pointer transition-all" title="Reset"><RotateCcw className="w-[12px] h-[12px]" /></button>
         </div>
 
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">Theme</div>
-          <div className="flex gap-[4px]">
-            <button onClick={() => setIsDark(true)} className={`flex-1 flex items-center justify-center gap-[5px] py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all ${isDark ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>
-              <Moon className="w-[11px] h-[11px]" /> Dark
-            </button>
-            <button onClick={() => setIsDark(false)} className={`flex-1 flex items-center justify-center gap-[5px] py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all ${!isDark ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>
-              <Sun className="w-[11px] h-[11px]" /> Light
-            </button>
-          </div>
-        </div>
+        {isEditing && (
+          <div className="flex flex-col gap-[12px] border-t border-[rgba(255,255,255,0.04)] pt-[12px]">
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[6px] block">Title</label>
+              <input
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                className="w-full py-[8px] px-[10px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[8px] text-[12px] font-semibold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] font-['Poppins']"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[6px] block">Subtitle</label>
+              <input
+                value={subtitle}
+                onChange={e => setSubtitle(e.target.value)}
+                className="w-full py-[8px] px-[10px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[8px] text-[12px] font-semibold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] font-['Poppins']"
+              />
+            </div>
 
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">Export Format</div>
-          <div className="flex gap-[4px]">
-            {(["pdf","png"] as const).map(f => (
-              <button key={f} onClick={() => setExportFormat(f)} className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all uppercase ${exportFormat===f ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>{f}</button>
+            {phases.map((ph, pi) => (
+              <div key={pi}>
+                <button onClick={() => togglePhase(pi)} className="w-full flex items-center justify-between py-[6px] cursor-pointer bg-transparent border-none outline-none">
+                  <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#2896FB]">{ph.label} — {ph.heading}</span>
+                  <ChevronDown className={`w-[12px] h-[12px] text-[#2896FB] transition-transform duration-200 ${openPhases[pi] ? "rotate-180" : ""}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-200 ${openPhases[pi] ? "max-h-[800px] opacity-100 mt-[4px]" : "max-h-0 opacity-0"}`}>
+                  {ph.items.map((item, i) => (
+                    <div key={i} className="mb-[8px] p-[10px] rounded-[8px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]">
+                      <label className="text-[9px] font-semibold uppercase tracking-[0.5px] text-[#475569] mb-[4px] block">Item {i+1} Title</label>
+                      <input
+                        value={item.title}
+                        onChange={e => up(ph.pn, i, "title", e.target.value)}
+                        className="w-full py-[6px] px-[8px] mb-[6px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[6px] text-[11px] font-semibold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] font-['Poppins']"
+                      />
+                      <label className="text-[9px] font-semibold uppercase tracking-[0.5px] text-[#475569] mb-[4px] block">Description</label>
+                      <textarea
+                        value={item.desc}
+                        onChange={e => up(ph.pn, i, "desc", e.target.value)}
+                        rows={2}
+                        className="w-full py-[6px] px-[8px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[6px] text-[10px] text-[#94A3B8] outline-none focus:border-[rgba(40,150,251,0.3)] resize-none font-['Poppins'] leading-[1.5]"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
             ))}
-          </div>
-        </div>
 
-        {[{l:"Phase 1 — Trial",items:phase1Items},{l:"Phase 2 — Success",items:phase2Items},{l:"Phase 3 — Growth",items:phase3Items}].map((s,si) => (
-          <div key={si}>
-            <button onClick={() => togglePhase(si)} className="w-full flex items-center justify-between py-[6px] cursor-pointer bg-transparent border-none outline-none">
-              <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880]">{s.l}</span>
-              <ChevronDown className={`w-[12px] h-[12px] text-[#94a3b880] transition-transform duration-200 ${openPhases[si] ? "rotate-180" : ""}`} />
-            </button>
-            <div className={`overflow-hidden transition-all duration-200 ${openPhases[si] ? "max-h-[600px] opacity-100 mt-[4px]" : "max-h-0 opacity-0"}`}>
-              {s.items.map((it,i) => (<div key={i} className="mb-[8px] p-[8px] rounded-[8px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]"><div className="text-[11px] font-semibold text-[#E2E8F0] mb-[2px]">{it.title}</div><div className="text-[10px] text-[#64748B] leading-[1.4]">{it.desc}</div></div>))}
+            <div>
+              <button onClick={() => togglePhase(3)} className="w-full flex items-center justify-between py-[6px] cursor-pointer bg-transparent border-none outline-none">
+                <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#2896FB]">Quick Reference Table</span>
+                <ChevronDown className={`w-[12px] h-[12px] text-[#2896FB] transition-transform duration-200 ${openPhases[3] ? "rotate-180" : ""}`} />
+              </button>
+              <div className={`overflow-hidden transition-all duration-200 ${openPhases[3] ? "max-h-[600px] opacity-100 mt-[4px]" : "max-h-0 opacity-0"}`}>
+                {quickRef.map((row, i) => (
+                  <div key={i} className="mb-[8px] p-[10px] rounded-[8px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)] flex flex-col gap-[6px]">
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-[0.5px] text-[#475569] mb-[3px] block">Stage</label>
+                      <input value={row.stage} onChange={e => uq(i, "stage", e.target.value)} className="w-full py-[5px] px-[8px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[6px] text-[10px] font-semibold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] font-['Poppins']" />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-[0.5px] text-[#475569] mb-[3px] block">Link</label>
+                      <input value={row.link} onChange={e => uq(i, "link", e.target.value)} className="w-full py-[5px] px-[8px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[6px] text-[10px] font-semibold text-[#2896FB] outline-none focus:border-[rgba(40,150,251,0.3)] font-['Poppins']" />
+                    </div>
+                    <div>
+                      <label className="text-[9px] font-semibold uppercase tracking-[0.5px] text-[#475569] mb-[3px] block">Team</label>
+                      <input value={row.team} onChange={e => uq(i, "team", e.target.value)} className="w-full py-[5px] px-[8px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[6px] text-[10px] text-[#94A3B8] outline-none focus:border-[rgba(40,150,251,0.3)] font-['Poppins']" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        ))}
+        )}
+
+        {!isEditing && (
+          <>
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">Theme</div>
+              <div className="flex gap-[4px]">
+                <button onClick={() => setIsDark(true)} className={`flex-1 flex items-center justify-center gap-[5px] py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all ${isDark ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>
+                  <Moon className="w-[11px] h-[11px]" /> Dark
+                </button>
+                <button onClick={() => setIsDark(false)} className={`flex-1 flex items-center justify-center gap-[5px] py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all ${!isDark ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>
+                  <Sun className="w-[11px] h-[11px]" /> Light
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">Export Format</div>
+              <div className="flex gap-[4px]">
+                {(["pdf","png"] as const).map(f => (
+                  <button key={f} onClick={() => setExportFormat(f)} className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all uppercase ${exportFormat===f ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>{f}</button>
+                ))}
+              </div>
+            </div>
+
+            {[{l:"Phase 1 — Trial",items:phase1Items},{l:"Phase 2 — Success",items:phase2Items},{l:"Phase 3 — Growth",items:phase3Items}].map((s,si) => (
+              <div key={si}>
+                <button onClick={() => togglePhase(si)} className="w-full flex items-center justify-between py-[6px] cursor-pointer bg-transparent border-none outline-none">
+                  <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880]">{s.l}</span>
+                  <ChevronDown className={`w-[12px] h-[12px] text-[#94a3b880] transition-transform duration-200 ${openPhases[si] ? "rotate-180" : ""}`} />
+                </button>
+                <div className={`overflow-hidden transition-all duration-200 ${openPhases[si] ? "max-h-[600px] opacity-100 mt-[4px]" : "max-h-0 opacity-0"}`}>
+                  {s.items.map((it,i) => (<div key={i} className="mb-[8px] p-[8px] rounded-[8px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]"><div className="text-[11px] font-semibold text-[#E2E8F0] mb-[2px]">{it.title}</div><div className="text-[10px] text-[#64748B] leading-[1.4]">{it.desc}</div></div>))}
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {isEditing && (
+          <>
+            <div className="border-t border-[rgba(255,255,255,0.04)] pt-[12px]">
+              <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">Theme</div>
+              <div className="flex gap-[4px]">
+                <button onClick={() => setIsDark(true)} className={`flex-1 flex items-center justify-center gap-[5px] py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all ${isDark ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>
+                  <Moon className="w-[11px] h-[11px]" /> Dark
+                </button>
+                <button onClick={() => setIsDark(false)} className={`flex-1 flex items-center justify-center gap-[5px] py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all ${!isDark ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>
+                  <Sun className="w-[11px] h-[11px]" /> Light
+                </button>
+              </div>
+            </div>
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#94a3b880] mb-[8px]">Export Format</div>
+              <div className="flex gap-[4px]">
+                {(["pdf","png"] as const).map(f => (
+                  <button key={f} onClick={() => setExportFormat(f)} className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-semibold border cursor-pointer transition-all uppercase ${exportFormat===f ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]" : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"}`}>{f}</button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
         <div className="mt-auto pt-[16px]">
           <button onClick={handleExport} disabled={isExporting} className="w-full flex items-center justify-center gap-[8px] py-[12px] rounded-[14px] text-[13px] font-bold cursor-pointer transition-all bg-gradient-to-r from-[#2896FB] to-[#095DC3] text-white shadow-[0_4px_20px_rgba(40,150,251,0.3)] hover:shadow-[0_6px_28px_rgba(40,150,251,0.4)] disabled:opacity-50 disabled:cursor-not-allowed border-none">
             {isExporting ? <Loader2 className="w-[16px] h-[16px] animate-spin" /> : <Download className="w-[16px] h-[16px]" />} Export as {exportFormat.toUpperCase()}
@@ -240,9 +337,7 @@ export function CustomerJourneyWorkspace() {
       <div className="flex-1 overflow-auto flex items-start justify-center p-[30px] bg-[rgba(6,11,22,0.5)]">
         <div ref={previewRef} className="font-['Poppins']" style={{ width: "680px", height: "880px", position: "relative", overflow: "hidden", background: th.bg, boxShadow: "0 25px 80px rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
 
-          {/* BG image */}
           {th.bgImage && <img src={`${BASE}assets/${th.bgImage}`} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none" }} />}
-          {/* BG overlay effects */}
           <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 20% 15%, ${th.bgGlow1} 0%, transparent 50%), radial-gradient(ellipse at 80% 60%, ${th.bgGlow2} 0%, transparent 50%)`, pointerEvents: "none" }} />
           <div style={{ position: "absolute", inset: 0, backgroundImage: `radial-gradient(${th.dotPattern} 1px, transparent 1px)`, backgroundSize: "24px 24px", pointerEvents: "none" }} />
 
@@ -252,31 +347,27 @@ export function CustomerJourneyWorkspace() {
               <img src={`${BASE}assets/logos/${th.logo}`} alt="HighLevel" style={{ height: "22px", objectFit: "contain" }} />
             </div>
             <div style={{ marginTop: "16px" }}>
-              <T value={title} onChange={setTitle} className="block text-[30px] font-semibold leading-[1.1] tracking-[-1px]" style={{ color: th.title }} />
+              <span className="block text-[30px] font-semibold leading-[1.1] tracking-[-1px]" style={{ color: th.title }}>{title}</span>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "8px" }}>
                 <div style={{ height: "3px", width: "44px", borderRadius: "2px", background: `linear-gradient(90deg, ${BLUE}, ${ROYAL})` }} />
-                <T value={subtitle} onChange={setSubtitle} className="text-[13px] font-semibold tracking-[1.5px] uppercase" style={{ color: th.muted }} />
+                <span className="text-[13px] font-semibold tracking-[1.5px] uppercase" style={{ color: th.muted }}>{subtitle}</span>
               </div>
             </div>
           </div>
 
-          {/* PHASE SECTIONS — uses relative container for timeline line */}
+          {/* PHASE SECTIONS */}
           <div style={{ position: "relative", zIndex: 2, flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: "8px", paddingBottom: "4px" }}>
-            {/* VERTICAL JOURNEY LINE — spans from first to last marker */}
             <div style={{ position: "absolute", top: "12px", bottom: "12px", left: "56px", width: "2px", background: `linear-gradient(180deg, ${BLUE}50, ${ROYAL}40, ${BLUE}20)`, zIndex: 1 }} />
 
             {phases.map((ph, pi) => (
               <div key={pi} style={{ position: "relative", padding: "7px 36px 5px 36px" }}>
-                {/* Phase marker dot */}
                 <div style={{ position: "absolute", left: "44px", top: "12px", width: "26px", height: "26px", borderRadius: "50%", background: `linear-gradient(135deg, ${BLUE}, ${ROYAL})`, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: `0 0 18px ${BLUE}40, 0 0 0 3px ${th.markerRing}, 0 0 0 5px ${BLUE}25`, zIndex: 3 }}>
                   <span style={{ color: "white", fontSize: "12px", fontWeight: 900 }}>{pi+1}</span>
                 </div>
 
-                {/* Phase content */}
                 <div style={{ marginLeft: "48px", background: th.cardBg, border: `1px solid ${th.cardBorder}`, borderRadius: "14px", padding: "10px 14px", backdropFilter: "blur(10px)", position: "relative", overflow: "hidden" }}>
                   <div style={{ position: "absolute", top: "-20px", left: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: `radial-gradient(circle, ${BLUE}08 0%, transparent 70%)` }} />
 
-                  {/* Header */}
                   <div style={{ marginBottom: "6px", position: "relative" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "2px" }}>
                       <span style={{ fontSize: "9px", fontWeight: 800, color: BLUE, letterSpacing: "2px", textTransform: "uppercase" }}>{ph.label}</span>
@@ -286,7 +377,6 @@ export function CustomerJourneyWorkspace() {
                     <div style={{ fontSize: "16px", fontWeight: 800, color: th.heading, lineHeight: 1.15 }}>{ph.heading}</div>
                   </div>
 
-                  {/* Items */}
                   <div style={{ display: "flex", gap: "7px" }}>
                     {ph.items.map((item, i) => (
                       <div key={i} style={{ flex: 1, background: th.itemBg, border: `1px solid ${th.itemBorder}`, borderRadius: "10px", padding: "8px", position: "relative", overflow: "hidden" }}>
@@ -294,16 +384,14 @@ export function CustomerJourneyWorkspace() {
                           <div style={{ width: "20px", height: "20px", borderRadius: "6px", background: `${BLUE}12`, border: `1px solid ${BLUE}18`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             <svg viewBox="0 0 24 24" fill="none" stroke={BLUE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "11px", height: "11px" }}>{ph.icons[i]}</svg>
                           </div>
-                          <T value={item.title} onChange={v => up(ph.pn, i, "title", v)} className="block text-[9px] font-bold leading-[1.25]" style={{ color: th.heading }} />
+                          <span className="block text-[9px] font-bold leading-[1.25]" style={{ color: th.heading }}>{item.title}</span>
                         </div>
-                        <T value={item.desc} onChange={v => up(ph.pn, i, "desc", v)} className="block text-[8.5px] leading-[1.5]" style={{ color: th.body }} multiline />
+                        <span className="block text-[8.5px] leading-[1.5]" style={{ color: th.body }}>{item.desc}</span>
                       </div>
                     ))}
                   </div>
-
                 </div>
 
-                {/* Arrow connector between phases */}
                 {pi < 2 && (
                   <div style={{ position: "absolute", left: "53px", bottom: "-4px", zIndex: 4 }}>
                     <svg width="8" height="12" viewBox="0 0 8 12"><path d="M4 0 L4 8 L2 5.5 M4 8 L6 5.5" stroke={BLUE} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" /></svg>
@@ -313,7 +401,7 @@ export function CustomerJourneyWorkspace() {
             ))}
           </div>
 
-          {/* QUICK REFERENCE — anchored to bottom */}
+          {/* QUICK REFERENCE */}
           <div style={{ position: "relative", zIndex: 2, margin: "0 36px 20px" }}>
             <div style={{ borderRadius: "14px", overflow: "hidden", border: `1px solid ${th.tableBorder}` }}>
               <div style={{ padding: "8px 16px", background: th.tableHeaderBg, display: "flex", alignItems: "center", gap: "8px", borderBottom: `1px solid ${th.tableBorder}` }}>
@@ -333,9 +421,9 @@ export function CustomerJourneyWorkspace() {
                 <tbody>
                   {quickRef.map((row, i) => (
                     <tr key={i} style={{ background: i%2===0 ? th.tableRowBg : th.tableRowAlt }}>
-                      <td style={{ padding: "7px 16px", fontWeight: 700, fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.stage} onChange={v => uq(i,"stage",v)} className="text-[10px]" style={{ color: th.tableText }} /></td>
-                      <td style={{ padding: "7px 16px", fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.link} onChange={v => uq(i,"link",v)} className="text-[10px] font-bold" style={{ color: BLUE }} /></td>
-                      <td style={{ padding: "7px 16px", fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}` }}><T value={row.team} onChange={v => uq(i,"team",v)} className="text-[10px]" style={{ color: th.tableMuted }} /></td>
+                      <td style={{ padding: "7px 16px", fontWeight: 700, fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}`, color: th.tableText }}>{row.stage}</td>
+                      <td style={{ padding: "7px 16px", fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}`, color: BLUE, fontWeight: 700 }}>{row.link}</td>
+                      <td style={{ padding: "7px 16px", fontSize: "10px", borderBottom: `1px solid ${th.tableBorder}`, color: th.tableMuted }}>{row.team}</td>
                     </tr>
                   ))}
                 </tbody>

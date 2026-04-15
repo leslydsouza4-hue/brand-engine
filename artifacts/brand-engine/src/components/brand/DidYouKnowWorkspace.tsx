@@ -46,12 +46,11 @@ const TEAM: TeamMember[] = [
 const BG_URL = `${BASE}assets/did-you-know/bg.png`;
 const ORBIT_URL = `${BASE}assets/did-you-know/orbit-rings.png`;
 
-type ThumbnailLayout = "text-left" | "text-right" | "text-center";
+type ThumbnailLayout = "text-left" | "text-right";
 
 const LAYOUT_PRESETS: Record<ThumbnailLayout, { personX: number; personY: number; orbitX: number; orbitY: number; label: string; desc: string }> = {
   "text-left":  { personX: 78, personY: 55, orbitX: 78, orbitY: 85, label: "Text Left",  desc: "Person right" },
   "text-right": { personX: 22, personY: 55, orbitX: 22, orbitY: 85, label: "Text Right", desc: "Person left" },
-  "text-center": { personX: 50, personY: 58, orbitX: 50, orbitY: 85, label: "Centered",  desc: "Text overlay" },
 };
 
 const BADGE_STYLES = [
@@ -237,31 +236,7 @@ export function DidYouKnowWorkspace() {
       );
     }
 
-    return (
-      <>
-        <div className="absolute bottom-0 left-0 right-0 h-[50%] z-[3] pointer-events-none"
-          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)" }}
-        />
-        <div className="absolute z-[4] text-center w-[85%] left-1/2 bottom-[6%] -translate-x-1/2">
-          {headline && (
-            <div
-              className="font-['Poppins'] font-black text-white uppercase leading-[0.92]"
-              style={{
-                fontSize: 'clamp(16px, 3vw, 34px)',
-                textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 0 30px rgba(0,0,0,0.4)',
-              }}
-            >
-              {headline}
-            </div>
-          )}
-          {subtext && (
-            <div className="font-['Poppins'] font-bold text-[clamp(7px,0.9vw,11px)] uppercase text-[#4CAF50] mt-[6px] tracking-[2.5px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-              {subtext}
-            </div>
-          )}
-        </div>
-      </>
-    );
+    return null;
   };
 
   return (
@@ -374,7 +349,7 @@ export function DidYouKnowWorkspace() {
             Layout
           </div>
           <div className="flex gap-[6px] mb-[4px]">
-            {(["text-left", "text-right", "text-center"] as ThumbnailLayout[]).map((l) => {
+            {(["text-left", "text-right"] as ThumbnailLayout[]).map((l) => {
               const preset = LAYOUT_PRESETS[l];
               const isActive = layout === l;
               return (
@@ -599,7 +574,7 @@ export function DidYouKnowWorkspace() {
             alt="Orbit Rings"
             className="absolute z-[1] pointer-events-none"
             style={{
-              width: '85%',
+              width: '65%',
               height: 'auto',
               left: `${currentPreset.orbitX}%`,
               top: `${currentPreset.orbitY}%`,

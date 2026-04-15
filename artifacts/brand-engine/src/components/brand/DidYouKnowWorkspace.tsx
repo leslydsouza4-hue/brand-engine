@@ -47,7 +47,7 @@ const TEAM: TeamMember[] = [
 const BG_URL = `${BASE}assets/did-you-know/bg.png`;
 const ORBIT_URL = `${BASE}assets/did-you-know/orbit-rings.png`;
 
-type ThumbnailLayout = "text-left" | "text-right" | "spotlight";
+type ThumbnailLayout = "text-left" | "text-right";
 
 interface LayoutPreset {
   personX: number;
@@ -62,7 +62,6 @@ interface LayoutPreset {
   personHeight: string;
   orbitWidth: string;
   orbitOpacity: number;
-  bottomBar?: boolean;
 }
 
 const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
@@ -81,15 +80,6 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
     badgePos: { top: "8%", left: "auto", right: "4%" },
     logoPos: { bottom: "6%", left: "auto", right: "4%" },
     personHeight: "95%", orbitWidth: "65%", orbitOpacity: 0.35,
-  },
-  "spotlight": {
-    personX: 50, personY: 48, orbitX: 50, orbitY: 85,
-    label: "Spotlight", desc: "Poster style",
-    textPos: { top: "auto", left: "5%", right: "auto", textAlign: "left", width: "60%" },
-    badgePos: { top: "6%", left: "50%", right: "auto" },
-    logoPos: { bottom: "6%", left: "auto", right: "5%" },
-    personHeight: "92%", orbitWidth: "85%", orbitOpacity: 0.2,
-    bottomBar: true,
   },
 };
 
@@ -230,16 +220,11 @@ export function DidYouKnowWorkspace() {
     if (!headlineWhite && !headlineHighlight) return null;
 
     const tp = currentPreset.textPos;
-    const isSpotlight = currentPreset.bottomBar;
 
     return (
       <div
         className="absolute z-[4]"
-        style={{
-          ...(isSpotlight
-            ? { bottom: "8%", left: tp.left, right: tp.right, textAlign: tp.textAlign as any, width: tp.width }
-            : { top: tp.top, left: tp.left, right: tp.right, textAlign: tp.textAlign as any, width: tp.width }),
-        }}
+        style={{ top: tp.top, left: tp.left, right: tp.right, textAlign: tp.textAlign as any, width: tp.width }}
       >
         {headlineWhite && (
           <div
@@ -613,24 +598,6 @@ export function DidYouKnowWorkspace() {
             className="absolute inset-0 w-full h-full object-cover z-0"
           />
 
-          {layout === "spotlight" && (
-            <>
-              <div
-                className="absolute inset-0 z-[0] pointer-events-none"
-                style={{
-                  background: 'radial-gradient(ellipse at 50% 30%, rgba(40,150,251,0.12) 0%, transparent 60%)',
-                }}
-              />
-              <div
-                className="absolute bottom-0 left-0 right-0 z-[3] pointer-events-none"
-                style={{
-                  height: '35%',
-                  background: 'linear-gradient(to top, rgba(3,8,20,0.95) 0%, rgba(3,8,20,0.8) 40%, rgba(3,8,20,0.4) 70%, transparent 100%)',
-                }}
-              />
-            </>
-          )}
-
           <img
             src={ORBIT_URL}
             alt="Orbit Rings"
@@ -692,7 +659,6 @@ export function DidYouKnowWorkspace() {
             const layoutOffsetMap: Record<ThumbnailLayout, { top: number; left: number }> = {
               "text-left": { top: 55, left: 65 },
               "text-right": { top: 55, left: 35 },
-              "spotlight": { top: 45, left: 50 },
             };
             const layoutOffsets = layoutOffsetMap[layout] || { top: 50, left: 50 };
             const baseTransform = `translate(-50%, -50%) scale(${scaleVal})`;

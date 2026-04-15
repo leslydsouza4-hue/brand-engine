@@ -698,6 +698,18 @@ export function DidYouKnowWorkspace() {
 
           {activeImage && currentMember ? (
             <>
+              <div
+                className={`absolute z-[1] pointer-events-none ${isDragging ? '' : 'transition-all duration-300 ease-out'}`}
+                style={{
+                  left: `${personX}%`,
+                  top: `${personY}%`,
+                  transform: `translate(-50%, -50%) scale(${personScale / 100})`,
+                  width: '70%',
+                  height: '90%',
+                  background: 'radial-gradient(ellipse at center, rgba(40,150,251,0.45) 0%, rgba(9,93,195,0.3) 30%, rgba(40,150,251,0.15) 55%, transparent 80%)',
+                  filter: 'blur(45px)',
+                }}
+              />
               <img
                 src={`${currentMember.assetBase}${activeImage}`}
                 alt={`${currentMember.name} Cutout`}
@@ -711,7 +723,7 @@ export function DidYouKnowWorkspace() {
                   top: `${personY}%`,
                   transform: `translate(-50%, -50%) scale(${personScale / 100})`,
                   height: '95%',
-                  filter: 'drop-shadow(0 0 25px rgba(0,0,0,0.5)) drop-shadow(0 4px 20px rgba(0,0,0,0.6))',
+                  filter: 'drop-shadow(0 0 30px rgba(40,150,251,0.4)) drop-shadow(0 0 60px rgba(9,93,195,0.3)) drop-shadow(0 4px 20px rgba(0,0,0,0.5))',
                 }}
               />
             </>

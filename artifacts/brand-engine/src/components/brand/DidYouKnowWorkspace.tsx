@@ -43,20 +43,21 @@ const TEAM: TeamMember[] = [
   },
 ];
 
-const BG_URL = `${BASE}assets/backgrounds-dark/Type=Core Gradient.png`;
+const BG_URL = `${BASE}assets/did-you-know/bg.png`;
+const ORBIT_URL = `${BASE}assets/did-you-know/orbit-rings.png`;
 
-type ThumbnailLayout = "classic" | "person-left" | "person-right";
+type ThumbnailLayout = "text-left" | "text-right" | "text-center";
 
-const LAYOUT_PRESETS: Record<ThumbnailLayout, { personX: number; personY: number; label: string; desc: string }> = {
-  "classic": { personX: 75, personY: 50, label: "Classic", desc: "Bottom text" },
-  "person-left": { personX: 22, personY: 55, label: "Left", desc: "Text right" },
-  "person-right": { personX: 78, personY: 50, label: "Right", desc: "Text left" },
+const LAYOUT_PRESETS: Record<ThumbnailLayout, { personX: number; personY: number; orbitX: number; orbitY: number; label: string; desc: string }> = {
+  "text-left":  { personX: 78, personY: 55, orbitX: 78, orbitY: 50, label: "Text Left",  desc: "Person right" },
+  "text-right": { personX: 22, personY: 55, orbitX: 22, orbitY: 50, label: "Text Right", desc: "Person left" },
+  "text-center": { personX: 50, personY: 58, orbitX: 50, orbitY: 52, label: "Centered",  desc: "Text overlay" },
 };
 
 const BADGE_STYLES = [
-  { label: "Gradient", bg: "linear-gradient(135deg, #095DC3 0%, #2896FB 40%, #00B2A9 100%)" },
+  { label: "Green", bg: "linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)" },
   { label: "Electric Blue", bg: "linear-gradient(135deg, #2896FB 0%, #095DC3 100%)" },
-  { label: "Teal", bg: "linear-gradient(135deg, #00B2A9 0%, #095DC3 100%)" },
+  { label: "Teal", bg: "linear-gradient(135deg, #00B2A9 0%, #009688 100%)" },
   { label: "Gold", bg: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)" },
   { label: "Purple", bg: "linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)" },
   { label: "Rose", bg: "linear-gradient(135deg, #F43F5E 0%, #BE123C 100%)" },
@@ -65,15 +66,15 @@ const BADGE_STYLES = [
 export function DidYouKnowWorkspace() {
   const { isExporting, handleExport } = useExport();
 
-  const [layout, setLayout] = useState<ThumbnailLayout>("classic");
+  const [layout, setLayout] = useState<ThumbnailLayout>("text-left");
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
   const [badgeStyle, setBadgeStyle] = useState(0);
 
-  const [personX, setPersonX] = useState(75);
-  const [personY, setPersonY] = useState(50);
+  const [personX, setPersonX] = useState(78);
+  const [personY, setPersonY] = useState(55);
   const [personScale, setPersonScale] = useState(95);
 
   const handleLayoutChange = (l: ThumbnailLayout) => {
@@ -144,7 +145,12 @@ export function DidYouKnowWorkspace() {
     };
   }, [isDragging, handleDragMove, handleDragEnd]);
 
-  const resetPersonPosition = () => { setPersonX(75); setPersonY(50); setPersonScale(95); };
+  const resetPersonPosition = () => {
+    const preset = LAYOUT_PRESETS[layout];
+    setPersonX(preset.personX);
+    setPersonY(preset.personY);
+    setPersonScale(95);
+  };
 
   const wordCount = useMemo(() => {
     const words = headline.trim().split(/\s+/).filter(w => w.length > 0);
@@ -179,6 +185,84 @@ export function DidYouKnowWorkspace() {
   };
 
   const handleCropCancel = () => { setCropModalImage(null); };
+
+  const currentPreset = LAYOUT_PRESETS[layout];
+
+  const renderTextContent = () => {
+    if (!headline && !subtext) return null;
+
+    if (layout === "text-left") {
+      return (
+        <div className="absolute z-[4] top-[28%] left-[5%] w-[50%] text-left">
+          {headline && (
+            <div
+              className="font-['Poppins'] font-black text-white uppercase leading-[0.92]"
+              style={{
+                fontSize: 'clamp(16px, 3.2vw, 38px)',
+                textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3)',
+              }}
+            >
+              {headline}
+            </div>
+          )}
+          {subtext && (
+            <div className="font-['Poppins'] font-bold text-[clamp(7px,0.9vw,11px)] uppercase text-[#4CAF50] mt-[8px] tracking-[2.5px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              {subtext}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (layout === "text-right") {
+      return (
+        <div className="absolute z-[4] top-[28%] right-[5%] w-[50%] text-right">
+          {headline && (
+            <div
+              className="font-['Poppins'] font-black text-white uppercase leading-[0.92]"
+              style={{
+                fontSize: 'clamp(16px, 3.2vw, 38px)',
+                textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3)',
+              }}
+            >
+              {headline}
+            </div>
+          )}
+          {subtext && (
+            <div className="font-['Poppins'] font-bold text-[clamp(7px,0.9vw,11px)] uppercase text-[#4CAF50] mt-[8px] tracking-[2.5px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              {subtext}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="absolute bottom-0 left-0 right-0 h-[50%] z-[3] pointer-events-none"
+          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)" }}
+        />
+        <div className="absolute z-[4] text-center w-[85%] left-1/2 bottom-[6%] -translate-x-1/2">
+          {headline && (
+            <div
+              className="font-['Poppins'] font-black text-white uppercase leading-[0.92]"
+              style={{
+                fontSize: 'clamp(16px, 3vw, 34px)',
+                textShadow: '0 2px 8px rgba(0,0,0,0.7), 0 0 30px rgba(0,0,0,0.4)',
+              }}
+            >
+              {headline}
+            </div>
+          )}
+          {subtext && (
+            <div className="font-['Poppins'] font-bold text-[clamp(7px,0.9vw,11px)] uppercase text-[#4CAF50] mt-[6px] tracking-[2.5px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+              {subtext}
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
@@ -270,24 +354,6 @@ export function DidYouKnowWorkspace() {
                 <Move className="w-[12px] h-[12px] text-[#2896FB] shrink-0" />
                 <span className="text-[10px] text-[#2896FB] font-medium">Drag person in the live preview to reposition</span>
               </div>
-              <div className="flex gap-[6px] mb-[6px]">
-                {[
-                  { label: "Left", x: 22, y: 50 },
-                  { label: "Center", x: 50, y: 50 },
-                  { label: "Right", x: 75, y: 50 },
-                ].map((preset) => (
-                  <button
-                    key={preset.label}
-                    onClick={() => { setPersonX(preset.x); setPersonY(preset.y); }}
-                    className={`flex-1 py-[6px] px-[8px] border rounded-[8px] font-inherit text-[10px] font-semibold cursor-pointer text-center capitalize transition-all
-                      ${Math.abs(personX - preset.x) < 5 && Math.abs(personY - preset.y) < 5
-                        ? 'border-[rgba(40,150,251,0.25)] text-[#2896FB] bg-[rgba(40,150,251,0.08)]'
-                        : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(40,150,251,0.15)] hover:text-[#CBD5E1]'}`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
               <div>
                 <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[4px]">
                   Scale <span className="font-semibold text-[#94A3B8]">{personScale}%</span>
@@ -308,7 +374,7 @@ export function DidYouKnowWorkspace() {
             Layout
           </div>
           <div className="flex gap-[6px] mb-[4px]">
-            {(["classic", "person-left", "person-right"] as ThumbnailLayout[]).map((l) => {
+            {(["text-left", "text-right", "text-center"] as ThumbnailLayout[]).map((l) => {
               const preset = LAYOUT_PRESETS[l];
               const isActive = layout === l;
               return (
@@ -354,13 +420,13 @@ export function DidYouKnowWorkspace() {
               Headline
               <span className="text-[10px] font-medium text-[#475569] normal-case tracking-normal">{wordCount} words</span>
             </label>
-            <input
-              type="text"
+            <textarea
               value={headline}
               onChange={e => setHeadline(e.target.value)}
-              placeholder="Enter bold headline..."
-              maxLength={60}
-              className="w-full py-[14px] px-[18px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[18px] font-bold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
+              placeholder="YOU CAN ADD TERMS & CONDITIONS DIRECTLY TO PAYMENT FORMS IN HIGHLEVEL?"
+              maxLength={120}
+              rows={3}
+              className="w-full py-[14px] px-[18px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[14px] font-bold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-none"
             />
           </div>
           <div className="flex flex-col">
@@ -371,7 +437,7 @@ export function DidYouKnowWorkspace() {
               type="text"
               value={subtext}
               onChange={e => setSubtext(e.target.value)}
-              placeholder="Supporting text..."
+              placeholder="IN HIGHLEVEL"
               maxLength={40}
               className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-inherit text-[13.5px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
             />
@@ -515,7 +581,12 @@ export function DidYouKnowWorkspace() {
       </div>
 
       <LivePreview>
-        <div ref={previewRef} data-export-preview data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; return headline.trim() ? `Did You Know - ${headline.trim()} ${datePart}` : `Did You Know Thumbnail ${datePart}`; })()} className={`w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}>
+        <div
+          ref={previewRef}
+          data-export-preview
+          data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; return headline.trim() ? `Did You Know - ${headline.trim().substring(0,40)} ${datePart}` : `Did You Know Thumbnail ${datePart}`; })()}
+          className={`w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}
+        >
 
           <img
             src={BG_URL}
@@ -524,32 +595,55 @@ export function DidYouKnowWorkspace() {
           />
 
           <img
-            src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png`}
-            alt="HighLevel"
-            className="absolute top-[8%] left-[4%] z-[5] h-[8%] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+            src={ORBIT_URL}
+            alt="Orbit Rings"
+            className="absolute z-[1] pointer-events-none"
+            style={{
+              width: '85%',
+              height: 'auto',
+              left: `${currentPreset.orbitX}%`,
+              top: `${currentPreset.orbitY}%`,
+              transform: 'translate(-50%, -50%)',
+              opacity: 0.35,
+              transition: 'left 0.3s ease, top 0.3s ease',
+            }}
           />
 
           <div
-            className="absolute top-[8%] right-[4%] z-[6] whitespace-nowrap overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+            className="absolute z-[6] whitespace-nowrap overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
             style={{
               background: BADGE_STYLES[badgeStyle].bg,
-              borderRadius: "8px",
+              borderRadius: "10px",
+              top: layout === "text-center" ? "6%" : "8%",
+              left: layout === "text-right" ? "auto" : "4%",
+              right: layout === "text-right" ? "4%" : "auto",
             }}
           >
-            <div className="absolute inset-0 bg-[rgba(255,255,255,0.08)]" />
-            <div className="relative py-[5px] px-[14px] flex items-center gap-[6px]">
-              <Lightbulb className="w-[10px] h-[10px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" style={{ minWidth: 10 }} />
-              <span className="font-['Poppins'] font-black text-white text-[8px] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+            <div className="absolute inset-0 bg-[rgba(255,255,255,0.1)] rounded-[10px]" />
+            <div className="relative py-[6px] px-[16px] flex items-center gap-[8px]">
+              <Lightbulb className="w-[12px] h-[12px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" style={{ minWidth: 12 }} />
+              <span className="font-['Poppins'] font-black text-white text-[10px] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
                 Did You Know?
               </span>
             </div>
           </div>
 
+          <img
+            src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png`}
+            alt="HighLevel"
+            className="absolute z-[5] h-[7%] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+            style={{
+              bottom: "6%",
+              left: layout === "text-right" ? "auto" : "4%",
+              right: layout === "text-right" ? "4%" : "auto",
+            }}
+          />
+
           {screenshotImage && (() => {
             const scaleVal = screenshotScale / 100;
-            const layoutOffsets = layout === "person-left"
-              ? { top: 58, left: 62 }
-              : layout === "person-right"
+            const layoutOffsets = layout === "text-left"
+              ? { top: 55, left: 65 }
+              : layout === "text-right"
               ? { top: 55, left: 35 }
               : { top: 50, left: 50 };
             const baseTransform = `translate(-50%, -50%) scale(${scaleVal})`;
@@ -608,7 +702,7 @@ export function DidYouKnowWorkspace() {
                   left: `${layoutOffsets.left + screenshotOffsetX}%`,
                   transform: s.transform,
                   opacity: screenshotOpacity / 100,
-                  width: layout !== "classic" ? '55%' : '80%',
+                  width: '55%',
                 }}
               >
                 <img
@@ -629,18 +723,6 @@ export function DidYouKnowWorkspace() {
 
           {activeImage && currentMember ? (
             <>
-              <div
-                className={`absolute z-[1] pointer-events-none ${isDragging ? '' : 'transition-all duration-300 ease-out'}`}
-                style={{
-                  left: `${personX}%`,
-                  top: `${personY}%`,
-                  transform: `translate(-50%, -50%) scale(${personScale / 100})`,
-                  width: '80%',
-                  height: '100%',
-                  background: 'radial-gradient(ellipse at center, rgba(100,180,255,0.7) 0%, rgba(40,150,251,0.5) 25%, rgba(9,93,195,0.35) 45%, rgba(40,150,251,0.15) 65%, transparent 85%)',
-                  filter: 'blur(40px)',
-                }}
-              />
               <img
                 src={`${currentMember.assetBase}${activeImage}`}
                 alt={`${currentMember.name} Cutout`}
@@ -654,67 +736,13 @@ export function DidYouKnowWorkspace() {
                   top: `${personY}%`,
                   transform: `translate(-50%, -50%) scale(${personScale / 100})`,
                   height: '95%',
-                  filter: 'drop-shadow(0 0 35px rgba(100,180,255,0.5)) drop-shadow(0 0 70px rgba(40,150,251,0.4)) drop-shadow(0 0 100px rgba(9,93,195,0.3)) drop-shadow(0 4px 20px rgba(0,0,0,0.5))',
+                  filter: 'drop-shadow(0 0 25px rgba(0,0,0,0.5)) drop-shadow(0 4px 20px rgba(0,0,0,0.6))',
                 }}
               />
             </>
           ) : null}
 
-          {(headline || subtext) ? (
-            layout === "classic" ? (
-              <>
-                <div className="absolute bottom-0 left-0 right-0 h-[45%] z-[3] pointer-events-none"
-                  style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 50%, transparent 100%)" }}
-                />
-                <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
-                  <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-white"
-                    style={{
-                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5))",
-                    }}
-                  >
-                    {headline}
-                  </div>
-                  <div className="font-bold text-[clamp(7px,0.8vw,10px)] uppercase text-white mt-[6px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-                    {subtext}
-                  </div>
-                </div>
-              </>
-            ) : layout === "person-left" ? (
-              <div className="absolute z-[4] top-[15%] right-[8%] w-[55%] text-left">
-                <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
-                  style={{
-                    color: '#7CC8FF',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
-                    WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
-                  }}
-                >
-                  {headline}
-                </div>
-                {subtext && (
-                  <div className="font-bold text-[clamp(8px,1vw,12px)] uppercase text-white mt-[8px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-                    {subtext}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="absolute z-[4] top-[18%] left-[4%] w-[55%] text-left">
-                <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
-                  style={{
-                    color: '#7CC8FF',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
-                    WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
-                  }}
-                >
-                  {headline}
-                </div>
-                {subtext && (
-                  <div className="font-bold text-[clamp(8px,1vw,12px)] uppercase text-white mt-[8px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-                    {subtext}
-                  </div>
-                )}
-              </div>
-            )
-          ) : null}
+          {renderTextContent()}
 
           {!activeImage && !headline && !subtext && !screenshotImage && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-[10] text-center gap-[8px]">

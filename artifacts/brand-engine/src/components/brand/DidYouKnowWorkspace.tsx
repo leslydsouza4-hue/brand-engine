@@ -68,8 +68,8 @@ export function DidYouKnowWorkspace() {
   const [layout, setLayout] = useState<ThumbnailLayout>("text-left");
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
-  const [headline, setHeadline] = useState("");
-  const [subtext, setSubtext] = useState("");
+  const [headlineWhite, setHeadlineWhite] = useState("");
+  const [headlineHighlight, setHeadlineHighlight] = useState("");
   const [badgeStyle, setBadgeStyle] = useState(0);
 
   const [personX, setPersonX] = useState(78);
@@ -152,9 +152,9 @@ export function DidYouKnowWorkspace() {
   };
 
   const wordCount = useMemo(() => {
-    const words = headline.trim().split(/\s+/).filter(w => w.length > 0);
-    return words.length;
-  }, [headline]);
+    const all = `${headlineWhite} ${headlineHighlight}`.trim().split(/\s+/).filter(w => w.length > 0);
+    return all.length;
+  }, [headlineWhite, headlineHighlight]);
 
   const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -188,55 +188,44 @@ export function DidYouKnowWorkspace() {
   const currentPreset = LAYOUT_PRESETS[layout];
 
   const renderTextContent = () => {
-    if (!headline && !subtext) return null;
+    if (!headlineWhite && !headlineHighlight) return null;
 
-    if (layout === "text-left") {
-      return (
-        <div className="absolute z-[4] top-[28%] left-[5%] w-[50%] text-left">
-          {headline && (
-            <div
-              className="font-['Poppins'] font-black text-white uppercase leading-[0.92]"
-              style={{
-                fontSize: 'clamp(16px, 3.2vw, 38px)',
-                textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3)',
-              }}
-            >
-              {headline}
-            </div>
-          )}
-          {subtext && (
-            <div className="font-['Poppins'] font-bold text-[clamp(7px,0.9vw,11px)] uppercase text-[#4CAF50] mt-[8px] tracking-[2.5px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-              {subtext}
-            </div>
-          )}
-        </div>
-      );
-    }
+    const align = layout === "text-left" ? "left" : "right";
+    const posStyle = layout === "text-left"
+      ? { top: "28%", left: "5%", right: "auto" }
+      : { top: "28%", right: "5%", left: "auto" };
 
-    if (layout === "text-right") {
-      return (
-        <div className="absolute z-[4] top-[28%] right-[5%] w-[50%] text-right">
-          {headline && (
-            <div
-              className="font-['Poppins'] font-black text-white uppercase leading-[0.92]"
-              style={{
-                fontSize: 'clamp(16px, 3.2vw, 38px)',
-                textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3)',
-              }}
-            >
-              {headline}
-            </div>
-          )}
-          {subtext && (
-            <div className="font-['Poppins'] font-bold text-[clamp(7px,0.9vw,11px)] uppercase text-[#4CAF50] mt-[8px] tracking-[2.5px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
-              {subtext}
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return null;
+    return (
+      <div
+        className="absolute z-[4] w-[50%]"
+        style={{ ...posStyle, textAlign: align }}
+      >
+        {headlineWhite && (
+          <div
+            className="font-['Poppins'] font-black text-white uppercase leading-[0.95]"
+            style={{
+              fontSize: 'clamp(16px, 3.2vw, 38px)',
+              textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3)',
+            }}
+          >
+            {headlineWhite}
+          </div>
+        )}
+        {headlineHighlight && (
+          <div
+            className="font-['Poppins'] font-black uppercase leading-[0.95]"
+            style={{
+              fontSize: 'clamp(16px, 3.2vw, 38px)',
+              color: '#7CC8FF',
+              textShadow: '0 2px 8px rgba(40,150,251,0.4), 0 0 30px rgba(40,150,251,0.2)',
+              marginTop: headlineWhite ? '4px' : '0',
+            }}
+          >
+            {headlineHighlight}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -392,29 +381,33 @@ export function DidYouKnowWorkspace() {
         <div className="flex flex-col gap-[12px] border-t border-[rgba(255,255,255,0.04)] pt-[16px] pb-[12px]">
           <div className="flex flex-col">
             <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px] flex items-center justify-between">
-              Headline
-              <span className="text-[10px] font-medium text-[#475569] normal-case tracking-normal">{wordCount} words</span>
+              <span className="flex items-center gap-[6px]">
+                <span className="w-[8px] h-[8px] rounded-full bg-white inline-block" />
+                White Lines
+              </span>
+              <span className="text-[10px] font-medium text-[#475569] normal-case tracking-normal">{wordCount} words total</span>
             </label>
             <textarea
-              value={headline}
-              onChange={e => setHeadline(e.target.value)}
-              placeholder="YOU CAN ADD TERMS & CONDITIONS DIRECTLY TO PAYMENT FORMS IN HIGHLEVEL?"
-              maxLength={120}
-              rows={3}
-              className="w-full py-[14px] px-[18px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[14px] font-bold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-none"
+              value={headlineWhite}
+              onChange={e => setHeadlineWhite(e.target.value)}
+              placeholder="YOU CAN ADD TERMS & CONDITIONS"
+              maxLength={80}
+              rows={2}
+              className="w-full py-[12px] px-[16px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[14px] font-bold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-none"
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px]">
-              Subtext
+            <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px] flex items-center gap-[6px]">
+              <span className="w-[8px] h-[8px] rounded-full bg-[#7CC8FF] inline-block" />
+              Highlight Lines
             </label>
-            <input
-              type="text"
-              value={subtext}
-              onChange={e => setSubtext(e.target.value)}
-              placeholder="IN HIGHLEVEL"
-              maxLength={40}
-              className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-inherit text-[13.5px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
+            <textarea
+              value={headlineHighlight}
+              onChange={e => setHeadlineHighlight(e.target.value)}
+              placeholder="DIRECTLY TO PAYMENT FORMS IN HIGHLEVEL?"
+              maxLength={80}
+              rows={2}
+              className="w-full py-[12px] px-[16px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[14px] font-bold text-[#7CC8FF] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[rgba(124,200,255,0.35)] resize-none"
             />
           </div>
         </div>
@@ -559,7 +552,7 @@ export function DidYouKnowWorkspace() {
         <div
           ref={previewRef}
           data-export-preview
-          data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; return headline.trim() ? `Did You Know - ${headline.trim().substring(0,40)} ${datePart}` : `Did You Know Thumbnail ${datePart}`; })()}
+          data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; const t = (headlineWhite || headlineHighlight).trim(); return t ? `Did You Know - ${t.substring(0,40)} ${datePart}` : `Did You Know Thumbnail ${datePart}`; })()}
           className={`w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}
         >
 
@@ -585,21 +578,31 @@ export function DidYouKnowWorkspace() {
           />
 
           <div
-            className="absolute z-[6] whitespace-nowrap overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+            className="absolute z-[6] whitespace-nowrap"
             style={{
-              background: BADGE_STYLES[badgeStyle].bg,
-              borderRadius: "10px",
-              top: layout === "text-center" ? "6%" : "8%",
+              top: "7%",
               left: layout === "text-right" ? "auto" : "4%",
               right: layout === "text-right" ? "4%" : "auto",
             }}
           >
-            <div className="absolute inset-0 bg-[rgba(255,255,255,0.1)] rounded-[10px]" />
-            <div className="relative py-[6px] px-[16px] flex items-center gap-[8px]">
-              <Lightbulb className="w-[12px] h-[12px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" style={{ minWidth: 12 }} />
-              <span className="font-['Poppins'] font-black text-white text-[10px] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
-                Did You Know?
-              </span>
+            <div
+              className="relative overflow-hidden"
+              style={{
+                background: BADGE_STYLES[badgeStyle].bg,
+                borderRadius: "12px",
+                boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 40px ${badgeStyle === 0 ? 'rgba(76,175,80,0.25)' : badgeStyle === 1 ? 'rgba(40,150,251,0.25)' : 'rgba(0,0,0,0.2)'}`,
+              }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-[rgba(255,255,255,0.15)] via-transparent to-[rgba(255,255,255,0.05)]" />
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-[rgba(255,255,255,0.3)]" />
+              <div className="relative py-[8px] px-[20px] flex items-center gap-[10px]">
+                <div className="w-[22px] h-[22px] rounded-full bg-[rgba(255,255,255,0.2)] flex items-center justify-center backdrop-blur-sm">
+                  <Lightbulb className="w-[13px] h-[13px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" />
+                </div>
+                <span className="font-['Poppins'] font-black text-white text-[12px] uppercase tracking-[3px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
+                  Did You Know?
+                </span>
+              </div>
             </div>
           </div>
 
@@ -719,7 +722,7 @@ export function DidYouKnowWorkspace() {
 
           {renderTextContent()}
 
-          {!activeImage && !headline && !subtext && !screenshotImage && (
+          {!activeImage && !headlineWhite && !headlineHighlight && !screenshotImage && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-[10] text-center gap-[8px]">
               <Lightbulb className="w-[32px] h-[32px] text-[rgba(255,255,255,0.25)] mb-[4px]" />
               <p className="text-[14px] text-[rgba(255,255,255,0.35)] font-medium m-0">Select a person, type a headline</p>

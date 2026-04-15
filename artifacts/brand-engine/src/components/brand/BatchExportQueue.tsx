@@ -131,18 +131,20 @@ export function BatchExportQueue({ queue, onAdd, onRemove, onClear, isCapturing 
           </div>
         ))}
 
-        <button
-          onClick={onAdd}
-          disabled={isCapturing}
-          className="shrink-0 w-[42px] h-[42px] rounded-[8px] border border-dashed border-[rgba(255,255,255,0.1)] bg-transparent flex items-center justify-center cursor-pointer transition-all hover:border-[rgba(40,150,251,0.3)] hover:bg-[rgba(40,150,251,0.04)] disabled:opacity-50"
-        >
-          {isCapturing ? (
-            <Loader2 className="w-[12px] h-[12px] text-[#64748B] animate-spin" />
-          ) : (
-            <Plus className="w-[14px] h-[14px] text-[#64748B]" />
-          )}
-        </button>
       </div>
+
+      <button
+        onClick={onAdd}
+        disabled={isCapturing}
+        className="w-full mt-[6px] py-[8px] rounded-[8px] border border-dashed border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.02)] text-[#64748B] text-[10px] font-semibold flex items-center justify-center gap-[5px] cursor-pointer transition-all hover:border-[rgba(40,150,251,0.3)] hover:text-[#2896FB] hover:bg-[rgba(40,150,251,0.04)] disabled:opacity-50"
+      >
+        {isCapturing ? (
+          <Loader2 className="w-[11px] h-[11px] animate-spin" />
+        ) : (
+          <Plus className="w-[11px] h-[11px]" />
+        )}
+        {isCapturing ? "Capturing..." : "Add to Batch Queue"}
+      </button>
 
       <button
         onClick={handleExportAll}

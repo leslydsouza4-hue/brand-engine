@@ -182,6 +182,7 @@ export function DidYouKnowWorkspace() {
 
   const handleCropCancel = () => { setCropModalImage(null); };
 
+  const safeBadgeStyle = Math.min(badgeStyle, BADGE_STYLES.length - 1);
   const currentPreset = LAYOUT_PRESETS[layout];
 
   const renderTextContent = () => {
@@ -585,9 +586,9 @@ export function DidYouKnowWorkspace() {
             <div
               className="relative overflow-hidden"
               style={{
-                background: BADGE_STYLES[badgeStyle].bg,
+                background: BADGE_STYLES[safeBadgeStyle].bg,
                 borderRadius: "16px",
-                boxShadow: `0 6px 30px rgba(0,0,0,0.5), 0 0 50px ${badgeStyle === 0 ? 'rgba(76,175,80,0.3)' : badgeStyle === 1 ? 'rgba(40,150,251,0.3)' : 'rgba(0,0,0,0.2)'}, inset 0 1px 0 rgba(255,255,255,0.2)`,
+                boxShadow: `0 6px 30px rgba(0,0,0,0.5), 0 0 50px ${safeBadgeStyle === 0 ? 'rgba(76,175,80,0.3)' : safeBadgeStyle === 1 ? 'rgba(40,150,251,0.3)' : 'rgba(0,0,0,0.2)'}, inset 0 1px 0 rgba(255,255,255,0.2)`,
               }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-[rgba(255,255,255,0.12)] via-transparent to-[rgba(0,0,0,0.08)]" />

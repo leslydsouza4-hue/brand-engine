@@ -46,11 +46,72 @@ const TEAM: TeamMember[] = [
 const BG_URL = `${BASE}assets/did-you-know/bg.png`;
 const ORBIT_URL = `${BASE}assets/did-you-know/orbit-rings.png`;
 
-type ThumbnailLayout = "text-left" | "text-right";
+type ThumbnailLayout = "text-left" | "text-right" | "centered" | "cinematic" | "hero-left" | "hero-right";
 
-const LAYOUT_PRESETS: Record<ThumbnailLayout, { personX: number; personY: number; orbitX: number; orbitY: number; label: string; desc: string }> = {
-  "text-left":  { personX: 78, personY: 55, orbitX: 78, orbitY: 85, label: "Text Left",  desc: "Person right" },
-  "text-right": { personX: 22, personY: 55, orbitX: 22, orbitY: 85, label: "Text Right", desc: "Person left" },
+interface LayoutPreset {
+  personX: number;
+  personY: number;
+  orbitX: number;
+  orbitY: number;
+  label: string;
+  desc: string;
+  textPos: { top: string; left: string; right: string; textAlign: string; width: string };
+  badgePos: { top: string; left: string; right: string };
+  logoPos: { bottom: string; left: string; right: string };
+  personHeight: string;
+  orbitWidth: string;
+  orbitOpacity: number;
+}
+
+const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
+  "text-left": {
+    personX: 78, personY: 55, orbitX: 78, orbitY: 85,
+    label: "Classic Left", desc: "Text left, person right",
+    textPos: { top: "28%", left: "5%", right: "auto", textAlign: "left", width: "50%" },
+    badgePos: { top: "8%", left: "4%", right: "auto" },
+    logoPos: { bottom: "6%", left: "4%", right: "auto" },
+    personHeight: "95%", orbitWidth: "65%", orbitOpacity: 0.35,
+  },
+  "text-right": {
+    personX: 22, personY: 55, orbitX: 22, orbitY: 85,
+    label: "Classic Right", desc: "Text right, person left",
+    textPos: { top: "28%", left: "auto", right: "5%", textAlign: "right", width: "50%" },
+    badgePos: { top: "8%", left: "auto", right: "4%" },
+    logoPos: { bottom: "6%", left: "auto", right: "4%" },
+    personHeight: "95%", orbitWidth: "65%", orbitOpacity: 0.35,
+  },
+  "centered": {
+    personX: 50, personY: 58, orbitX: 50, orbitY: 88,
+    label: "Centered", desc: "Person center, text top",
+    textPos: { top: "18%", left: "15%", right: "15%", textAlign: "center", width: "70%" },
+    badgePos: { top: "5%", left: "50%", right: "auto" },
+    logoPos: { bottom: "5%", left: "50%", right: "auto" },
+    personHeight: "88%", orbitWidth: "80%", orbitOpacity: 0.3,
+  },
+  "cinematic": {
+    personX: 50, personY: 62, orbitX: 50, orbitY: 92,
+    label: "Cinematic", desc: "Dramatic centered",
+    textPos: { top: "8%", left: "10%", right: "10%", textAlign: "center", width: "80%" },
+    badgePos: { top: "2%", left: "50%", right: "auto" },
+    logoPos: { bottom: "4%", left: "50%", right: "auto" },
+    personHeight: "100%", orbitWidth: "90%", orbitOpacity: 0.25,
+  },
+  "hero-left": {
+    personX: 25, personY: 50, orbitX: 25, orbitY: 80,
+    label: "Hero Left", desc: "Big person left, text right",
+    textPos: { top: "25%", left: "48%", right: "4%", textAlign: "left", width: "48%" },
+    badgePos: { top: "8%", left: "48%", right: "auto" },
+    logoPos: { bottom: "6%", left: "auto", right: "4%" },
+    personHeight: "105%", orbitWidth: "55%", orbitOpacity: 0.3,
+  },
+  "hero-right": {
+    personX: 75, personY: 50, orbitX: 75, orbitY: 80,
+    label: "Hero Right", desc: "Big person right, text left",
+    textPos: { top: "25%", left: "4%", right: "48%", textAlign: "left", width: "48%" },
+    badgePos: { top: "8%", left: "4%", right: "auto" },
+    logoPos: { bottom: "6%", left: "4%", right: "auto" },
+    personHeight: "105%", orbitWidth: "55%", orbitOpacity: 0.3,
+  },
 };
 
 const BADGE_STYLES = [
@@ -188,15 +249,12 @@ export function DidYouKnowWorkspace() {
   const renderTextContent = () => {
     if (!headlineWhite && !headlineHighlight) return null;
 
-    const align = layout === "text-left" ? "left" : "right";
-    const posStyle = layout === "text-left"
-      ? { top: "28%", left: "5%", right: "auto" }
-      : { top: "28%", right: "5%", left: "auto" };
+    const tp = currentPreset.textPos;
 
     return (
       <div
-        className="absolute z-[4] w-[50%]"
-        style={{ ...posStyle, textAlign: align }}
+        className="absolute z-[4]"
+        style={{ top: tp.top, left: tp.left, right: tp.right, textAlign: tp.textAlign as any, width: tp.width }}
       >
         {headlineWhite && (
           <div
@@ -335,21 +393,21 @@ export function DidYouKnowWorkspace() {
             <LayoutGrid className="w-[12px] h-[12px] text-[#2896FB]" />
             Layout
           </div>
-          <div className="flex gap-[6px] mb-[4px]">
-            {(["text-left", "text-right"] as ThumbnailLayout[]).map((l) => {
+          <div className="grid grid-cols-3 gap-[6px] mb-[4px]">
+            {(Object.keys(LAYOUT_PRESETS) as ThumbnailLayout[]).map((l) => {
               const preset = LAYOUT_PRESETS[l];
               const isActive = layout === l;
               return (
                 <button
                   key={l}
                   onClick={() => handleLayoutChange(l)}
-                  className={`flex-1 py-[8px] px-[6px] border rounded-[10px] font-inherit cursor-pointer text-center transition-all flex flex-col items-center gap-[2px]
+                  className={`py-[8px] px-[4px] border rounded-[10px] font-inherit cursor-pointer text-center transition-all flex flex-col items-center gap-[2px]
                     ${isActive
                       ? 'border-[rgba(40,150,251,0.25)] text-[#2896FB] bg-[rgba(40,150,251,0.08)]'
                       : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(40,150,251,0.15)] hover:text-[#CBD5E1]'}`}
                 >
-                  <span className="text-[11px] font-semibold">{preset.label}</span>
-                  <span className="text-[8px] opacity-60">{preset.desc}</span>
+                  <span className="text-[10px] font-semibold leading-tight">{preset.label}</span>
+                  <span className="text-[7px] opacity-60 leading-tight">{preset.desc}</span>
                 </button>
               );
             })}
@@ -560,27 +618,37 @@ export function DidYouKnowWorkspace() {
             className="absolute inset-0 w-full h-full object-cover z-0"
           />
 
+          {layout === "cinematic" && (
+            <div
+              className="absolute inset-0 z-[0] pointer-events-none"
+              style={{
+                background: 'radial-gradient(ellipse at center 40%, transparent 40%, rgba(0,0,0,0.5) 100%)',
+              }}
+            />
+          )}
+
           <img
             src={ORBIT_URL}
             alt="Orbit Rings"
             className="absolute z-[1] pointer-events-none"
             style={{
-              width: '65%',
+              width: currentPreset.orbitWidth,
               height: 'auto',
               left: `${currentPreset.orbitX}%`,
               top: `${currentPreset.orbitY}%`,
               transform: 'translate(-50%, -50%)',
-              opacity: 0.35,
-              transition: 'left 0.3s ease, top 0.3s ease',
+              opacity: currentPreset.orbitOpacity,
+              transition: 'all 0.4s ease',
             }}
           />
 
           <div
-            className="absolute z-[6] whitespace-nowrap"
+            className="absolute z-[6] whitespace-nowrap transition-all duration-400"
             style={{
-              top: "8%",
-              left: layout === "text-right" ? "auto" : "4%",
-              right: layout === "text-right" ? "4%" : "auto",
+              top: currentPreset.badgePos.top,
+              left: currentPreset.badgePos.left,
+              right: currentPreset.badgePos.right,
+              transform: currentPreset.badgePos.left === "50%" ? "translateX(-50%)" : "none",
             }}
           >
             <div
@@ -606,21 +674,26 @@ export function DidYouKnowWorkspace() {
           <img
             src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png`}
             alt="HighLevel"
-            className="absolute z-[5] h-[7%] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+            className="absolute z-[5] h-[7%] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)] transition-all duration-400"
             style={{
-              bottom: "6%",
-              left: layout === "text-right" ? "auto" : "4%",
-              right: layout === "text-right" ? "4%" : "auto",
+              bottom: currentPreset.logoPos.bottom,
+              left: currentPreset.logoPos.left,
+              right: currentPreset.logoPos.right,
+              transform: currentPreset.logoPos.left === "50%" ? "translateX(-50%)" : "none",
             }}
           />
 
           {screenshotImage && (() => {
             const scaleVal = screenshotScale / 100;
-            const layoutOffsets = layout === "text-left"
-              ? { top: 55, left: 65 }
-              : layout === "text-right"
-              ? { top: 55, left: 35 }
-              : { top: 50, left: 50 };
+            const layoutOffsetMap: Record<ThumbnailLayout, { top: number; left: number }> = {
+              "text-left": { top: 55, left: 65 },
+              "text-right": { top: 55, left: 35 },
+              "centered": { top: 50, left: 50 },
+              "cinematic": { top: 55, left: 50 },
+              "hero-left": { top: 50, left: 70 },
+              "hero-right": { top: 50, left: 30 },
+            };
+            const layoutOffsets = layoutOffsetMap[layout] || { top: 50, left: 50 };
             const baseTransform = `translate(-50%, -50%) scale(${scaleVal})`;
             const styleMap: Record<typeof screenshotStyle, { transform: string; border: string; boxShadow: string; outline?: string; outlineOffset?: string }> = {
               glow: {
@@ -722,7 +795,7 @@ export function DidYouKnowWorkspace() {
                   left: `${personX}%`,
                   top: `${personY}%`,
                   transform: `translate(-50%, -50%) scale(${personScale / 100})`,
-                  height: '95%',
+                  height: currentPreset.personHeight,
                   filter: 'drop-shadow(0 0 30px rgba(40,150,251,0.4)) drop-shadow(0 0 60px rgba(9,93,195,0.3)) drop-shadow(0 4px 20px rgba(0,0,0,0.5))',
                 }}
               />

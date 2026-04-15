@@ -32,8 +32,8 @@ const TEAM: TeamMember[] = [
   {
     id: "ben",
     name: "Ben Stutzner",
-    assetBase: `${BASE}assets/content-army/ben/`,
-    images: Array.from({ length: 33 }, (_, i) => `Ben_${String(i + 1).padStart(2, '0')}.png`),
+    assetBase: `${BASE}assets/did-you-know/ben/`,
+    images: Array.from({ length: 10 }, (_, i) => `ben-pose-${i + 1}.png`),
   },
   {
     id: "usma",

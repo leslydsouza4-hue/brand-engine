@@ -6,6 +6,7 @@ import {
   Gift, 
   FolderOpen,
   MonitorPlay,
+  Lightbulb,
   X,
   Package,
   FileText,
@@ -101,6 +102,14 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           >
             <MonitorPlay className={iconCls(currentMode === 'content-army')} />
             Content Army
+          </button>
+
+          <button 
+            onClick={() => handleSetMode('did-you-know')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'did-you-know' ? activeClass : inactiveClass}`}
+          >
+            <Lightbulb className={iconCls(currentMode === 'did-you-know')} />
+            Did You Know
           </button>
         </div>
 

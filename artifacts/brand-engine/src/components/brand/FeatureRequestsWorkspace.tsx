@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Trash2, MessageSquarePlus, RefreshCw } from "lucide-react";
+import { Loader2, Trash2, MessageSquarePlus, RefreshCw, Link, ExternalLink } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -9,6 +9,8 @@ interface FeatureRequest {
   email: string;
   category: string;
   description: string;
+  links?: string[];
+  attachments?: { name: string }[];
   timestamp: string;
 }
 
@@ -23,6 +25,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 export function FeatureRequestsWorkspace() {
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -36,6 +39,20 @@ export function FeatureRequestsWorkspace() {
       console.error("Failed to fetch requests:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const deleteRequest = async (id: string) => {
+    setDeleting(id);
+    try {
+      const res = await fetch(`${BASE}api/feature-request/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setRequests(prev => prev.filter(r => r.id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete:", err);
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -80,7 +97,7 @@ export function FeatureRequestsWorkspace() {
             {requests.map((req) => (
               <div
                 key={req.id}
-                className="bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-[14px] p-[20px] hover:border-[rgba(40,150,251,0.15)] transition-all"
+                className="bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] rounded-[14px] p-[20px] hover:border-[rgba(40,150,251,0.15)] transition-all group"
               >
                 <div className="flex items-start justify-between mb-[10px]">
                   <div className="flex items-center gap-[10px]">
@@ -92,11 +109,50 @@ export function FeatureRequestsWorkspace() {
                       <div className="text-[#64748B] text-[11px]">{req.email}</div>
                     </div>
                   </div>
-                  <span className={`text-[10px] font-bold px-[10px] py-[3px] rounded-full border ${CATEGORY_COLORS[req.category] || CATEGORY_COLORS["Other"]}`}>
-                    {req.category}
-                  </span>
+                  <div className="flex items-center gap-[8px]">
+                    <span className={`text-[10px] font-bold px-[10px] py-[3px] rounded-full border ${CATEGORY_COLORS[req.category] || CATEGORY_COLORS["Other"]}`}>
+                      {req.category}
+                    </span>
+                    <button
+                      onClick={() => deleteRequest(req.id)}
+                      disabled={deleting === req.id}
+                      className="w-[28px] h-[28px] flex items-center justify-center rounded-[8px] opacity-0 group-hover:opacity-100 bg-transparent border border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#EF4444] hover:border-[rgba(239,68,68,0.3)] cursor-pointer transition-all disabled:opacity-50"
+                      title="Delete request"
+                    >
+                      {deleting === req.id ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Trash2 className="w-[12px] h-[12px]" />}
+                    </button>
+                  </div>
                 </div>
+
                 <p className="text-[#CBD5E1] text-[13px] leading-[1.6] m-0 whitespace-pre-wrap">{req.description}</p>
+
+                {req.links && req.links.length > 0 && (
+                  <div className="flex flex-wrap gap-[6px] mt-[10px]">
+                    {req.links.map((link, i) => (
+                      <a
+                        key={i}
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-[4px] py-[3px] px-[8px] rounded-[6px] bg-[rgba(40,150,251,0.08)] text-[#7CC8FF] text-[11px] hover:bg-[rgba(40,150,251,0.15)] transition-colors no-underline"
+                      >
+                        <ExternalLink className="w-[10px] h-[10px]" />
+                        {link.length > 40 ? link.slice(0, 40) + "..." : link}
+                      </a>
+                    ))}
+                  </div>
+                )}
+
+                {req.attachments && req.attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-[6px] mt-[6px]">
+                    {req.attachments.map((att, i) => (
+                      <span key={i} className="flex items-center gap-[4px] py-[3px] px-[8px] rounded-[6px] bg-[rgba(255,255,255,0.04)] text-[#94A3B8] text-[11px]">
+                        {att.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 <div className="mt-[12px] text-[#475569] text-[10px]">{formatDate(req.timestamp)}</div>
               </div>
             ))}

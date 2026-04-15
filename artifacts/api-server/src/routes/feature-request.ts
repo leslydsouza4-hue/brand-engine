@@ -25,19 +25,21 @@ function saveRequests(requests: any[]) {
 
 router.post("/feature-request", async (req, res) => {
   try {
-    const { name, email, category, description } = req.body;
+    const { name, email, category, description, links, attachments } = req.body;
 
-    if (!name || !description) {
-      res.status(400).json({ error: "Name and description are required" });
+    if (!name || !email || !description) {
+      res.status(400).json({ error: "Name, email, and description are required" });
       return;
     }
 
     const request = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       name,
-      email: email || "Not provided",
+      email,
       category: category || "General",
       description,
+      links: links || [],
+      attachments: attachments || [],
       timestamp: new Date().toISOString(),
     };
 
@@ -59,6 +61,10 @@ router.post("/feature-request", async (req, res) => {
           auth: { user: smtpUser, pass: smtpPass },
         });
 
+        const linksHtml = (links || []).length > 0
+          ? `<div style="margin-top: 12px;"><p style="margin: 0; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Links</p>${(links as string[]).map((l: string) => `<a href="${l}" style="color: #2896FB; font-size: 13px; display: block; margin-top: 4px;">${l}</a>`).join("")}</div>`
+          : "";
+
         await transporter.sendMail({
           from: smtpUser,
           to: TARGET_EMAIL,
@@ -72,12 +78,13 @@ router.post("/feature-request", async (req, res) => {
               <div style="background: #f8fafc; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
                 <table style="width: 100%; border-collapse: collapse;">
                   <tr><td style="padding: 8px 0; color: #64748b; font-size: 13px; width: 100px;">From</td><td style="padding: 8px 0; font-weight: 600; color: #1e293b; font-size: 14px;">${name}</td></tr>
-                  <tr><td style="padding: 8px 0; color: #64748b; font-size: 13px;">Email</td><td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${email || "Not provided"}</td></tr>
+                  <tr><td style="padding: 8px 0; color: #64748b; font-size: 13px;">Email</td><td style="padding: 8px 0; color: #1e293b; font-size: 14px;">${email}</td></tr>
                   <tr><td style="padding: 8px 0; color: #64748b; font-size: 13px;">Category</td><td style="padding: 8px 0; font-size: 14px;"><span style="background: #2896FB; color: white; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;">${category || "General"}</span></td></tr>
                 </table>
                 <div style="margin-top: 16px; padding: 16px; background: white; border: 1px solid #e2e8f0; border-radius: 8px;">
                   <p style="margin: 0; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Description</p>
                   <p style="margin: 8px 0 0; color: #1e293b; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${description}</p>
+                  ${linksHtml}
                 </div>
                 <p style="margin: 16px 0 0; color: #94a3b8; font-size: 11px;">Submitted on ${new Date().toLocaleString()}</p>
               </div>
@@ -95,7 +102,7 @@ router.post("/feature-request", async (req, res) => {
       emailSent,
       message: emailSent
         ? "Feature request submitted and email sent!"
-        : "Feature request saved! (Email delivery not configured yet)",
+        : "Feature request saved!",
     });
   } catch (err) {
     console.error("Feature request error:", err);
@@ -106,6 +113,22 @@ router.post("/feature-request", async (req, res) => {
 router.get("/feature-requests", async (_req, res) => {
   const requests = loadRequests();
   res.json(requests);
+});
+
+router.delete("/feature-request/:id", async (req, res) => {
+  try {
+    const requests = loadRequests();
+    const filtered = requests.filter((r: any) => r.id !== req.params.id);
+    if (filtered.length === requests.length) {
+      res.status(404).json({ error: "Request not found" });
+      return;
+    }
+    saveRequests(filtered);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ error: "Failed to delete request" });
+  }
 });
 
 export default router;

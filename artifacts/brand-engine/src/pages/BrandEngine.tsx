@@ -19,10 +19,10 @@ import { FeatureRequestsWorkspace } from "@/components/brand/FeatureRequestsWork
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    const valid = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "my-exports", "events", "feature-requests"];
+    const valid = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
     return valid.includes(hash) ? hash : "templates";
   });
-  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "my-exports", "events", "feature-requests"];
+  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -60,7 +60,7 @@ export default function BrandEngine() {
         {currentMode === "ai-image" && <AIImageWorkspace />}
         {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
         {currentMode === "settings" && <SettingsWorkspace />}
-        {currentMode === "my-exports" && <MyExportsWorkspace />}
+
         {currentMode === "events" && <EventsWorkspace />}
         {currentMode === "feature-requests" && <FeatureRequestsWorkspace />}
       </div>

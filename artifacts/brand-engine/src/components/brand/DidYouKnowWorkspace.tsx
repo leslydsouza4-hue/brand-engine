@@ -1,22 +1,57 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { Image as ImageIcon, UploadCloud, X, Crop, Lightbulb } from "lucide-react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Crop, Lightbulb, LayoutGrid } from "lucide-react";
 import { CropModal } from "./CropModal";
 import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
 import { useExport } from "./useExport";
 
+interface TeamMember {
+  id: string;
+  name: string;
+  assetBase: string;
+  images: string[];
+}
+
 const BASE = import.meta.env.BASE_URL;
 
-const BACKGROUNDS = [
-  { label: "Core Gradient", file: "Type=Core Gradient.png" },
-  { label: "Centered Planet", file: "Type=Centered Planet.png" },
-  { label: "Planet Bottom Right", file: "Type=Planet Bottom Right.png" },
-  { label: "Radial Shine Left", file: "Type=Radial Shine Bottom Left.png" },
-  { label: "Radial Shine Right", file: "Type=Radial Shine Bottom RIght.png" },
-  { label: "Planet Ray", file: "Type=Planet Ray Bottom Right.png" },
-  { label: "Small Planet", file: "Type=Small Planet Bottom Right.png" },
-  { label: "Large Planet", file: "Type=Large Planet Bottom Right.png" },
+const TEAM: TeamMember[] = [
+  {
+    id: "andrew",
+    name: "Andrew George",
+    assetBase: `${BASE}assets/did-you-know/andrew/`,
+    images: [
+      "andrew-pose-1.png",
+      "andrew-pose-2.png",
+      "andrew-pose-3.png",
+      "andrew-pose-4.png",
+      "andrew-pose-5.png",
+      "andrew-pose-6.png",
+      "andrew-pose-7.png",
+    ],
+  },
+  {
+    id: "ben",
+    name: "Ben Stutzner",
+    assetBase: `${BASE}assets/content-army/ben/`,
+    images: Array.from({ length: 33 }, (_, i) => `Ben_${String(i + 1).padStart(2, '0')}.png`),
+  },
+  {
+    id: "usma",
+    name: "Usma",
+    assetBase: `${BASE}assets/content-army/usma/`,
+    images: Array.from({ length: 8 }, (_, i) => `Usma_${String(i + 1).padStart(2, '0')}.png`),
+  },
 ];
+
+const BG_URL = `${BASE}assets/backgrounds-dark/Type=Core Gradient.png`;
+
+type ThumbnailLayout = "classic" | "person-left" | "person-right";
+
+const LAYOUT_PRESETS: Record<ThumbnailLayout, { personX: number; personY: number; label: string; desc: string }> = {
+  "classic": { personX: 75, personY: 50, label: "Classic", desc: "Bottom text" },
+  "person-left": { personX: 22, personY: 55, label: "Left", desc: "Text right" },
+  "person-right": { personX: 78, personY: 50, label: "Right", desc: "Text left" },
+};
 
 const BADGE_STYLES = [
   { label: "Gradient", bg: "linear-gradient(135deg, #095DC3 0%, #2896FB 40%, #00B2A9 100%)" },
@@ -27,77 +62,269 @@ const BADGE_STYLES = [
   { label: "Rose", bg: "linear-gradient(135deg, #F43F5E 0%, #BE123C 100%)" },
 ];
 
-type TextPosition = "center" | "bottom-left" | "bottom-center";
-
 export function DidYouKnowWorkspace() {
   const { isExporting, handleExport } = useExport();
-  const [factText, setFactText] = useState("");
+
+  const [layout, setLayout] = useState<ThumbnailLayout>("classic");
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const [activeImage, setActiveImage] = useState<string | null>(null);
+  const [headline, setHeadline] = useState("");
   const [subtext, setSubtext] = useState("");
-  const [selectedBg, setSelectedBg] = useState(0);
   const [badgeStyle, setBadgeStyle] = useState(0);
-  const [textPosition, setTextPosition] = useState<TextPosition>("center");
+
+  const [personX, setPersonX] = useState(75);
+  const [personY, setPersonY] = useState(50);
+  const [personScale, setPersonScale] = useState(95);
+
+  const handleLayoutChange = (l: ThumbnailLayout) => {
+    setLayout(l);
+    const preset = LAYOUT_PRESETS[l];
+    setPersonX(preset.personX);
+    setPersonY(preset.personY);
+  };
+
+  const [isDragging, setIsDragging] = useState(false);
 
   const [screenshotImage, setScreenshotImage] = useState<string | null>(null);
-  const [screenshotOpacity, setScreenshotOpacity] = useState(30);
-  const [screenshotScale, setScreenshotScale] = useState(80);
-  const [screenshotRadius, setScreenshotRadius] = useState(12);
+  const [screenshotOpacity, setScreenshotOpacity] = useState(40);
+  const [screenshotScale, setScreenshotScale] = useState(85);
+  const [screenshotRadius, setScreenshotRadius] = useState(16);
+  const [screenshotOffsetX, setScreenshotOffsetX] = useState(0);
+  const [screenshotOffsetY, setScreenshotOffsetY] = useState(0);
+  const [screenshotStyle, setScreenshotStyle] = useState<"glow" | "float" | "neon" | "minimal" | "tilt" | "shadow" | "cinematic" | "glass">("glow");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
 
-  const [cropModalImage, setCropModalImage] = useState<string | null>(null);
+  const currentMember = TEAM.find(m => m.id === selectedMember);
+
+  const memberImages = useMemo(() => {
+    if (!currentMember) return [];
+    return currentMember.images.map(img => ({
+      filename: img,
+      url: `${currentMember.assetBase}${img}`,
+    }));
+  }, [currentMember]);
+
+  const handleDragStart = useCallback((clientX: number, clientY: number) => {
+    if (!activeImage || !previewRef.current) return;
+    setIsDragging(true);
+    dragStartRef.current = { startX: clientX, startY: clientY, origX: personX, origY: personY };
+  }, [activeImage, personX, personY]);
+
+  const handleDragMove = useCallback((clientX: number, clientY: number) => {
+    if (!isDragging || !dragStartRef.current || !previewRef.current) return;
+    const rect = previewRef.current.getBoundingClientRect();
+    const dx = ((clientX - dragStartRef.current.startX) / rect.width) * 100;
+    const dy = ((clientY - dragStartRef.current.startY) / rect.height) * 100;
+    setPersonX(Math.max(0, Math.min(100, dragStartRef.current.origX + dx)));
+    setPersonY(Math.max(0, Math.min(100, dragStartRef.current.origY + dy)));
+  }, [isDragging]);
+
+  const handleDragEnd = useCallback(() => {
+    setIsDragging(false);
+    dragStartRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMove = (e: MouseEvent) => handleDragMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => { if (e.touches[0]) handleDragMove(e.touches[0].clientX, e.touches[0].clientY); };
+    const onUp = () => handleDragEnd();
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onUp);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onUp);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
+  const resetPersonPosition = () => { setPersonX(75); setPersonY(50); setPersonScale(95); };
+
+  const wordCount = useMemo(() => {
+    const words = headline.trim().split(/\s+/).filter(w => w.length > 0);
+    return words.length;
+  }, [headline]);
 
   const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setScreenshotImage(event.target?.result as string);
-      };
+      reader.onload = (event) => { setScreenshotImage(event.target?.result as string); };
       reader.readAsDataURL(file);
     }
   };
 
   const clearScreenshot = () => {
     setScreenshotImage(null);
-    setScreenshotOpacity(30);
-    setScreenshotScale(80);
-    setScreenshotRadius(12);
+    setScreenshotOpacity(40);
+    setScreenshotScale(85);
+    setScreenshotRadius(16);
+    setScreenshotOffsetX(0);
+    setScreenshotOffsetY(0);
+    setScreenshotStyle("glow");
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  const [cropModalImage, setCropModalImage] = useState<string | null>(null);
 
   const handleCropApply = (croppedDataUrl: string) => {
     setScreenshotImage(croppedDataUrl);
     setCropModalImage(null);
   };
 
-  const bgUrl = `${BASE}assets/backgrounds-dark/${BACKGROUNDS[selectedBg].file}`;
-
-  const textPositionClasses: Record<TextPosition, string> = {
-    "center": "inset-0 flex flex-col items-center justify-center text-center px-[10%]",
-    "bottom-left": "bottom-[8%] left-[6%] right-[20%] text-left",
-    "bottom-center": "bottom-[8%] left-[10%] right-[10%] text-center",
-  };
+  const handleCropCancel = () => { setCropModalImage(null); };
 
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
+
       <div className="w-full md:w-[380px] md:min-w-[380px] overflow-y-auto pt-[20px] px-[16px] md:px-[28px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.06)] flex flex-col max-h-[50vh] md:max-h-none">
 
-        <div className="pt-[20px] pb-[16px]">
-          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[12px]">Background</div>
-          <div className="grid grid-cols-4 gap-[8px]">
-            {BACKGROUNDS.map((bg, i) => (
-              <div
-                key={bg.file}
-                onClick={() => setSelectedBg(i)}
-                className={`w-full aspect-video rounded-[10px] overflow-hidden cursor-pointer relative transition-all duration-250 border-[2px]
-                  ${selectedBg === i
-                    ? 'border-[#00B2A9] shadow-[0_0_0_2px_rgba(3,11,23,0.8),0_0_0_4px_rgba(0,178,169,0.4)]'
-                    : 'border-[rgba(255,255,255,0.06)] hover:border-[rgba(0,178,169,0.2)]'}`}
-              >
-                <img src={`${BASE}assets/backgrounds-dark/${bg.file}`} alt={bg.label} className="w-full h-full object-cover" />
+        <div className="pt-[10px] pb-[16px]">
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[12px]">Select Person</div>
+
+          <div className="grid grid-cols-2 gap-[8px] mb-[14px]">
+            {TEAM.map((member) => {
+              const isActive = selectedMember === member.id;
+              return (
+                <button
+                  key={member.id}
+                  onClick={() => {
+                    setSelectedMember(member.id);
+                    setActiveImage(null);
+                  }}
+                  className={`flex items-center gap-[10px] py-[10px] px-[12px] rounded-[12px] border cursor-pointer transition-all text-left
+                    ${isActive
+                      ? 'border-[#2896FB] bg-[rgba(40,150,251,0.08)] shadow-[0_0_0_1px_rgba(40,150,251,0.2)]'
+                      : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] hover:border-[rgba(40,150,251,0.2)] hover:bg-[rgba(40,150,251,0.03)]'
+                    }`}
+                >
+                  <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center text-[12px] font-bold shrink-0
+                    ${isActive ? 'bg-[#2896FB] text-white' : 'bg-[rgba(255,255,255,0.06)] text-[#64748B]'}`}>
+                    {member.name.charAt(0)}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className={`text-[12px] font-semibold truncate ${isActive ? 'text-[#E2E8F0]' : 'text-[#94A3B8]'}`}>
+                      {member.name}
+                    </span>
+                    <span className="text-[9px] text-[#475569]">
+                      {member.images.length} poses
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {currentMember && memberImages.length > 0 && (
+            <>
+              <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Select Pose</div>
+              <div className="flex gap-[12px] overflow-x-auto pb-[6px] snap-x scroll-p-[12px] hide-scrollbar">
+                {memberImages.map((img, i) => {
+                  const isActive2 = activeImage === img.filename;
+                  return (
+                    <div
+                      key={img.filename}
+                      onClick={() => setActiveImage(img.filename)}
+                      className={`shrink-0 w-[88px] h-[88px] rounded-[16px] overflow-hidden cursor-pointer relative transition-all duration-250 border-[2px] bg-[rgba(255,255,255,0.02)] snap-start
+                        ${isActive2
+                          ? 'border-[#2896FB] shadow-[0_0_0_2px_rgba(3,11,23,0.8),0_0_0_4px_rgba(40,150,251,0.4)]'
+                          : 'border-[rgba(255,255,255,0.06)] hover:border-[rgba(40,150,251,0.2)] hover:-translate-y-[2px]'}`}
+                    >
+                      <img src={img.url} alt={`${currentMember.name} ${i+1}`} className="w-full h-full object-cover" />
+                      <div className={`absolute top-[6px] right-[6px] w-[20px] h-[20px] rounded-full bg-[#2896FB] flex items-center justify-center transition-all duration-250
+                        ${isActive2 ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.6]'}`}>
+                        <Check className="w-[12px] h-[12px] text-white stroke-[3px]" />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 pt-[16px] px-[6px] pb-[5px] bg-gradient-to-t from-[rgba(0,0,0,0.7)] to-transparent text-[9px] font-semibold text-[rgba(255,255,255,0.8)] text-center uppercase">
+                        Pose {i+1}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            </>
+          )}
+
+          {activeImage && currentMember && (
+            <div className="mt-[12px] animate-in fade-in duration-300">
+              <div className="flex items-center justify-between mb-[8px]">
+                <span className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] flex items-center gap-[5px]">
+                  <Move className="w-[11px] h-[11px]" />
+                  Position & Size
+                </span>
+                <button
+                  onClick={resetPersonPosition}
+                  className="flex items-center gap-[4px] py-[3px] px-[8px] rounded-[6px] border border-[rgba(255,255,255,0.06)] bg-transparent text-[10px] font-medium text-[#64748B] cursor-pointer hover:text-[#2896FB] hover:border-[rgba(40,150,251,0.2)] transition-all"
+                >
+                  <RotateCcw className="w-[9px] h-[9px]" />
+                  Reset
+                </button>
+              </div>
+              <div className="flex items-center gap-[6px] mb-[6px] p-[8px] rounded-[10px] bg-[rgba(40,150,251,0.04)] border border-[rgba(40,150,251,0.1)]">
+                <Move className="w-[12px] h-[12px] text-[#2896FB] shrink-0" />
+                <span className="text-[10px] text-[#2896FB] font-medium">Drag person in the live preview to reposition</span>
+              </div>
+              <div className="flex gap-[6px] mb-[6px]">
+                {[
+                  { label: "Left", x: 22, y: 50 },
+                  { label: "Center", x: 50, y: 50 },
+                  { label: "Right", x: 75, y: 50 },
+                ].map((preset) => (
+                  <button
+                    key={preset.label}
+                    onClick={() => { setPersonX(preset.x); setPersonY(preset.y); }}
+                    className={`flex-1 py-[6px] px-[8px] border rounded-[8px] font-inherit text-[10px] font-semibold cursor-pointer text-center capitalize transition-all
+                      ${Math.abs(personX - preset.x) < 5 && Math.abs(personY - preset.y) < 5
+                        ? 'border-[rgba(40,150,251,0.25)] text-[#2896FB] bg-[rgba(40,150,251,0.08)]'
+                        : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(40,150,251,0.15)] hover:text-[#CBD5E1]'}`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <div>
+                <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[4px]">
+                  Scale <span className="font-semibold text-[#94A3B8]">{personScale}%</span>
+                </div>
+                <input
+                  type="range" min="40" max="150" value={personScale}
+                  onChange={e => setPersonScale(Number(e.target.value))}
+                  className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-[rgba(255,255,255,0.04)] pt-[16px] pb-[12px]">
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px] flex items-center gap-[6px]">
+            <LayoutGrid className="w-[12px] h-[12px] text-[#2896FB]" />
+            Layout
+          </div>
+          <div className="flex gap-[6px] mb-[4px]">
+            {(["classic", "person-left", "person-right"] as ThumbnailLayout[]).map((l) => {
+              const preset = LAYOUT_PRESETS[l];
+              const isActive = layout === l;
+              return (
+                <button
+                  key={l}
+                  onClick={() => handleLayoutChange(l)}
+                  className={`flex-1 py-[8px] px-[6px] border rounded-[10px] font-inherit cursor-pointer text-center transition-all flex flex-col items-center gap-[2px]
+                    ${isActive
+                      ? 'border-[rgba(40,150,251,0.25)] text-[#2896FB] bg-[rgba(40,150,251,0.08)]'
+                      : 'border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] text-[#64748B] hover:border-[rgba(40,150,251,0.15)] hover:text-[#CBD5E1]'}`}
+                >
+                  <span className="text-[11px] font-semibold">{preset.label}</span>
+                  <span className="text-[8px] opacity-60">{preset.desc}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -108,9 +335,9 @@ export function DidYouKnowWorkspace() {
               <button
                 key={style.label}
                 onClick={() => setBadgeStyle(i)}
-                className={`py-[8px] px-[6px] rounded-[8px] text-[10px] font-semibold border cursor-pointer transition-all ${
+                className={`py-[7px] px-[6px] rounded-[8px] text-[10px] font-semibold border cursor-pointer transition-all ${
                   badgeStyle === i
-                    ? "border-[rgba(0,178,169,0.3)] text-white shadow-[0_0_12px_rgba(0,178,169,0.15)]"
+                    ? "border-[rgba(40,150,251,0.3)] text-white shadow-[0_0_12px_rgba(40,150,251,0.15)]"
                     : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8] hover:border-[rgba(255,255,255,0.1)]"
                 }`}
                 style={badgeStyle === i ? { background: style.bg } : undefined}
@@ -121,41 +348,19 @@ export function DidYouKnowWorkspace() {
           </div>
         </div>
 
-        <div className="border-t border-[rgba(255,255,255,0.04)] pt-[16px] pb-[12px]">
-          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px]">Text Position</div>
-          <div className="grid grid-cols-3 gap-[6px]">
-            {([
-              { key: "center" as TextPosition, label: "Center" },
-              { key: "bottom-left" as TextPosition, label: "Bottom Left" },
-              { key: "bottom-center" as TextPosition, label: "Bottom Center" },
-            ]).map((pos) => (
-              <button
-                key={pos.key}
-                onClick={() => setTextPosition(pos.key)}
-                className={`py-[7px] px-[6px] rounded-[8px] text-[10px] font-semibold border cursor-pointer transition-all ${
-                  textPosition === pos.key
-                    ? "bg-[rgba(0,178,169,0.15)] border-[rgba(0,178,169,0.3)] text-[#00B2A9]"
-                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8] hover:border-[rgba(255,255,255,0.1)]"
-                }`}
-              >
-                {pos.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="flex flex-col gap-[12px] border-t border-[rgba(255,255,255,0.04)] pt-[16px] pb-[12px]">
           <div className="flex flex-col">
-            <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px]">
-              Fact / Tip
+            <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px] flex items-center justify-between">
+              Headline
+              <span className="text-[10px] font-medium text-[#475569] normal-case tracking-normal">{wordCount} words</span>
             </label>
-            <textarea
-              value={factText}
-              onChange={e => setFactText(e.target.value)}
-              placeholder="Type your fact or tip here..."
-              maxLength={200}
-              rows={3}
-              className="w-full py-[12px] px-[16px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[15px] font-bold text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-none"
+            <input
+              type="text"
+              value={headline}
+              onChange={e => setHeadline(e.target.value)}
+              placeholder="Enter bold headline..."
+              maxLength={60}
+              className="w-full py-[14px] px-[18px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[18px] font-bold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
             />
           </div>
           <div className="flex flex-col">
@@ -166,15 +371,15 @@ export function DidYouKnowWorkspace() {
               type="text"
               value={subtext}
               onChange={e => setSubtext(e.target.value)}
-              placeholder="Optional supporting text..."
-              maxLength={60}
-              className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-inherit text-[13.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
+              placeholder="Supporting text..."
+              maxLength={40}
+              className="w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-inherit text-[13.5px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
             />
           </div>
         </div>
 
         <div className="border-t border-[rgba(255,255,255,0.04)] pt-[16px]">
-          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[12px]">Background Image</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[12px]">Screenshot / Image</div>
 
           <input
             type="file"
@@ -188,20 +393,20 @@ export function DidYouKnowWorkspace() {
             onClick={() => !screenshotImage && fileInputRef.current?.click()}
             className={`flex items-center gap-[14px] py-[14px] px-[16px] rounded-[16px] transition-all duration-250 relative overflow-hidden mb-[14px]
               ${screenshotImage
-                ? 'border-solid border border-[rgba(0,178,169,0.15)] bg-[rgba(0,178,169,0.04)] cursor-default'
-                : 'border-dashed border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(0,178,169,0.2)] hover:bg-[rgba(0,178,169,0.03)] cursor-pointer'}`}
+                ? 'border-solid border border-[rgba(40,150,251,0.15)] bg-[rgba(40,150,251,0.04)] cursor-default'
+                : 'border-dashed border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.025)] hover:border-[rgba(40,150,251,0.2)] hover:bg-[rgba(40,150,251,0.03)] cursor-pointer'}`}
           >
             <div className={`w-[36px] h-[36px] rounded-[10px] flex items-center justify-center shrink-0
-              ${screenshotImage ? 'bg-[rgba(0,178,169,0.1)]' : 'bg-[rgba(255,255,255,0.04)]'}`}>
+              ${screenshotImage ? 'bg-[rgba(40,150,251,0.1)]' : 'bg-[rgba(255,255,255,0.04)]'}`}>
               {screenshotImage
-                ? <ImageIcon className="w-[16px] h-[16px] text-[#00B2A9]" />
+                ? <Monitor className="w-[16px] h-[16px] text-[#2896FB]" />
                 : <UploadCloud className="w-[16px] h-[16px] text-[#64748B]" />
               }
             </div>
             <div className="text-[12.5px] font-medium text-[#94A3B8] flex-1">
-              {screenshotImage ? 'Image uploaded' : 'Upload background image'}
+              {screenshotImage ? 'Image uploaded' : 'Upload screenshot or image'}
               <span className="block text-[10.5px] text-[#64748B] mt-[2px]">
-                {screenshotImage ? 'Renders behind the text' : 'PNG, JPG — optional depth layer'}
+                {screenshotImage ? 'Renders behind person as a depth layer' : 'PNG, JPG — renders behind person'}
               </span>
             </div>
             {screenshotImage && (
@@ -225,6 +430,24 @@ export function DidYouKnowWorkspace() {
 
           {screenshotImage && (
             <div className="flex flex-col gap-[14px] animate-in fade-in duration-300">
+              <div>
+                <div className="text-[11px] font-medium text-[#64748B] mb-[6px]">Style</div>
+                <div className="grid grid-cols-4 gap-[4px]">
+                  {(["glow", "float", "neon", "minimal", "tilt", "shadow", "cinematic", "glass"] as const).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setScreenshotStyle(s)}
+                      className={`py-[6px] px-[4px] rounded-[8px] text-[9px] font-semibold border cursor-pointer transition-all capitalize ${
+                        screenshotStyle === s
+                          ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
+                          : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8] hover:border-[rgba(255,255,255,0.1)]"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="flex gap-[14px]">
                 <div className="flex-1">
                   <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
@@ -241,7 +464,7 @@ export function DidYouKnowWorkspace() {
                     Scale <span className="font-semibold text-[#94A3B8]">{screenshotScale}%</span>
                   </div>
                   <input
-                    type="range" min="30" max="150" value={screenshotScale}
+                    type="range" min="30" max="120" value={screenshotScale}
                     onChange={e => setScreenshotScale(Number(e.target.value))}
                     className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
                   />
@@ -258,7 +481,29 @@ export function DidYouKnowWorkspace() {
                     className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
                   />
                 </div>
-                <div className="flex-1" />
+                <div className="flex-1">
+                  <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
+                    Offset X <span className="font-semibold text-[#94A3B8]">{screenshotOffsetX}</span>
+                  </div>
+                  <input
+                    type="range" min="-40" max="40" value={screenshotOffsetX}
+                    onChange={e => setScreenshotOffsetX(Number(e.target.value))}
+                    className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-[14px]">
+                <div className="flex-1">
+                  <div className="flex justify-between text-[11px] font-medium text-[#64748B] mb-[6px]">
+                    Offset Y <span className="font-semibold text-[#94A3B8]">{screenshotOffsetY}</span>
+                  </div>
+                  <input
+                    type="range" min="-30" max="30" value={screenshotOffsetY}
+                    onChange={e => setScreenshotOffsetY(Number(e.target.value))}
+                    className="w-full h-[4px] rounded-[4px] bg-[rgba(255,255,255,0.06)] outline-none appearance-none"
+                  />
+                </div>
+                <div className="flex-1"></div>
               </div>
             </div>
           )}
@@ -270,88 +515,211 @@ export function DidYouKnowWorkspace() {
       </div>
 
       <LivePreview>
-        <div ref={previewRef} data-export-preview data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; return factText.trim() ? `Did You Know - ${factText.trim().slice(0, 30)} ${datePart}` : `Did You Know Thumbnail ${datePart}`; })()} className="w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
+        <div ref={previewRef} data-export-preview data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; return headline.trim() ? `Did You Know - ${headline.trim()} ${datePart}` : `Did You Know Thumbnail ${datePart}`; })()} className={`w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}>
 
           <img
-            src={bgUrl}
+            src={BG_URL}
             alt="Background"
             className="absolute inset-0 w-full h-full object-cover z-0"
           />
 
-          {screenshotImage && (
-            <div
-              className="absolute inset-0 z-[1] flex items-center justify-center"
-            >
-              <img
-                src={screenshotImage}
-                alt="Background image"
-                className="object-contain"
-                style={{
-                  opacity: screenshotOpacity / 100,
-                  width: `${screenshotScale}%`,
-                  borderRadius: `${screenshotRadius}px`,
-                  boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
-                }}
-              />
-            </div>
-          )}
+          <img
+            src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png`}
+            alt="HighLevel"
+            className="absolute top-[8%] left-[4%] z-[5] h-[8%] w-auto object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]"
+          />
 
           <div
-            className="absolute top-[8%] left-1/2 -translate-x-1/2 z-[6] whitespace-nowrap overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
+            className="absolute top-[8%] right-[4%] z-[6] whitespace-nowrap overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.4)]"
             style={{
               background: BADGE_STYLES[badgeStyle].bg,
               borderRadius: "8px",
             }}
           >
             <div className="absolute inset-0 bg-[rgba(255,255,255,0.08)]" />
-            <div className="relative py-[6px] px-[20px] flex items-center gap-[8px]">
-              <Lightbulb className="w-[14px] h-[14px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" style={{ minWidth: 14 }} />
-              <span className="font-['Poppins'] font-black text-white text-[12px] uppercase tracking-[3px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
+            <div className="relative py-[5px] px-[14px] flex items-center gap-[6px]">
+              <Lightbulb className="w-[10px] h-[10px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" style={{ minWidth: 10 }} />
+              <span className="font-['Poppins'] font-black text-white text-[8px] uppercase tracking-[2.5px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]">
                 Did You Know?
               </span>
             </div>
           </div>
 
-          {(factText || subtext) && (
+          {screenshotImage && (() => {
+            const scaleVal = screenshotScale / 100;
+            const layoutOffsets = layout === "person-left"
+              ? { top: 58, left: 62 }
+              : layout === "person-right"
+              ? { top: 55, left: 35 }
+              : { top: 50, left: 50 };
+            const baseTransform = `translate(-50%, -50%) scale(${scaleVal})`;
+            const styleMap: Record<typeof screenshotStyle, { transform: string; border: string; boxShadow: string; outline?: string; outlineOffset?: string }> = {
+              glow: {
+                transform: `${baseTransform} rotate(-3deg)`,
+                border: "2px solid rgba(40,150,251,0.6)",
+                boxShadow: "0 0 30px rgba(40,150,251,0.4), 0 0 60px rgba(40,150,251,0.2), 0 8px 40px rgba(0,0,0,0.5)",
+              },
+              float: {
+                transform: `${baseTransform} rotate(2deg) perspective(800px) rotateY(-4deg)`,
+                border: "1px solid rgba(255,255,255,0.1)",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)",
+              },
+              neon: {
+                transform: baseTransform,
+                border: "2px solid rgba(40,150,251,0.4)",
+                boxShadow: "0 0 15px rgba(40,150,251,0.5), 0 0 40px rgba(9,93,195,0.3), inset 0 0 15px rgba(40,150,251,0.1), 0 8px 40px rgba(0,0,0,0.5)",
+                outline: "2px solid rgba(40,150,251,0.5)",
+                outlineOffset: "2px",
+              },
+              minimal: {
+                transform: baseTransform,
+                border: "none",
+                boxShadow: "0 8px 40px rgba(0,0,0,0.5)",
+              },
+              tilt: {
+                transform: `${baseTransform} perspective(600px) rotateY(-8deg) rotateX(3deg)`,
+                border: "2px solid rgba(255,255,255,0.12)",
+                boxShadow: "20px 20px 60px rgba(0,0,0,0.6), -5px -5px 20px rgba(40,150,251,0.1)",
+              },
+              shadow: {
+                transform: `${baseTransform} rotate(-2deg)`,
+                border: "none",
+                boxShadow: "0 25px 80px rgba(0,0,0,0.7), 0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05)",
+              },
+              cinematic: {
+                transform: `${baseTransform} rotate(1deg)`,
+                border: "3px solid rgba(255,255,255,0.08)",
+                boxShadow: "0 0 0 6px rgba(0,0,0,0.3), 0 20px 60px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.2)",
+              },
+              glass: {
+                transform: baseTransform,
+                border: "1px solid rgba(255,255,255,0.2)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.1), 0 0 40px rgba(40,150,251,0.15)",
+                outline: "1px solid rgba(255,255,255,0.08)",
+                outlineOffset: "4px",
+              },
+            };
+            const s = styleMap[screenshotStyle];
+            return (
+              <div
+                className="absolute z-[1] transition-all duration-300"
+                style={{
+                  top: `${layoutOffsets.top + screenshotOffsetY}%`,
+                  left: `${layoutOffsets.left + screenshotOffsetX}%`,
+                  transform: s.transform,
+                  opacity: screenshotOpacity / 100,
+                  width: layout !== "classic" ? '55%' : '80%',
+                }}
+              >
+                <img
+                  src={screenshotImage}
+                  alt="Screenshot"
+                  className="w-full h-auto object-contain"
+                  style={{
+                    borderRadius: `${screenshotRadius}px`,
+                    border: s.border,
+                    boxShadow: s.boxShadow,
+                    outline: s.outline || "none",
+                    outlineOffset: s.outlineOffset || "0",
+                  }}
+                />
+              </div>
+            );
+          })()}
+
+          {activeImage && currentMember ? (
             <>
-              {textPosition !== "center" && (
-                <div className="absolute bottom-0 left-0 right-0 h-[50%] z-[3] pointer-events-none"
+              <div
+                className={`absolute z-[1] pointer-events-none ${isDragging ? '' : 'transition-all duration-300 ease-out'}`}
+                style={{
+                  left: `${personX}%`,
+                  top: `${personY}%`,
+                  transform: `translate(-50%, -50%) scale(${personScale / 100})`,
+                  width: '80%',
+                  height: '100%',
+                  background: 'radial-gradient(ellipse at center, rgba(100,180,255,0.7) 0%, rgba(40,150,251,0.5) 25%, rgba(9,93,195,0.35) 45%, rgba(40,150,251,0.15) 65%, transparent 85%)',
+                  filter: 'blur(40px)',
+                }}
+              />
+              <img
+                src={`${currentMember.assetBase}${activeImage}`}
+                alt={`${currentMember.name} Cutout`}
+                onMouseDown={(e) => { e.preventDefault(); handleDragStart(e.clientX, e.clientY); }}
+                onTouchStart={(e) => { if (e.touches[0]) handleDragStart(e.touches[0].clientX, e.touches[0].clientY); }}
+                draggable={false}
+                className={`absolute z-[2] object-contain select-none
+                  ${isDragging ? '' : 'transition-all duration-300 ease-out'}`}
+                style={{
+                  left: `${personX}%`,
+                  top: `${personY}%`,
+                  transform: `translate(-50%, -50%) scale(${personScale / 100})`,
+                  height: '95%',
+                  filter: 'drop-shadow(0 0 35px rgba(100,180,255,0.5)) drop-shadow(0 0 70px rgba(40,150,251,0.4)) drop-shadow(0 0 100px rgba(9,93,195,0.3)) drop-shadow(0 4px 20px rgba(0,0,0,0.5))',
+                }}
+              />
+            </>
+          ) : null}
+
+          {(headline || subtext) ? (
+            layout === "classic" ? (
+              <>
+                <div className="absolute bottom-0 left-0 right-0 h-[45%] z-[3] pointer-events-none"
                   style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 50%, transparent 100%)" }}
                 />
-              )}
-              <div className={`absolute z-[4] ${textPositionClasses[textPosition]}`}>
-                {factText && (
-                  <div
-                    className="font-black text-[clamp(14px,2.2vw,28px)] leading-[1.15] text-white"
+                <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
+                  <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-white"
                     style={{
                       filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5))",
                     }}
                   >
-                    {factText}
+                    {headline}
                   </div>
-                )}
+                  <div className="font-bold text-[clamp(7px,0.8vw,10px)] uppercase text-white mt-[6px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                    {subtext}
+                  </div>
+                </div>
+              </>
+            ) : layout === "person-left" ? (
+              <div className="absolute z-[4] top-[15%] right-[8%] w-[55%] text-left">
+                <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
+                  style={{
+                    color: '#7CC8FF',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
+                    WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
+                  }}
+                >
+                  {headline}
+                </div>
                 {subtext && (
-                  <div className="font-medium text-[clamp(7px,0.8vw,11px)] text-[rgba(255,255,255,0.8)] mt-[8px] tracking-[1px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                  <div className="font-bold text-[clamp(8px,1vw,12px)] uppercase text-white mt-[8px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
                     {subtext}
                   </div>
                 )}
               </div>
-            </>
-          )}
+            ) : (
+              <div className="absolute z-[4] top-[18%] left-[4%] w-[55%] text-left">
+                <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
+                  style={{
+                    color: '#7CC8FF',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
+                    WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
+                  }}
+                >
+                  {headline}
+                </div>
+                {subtext && (
+                  <div className="font-bold text-[clamp(8px,1vw,12px)] uppercase text-white mt-[8px] tracking-[2px] drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)]">
+                    {subtext}
+                  </div>
+                )}
+              </div>
+            )
+          ) : null}
 
-          <div className="absolute bottom-[4%] right-[4%] z-[5]">
-            <img
-              src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=AllWhite.png`}
-              alt="HighLevel"
-              className="h-[18px] object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          </div>
-
-          {!factText && !subtext && !screenshotImage && (
+          {!activeImage && !headline && !subtext && !screenshotImage && (
             <div className="absolute inset-0 flex flex-col items-center justify-center z-[10] text-center gap-[8px]">
               <Lightbulb className="w-[32px] h-[32px] text-[rgba(255,255,255,0.25)] mb-[4px]" />
-              <p className="text-[14px] text-[rgba(255,255,255,0.35)] font-medium m-0">Type a fact or tip</p>
+              <p className="text-[14px] text-[rgba(255,255,255,0.35)] font-medium m-0">Select a person, type a headline</p>
               <span className="text-[11px] text-[rgba(255,255,255,0.2)]">Your thumbnail will preview here</span>
             </div>
           )}
@@ -362,7 +730,7 @@ export function DidYouKnowWorkspace() {
         <CropModal
           imageSrc={cropModalImage}
           onCrop={handleCropApply}
-          onCancel={() => setCropModalImage(null)}
+          onCancel={handleCropCancel}
         />
       )}
     </div>

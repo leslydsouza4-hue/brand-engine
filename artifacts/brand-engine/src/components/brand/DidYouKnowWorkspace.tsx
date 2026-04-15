@@ -580,7 +580,7 @@ export function DidYouKnowWorkspace() {
           <div
             className="absolute z-[6] whitespace-nowrap"
             style={{
-              top: "7%",
+              top: "5%",
               left: layout === "text-right" ? "auto" : "4%",
               right: layout === "text-right" ? "4%" : "auto",
             }}
@@ -589,19 +589,25 @@ export function DidYouKnowWorkspace() {
               className="relative overflow-hidden"
               style={{
                 background: BADGE_STYLES[badgeStyle].bg,
-                borderRadius: "12px",
-                boxShadow: `0 4px 24px rgba(0,0,0,0.4), 0 0 40px ${badgeStyle === 0 ? 'rgba(76,175,80,0.25)' : badgeStyle === 1 ? 'rgba(40,150,251,0.25)' : 'rgba(0,0,0,0.2)'}`,
+                borderRadius: "16px",
+                boxShadow: `0 6px 30px rgba(0,0,0,0.5), 0 0 50px ${badgeStyle === 0 ? 'rgba(76,175,80,0.3)' : badgeStyle === 1 ? 'rgba(40,150,251,0.3)' : 'rgba(0,0,0,0.2)'}, inset 0 1px 0 rgba(255,255,255,0.2)`,
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-[rgba(255,255,255,0.15)] via-transparent to-[rgba(255,255,255,0.05)]" />
-              <div className="absolute top-0 left-0 right-0 h-[1px] bg-[rgba(255,255,255,0.3)]" />
-              <div className="relative py-[8px] px-[20px] flex items-center gap-[10px]">
-                <div className="w-[22px] h-[22px] rounded-full bg-[rgba(255,255,255,0.2)] flex items-center justify-center backdrop-blur-sm">
-                  <Lightbulb className="w-[13px] h-[13px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.3)]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[rgba(255,255,255,0.18)] via-transparent to-[rgba(0,0,0,0.1)]" />
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-[rgba(255,255,255,0.35)]" />
+              <div className="absolute bottom-0 left-[10%] right-[10%] h-[1px] bg-[rgba(255,255,255,0.08)]" />
+              <div className="relative py-[10px] px-[24px] flex items-center gap-[12px]">
+                <div className="w-[30px] h-[30px] rounded-[10px] bg-[rgba(255,255,255,0.2)] flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_2px_8px_rgba(0,0,0,0.2)]">
+                  <Lightbulb className="w-[17px] h-[17px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
                 </div>
-                <span className="font-['Poppins'] font-black text-white text-[12px] uppercase tracking-[3px] drop-shadow-[0_1px_3px_rgba(0,0,0,0.4)]">
-                  Did You Know?
-                </span>
+                <div className="flex flex-col">
+                  <span className="font-['Poppins'] font-black text-white text-[16px] uppercase tracking-[4px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
+                    Did You Know?
+                  </span>
+                  <span className="font-['Poppins'] font-medium text-[rgba(255,255,255,0.7)] text-[7px] uppercase tracking-[2px] mt-[2px]">
+                    HighLevel Tips
+                  </span>
+                </div>
               </div>
             </div>
           </div>

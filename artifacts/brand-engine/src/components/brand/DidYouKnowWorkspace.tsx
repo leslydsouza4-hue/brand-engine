@@ -49,9 +49,9 @@ const ORBIT_URL = `${BASE}assets/did-you-know/orbit-rings.png`;
 type ThumbnailLayout = "text-left" | "text-right" | "text-center";
 
 const LAYOUT_PRESETS: Record<ThumbnailLayout, { personX: number; personY: number; orbitX: number; orbitY: number; label: string; desc: string }> = {
-  "text-left":  { personX: 78, personY: 55, orbitX: 78, orbitY: 50, label: "Text Left",  desc: "Person right" },
-  "text-right": { personX: 22, personY: 55, orbitX: 22, orbitY: 50, label: "Text Right", desc: "Person left" },
-  "text-center": { personX: 50, personY: 58, orbitX: 50, orbitY: 52, label: "Centered",  desc: "Text overlay" },
+  "text-left":  { personX: 78, personY: 55, orbitX: 78, orbitY: 85, label: "Text Left",  desc: "Person right" },
+  "text-right": { personX: 22, personY: 55, orbitX: 22, orbitY: 85, label: "Text Right", desc: "Person left" },
+  "text-center": { personX: 50, personY: 58, orbitX: 50, orbitY: 85, label: "Centered",  desc: "Text overlay" },
 };
 
 const BADGE_STYLES = [

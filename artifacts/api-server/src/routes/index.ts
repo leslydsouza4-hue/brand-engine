@@ -5,6 +5,7 @@ import geminiImageRouter from "./gemini/generate-image";
 import descriptMetaRouter from "./descript/fetch-meta";
 import supportDocMetaRouter from "./support-doc/fetch-meta";
 import convertCmykRouter from "./convert-cmyk";
+import featureRequestRouter from "./feature-request";
 const router: IRouter = Router();
 
 router.use(healthRouter);
@@ -13,5 +14,6 @@ router.use("/gemini", geminiImageRouter);
 router.use(descriptMetaRouter);
 router.use(supportDocMetaRouter);
 router.use(convertCmykRouter);
+router.use(featureRequestRouter);
 
 export default router;

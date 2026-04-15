@@ -13,6 +13,7 @@ import { SuperPromo2Workspace } from "@/components/brand/SuperPromo2Workspace";
 import { EventsWorkspace } from "@/components/brand/EventsWorkspace";
 import { ContentArmyWorkspace } from "@/components/brand/ContentArmyWorkspace";
 import { DidYouKnowWorkspace } from "@/components/brand/DidYouKnowWorkspace";
+import { FeatureRequestBubble } from "@/components/brand/FeatureRequestBubble";
 
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
@@ -61,6 +62,7 @@ export default function BrandEngine() {
         {currentMode === "my-exports" && <MyExportsWorkspace />}
         {currentMode === "events" && <EventsWorkspace />}
       </div>
+      <FeatureRequestBubble />
     </div>
   );
 }

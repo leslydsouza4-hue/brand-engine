@@ -230,7 +230,7 @@ export function DidYouKnowWorkspace() {
           <div
             className="font-['Poppins'] font-black text-white uppercase leading-[0.95]"
             style={{
-              fontSize: 'clamp(16px, 3.2vw, 38px)',
+              fontSize: 'clamp(13px, 2.56vw, 30px)',
               textShadow: '0 2px 8px rgba(0,0,0,0.6), 0 0 30px rgba(0,0,0,0.3)',
             }}
           >
@@ -241,7 +241,7 @@ export function DidYouKnowWorkspace() {
           <div
             className="font-['Poppins'] font-black uppercase leading-[0.95]"
             style={{
-              fontSize: 'clamp(16px, 3.2vw, 38px)',
+              fontSize: 'clamp(13px, 2.56vw, 30px)',
               color: '#7CC8FF',
               textShadow: '0 2px 8px rgba(40,150,251,0.4), 0 0 30px rgba(40,150,251,0.2)',
               marginTop: headlineWhite ? '4px' : '0',

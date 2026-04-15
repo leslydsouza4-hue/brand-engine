@@ -84,7 +84,7 @@ export function ZoomWorkspace() {
       </div>
 
       <LivePreview>
-          <div data-export-preview data-export-name={[name, designation].filter(Boolean).join(" - ") || "Zoom Background"} className="w-full max-w-[720px] aspect-video rounded-[22px] relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
+          <div data-export-preview data-export-name={[name, designation].filter(Boolean).join(" - ") || "Zoom Background"} className="w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins']">
 
             <img
               src={bgUrl}

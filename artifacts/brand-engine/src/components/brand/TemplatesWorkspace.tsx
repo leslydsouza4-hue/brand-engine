@@ -785,7 +785,7 @@ export function TemplatesWorkspace() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.97 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
-                className={`relative w-full max-w-[680px] mx-auto rounded-[14px] overflow-hidden z-[2] ${dragging ? 'cursor-grabbing' : ''}`}
+                className={`relative w-full max-w-[680px] mx-auto overflow-hidden z-[2] ${dragging ? 'cursor-grabbing' : ''}`}
                 style={{
                   aspectRatio: activeSize.ratio,
                   boxShadow: '0 8px 50px rgba(0,0,0,0.3)',

@@ -31,6 +31,35 @@ export function FeatureRequestsWorkspace() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const fetchRequests = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${BASE}api/feature-requests`);
+      if (res.ok) {
+        const data = await res.json();
+        setRequests(data.reverse());
+      }
+    } catch (err) {
+      console.error("Failed to fetch requests:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteRequest = async (id: string) => {
+    setDeleting(id);
+    try {
+      const res = await fetch(`${BASE}api/feature-request/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setRequests(prev => prev.filter(r => r.id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete:", err);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
   const handleUnlock = () => {
     if (password === ACCESS_PASSWORD) {
       setAuthed(true);
@@ -39,6 +68,14 @@ export function FeatureRequestsWorkspace() {
     } else {
       setAuthError(true);
     }
+  };
+
+  useEffect(() => { if (authed) fetchRequests(); }, [authed]);
+
+  const formatDate = (ts: string) => {
+    const d = new Date(ts);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
+      " at " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
   };
 
   if (!authed) {
@@ -72,43 +109,6 @@ export function FeatureRequestsWorkspace() {
       </div>
     );
   }
-
-  const fetchRequests = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${BASE}api/feature-requests`);
-      if (res.ok) {
-        const data = await res.json();
-        setRequests(data.reverse());
-      }
-    } catch (err) {
-      console.error("Failed to fetch requests:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteRequest = async (id: string) => {
-    setDeleting(id);
-    try {
-      const res = await fetch(`${BASE}api/feature-request/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setRequests(prev => prev.filter(r => r.id !== id));
-      }
-    } catch (err) {
-      console.error("Failed to delete:", err);
-    } finally {
-      setDeleting(null);
-    }
-  };
-
-  useEffect(() => { fetchRequests(); }, []);
-
-  const formatDate = (ts: string) => {
-    const d = new Date(ts);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
-      " at " + d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">

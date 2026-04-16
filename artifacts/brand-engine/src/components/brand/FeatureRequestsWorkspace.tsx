@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Loader2, Trash2, MessageSquarePlus, RefreshCw, Link, ExternalLink } from "lucide-react";
+import { Loader2, Trash2, MessageSquarePlus, RefreshCw, Link, ExternalLink, Lock } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
+const ACCESS_PASSWORD = "brandengine_2026";
 
 interface FeatureRequest {
   id: string;
@@ -23,9 +24,54 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function FeatureRequestsWorkspace() {
+  const [authed, setAuthed] = useState(() => sessionStorage.getItem("fr_auth") === "1");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState(false);
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleUnlock = () => {
+    if (password === ACCESS_PASSWORD) {
+      setAuthed(true);
+      sessionStorage.setItem("fr_auth", "1");
+      setAuthError(false);
+    } else {
+      setAuthError(true);
+    }
+  };
+
+  if (!authed) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="w-[320px] flex flex-col items-center">
+          <div className="w-[56px] h-[56px] rounded-full bg-[rgba(40,150,251,0.1)] flex items-center justify-center mb-[20px]">
+            <Lock className="w-[24px] h-[24px] text-[#2896FB]" />
+          </div>
+          <h3 className="text-white text-[16px] font-bold mb-[4px]">Password Required</h3>
+          <p className="text-[#64748B] text-[12px] mb-[20px] text-center">Enter the password to view feature requests</p>
+          <div className="w-full flex gap-[8px]">
+            <input
+              type="password"
+              value={password}
+              onChange={e => { setPassword(e.target.value); setAuthError(false); }}
+              onKeyDown={e => e.key === "Enter" && handleUnlock()}
+              placeholder="Enter password"
+              className={`flex-1 py-[10px] px-[14px] bg-[rgba(255,255,255,0.04)] border rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] placeholder:text-[#334155] font-['Poppins'] transition-colors ${authError ? "border-[rgba(239,68,68,0.4)]" : "border-[rgba(255,255,255,0.08)]"}`}
+            />
+            <button
+              onClick={handleUnlock}
+              className="py-[10px] px-[18px] rounded-[10px] text-[13px] font-bold text-white border-none cursor-pointer transition-all hover:shadow-[0_4px_20px_rgba(40,150,251,0.3)]"
+              style={{ background: "linear-gradient(135deg, #2896FB, #095DC3)" }}
+            >
+              Unlock
+            </button>
+          </div>
+          {authError && <p className="text-[#EF4444] text-[11px] mt-[8px]">Incorrect password</p>}
+        </div>
+      </div>
+    );
+  }
 
   const fetchRequests = async () => {
     setLoading(true);

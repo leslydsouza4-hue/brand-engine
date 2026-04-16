@@ -650,7 +650,7 @@ export function DidYouKnowWorkspace() {
               top: currentPreset.badgePos.top,
               left: currentPreset.badgePos.left,
               right: currentPreset.badgePos.right,
-              transform: `rotate(-45deg)${currentPreset.badgePos.left === "50%" ? " translateX(-50%)" : ""}`,
+              transform: `rotate(-6deg)${currentPreset.badgePos.left === "50%" ? " translateX(-50%)" : ""}`,
             }}
           >
             <div

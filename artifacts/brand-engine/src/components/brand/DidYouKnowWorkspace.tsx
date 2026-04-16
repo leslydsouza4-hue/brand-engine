@@ -68,7 +68,7 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
   "text-left": {
     personX: 78, personY: 55, orbitX: 78, orbitY: 85,
     label: "Text Left", desc: "Person right",
-    textPos: { top: "32%", left: "5%", right: "auto", textAlign: "left", width: "50%" },
+    textPos: { top: "35%", left: "5%", right: "auto", textAlign: "left", width: "50%" },
     badgePos: { top: "12%", left: "4%", right: "auto" },
     logoPos: { bottom: "6%", left: "4%", right: "auto" },
     personHeight: "95%", orbitWidth: "65%", orbitOpacity: 0.35,
@@ -76,7 +76,7 @@ const LAYOUT_PRESETS: Record<ThumbnailLayout, LayoutPreset> = {
   "text-right": {
     personX: 22, personY: 55, orbitX: 22, orbitY: 85,
     label: "Text Right", desc: "Person left",
-    textPos: { top: "32%", left: "auto", right: "5%", textAlign: "right", width: "50%" },
+    textPos: { top: "35%", left: "auto", right: "5%", textAlign: "right", width: "50%" },
     badgePos: { top: "12%", left: "auto", right: "4%" },
     logoPos: { bottom: "6%", left: "auto", right: "4%" },
     personHeight: "95%", orbitWidth: "65%", orbitOpacity: 0.35,

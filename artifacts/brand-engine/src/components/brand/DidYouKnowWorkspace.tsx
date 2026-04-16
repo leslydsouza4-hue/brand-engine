@@ -650,7 +650,7 @@ export function DidYouKnowWorkspace() {
               top: currentPreset.badgePos.top,
               left: currentPreset.badgePos.left,
               right: currentPreset.badgePos.right,
-              transform: currentPreset.badgePos.left === "50%" ? "translateX(-50%)" : "none",
+              transform: `rotate(-45deg)${currentPreset.badgePos.left === "50%" ? " translateX(-50%)" : ""}`,
             }}
           >
             <div
@@ -667,7 +667,7 @@ export function DidYouKnowWorkspace() {
                   <Lightbulb className="w-[11px] h-[11px] text-white drop-shadow-[0_1px_4px_rgba(0,0,0,0.4)]" />
                 </div>
                 <span className="font-['Poppins'] font-black text-white text-[9px] uppercase tracking-[2.5px] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] leading-none">
-                  Did You Know?
+                  Did You Know
                 </span>
               </div>
             </div>

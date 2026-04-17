@@ -6,6 +6,7 @@ import descriptMetaRouter from "./descript/fetch-meta";
 import supportDocMetaRouter from "./support-doc/fetch-meta";
 import convertCmykRouter from "./convert-cmyk";
 import featureRequestRouter from "./feature-request";
+import importDocRouter from "./import-doc";
 const router: IRouter = Router();
 
 router.use(healthRouter);
@@ -15,5 +16,6 @@ router.use(descriptMetaRouter);
 router.use(supportDocMetaRouter);
 router.use(convertCmykRouter);
 router.use(featureRequestRouter);
+router.use(importDocRouter);
 
 export default router;

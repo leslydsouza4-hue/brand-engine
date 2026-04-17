@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
-import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, Package, Copy, Scissors } from "lucide-react";
+import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, Package, Copy, Scissors, FileDown, Link2 } from "lucide-react";
 import JSZip from "jszip";
 import { useExport } from "./useExport";
 import { HIGHLY_POSES } from "./highlyData";
@@ -33,6 +33,93 @@ const newEmail = (): EmailItem => ({
   imgOffset: { x: 0, y: 0 },
   imgScale: 1,
 });
+
+interface ParsedSection {
+  headline: string;
+  subhead: string;
+  cta: string;
+}
+
+function parseDocText(raw: string): ParsedSection[] {
+  // Normalize line endings, strip BOM
+  const text = raw.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = text.split("\n");
+
+  // Section marker: any line containing "Image Header" (case-insensitive)
+  const headerRe = /image\s*header/i;
+
+  // Collect blocks: each block is the lines that follow an "Image Header" marker
+  // until the next marker (or end of doc).
+  const blocks: string[][] = [];
+  let current: string[] | null = null;
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (headerRe.test(line)) {
+      // Start a new block. We don't include the marker line itself.
+      // But if the marker line has trailing text after it (e.g. "Image Header 1: Overwhelmed?"),
+      // capture that as the first content line.
+      current = [];
+      blocks.push(current);
+      const trailing = line.replace(/^.*?image\s*header[^\w]*\d*[\s:.\-–—]*/i, "").trim();
+      if (trailing) current.push(trailing);
+    } else if (current) {
+      current.push(line);
+    }
+  }
+
+  const sections: ParsedSection[] = [];
+  for (const block of blocks) {
+    // Drop leading/trailing blanks but keep internal blanks for separation
+    let start = 0, end = block.length;
+    while (start < end && !block[start]) start++;
+    while (end > start && !block[end - 1]) end--;
+    const content = block.slice(start, end);
+    if (content.length === 0) continue;
+
+    let headline = "";
+    let subhead = "";
+    let cta = "";
+
+    // Detect labeled lines first
+    const consumed = new Set<number>();
+    for (let i = 0; i < content.length; i++) {
+      const l = content[i]!;
+      const m = l.match(/^\s*(headline|head|title|subhead|sub-head|subheadline|sub|cta|button|call to action)\s*[:\-–—]\s*(.+)$/i);
+      if (m) {
+        const label = m[1]!.toLowerCase();
+        const value = m[2]!.trim();
+        if ((label.startsWith("head") || label === "title") && !headline) headline = value;
+        else if ((label.startsWith("sub")) && !subhead) subhead = value;
+        else if ((label === "cta" || label === "button" || label === "call to action") && !cta) cta = value;
+        consumed.add(i);
+      }
+    }
+
+    // Fall back to positional: first non-consumed = headline, rest = subhead, last short = cta
+    const remaining = content.map((l, i) => ({ l, i })).filter(x => !consumed.has(x.i) && x.l.length > 0);
+    if (!headline && remaining.length > 0) {
+      headline = remaining.shift()!.l;
+    }
+    if (!cta && remaining.length > 0) {
+      // If the last line looks like a button (short, action-y), treat as CTA
+      const last = remaining[remaining.length - 1]!.l;
+      const looksLikeCta = last.length <= 28 && /^[A-Z]/.test(last) && !last.endsWith(".") && !last.endsWith("?") && !last.endsWith("!");
+      if (looksLikeCta && remaining.length > 1) {
+        cta = last;
+        remaining.pop();
+      }
+    }
+    if (!subhead && remaining.length > 0) {
+      subhead = remaining.map(r => r.l).join(" ").trim();
+    }
+
+    if (headline || subhead || cta) {
+      sections.push({ headline, subhead, cta });
+    }
+  }
+
+  return sections;
+}
 
 function dataUrlToBlob(dataUrl: string): Blob {
   const parts = dataUrl.split(",");

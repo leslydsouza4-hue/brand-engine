@@ -57,6 +57,7 @@ interface EmailPreviewProps {
 function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, onDuplicate, onRemove, onDownload, registerRef }: EmailPreviewProps) {
   const previewRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLDivElement>(null);
+  const subheadRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(34);
 
@@ -69,21 +70,39 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     return () => registerRef(email.id, null);
   }, [email.id, registerRef]);
 
-  // Dynamic headline sizing
+  // Dynamic headline + subhead combined sizing
   useEffect(() => {
     const el = headlineRef.current;
-    if (!el || !email.headline) { setHeadlineFontPx(34); return; }
+    const sub = subheadRef.current;
+    if (!el) return;
+    if (!email.headline && !email.subhead) { setHeadlineFontPx(34); return; }
+
     const containerWidth = el.parentElement?.clientWidth || 600;
-    const containerHeight = 200;
-    let lo = 14, hi = 36, best = 14;
+    const previewH = previewRef.current?.clientHeight || 540;
+    // Text block sits at 28% top with a 4% bottom safety margin → ~68% of preview available
+    const availableHeight = Math.max(120, previewH * 0.66);
+    const gap = 18;
+
+    let lo = 12, hi = 40, best = 12;
     const measure = (size: number) => {
       el.style.fontSize = `${size}px`;
-      return { w: el.scrollWidth, h: el.scrollHeight };
+      const headlineH = email.headline ? el.scrollHeight : 0;
+      const headlineW = email.headline ? el.scrollWidth : 0;
+      let subH = 0, subW = 0;
+      if (sub && email.subhead) {
+        const subSize = Math.max(16, Math.round(size * 0.55));
+        sub.style.fontSize = `${subSize}px`;
+        subH = sub.scrollHeight;
+        subW = sub.scrollWidth;
+      }
+      const totalH = headlineH + (subH > 0 && headlineH > 0 ? gap : 0) + subH;
+      const maxW = Math.max(headlineW, subW);
+      return { w: maxW, h: totalH };
     };
     while (lo <= hi) {
       const mid = Math.floor((lo + hi) / 2);
       const { w, h } = measure(mid);
-      if (w <= containerWidth && h <= containerHeight) {
+      if (w <= containerWidth && h <= availableHeight) {
         best = mid;
         lo = mid + 1;
       } else {
@@ -91,7 +110,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
       }
     }
     setHeadlineFontPx(best);
-  }, [email.headline, email.imageSource]);
+  }, [email.headline, email.subhead, email.imageSource]);
 
   const handleImgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!previewRef.current) return;
@@ -175,7 +194,8 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
           </div>
         </div>
 
-        {/* Preview */}
+        {/* Preview wrapper — visually rounded but the export target is sharp */}
+        <div className="relative overflow-hidden rounded-b-[16px]">
         <div
           ref={previewRef}
           data-export-preview
@@ -195,8 +215,13 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
           />
 
           <div
-            className="absolute z-[4] flex flex-col"
-            style={{ top: "28%", left: "5%", width: email.imageSource === "none" ? "90%" : "52%" }}
+            className="absolute z-[4] flex flex-col overflow-hidden"
+            style={{
+              top: "28%",
+              left: "5%",
+              width: email.imageSource === "none" ? "90%" : "52%",
+              maxHeight: "68%",
+            }}
           >
             <div
               ref={headlineRef}
@@ -216,9 +241,10 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
             </div>
             {email.subhead && (
               <div
+                ref={subheadRef}
                 className="font-['Poppins'] font-semibold leading-[1.35] mt-[18px] text-white"
                 style={{
-                  fontSize: `${Math.max(18, Math.round(headlineFontPx * 0.55))}px`,
+                  fontSize: `${Math.max(16, Math.round(headlineFontPx * 0.55))}px`,
                   textShadow: "0 2px 8px rgba(0,0,0,0.5)",
                 }}
               >
@@ -278,6 +304,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
               )}
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

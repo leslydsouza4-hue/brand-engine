@@ -83,28 +83,33 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     const cta = ctaRef.current;
     const containerWidth = el.parentElement?.clientWidth || 600;
     const previewH = previewRef.current?.clientHeight || 540;
-    // Text block sits at 28% top with a 4% bottom safety margin → ~68% of preview available
-    const availableHeight = Math.max(120, previewH * 0.66);
-    const gap = 18;
-    const ctaGap = 22;
+    // Text block sits at 28% top → ~70% of preview height available
+    const availableHeight = Math.max(140, previewH * 0.70);
+    const gap = 14;
+    const ctaGap = 18;
 
-    let lo = 12, hi = 40, best = 12;
+    // Headline is the hero — keep it bold and readable.
+    // Floor at 22px so it never gets tiny; subhead/CTA scale to fit.
+    const HEADLINE_MIN = 22;
+    const HEADLINE_MAX = 40;
+    let lo = HEADLINE_MIN, hi = HEADLINE_MAX, best = HEADLINE_MIN;
     const measure = (size: number) => {
       el.style.fontSize = `${size}px`;
       const headlineH = email.headline ? el.scrollHeight : 0;
       const headlineW = email.headline ? el.scrollWidth : 0;
       let subH = 0, subW = 0;
       if (sub && email.subhead) {
-        const subSize = Math.max(16, Math.round(size * 0.55));
+        // Subhead scales relative to headline but never larger than ~half
+        const subSize = Math.max(13, Math.min(20, Math.round(size * 0.48)));
         sub.style.fontSize = `${subSize}px`;
         subH = sub.scrollHeight;
         subW = sub.scrollWidth;
       }
       let ctaH = 0, ctaW = 0;
       if (cta && email.cta) {
-        const ctaFont = Math.max(11, Math.round(size * 0.42));
-        const ctaPadY = Math.max(6, Math.round(size * 0.32));
-        const ctaPadX = Math.max(12, Math.round(size * 0.7));
+        const ctaFont = Math.max(11, Math.min(16, Math.round(size * 0.4)));
+        const ctaPadY = Math.max(6, Math.round(ctaFont * 0.7));
+        const ctaPadX = Math.max(12, Math.round(ctaFont * 1.7));
         cta.style.fontSize = `${ctaFont}px`;
         cta.style.padding = `${ctaPadY}px ${ctaPadX}px`;
         ctaH = cta.scrollHeight;
@@ -126,6 +131,8 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
         hi = mid - 1;
       }
     }
+    // Force-apply at min so subhead/CTA inline styles match the rendered headline
+    measure(best);
     setHeadlineFontPx(best);
   }, [email.headline, email.subhead, email.cta, email.imageSource]);
 
@@ -259,9 +266,9 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
             {email.subhead && (
               <div
                 ref={subheadRef}
-                className="font-['Poppins'] font-semibold leading-[1.35] mt-[18px] text-white"
+                className="font-['Poppins'] font-semibold leading-[1.35] mt-[14px] text-white"
                 style={{
-                  fontSize: `${Math.max(16, Math.round(headlineFontPx * 0.55))}px`,
+                  fontSize: `${Math.max(13, Math.min(20, Math.round(headlineFontPx * 0.48)))}px`,
                   textShadow: "0 2px 8px rgba(0,0,0,0.5)",
                 }}
               >
@@ -271,10 +278,10 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
             {email.cta && (
               <div
                 ref={ctaRef}
-                className="font-['Poppins'] font-bold inline-flex items-center self-start mt-[22px] tracking-[0.3px]"
+                className="font-['Poppins'] font-bold inline-flex items-center self-start mt-[18px] tracking-[0.3px]"
                 style={{
-                  fontSize: `${Math.max(11, Math.round(headlineFontPx * 0.42))}px`,
-                  padding: `${Math.max(6, Math.round(headlineFontPx * 0.32))}px ${Math.max(12, Math.round(headlineFontPx * 0.7))}px`,
+                  fontSize: `${Math.max(11, Math.min(16, Math.round(headlineFontPx * 0.4)))}px`,
+                  padding: `${Math.max(6, Math.round(Math.max(11, Math.min(16, Math.round(headlineFontPx * 0.4))) * 0.7))}px ${Math.max(12, Math.round(Math.max(11, Math.min(16, Math.round(headlineFontPx * 0.4))) * 1.7))}px`,
                   borderRadius: "999px",
                   color: "#060B16",
                   background: "linear-gradient(135deg, #DCEEFF 0%, #7CC8FF 50%, #2896FB 100%)",

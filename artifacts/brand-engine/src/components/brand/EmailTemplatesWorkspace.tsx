@@ -44,17 +44,63 @@ function splitHeadlineSubhead(text: string): { headline: string; subhead: string
   const clean = text.replace(/\s+/g, " ").trim();
   if (!clean) return { headline: "", subhead: "" };
 
-  // Split into sentences using terminal punctuation (. ? !)
+  // Sentence segmentation on . ? ! (keeping punctuation)
   const matches = clean.match(/[^.!?]+[.!?]+(\s|$)|[^.!?]+$/g);
   const sentences = matches ? matches.map(s => s.trim()).filter(Boolean) : [clean];
 
-  if (sentences.length === 1) {
-    return { headline: sentences[0]!, subhead: "" };
+  // ---- Multi-sentence path ----
+  if (sentences.length >= 2) {
+    // 1) If exactly one sentence is a question/exclamation, it's the hook → headline
+    const punchyIdxs = sentences
+      .map((s, i) => ({ i, s }))
+      .filter(x => /[?!]$/.test(x.s));
+    if (punchyIdxs.length === 1) {
+      const idx = punchyIdxs[0]!.i;
+      const headline = sentences[idx]!;
+      const rest = sentences.filter((_, i) => i !== idx).join(" ").trim();
+      return { headline, subhead: rest };
+    }
+
+    // 2) Headline is normally the FIRST sentence — unless it's clearly too long
+    //    AND the second is much shorter (then second is more headline-like).
+    const first = sentences[0]!;
+    const rest = sentences.slice(1).join(" ").trim();
+    if (first.length > 90 && sentences[1] && sentences[1].length < first.length * 0.6) {
+      const second = sentences[1]!;
+      const others = [first, ...sentences.slice(2)].join(" ").trim();
+      return { headline: second, subhead: others };
+    }
+    return { headline: first, subhead: rest };
   }
-  return {
-    headline: sentences[0]!,
-    subhead: sentences.slice(1).join(" ").trim(),
-  };
+
+  // ---- Single-sentence path: try to split smartly ----
+  // Look for natural break points (em-dash, colon, semicolon, " — ", " - ")
+  const breakRe = /\s*[—–]\s*|\s+[-–—]\s+|\s*:\s+|\s*;\s+/;
+  const breakMatch = clean.match(breakRe);
+  if (breakMatch && typeof breakMatch.index === "number") {
+    const idx = breakMatch.index;
+    const left = clean.slice(0, idx).trim();
+    const right = clean.slice(idx + breakMatch[0]!.length).trim();
+    if (left && right && left.length <= 90) {
+      return { headline: left, subhead: right };
+    }
+  }
+
+  // If still long, split at the comma closest to the middle so neither side is empty
+  if (clean.length > 80) {
+    const commas: number[] = [];
+    for (let i = 0; i < clean.length; i++) if (clean[i] === ",") commas.push(i);
+    if (commas.length > 0) {
+      const mid = clean.length / 2;
+      let best = commas[0]!;
+      for (const c of commas) if (Math.abs(c - mid) < Math.abs(best - mid)) best = c;
+      const left = clean.slice(0, best).trim();
+      const right = clean.slice(best + 1).trim();
+      if (left && right) return { headline: left, subhead: right };
+    }
+  }
+
+  return { headline: clean, subhead: "" };
 }
 
 function parseDocText(raw: string): ParsedSection[] {

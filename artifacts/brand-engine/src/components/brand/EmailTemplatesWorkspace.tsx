@@ -14,6 +14,7 @@ interface EmailItem {
   id: string;
   headline: string;
   subhead: string;
+  cta: string;
   imageSource: ImageSource;
   selectedHighlyId: string;
   uploadedImage: string | null;
@@ -25,6 +26,7 @@ const newEmail = (): EmailItem => ({
   id: `e_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
   headline: "",
   subhead: "",
+  cta: "",
   imageSource: "highly",
   selectedHighlyId: HIGHLY_POSES[0]!.id,
   uploadedImage: null,
@@ -58,6 +60,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
   const previewRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLDivElement>(null);
   const subheadRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(34);
 
@@ -77,11 +80,13 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     if (!el) return;
     if (!email.headline && !email.subhead) { setHeadlineFontPx(34); return; }
 
+    const cta = ctaRef.current;
     const containerWidth = el.parentElement?.clientWidth || 600;
     const previewH = previewRef.current?.clientHeight || 540;
     // Text block sits at 28% top with a 4% bottom safety margin → ~68% of preview available
     const availableHeight = Math.max(120, previewH * 0.66);
     const gap = 18;
+    const ctaGap = 22;
 
     let lo = 12, hi = 40, best = 12;
     const measure = (size: number) => {
@@ -95,8 +100,15 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
         subH = sub.scrollHeight;
         subW = sub.scrollWidth;
       }
-      const totalH = headlineH + (subH > 0 && headlineH > 0 ? gap : 0) + subH;
-      const maxW = Math.max(headlineW, subW);
+      let ctaH = 0, ctaW = 0;
+      if (cta && email.cta) {
+        ctaH = cta.scrollHeight;
+        ctaW = cta.scrollWidth;
+      }
+      const totalH = headlineH
+        + (subH > 0 && headlineH > 0 ? gap : 0) + subH
+        + (ctaH > 0 && (headlineH > 0 || subH > 0) ? ctaGap : 0) + ctaH;
+      const maxW = Math.max(headlineW, subW, ctaW);
       return { w: maxW, h: totalH };
     };
     while (lo <= hi) {
@@ -110,7 +122,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
       }
     }
     setHeadlineFontPx(best);
-  }, [email.headline, email.subhead, email.imageSource]);
+  }, [email.headline, email.subhead, email.cta, email.imageSource]);
 
   const handleImgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!previewRef.current) return;
@@ -249,6 +261,23 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 }}
               >
                 {email.subhead}
+              </div>
+            )}
+            {email.cta && (
+              <div
+                ref={ctaRef}
+                className="font-['Poppins'] font-bold inline-flex items-center self-start mt-[22px] tracking-[0.3px]"
+                style={{
+                  fontSize: `${Math.max(13, Math.round(headlineFontPx * 0.42))}px`,
+                  padding: "12px 26px",
+                  borderRadius: "999px",
+                  color: "#060B16",
+                  background: "linear-gradient(135deg, #DCEEFF 0%, #7CC8FF 50%, #2896FB 100%)",
+                  boxShadow: "0 8px 22px rgba(40,150,251,0.4), inset 0 1px 0 rgba(255,255,255,0.6)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {email.cta}
               </div>
             )}
           </div>
@@ -474,6 +503,42 @@ export function EmailTemplatesWorkspace() {
             placeholder="Type or paste your subheadline..."
             className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-[8px]">
+            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B]">CTA Button <span className="text-[#475569] font-normal normal-case tracking-normal">(optional)</span></div>
+            {activeEmail.cta && (
+              <button
+                onClick={() => patchActive({ cta: "" })}
+                className="text-[10px] text-[#64748B] hover:text-[#7CC8FF] cursor-pointer bg-transparent border-none p-0 transition-colors"
+                title="Remove CTA"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <input
+            type="text"
+            value={activeEmail.cta}
+            onChange={e => patchActive({ cta: e.target.value })}
+            placeholder="e.g. Get Started, Book a Demo"
+            maxLength={28}
+            className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] transition-colors placeholder:text-[#475569]"
+          />
+          {!activeEmail.cta && (
+            <div className="flex flex-wrap gap-[6px] mt-[8px]">
+              {["Get Started", "Book a Demo", "Try It Free", "Learn More"].map(t => (
+                <button
+                  key={t}
+                  onClick={() => patchActive({ cta: t })}
+                  className="text-[10px] py-[4px] px-[10px] rounded-full bg-[rgba(40,150,251,0.08)] hover:bg-[rgba(40,150,251,0.18)] text-[#7CC8FF] border border-[rgba(40,150,251,0.2)] cursor-pointer transition-colors"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>

@@ -183,7 +183,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     // Headline is the hero — keep it bold and readable.
     // Floor at 22px so it never gets tiny; ceiling allows bold growth when text is short.
     const HEADLINE_MIN = 22;
-    const HEADLINE_MAX = 60;
+    const HEADLINE_MAX = 88;
     let lo = HEADLINE_MIN, hi = HEADLINE_MAX, best = HEADLINE_MIN;
     const measure = (size: number) => {
       el.style.fontSize = `${size}px`;
@@ -192,14 +192,14 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
       let subH = 0, subW = 0;
       if (sub && email.subhead) {
         // Subhead scales with headline (~half its size), generous range
-        const subSize = Math.max(14, Math.min(28, Math.round(size * 0.5)));
+        const subSize = Math.max(14, Math.min(42, Math.round(size * 0.55)));
         sub.style.fontSize = `${subSize}px`;
         subH = sub.scrollHeight;
         subW = sub.scrollWidth;
       }
       let ctaH = 0, ctaW = 0;
       if (cta && email.cta) {
-        const ctaFont = Math.max(12, Math.min(20, Math.round(size * 0.42)));
+        const ctaFont = Math.max(12, Math.min(26, Math.round(size * 0.42)));
         const ctaPadY = Math.max(6, Math.round(ctaFont * 0.7));
         const ctaPadX = Math.max(14, Math.round(ctaFont * 1.7));
         cta.style.fontSize = `${ctaFont}px`;
@@ -359,7 +359,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 ref={subheadRef}
                 className="font-['Poppins'] font-semibold leading-[1.35] mt-[14px] text-white"
                 style={{
-                  fontSize: `${Math.max(14, Math.min(28, Math.round(headlineFontPx * 0.5)))}px`,
+                  fontSize: `${Math.max(14, Math.min(42, Math.round(headlineFontPx * 0.55)))}px`,
                   textShadow: "0 2px 8px rgba(0,0,0,0.5)",
                 }}
               >
@@ -371,8 +371,8 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 ref={ctaRef}
                 className="font-['Poppins'] font-bold inline-flex items-center self-start mt-[18px] tracking-[0.3px]"
                 style={{
-                  fontSize: `${Math.max(12, Math.min(20, Math.round(headlineFontPx * 0.42)))}px`,
-                  padding: `${Math.max(6, Math.round(Math.max(12, Math.min(20, Math.round(headlineFontPx * 0.42))) * 0.7))}px ${Math.max(14, Math.round(Math.max(12, Math.min(20, Math.round(headlineFontPx * 0.42))) * 1.7))}px`,
+                  fontSize: `${Math.max(12, Math.min(26, Math.round(headlineFontPx * 0.42)))}px`,
+                  padding: `${Math.max(6, Math.round(Math.max(12, Math.min(26, Math.round(headlineFontPx * 0.42))) * 0.7))}px ${Math.max(14, Math.round(Math.max(12, Math.min(26, Math.round(headlineFontPx * 0.42))) * 1.7))}px`,
                   borderRadius: "999px",
                   color: "#060B16",
                   background: "linear-gradient(135deg, #DCEEFF 0%, #7CC8FF 50%, #2896FB 100%)",

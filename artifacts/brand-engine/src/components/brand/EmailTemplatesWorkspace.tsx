@@ -21,6 +21,8 @@ interface EmailItem {
   uploadedImage: string | null;
   imgOffset: { x: number; y: number };
   imgScale: number;
+  bundleOffset: { x: number; y: number };
+  bundleScale: number;
 }
 
 const newEmail = (): EmailItem => ({
@@ -34,6 +36,8 @@ const newEmail = (): EmailItem => ({
   uploadedImage: null,
   imgOffset: { x: 0, y: 0 },
   imgScale: 1,
+  bundleOffset: { x: 0, y: 0 },
+  bundleScale: 1,
 });
 
 interface ParsedSection {
@@ -156,6 +160,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
   const subheadRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
+  const bundleDragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(34);
 
   const selectedHighly = HIGHLY_POSES.find(h => h.id === email.selectedHighlyId);
@@ -266,6 +271,36 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     if (dragRef.current) {
       try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
       dragRef.current = null;
+    }
+  };
+
+  const handleBundlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!previewRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onSelect();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    bundleDragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: email.bundleOffset.x,
+      baseY: email.bundleOffset.y,
+      rect: previewRef.current.getBoundingClientRect(),
+    };
+  };
+
+  const handleBundlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = bundleDragRef.current;
+    if (!d) return;
+    const dxPct = ((e.clientX - d.startX) / d.rect.width) * 100;
+    const dyPct = ((e.clientY - d.startY) / d.rect.height) * 100;
+    onPatch({ bundleOffset: { x: d.baseX + dxPct, y: d.baseY + dyPct } });
+  };
+
+  const handleBundlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (bundleDragRef.current) {
+      try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+      bundleDragRef.current = null;
     }
   };
 
@@ -399,15 +434,28 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
 
           {bundleBase && (
             <div
-              className="absolute z-[3] flex items-center justify-center pointer-events-none"
-              style={{ top: "10%", right: "4%", width: "38%", height: "82%" }}
+              className="absolute z-[3] flex items-center justify-center select-none"
+              style={{
+                top: "10%",
+                right: "4%",
+                width: "38%",
+                height: "82%",
+                transform: `translate(${email.bundleOffset.x}%, ${email.bundleOffset.y}%) scale(${email.bundleScale})`,
+                transformOrigin: "center",
+                cursor: "grab",
+                touchAction: "none",
+              }}
+              onPointerDown={handleBundlePointerDown}
+              onPointerMove={handleBundlePointerMove}
+              onPointerUp={handleBundlePointerUp}
+              onPointerCancel={handleBundlePointerUp}
             >
               <img
                 src={bundleBase}
                 alt=""
                 draggable={false}
                 crossOrigin="anonymous"
-                className="max-w-full max-h-full object-contain"
+                className="max-w-full max-h-full object-contain pointer-events-none"
                 style={{ filter: "drop-shadow(0 12px 30px rgba(0,0,0,0.5))" }}
               />
             </div>
@@ -666,7 +714,7 @@ export function EmailTemplatesWorkspace() {
 
   const setSource = (src: ImageSource) => patchActive({ imageSource: src, imgOffset: { x: 0, y: 0 }, imgScale: 1 });
   const setHighly = (id: string) => patchActive({ selectedHighlyId: id, imgOffset: { x: 0, y: 0 }, imgScale: 1 });
-  const setBundle = (id: string) => patchActive({ selectedBundleId: id, imgOffset: { x: 0, y: 0 }, imgScale: 1 });
+  const setBundle = (id: string) => patchActive({ selectedBundleId: id, bundleOffset: { x: 0, y: 0 }, bundleScale: 1 });
 
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
@@ -845,6 +893,32 @@ export function EmailTemplatesWorkspace() {
                     </div>
                   </button>
                 ))}
+              </div>
+
+              <div className="border-t border-[rgba(255,255,255,0.06)] pt-[12px]">
+                <div className="flex items-center justify-between mb-[6px]">
+                  <div className="text-[10px] font-bold uppercase tracking-[1px] text-[#64748B]">Bundle Size & Position</div>
+                  <div className="flex items-center gap-[8px]">
+                    <span className="text-[11px] font-bold text-[#7CC8FF] tabular-nums">{Math.round(activeEmail.bundleScale * 100)}%</span>
+                    <button
+                      onClick={() => patchActive({ bundleScale: 1, bundleOffset: { x: 0, y: 0 } })}
+                      className="text-[10px] text-[#64748B] hover:text-[#7CC8FF] cursor-pointer bg-transparent border-none p-0 transition-colors"
+                      title="Reset bundle size & position"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min={0.4}
+                  max={2}
+                  step={0.05}
+                  value={activeEmail.bundleScale}
+                  onChange={(e) => patchActive({ bundleScale: parseFloat(e.target.value) })}
+                  className="w-full email-scale-slider cursor-pointer"
+                />
+                <div className="text-[10px] text-[#475569] mt-[4px] mb-[14px]">Drag the bundle in the preview to reposition it</div>
               </div>
 
               <div className="border-t border-[rgba(255,255,255,0.06)] pt-[12px]">

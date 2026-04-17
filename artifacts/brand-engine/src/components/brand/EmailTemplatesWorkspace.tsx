@@ -228,7 +228,6 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
           style={{ aspectRatio: "1200 / 600" }}
         >
           <img src={BG_URL} alt="" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[rgba(6,11,22,0.45)] via-transparent to-transparent" />
 
           <img
             src={LOGO_URL}

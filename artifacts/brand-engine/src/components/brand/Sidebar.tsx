@@ -15,7 +15,8 @@ import {
   Mic2,
   Award,
   Clock,
-  MessageSquarePlus
+  MessageSquarePlus,
+  Mail
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -131,6 +132,14 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           >
             <Gift className={iconCls(currentMode === 'super-promo')} />
             Super Promo
+          </button>
+
+          <button 
+            onClick={() => handleSetMode('email-templates')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'email-templates' ? activeClass : inactiveClass}`}
+          >
+            <Mail className={iconCls(currentMode === 'email-templates')} />
+            Email Templates
           </button>
         </div>
 

@@ -15,14 +15,15 @@ import { ContentArmyWorkspace } from "@/components/brand/ContentArmyWorkspace";
 import { DidYouKnowWorkspace } from "@/components/brand/DidYouKnowWorkspace";
 import { FeatureRequestBubble } from "@/components/brand/FeatureRequestBubble";
 import { FeatureRequestsWorkspace } from "@/components/brand/FeatureRequestsWorkspace";
+import { EmailTemplatesWorkspace } from "@/components/brand/EmailTemplatesWorkspace";
 
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    const valid = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
+    const valid = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
     return valid.includes(hash) ? hash : "templates";
   });
-  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
+  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -62,6 +63,7 @@ export default function BrandEngine() {
         {currentMode === "settings" && <SettingsWorkspace />}
 
         {currentMode === "events" && <EventsWorkspace />}
+        {currentMode === "email-templates" && <EmailTemplatesWorkspace />}
         {currentMode === "feature-requests" && <FeatureRequestsWorkspace />}
       </div>
       <FeatureRequestBubble />

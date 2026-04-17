@@ -26,8 +26,8 @@ interface SubTemplate {
 
 const SUB_TEMPLATES: SubTemplate[] = [
   {
-    id: "churned-workflow",
-    label: "Churned Email Workflow",
+    id: "marketing-email",
+    label: "Marketing Email",
     description: "8 templates for the churned-user re-engagement sequence",
     templates: [
       { id: "email-1a", label: "Email 1A", headline: "Overwhelmed? We can help.", subhead: "Come back and claim your free trial extension." },

@@ -143,7 +143,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             className={`${btnBase} cursor-pointer ${currentMode === 'email-templates' ? activeClass : inactiveClass}`}
           >
             <Mail className={iconCls(currentMode === 'email-templates')} />
-            Churned Email Workflow
+            Marketing Email
           </button>
         </div>
 

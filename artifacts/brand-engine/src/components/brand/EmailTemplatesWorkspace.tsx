@@ -160,11 +160,15 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
 
   const selectedHighly = HIGHLY_POSES.find(h => h.id === email.selectedHighlyId);
   const selectedBundle = BUNDLE_ASSETS.find(b => b.id === email.selectedBundleId);
+  // In bundle mode, the bundle is the static base and uploadedImage (a person) is the
+  // draggable overlay on top of it. In other modes, displayedImage is the single layer.
   const displayedImage =
     email.imageSource === "upload" ? email.uploadedImage :
     email.imageSource === "highly" ? selectedHighly?.image :
-    email.imageSource === "bundle" ? selectedBundle?.image :
+    email.imageSource === "bundle" ? email.uploadedImage :
     null;
+  const bundleBase = email.imageSource === "bundle" ? selectedBundle?.image : null;
+  const showPlaceholder = email.imageSource !== "none" && !displayedImage && !bundleBase;
 
   // Register ref for parent
   useLayoutEffect(() => {
@@ -393,6 +397,22 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
             )}
           </div>
 
+          {bundleBase && (
+            <div
+              className="absolute z-[3] flex items-center justify-center pointer-events-none"
+              style={{ top: "10%", right: "4%", width: "38%", height: "82%" }}
+            >
+              <img
+                src={bundleBase}
+                alt=""
+                draggable={false}
+                crossOrigin="anonymous"
+                className="max-w-full max-h-full object-contain"
+                style={{ filter: "drop-shadow(0 12px 30px rgba(0,0,0,0.5))" }}
+              />
+            </div>
+          )}
+
           {email.imageSource !== "none" && (
             <div
               className="absolute z-[4] flex items-center justify-center select-none"
@@ -413,35 +433,37 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
             >
               {displayedImage ? (
                 <>
-                  <div
-                    className="absolute pointer-events-none"
-                    style={{
-                      width: "85%",
-                      height: "85%",
-                      left: "50%",
-                      top: "50%",
-                      transform: "translate(-50%, -50%)",
-                      background: "radial-gradient(ellipse at center, rgba(124,200,255,0.55) 0%, rgba(40,150,251,0.35) 30%, rgba(40,150,251,0.12) 55%, rgba(40,150,251,0) 75%)",
-                      filter: "blur(20px)",
-                      zIndex: 0,
-                    }}
-                  />
+                  {!bundleBase && (
+                    <div
+                      className="absolute pointer-events-none"
+                      style={{
+                        width: "85%",
+                        height: "85%",
+                        left: "50%",
+                        top: "50%",
+                        transform: "translate(-50%, -50%)",
+                        background: "radial-gradient(ellipse at center, rgba(124,200,255,0.55) 0%, rgba(40,150,251,0.35) 30%, rgba(40,150,251,0.12) 55%, rgba(40,150,251,0) 75%)",
+                        filter: "blur(20px)",
+                        zIndex: 0,
+                      }}
+                    />
+                  )}
                   <img
                     src={displayedImage}
                     alt=""
                     draggable={false}
                     className="relative max-w-full max-h-full object-contain pointer-events-none"
                     style={{ filter: "drop-shadow(0 12px 30px rgba(0,0,0,0.5))", zIndex: 1 }}
-                    crossOrigin={email.imageSource === "highly" || email.imageSource === "bundle" ? "anonymous" : undefined}
+                    crossOrigin={email.imageSource === "highly" ? "anonymous" : undefined}
                   />
                 </>
-              ) : (
+              ) : showPlaceholder ? (
                 <div className="w-full h-full flex flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-white/15 bg-white/[0.03]">
                   <ImageIcon className="w-[40px] h-[40px] text-white/20 mb-[8px]" />
                   <div className="text-[12px] text-white/40 font-semibold uppercase tracking-[1px]">Image area</div>
                   <div className="text-[10px] text-white/25 mt-[2px]">Pick from sidebar</div>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>
@@ -804,11 +826,8 @@ export function EmailTemplatesWorkspace() {
           )}
 
           {activeEmail.imageSource === "bundle" && (
-            <div className="flex flex-col gap-[10px]">
-              <div className="text-[10px] text-[#475569] leading-[1.4]">
-                HighLevel product bundle. Drop a person image on top via Upload after selecting.
-              </div>
-              <div className="grid grid-cols-3 gap-[6px] max-h-[300px] overflow-y-auto sidebar-scroll p-[2px]">
+            <div className="flex flex-col gap-[12px]">
+              <div className="grid grid-cols-3 gap-[6px] max-h-[260px] overflow-y-auto sidebar-scroll p-[2px]">
                 {BUNDLE_ASSETS.map(b => (
                   <button
                     key={b.id}
@@ -826,6 +845,75 @@ export function EmailTemplatesWorkspace() {
                     </div>
                   </button>
                 ))}
+              </div>
+
+              <div className="border-t border-[rgba(255,255,255,0.06)] pt-[12px]">
+                <div className="text-[10px] font-bold uppercase tracking-[1px] text-[#64748B] mb-[8px]">Person on top (optional)</div>
+                <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+                {activeEmail.uploadedImage ? (
+                  <>
+                    <div className="relative rounded-[10px] overflow-hidden border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.2)]">
+                      <div
+                        className="w-full h-[100px]"
+                        style={{
+                          backgroundImage: `url(${activeEmail.uploadedImage}), linear-gradient(45deg, rgba(255,255,255,0.06) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.06) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.06) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.06) 75%)`,
+                          backgroundSize: "contain, 12px 12px, 12px 12px, 12px 12px, 12px 12px",
+                          backgroundPosition: "center, 0 0, 0 6px, 6px -6px, -6px 0px",
+                          backgroundRepeat: "no-repeat, repeat, repeat, repeat, repeat",
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-end p-[8px] gap-[6px] pointer-events-none">
+                        <button
+                          onClick={() => fileRef.current?.click()}
+                          disabled={bgRemovingId === activeEmail.id}
+                          className="pointer-events-auto py-[5px] px-[10px] rounded-[6px] text-[11px] font-semibold bg-[rgba(255,255,255,0.15)] backdrop-blur-md border border-white/20 text-white hover:bg-[rgba(255,255,255,0.25)] cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Replace
+                        </button>
+                        <button
+                          onClick={() => patchActive({ uploadedImage: null })}
+                          disabled={bgRemovingId === activeEmail.id}
+                          className="pointer-events-auto w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(239,68,68,0.2)] backdrop-blur-md border border-[rgba(239,68,68,0.3)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.3)] cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <X className="w-[12px] h-[12px]" />
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRemoveBg}
+                      disabled={bgRemovingId === activeEmail.id}
+                      className="mt-[8px] w-full flex items-center justify-center gap-[8px] py-[10px] px-[12px] rounded-[10px] text-[12px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed"
+                      style={{
+                        background: bgRemovingId === activeEmail.id
+                          ? "rgba(40,150,251,0.08)"
+                          : "linear-gradient(135deg, rgba(40,150,251,0.18) 0%, rgba(124,200,255,0.15) 100%)",
+                        borderColor: "rgba(40,150,251,0.35)",
+                        color: "#7CC8FF",
+                      }}
+                    >
+                      {bgRemovingId === activeEmail.id ? (
+                        <>
+                          <Loader2 className="w-[14px] h-[14px] animate-spin" />
+                          <span>Removing background…</span>
+                        </>
+                      ) : (
+                        <>
+                          <Scissors className="w-[14px] h-[14px]" />
+                          <span>Remove Background</span>
+                        </>
+                      )}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => fileRef.current?.click()}
+                    className="w-full flex flex-col items-center justify-center gap-[6px] py-[18px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border border-dashed border-[rgba(255,255,255,0.12)] text-[#64748B] hover:text-[#94A3B8] hover:border-[rgba(40,150,251,0.3)] cursor-pointer transition-all"
+                  >
+                    <Upload className="w-[16px] h-[16px]" />
+                    <span className="text-[11px] font-semibold">Upload person image</span>
+                    <span className="text-[10px]">Layered on top of bundle</span>
+                  </button>
+                )}
               </div>
             </div>
           )}

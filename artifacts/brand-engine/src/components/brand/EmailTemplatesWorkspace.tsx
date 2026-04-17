@@ -18,6 +18,7 @@ interface EmailItem {
   selectedHighlyId: string;
   uploadedImage: string | null;
   imgOffset: { x: number; y: number };
+  imgScale: number;
 }
 
 const newEmail = (): EmailItem => ({
@@ -28,6 +29,7 @@ const newEmail = (): EmailItem => ({
   selectedHighlyId: HIGHLY_POSES[0]!.id,
   uploadedImage: null,
   imgOffset: { x: 0, y: 0 },
+  imgScale: 1,
 });
 
 function dataUrlToBlob(dataUrl: string): Blob {
@@ -178,7 +180,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
           ref={previewRef}
           data-export-preview
           data-export-name={exportName}
-          className="relative w-full overflow-hidden rounded-b-[16px]"
+          className="relative w-full overflow-hidden"
           style={{ aspectRatio: "1200 / 600" }}
         >
           <img src={BG_URL} alt="" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />
@@ -233,7 +235,8 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 right: "4%",
                 width: "38%",
                 height: "82%",
-                transform: `translate(${email.imgOffset.x}%, ${email.imgOffset.y}%)`,
+                transform: `translate(${email.imgOffset.x}%, ${email.imgOffset.y}%) scale(${email.imgScale})`,
+                transformOrigin: "center",
                 cursor: displayedImage ? "grab" : "default",
                 touchAction: "none",
               }}
@@ -401,14 +404,14 @@ export function EmailTemplatesWorkspace() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      patchActive({ uploadedImage: ev.target?.result as string, imageSource: "upload", imgOffset: { x: 0, y: 0 } });
+      patchActive({ uploadedImage: ev.target?.result as string, imageSource: "upload", imgOffset: { x: 0, y: 0 }, imgScale: 1 });
     };
     reader.readAsDataURL(file);
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const setSource = (src: ImageSource) => patchActive({ imageSource: src, imgOffset: { x: 0, y: 0 } });
-  const setHighly = (id: string) => patchActive({ selectedHighlyId: id, imgOffset: { x: 0, y: 0 } });
+  const setSource = (src: ImageSource) => patchActive({ imageSource: src, imgOffset: { x: 0, y: 0 }, imgScale: 1 });
+  const setHighly = (id: string) => patchActive({ selectedHighlyId: id, imgOffset: { x: 0, y: 0 }, imgScale: 1 });
 
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
@@ -525,6 +528,33 @@ export function EmailTemplatesWorkspace() {
           {activeEmail.imageSource === "none" && (
             <div className="text-[11px] text-[#64748B] py-[12px] px-[14px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] text-center">
               No image — text only layout
+            </div>
+          )}
+
+          {activeEmail.imageSource !== "none" && (
+            <div className="mt-[12px]">
+              <div className="flex items-center justify-between mb-[6px]">
+                <div className="text-[10px] font-semibold uppercase tracking-[1px] text-[#64748B]">Size</div>
+                <div className="flex items-center gap-[8px]">
+                  <span className="text-[11px] font-bold text-[#7CC8FF] tabular-nums">{Math.round(activeEmail.imgScale * 100)}%</span>
+                  <button
+                    onClick={() => patchActive({ imgScale: 1, imgOffset: { x: 0, y: 0 } })}
+                    className="text-[10px] text-[#64748B] hover:text-[#7CC8FF] cursor-pointer bg-transparent border-none p-0 transition-colors"
+                    title="Reset size & position"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+              <input
+                type="range"
+                min={0.4}
+                max={2}
+                step={0.05}
+                value={activeEmail.imgScale}
+                onChange={(e) => patchActive({ imgScale: parseFloat(e.target.value) })}
+                className="w-full email-scale-slider cursor-pointer"
+              />
             </div>
           )}
         </div>

@@ -67,10 +67,10 @@ export function EmailTemplatesWorkspace() {
   // Dynamic headline sizing
   useEffect(() => {
     const el = headlineRef.current;
-    if (!el || !headline) { setHeadlineFontPx(76); return; }
+    if (!el || !headline) { setHeadlineFontPx(48); return; }
     const containerWidth = el.parentElement?.clientWidth || 600;
-    const containerHeight = 280;
-    let lo = 22, hi = 76, best = 22;
+    const containerHeight = 220;
+    let lo = 18, hi = 52, best = 18;
     const measure = (size: number) => {
       el.style.fontSize = `${size}px`;
       return { w: el.scrollWidth, h: el.scrollHeight };

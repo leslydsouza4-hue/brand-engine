@@ -291,22 +291,26 @@ export function EmailTemplatesWorkspace() {
               >
                 <div
                   ref={headlineRef}
-                  className="font-['Poppins'] font-black text-white leading-[1.05]"
+                  className="font-['Poppins'] font-black leading-[1.05]"
                   style={{
                     fontSize: `${headlineFontPx}px`,
-                    textShadow: "0 2px 12px rgba(0,0,0,0.5)",
                     letterSpacing: "-0.5px",
+                    backgroundImage: "linear-gradient(180deg, #DCEEFF 0%, #7CC8FF 55%, #2896FB 100%)",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    color: "transparent",
+                    filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.45))",
                   }}
                 >
-                  {headline || <span className="opacity-30">Your headline here</span>}
+                  {headline || <span style={{ WebkitTextFillColor: "rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.25)" }}>Your headline here</span>}
                 </div>
                 {subhead && (
                   <div
-                    className="font-['Poppins'] font-medium leading-[1.4] mt-[18px]"
+                    className="font-['Poppins'] font-semibold leading-[1.35] mt-[18px] text-white"
                     style={{
-                      color: "#7CC8FF",
-                      fontSize: `${Math.max(14, Math.round(headlineFontPx * 0.38))}px`,
-                      textShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                      fontSize: `${Math.max(18, Math.round(headlineFontPx * 0.55))}px`,
+                      textShadow: "0 2px 8px rgba(0,0,0,0.5)",
                     }}
                   >
                     {subhead}

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
-import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, Package, Copy } from "lucide-react";
+import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, Package, Copy, Scissors } from "lucide-react";
 import JSZip from "jszip";
 import { useExport } from "./useExport";
 import { HIGHLY_POSES } from "./highlyData";
@@ -357,11 +357,35 @@ export function EmailTemplatesWorkspace() {
   const [emails, setEmails] = useState<EmailItem[]>(() => [newEmail()]);
   const [activeId, setActiveId] = useState<string>(emails[0]!.id);
   const [isZipping, setIsZipping] = useState(false);
+  const [bgRemovingId, setBgRemovingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const refsMap = useRef<Map<string, HTMLDivElement | null>>(new Map());
   const { isExporting, handleExport, captureToQueue } = useExport();
 
   const activeEmail = emails.find(e => e.id === activeId) || emails[0]!;
+
+  const handleRemoveBg = async () => {
+    if (!activeEmail.uploadedImage || bgRemovingId) return;
+    const targetId = activeEmail.id;
+    const sourceImage = activeEmail.uploadedImage;
+    setBgRemovingId(targetId);
+    try {
+      const { removeBackground } = await import("@imgly/background-removal");
+      const blob = await removeBackground(sourceImage);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string;
+        setEmails(prev => prev.map(e => e.id === targetId ? { ...e, uploadedImage: dataUrl } : e));
+        setBgRemovingId(null);
+      };
+      reader.onerror = () => setBgRemovingId(null);
+      reader.readAsDataURL(blob);
+    } catch (err) {
+      console.error("Background removal failed:", err);
+      alert("Background removal failed. Try a different image.");
+      setBgRemovingId(null);
+    }
+  };
 
   const registerRef = useCallback((id: string, el: HTMLDivElement | null) => {
     if (el) refsMap.current.set(id, el);
@@ -600,23 +624,62 @@ export function EmailTemplatesWorkspace() {
             <>
               <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
               {activeEmail.uploadedImage ? (
-                <div className="relative rounded-[10px] overflow-hidden border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.2)]">
-                  <img src={activeEmail.uploadedImage} alt="Preview" className="w-full h-[120px] object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-end p-[8px] gap-[6px]">
-                    <button
-                      onClick={() => fileRef.current?.click()}
-                      className="py-[5px] px-[10px] rounded-[6px] text-[11px] font-semibold bg-[rgba(255,255,255,0.15)] backdrop-blur-md border border-white/20 text-white hover:bg-[rgba(255,255,255,0.25)] cursor-pointer transition-all"
-                    >
-                      Replace
-                    </button>
-                    <button
-                      onClick={() => patchActive({ uploadedImage: null })}
-                      className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(239,68,68,0.2)] backdrop-blur-md border border-[rgba(239,68,68,0.3)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.3)] cursor-pointer transition-all"
-                    >
-                      <X className="w-[12px] h-[12px]" />
-                    </button>
+                <>
+                  <div className="relative rounded-[10px] overflow-hidden border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.2)]">
+                    <div
+                      className="w-full h-[120px]"
+                      style={{
+                        backgroundImage: `url(${activeEmail.uploadedImage}), linear-gradient(45deg, rgba(255,255,255,0.06) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.06) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.06) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.06) 75%)`,
+                        backgroundSize: "contain, 12px 12px, 12px 12px, 12px 12px, 12px 12px",
+                        backgroundPosition: "center, 0 0, 0 6px, 6px -6px, -6px 0px",
+                        backgroundRepeat: "no-repeat, repeat, repeat, repeat, repeat",
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-end p-[8px] gap-[6px] pointer-events-none">
+                      <button
+                        onClick={() => fileRef.current?.click()}
+                        disabled={bgRemovingId === activeEmail.id}
+                        className="pointer-events-auto py-[5px] px-[10px] rounded-[6px] text-[11px] font-semibold bg-[rgba(255,255,255,0.15)] backdrop-blur-md border border-white/20 text-white hover:bg-[rgba(255,255,255,0.25)] cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Replace
+                      </button>
+                      <button
+                        onClick={() => patchActive({ uploadedImage: null })}
+                        disabled={bgRemovingId === activeEmail.id}
+                        className="pointer-events-auto w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(239,68,68,0.2)] backdrop-blur-md border border-[rgba(239,68,68,0.3)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.3)] cursor-pointer transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <X className="w-[12px] h-[12px]" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                  <button
+                    onClick={handleRemoveBg}
+                    disabled={bgRemovingId === activeEmail.id}
+                    className="mt-[8px] w-full flex items-center justify-center gap-[8px] py-[10px] px-[12px] rounded-[10px] text-[12px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed"
+                    style={{
+                      background: bgRemovingId === activeEmail.id
+                        ? "rgba(40,150,251,0.08)"
+                        : "linear-gradient(135deg, rgba(40,150,251,0.18) 0%, rgba(124,200,255,0.15) 100%)",
+                      borderColor: "rgba(40,150,251,0.35)",
+                      color: "#7CC8FF",
+                    }}
+                  >
+                    {bgRemovingId === activeEmail.id ? (
+                      <>
+                        <Loader2 className="w-[14px] h-[14px] animate-spin" />
+                        <span>Removing background…</span>
+                      </>
+                    ) : (
+                      <>
+                        <Scissors className="w-[14px] h-[14px]" />
+                        <span>Remove Background</span>
+                      </>
+                    )}
+                  </button>
+                  <div className="text-[10px] text-[#475569] mt-[6px] text-center leading-[1.4]">
+                    Runs in your browser • First use downloads the AI model (~25MB)
+                  </div>
+                </>
               ) : (
                 <button
                   onClick={() => fileRef.current?.click()}

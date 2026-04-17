@@ -102,6 +102,11 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
       }
       let ctaH = 0, ctaW = 0;
       if (cta && email.cta) {
+        const ctaFont = Math.max(11, Math.round(size * 0.42));
+        const ctaPadY = Math.max(6, Math.round(size * 0.32));
+        const ctaPadX = Math.max(12, Math.round(size * 0.7));
+        cta.style.fontSize = `${ctaFont}px`;
+        cta.style.padding = `${ctaPadY}px ${ctaPadX}px`;
         ctaH = cta.scrollHeight;
         ctaW = cta.scrollWidth;
       }
@@ -268,13 +273,14 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 ref={ctaRef}
                 className="font-['Poppins'] font-bold inline-flex items-center self-start mt-[22px] tracking-[0.3px]"
                 style={{
-                  fontSize: `${Math.max(13, Math.round(headlineFontPx * 0.42))}px`,
-                  padding: "12px 26px",
+                  fontSize: `${Math.max(11, Math.round(headlineFontPx * 0.42))}px`,
+                  padding: `${Math.max(6, Math.round(headlineFontPx * 0.32))}px ${Math.max(12, Math.round(headlineFontPx * 0.7))}px`,
                   borderRadius: "999px",
                   color: "#060B16",
                   background: "linear-gradient(135deg, #DCEEFF 0%, #7CC8FF 50%, #2896FB 100%)",
                   boxShadow: "0 8px 22px rgba(40,150,251,0.4), inset 0 1px 0 rgba(255,255,255,0.6)",
                   whiteSpace: "nowrap",
+                  maxWidth: "100%",
                 }}
               >
                 {email.cta}

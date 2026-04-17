@@ -517,6 +517,47 @@ export function EmailTemplatesWorkspace() {
     }, 50);
   };
 
+  const [docUrl, setDocUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  const importFromDoc = async () => {
+    const url = docUrl.trim();
+    if (!url) {
+      setImportMsg({ kind: "err", text: "Paste a Google Docs link first." });
+      return;
+    }
+    setIsImporting(true);
+    setImportMsg(null);
+    try {
+      const res = await fetch("/api/import-doc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to import doc");
+      const sections = parseDocText(data.text || "");
+      if (sections.length === 0) {
+        setImportMsg({ kind: "err", text: "No 'Image Header' sections found in the doc." });
+        return;
+      }
+      const newEmails: EmailItem[] = sections.map((s) => ({
+        ...newEmail(),
+        headline: s.headline,
+        subhead: s.subhead,
+        cta: s.cta,
+      }));
+      setEmails(newEmails);
+      setActiveId(newEmails[0]!.id);
+      setImportMsg({ kind: "ok", text: `Imported ${sections.length} email${sections.length !== 1 ? "s" : ""} from the doc.` });
+    } catch (err: any) {
+      setImportMsg({ kind: "err", text: err?.message || "Could not import the doc." });
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const duplicateEmail = (id: string) => {
     const src = emails.find(e => e.id === id);
     if (!src) return;
@@ -596,6 +637,48 @@ export function EmailTemplatesWorkspace() {
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
       {/* Sidebar / Controls */}
       <div className="w-full md:w-[340px] shrink-0 overflow-y-auto sidebar-scroll border-r border-[rgba(255,255,255,0.06)] p-[24px] flex flex-col gap-[20px]">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px] flex items-center gap-[6px]">
+            <FileDown className="w-[12px] h-[12px]" /> Import from Google Doc
+          </div>
+          <div className="flex flex-col gap-[8px]">
+            <div className="relative">
+              <Link2 className="w-[12px] h-[12px] text-[#475569] absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={docUrl}
+                onChange={(e) => setDocUrl(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !isImporting) importFromDoc(); }}
+                placeholder="Paste Google Docs link..."
+                className="w-full py-[9px] pl-[28px] pr-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] placeholder:text-[#475569]"
+              />
+            </div>
+            <button
+              onClick={importFromDoc}
+              disabled={isImporting || !docUrl.trim()}
+              className="w-full flex items-center justify-center gap-[6px] py-[9px] rounded-[10px] text-[12px] font-bold cursor-pointer transition-all text-white border-none disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_4px_16px_rgba(40,150,251,0.25)]"
+              style={{ background: "linear-gradient(135deg, #2896FB, #095DC3)" }}
+            >
+              {isImporting ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <FileDown className="w-[12px] h-[12px]" />}
+              {isImporting ? "Importing..." : "Import & Generate Emails"}
+            </button>
+            {importMsg && (
+              <div
+                className={`text-[10.5px] leading-[1.4] py-[6px] px-[8px] rounded-[8px] border ${
+                  importMsg.kind === "ok"
+                    ? "bg-[rgba(40,150,251,0.08)] border-[rgba(40,150,251,0.25)] text-[#7CC8FF]"
+                    : "bg-[rgba(248,113,113,0.08)] border-[rgba(248,113,113,0.25)] text-[#FCA5A5]"
+                }`}
+              >
+                {importMsg.text}
+              </div>
+            )}
+            <div className="text-[10px] text-[#475569] leading-[1.4]">
+              Doc must be set to <span className="text-[#64748B]">"Anyone with the link can view"</span>. Each <span className="text-[#7CC8FF]">Image Header</span> section becomes one email. Replaces current batch.
+            </div>
+          </div>
+        </div>
+
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px]">Workflow</div>
           <div className="py-[10px] px-[12px] rounded-[10px] border bg-[rgba(40,150,251,0.12)] border-[rgba(40,150,251,0.25)]">

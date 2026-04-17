@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, RefreshCw, Sparkles } from "lucide-react";
+import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles } from "lucide-react";
 import { useExport } from "./useExport";
 import { BatchExportQueue } from "./BatchExportQueue";
 import type { QueuedThumbnail } from "./useExport";
@@ -9,18 +9,10 @@ const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/email-templates/BG_BLUE.jpg`;
 const LOGO_URL = `${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png`;
 
-interface EmailTemplate {
-  id: string;
-  label: string;
-  headline: string;
-  subhead: string;
-}
-
 interface SubTemplate {
   id: string;
   label: string;
   description: string;
-  templates: EmailTemplate[];
   comingSoon?: boolean;
 }
 
@@ -28,17 +20,7 @@ const SUB_TEMPLATES: SubTemplate[] = [
   {
     id: "marketing-email",
     label: "Marketing Email",
-    description: "8 templates for the churned-user re-engagement sequence",
-    templates: [
-      { id: "email-1a", label: "Email 1A", headline: "Overwhelmed? We can help.", subhead: "Come back and claim your free trial extension." },
-      { id: "email-1bc", label: "Emails 1B + 1C", headline: "There's a lot more to see. We can help.", subhead: "Come back and extend your free trial." },
-      { id: "email-1d", label: "Email 1D", headline: "You put in real time. It showed.", subhead: "Come back and claim your free trial extension." },
-      { id: "email-1ef", label: "Emails 1E + 1F", headline: "You were THIS close to building a real solution.", subhead: "Come back and finish what you started." },
-      { id: "email-2", label: "Email 2", headline: "No prior tech experience needed.", subhead: "Come back and extend your trial." },
-      { id: "email-3", label: "Email 3", headline: "There's an easier way to scale your business.", subhead: "Come back and extend your trial." },
-      { id: "email-4", label: "Email 4", headline: "Remember that problem you came here to solve?", subhead: "Come back. We can help." },
-      { id: "email-5", label: "Email 5", headline: "Last chance to extend your trial.", subhead: "Come back to HighLevel. We can help." },
-    ],
+    description: "Generate a unique marketing email banner",
   },
 ];
 
@@ -48,9 +30,8 @@ export function EmailTemplatesWorkspace() {
   const [activeSubId, setActiveSubId] = useState<string>(SUB_TEMPLATES[0]!.id);
   const activeSub = SUB_TEMPLATES.find(s => s.id === activeSubId) || SUB_TEMPLATES[0]!;
 
-  const [activeId, setActiveId] = useState<string>(activeSub.templates[0]!.id);
-  const [headline, setHeadline] = useState<string>(activeSub.templates[0]!.headline);
-  const [subhead, setSubhead] = useState<string>(activeSub.templates[0]!.subhead);
+  const [headline, setHeadline] = useState<string>("");
+  const [subhead, setSubhead] = useState<string>("");
 
   const [imageSource, setImageSource] = useState<ImageSource>("highly");
   const [selectedHighlyId, setSelectedHighlyId] = useState<string>(HIGHLY_POSES[0]!.id);
@@ -63,30 +44,12 @@ export function EmailTemplatesWorkspace() {
   const [headlineFontPx, setHeadlineFontPx] = useState(64);
   const { isExporting, handleExport, captureToQueue } = useExport();
 
-  const activeTpl = activeSub.templates.find(t => t.id === activeId) || activeSub.templates[0]!;
   const selectedHighly = HIGHLY_POSES.find(h => h.id === selectedHighlyId);
 
   const handleSelectSub = (id: string) => {
     const sub = SUB_TEMPLATES.find(s => s.id === id);
     if (!sub || sub.comingSoon) return;
     setActiveSubId(id);
-    const first = sub.templates[0]!;
-    setActiveId(first.id);
-    setHeadline(first.headline);
-    setSubhead(first.subhead);
-  };
-
-  const handleSelectTemplate = (id: string) => {
-    const tpl = activeSub.templates.find(t => t.id === id);
-    if (!tpl) return;
-    setActiveId(id);
-    setHeadline(tpl.headline);
-    setSubhead(tpl.subhead);
-  };
-
-  const handleResetCopy = () => {
-    setHeadline(activeTpl.headline);
-    setSubhead(activeTpl.subhead);
   };
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +67,7 @@ export function EmailTemplatesWorkspace() {
   // Dynamic headline sizing
   useEffect(() => {
     const el = headlineRef.current;
-    if (!el || !headline) { setHeadlineFontPx(64); return; }
+    if (!el || !headline) { setHeadlineFontPx(76); return; }
     const containerWidth = el.parentElement?.clientWidth || 600;
     const containerHeight = 280;
     let lo = 22, hi = 76, best = 22;
@@ -123,14 +86,14 @@ export function EmailTemplatesWorkspace() {
       }
     }
     setHeadlineFontPx(best);
-  }, [headline, activeId]);
+  }, [headline]);
 
   const onAddToQueue = async () => {
     const item = await captureToQueue(previewRef.current);
     if (item) setQueue(prev => [...prev, item]);
   };
 
-  const exportName = `Email - ${activeSub.label} - ${activeTpl.label} ${(() => { const d = new Date(); return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; })()}`;
+  const exportName = `Email - ${activeSub.label} ${(() => { const d = new Date(); return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; })()}`;
 
   const displayedImage = imageSource === "upload" ? uploadedImage : (imageSource === "highly" ? selectedHighly?.image : null);
 
@@ -165,40 +128,13 @@ export function EmailTemplatesWorkspace() {
         </div>
 
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px]">Email</div>
-          <div className="grid grid-cols-2 gap-[6px]">
-            {activeSub.templates.map(tpl => (
-              <button
-                key={tpl.id}
-                onClick={() => handleSelectTemplate(tpl.id)}
-                className={`text-left py-[8px] px-[10px] rounded-[10px] text-[11px] font-semibold border cursor-pointer transition-all ${
-                  activeId === tpl.id
-                    ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#7CC8FF]"
-                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#94A3B8] hover:text-white hover:border-[rgba(255,255,255,0.12)]"
-                }`}
-              >
-                {tpl.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-[8px]">
-            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B]">Headline</div>
-            <button
-              onClick={handleResetCopy}
-              className="flex items-center gap-[4px] text-[10px] text-[#64748B] hover:text-[#7CC8FF] cursor-pointer bg-transparent border-none p-0 transition-colors"
-              title="Reset to original copy"
-            >
-              <RefreshCw className="w-[10px] h-[10px]" /> Reset
-            </button>
-          </div>
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Headline</div>
           <textarea
             value={headline}
             onChange={e => setHeadline(e.target.value)}
             rows={2}
-            className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4]"
+            placeholder="Type your headline..."
+            className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
         </div>
 
@@ -208,7 +144,8 @@ export function EmailTemplatesWorkspace() {
             value={subhead}
             onChange={e => setSubhead(e.target.value)}
             rows={2}
-            className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4]"
+            placeholder="Type your subheadline..."
+            className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
         </div>
 
@@ -323,7 +260,7 @@ export function EmailTemplatesWorkspace() {
         <div className="shrink-0 px-[32px] py-[16px] border-b border-[rgba(255,255,255,0.06)] flex items-center gap-[8px]">
           <Mail className="w-[16px] h-[16px] text-[#2896FB]" />
           <div className="text-white text-[14px] font-bold">Email Templates</div>
-          <span className="text-[#64748B] text-[11px]">— {activeSub.label} / {activeTpl.label}</span>
+          <span className="text-[#64748B] text-[11px]">— {activeSub.label}</span>
         </div>
         <div className="flex-1 overflow-auto p-[32px] flex items-start justify-center">
           <div className="w-full max-w-[1080px]">
@@ -361,7 +298,7 @@ export function EmailTemplatesWorkspace() {
                     letterSpacing: "-0.5px",
                   }}
                 >
-                  {headline}
+                  {headline || <span className="opacity-30">Your headline here</span>}
                 </div>
                 {subhead && (
                   <div

@@ -257,7 +257,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 backgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 color: "transparent",
-                filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.45))",
+                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",
               }}
             >
               {email.headline || <span style={{ WebkitTextFillColor: "rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.25)" }}>Your headline here</span>}

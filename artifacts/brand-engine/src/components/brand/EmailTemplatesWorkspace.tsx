@@ -101,10 +101,10 @@ export function EmailTemplatesWorkspace() {
   // Dynamic headline sizing
   useEffect(() => {
     const el = headlineRef.current;
-    if (!el || !headline) { setHeadlineFontPx(48); return; }
+    if (!el || !headline) { setHeadlineFontPx(34); return; }
     const containerWidth = el.parentElement?.clientWidth || 600;
-    const containerHeight = 220;
-    let lo = 18, hi = 52, best = 18;
+    const containerHeight = 200;
+    let lo = 14, hi = 36, best = 14;
     const measure = (size: number) => {
       el.style.fontSize = `${size}px`;
       return { w: el.scrollWidth, h: el.scrollHeight };
@@ -372,14 +372,33 @@ export function EmailTemplatesWorkspace() {
                   onPointerCancel={displayedImage ? handleImgPointerUp : undefined}
                 >
                   {displayedImage ? (
-                    <img
-                      src={displayedImage}
-                      alt=""
-                      draggable={false}
-                      className="max-w-full max-h-full object-contain pointer-events-none"
-                      style={{ filter: imageSource === "highly" ? "drop-shadow(0 12px 30px rgba(0,0,0,0.5))" : undefined }}
-                      crossOrigin={imageSource === "highly" ? "anonymous" : undefined}
-                    />
+                    <>
+                      {/* Glow behind image */}
+                      <div
+                        className="absolute pointer-events-none"
+                        style={{
+                          width: "85%",
+                          height: "85%",
+                          left: "50%",
+                          top: "50%",
+                          transform: "translate(-50%, -50%)",
+                          background: "radial-gradient(ellipse at center, rgba(124,200,255,0.55) 0%, rgba(40,150,251,0.35) 30%, rgba(40,150,251,0.12) 55%, rgba(40,150,251,0) 75%)",
+                          filter: "blur(20px)",
+                          zIndex: 0,
+                        }}
+                      />
+                      <img
+                        src={displayedImage}
+                        alt=""
+                        draggable={false}
+                        className="relative max-w-full max-h-full object-contain pointer-events-none"
+                        style={{
+                          filter: "drop-shadow(0 12px 30px rgba(0,0,0,0.5))",
+                          zIndex: 1,
+                        }}
+                        crossOrigin={imageSource === "highly" ? "anonymous" : undefined}
+                      />
+                    </>
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-white/15 bg-white/[0.03]">
                       <ImageIcon className="w-[40px] h-[40px] text-white/20 mb-[8px]" />

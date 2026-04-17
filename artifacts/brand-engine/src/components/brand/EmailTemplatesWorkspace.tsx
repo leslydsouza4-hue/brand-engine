@@ -165,6 +165,8 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
 
   const selectedHighly = HIGHLY_POSES.find(h => h.id === email.selectedHighlyId);
   const selectedBundle = BUNDLE_ASSETS.find(b => b.id === email.selectedBundleId);
+  const bundleOffset = email.bundleOffset ?? { x: 0, y: 0 };
+  const bundleScale = email.bundleScale ?? 1;
   // In bundle mode, the bundle is the static base and uploadedImage (a person) is the
   // draggable overlay on top of it. In other modes, displayedImage is the single layer.
   const displayedImage =
@@ -283,8 +285,8 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     bundleDragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
-      baseX: email.bundleOffset.x,
-      baseY: email.bundleOffset.y,
+      baseX: bundleOffset.x,
+      baseY: bundleOffset.y,
       rect: previewRef.current.getBoundingClientRect(),
     };
   };
@@ -440,7 +442,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 right: "4%",
                 width: "38%",
                 height: "82%",
-                transform: `translate(${email.bundleOffset.x}%, ${email.bundleOffset.y}%) scale(${email.bundleScale})`,
+                transform: `translate(${bundleOffset.x}%, ${bundleOffset.y}%) scale(${bundleScale})`,
                 transformOrigin: "center",
                 cursor: "grab",
                 touchAction: "none",

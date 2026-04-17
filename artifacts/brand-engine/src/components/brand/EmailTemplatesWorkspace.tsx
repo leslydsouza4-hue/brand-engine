@@ -2,13 +2,13 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react
 import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, Package, Copy, Scissors, FileDown, Link2 } from "lucide-react";
 import JSZip from "jszip";
 import { useExport } from "./useExport";
-import { HIGHLY_POSES } from "./highlyData";
+import { HIGHLY_POSES, BUNDLE_ASSETS } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/email-templates/BG_BLUE.jpg`;
 const LOGO_URL = `${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png`;
 
-type ImageSource = "highly" | "upload" | "none";
+type ImageSource = "highly" | "bundle" | "upload" | "none";
 
 interface EmailItem {
   id: string;
@@ -17,6 +17,7 @@ interface EmailItem {
   cta: string;
   imageSource: ImageSource;
   selectedHighlyId: string;
+  selectedBundleId: string;
   uploadedImage: string | null;
   imgOffset: { x: number; y: number };
   imgScale: number;
@@ -29,6 +30,7 @@ const newEmail = (): EmailItem => ({
   cta: "",
   imageSource: "highly",
   selectedHighlyId: HIGHLY_POSES[0]!.id,
+  selectedBundleId: BUNDLE_ASSETS[0]!.id,
   uploadedImage: null,
   imgOffset: { x: 0, y: 0 },
   imgScale: 1,
@@ -157,7 +159,12 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
   const [headlineFontPx, setHeadlineFontPx] = useState(34);
 
   const selectedHighly = HIGHLY_POSES.find(h => h.id === email.selectedHighlyId);
-  const displayedImage = email.imageSource === "upload" ? email.uploadedImage : (email.imageSource === "highly" ? selectedHighly?.image : null);
+  const selectedBundle = BUNDLE_ASSETS.find(b => b.id === email.selectedBundleId);
+  const displayedImage =
+    email.imageSource === "upload" ? email.uploadedImage :
+    email.imageSource === "highly" ? selectedHighly?.image :
+    email.imageSource === "bundle" ? selectedBundle?.image :
+    null;
 
   // Register ref for parent
   useLayoutEffect(() => {
@@ -425,7 +432,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                     draggable={false}
                     className="relative max-w-full max-h-full object-contain pointer-events-none"
                     style={{ filter: "drop-shadow(0 12px 30px rgba(0,0,0,0.5))", zIndex: 1 }}
-                    crossOrigin={email.imageSource === "highly" ? "anonymous" : undefined}
+                    crossOrigin={email.imageSource === "highly" || email.imageSource === "bundle" ? "anonymous" : undefined}
                   />
                 </>
               ) : (
@@ -637,6 +644,7 @@ export function EmailTemplatesWorkspace() {
 
   const setSource = (src: ImageSource) => patchActive({ imageSource: src, imgOffset: { x: 0, y: 0 }, imgScale: 1 });
   const setHighly = (id: string) => patchActive({ selectedHighlyId: id, imgOffset: { x: 0, y: 0 }, imgScale: 1 });
+  const setBundle = (id: string) => patchActive({ selectedBundleId: id, imgOffset: { x: 0, y: 0 }, imgScale: 1 });
 
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
@@ -757,13 +765,14 @@ export function EmailTemplatesWorkspace() {
           <div className="flex gap-[4px] mb-[10px] p-[3px] bg-[rgba(255,255,255,0.04)] rounded-[10px] border border-[rgba(255,255,255,0.06)]">
             {[
               { id: "highly" as const, label: "Highly", icon: Sparkles },
+              { id: "bundle" as const, label: "Bundle", icon: Package },
               { id: "upload" as const, label: "Upload", icon: Upload },
               { id: "none" as const, label: "None", icon: X },
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => setSource(id)}
-                className={`flex-1 flex items-center justify-center gap-[5px] py-[6px] px-[8px] rounded-[7px] text-[11px] font-semibold cursor-pointer transition-all border-none ${
+                className={`flex-1 flex items-center justify-center gap-[4px] py-[6px] px-[6px] rounded-[7px] text-[10.5px] font-semibold cursor-pointer transition-all border-none ${
                   activeEmail.imageSource === id
                     ? "bg-[rgba(40,150,251,0.18)] text-[#7CC8FF]"
                     : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
@@ -791,6 +800,33 @@ export function EmailTemplatesWorkspace() {
                   <img src={pose.image} alt={pose.name} className="w-full h-full object-contain p-[4px]" />
                 </button>
               ))}
+            </div>
+          )}
+
+          {activeEmail.imageSource === "bundle" && (
+            <div className="flex flex-col gap-[10px]">
+              <div className="text-[10px] text-[#475569] leading-[1.4]">
+                HighLevel product bundle. Drop a person image on top via Upload after selecting.
+              </div>
+              <div className="grid grid-cols-3 gap-[6px] max-h-[300px] overflow-y-auto sidebar-scroll p-[2px]">
+                {BUNDLE_ASSETS.map(b => (
+                  <button
+                    key={b.id}
+                    onClick={() => setBundle(b.id)}
+                    title={`${b.type} · ${b.color}`}
+                    className={`relative aspect-square rounded-[8px] border cursor-pointer transition-all overflow-hidden flex flex-col ${
+                      activeEmail.selectedBundleId === b.id
+                        ? "border-[#2896FB] shadow-[0_0_0_2px_rgba(40,150,251,0.25)] bg-[rgba(40,150,251,0.08)]"
+                        : "border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]"
+                    }`}
+                  >
+                    <img src={b.image} alt={`${b.type} ${b.color}`} className="flex-1 w-full h-full object-contain p-[3px]" />
+                    <div className="text-[8px] font-bold text-[#94A3B8] py-[2px] px-[3px] text-center bg-[rgba(0,0,0,0.3)] truncate">
+                      {b.type} · {b.color.split(" ")[0]}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

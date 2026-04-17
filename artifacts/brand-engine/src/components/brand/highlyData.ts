@@ -23,3 +23,30 @@ export const HIGHLY_POSES: HighlyPose[] = [
   { id: "working", name: "Working", image: `${BASE}assets/highly/highly-working.png`, description: "Highly is intensely focused working at a laptop, leaning forward slightly with both detached hands on the keyboard, blue glow from the screen" },
   { id: "waving", name: "Waving Hi", image: `${BASE}assets/highly/highly-waving.png`, description: "Highly is waving hello with one open hand raised high, with friendly upright oval eyes on the black visor, in a welcoming greeting pose" },
 ];
+
+export type BundleType = "Narrow" | "Wide" | "Product UI";
+export type BundleColor = "Nurture Blue" | "Capture Yellow" | "Close Green";
+
+export interface BundleAsset {
+  id: string;
+  type: BundleType;
+  color: BundleColor;
+  image: string;
+}
+
+const bundleFile = (type: BundleType, color: BundleColor) => {
+  const t = type === "Product UI" ? "Product UI (Frosted)" : type;
+  return `${BASE}assets/bundles/Type=${t}, Color=${color}.png`;
+};
+
+const TYPES: BundleType[] = ["Narrow", "Wide", "Product UI"];
+const COLORS: BundleColor[] = ["Nurture Blue", "Capture Yellow", "Close Green"];
+
+export const BUNDLE_ASSETS: BundleAsset[] = TYPES.flatMap(type =>
+  COLORS.map(color => ({
+    id: `${type.toLowerCase().replace(/\s+/g, "-")}-${color.split(" ")[0]!.toLowerCase()}`,
+    type,
+    color,
+    image: bundleFile(type, color),
+  }))
+);

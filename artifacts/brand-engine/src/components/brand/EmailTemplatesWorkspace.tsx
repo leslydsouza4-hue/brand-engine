@@ -36,6 +36,9 @@ export function EmailTemplatesWorkspace() {
   const [imageSource, setImageSource] = useState<ImageSource>("highly");
   const [selectedHighlyId, setSelectedHighlyId] = useState<string>(HIGHLY_POSES[0]!.id);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [imgOffset, setImgOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [imgScale, setImgScale] = useState<number>(1);
+  const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
 
   const [queue, setQueue] = useState<QueuedThumbnail[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -45,6 +48,37 @@ export function EmailTemplatesWorkspace() {
   const { isExporting, handleExport, captureToQueue } = useExport();
 
   const selectedHighly = HIGHLY_POSES.find(h => h.id === selectedHighlyId);
+
+  const handleImgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!previewRef.current) return;
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: imgOffset.x,
+      baseY: imgOffset.y,
+      rect: previewRef.current.getBoundingClientRect(),
+    };
+  };
+
+  const handleImgPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const dxPct = ((e.clientX - d.startX) / d.rect.width) * 100;
+    const dyPct = ((e.clientY - d.startY) / d.rect.height) * 100;
+    setImgOffset({ x: d.baseX + dxPct, y: d.baseY + dyPct });
+  };
+
+  const handleImgPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragRef.current) {
+      try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+      dragRef.current = null;
+    }
+  };
+
+  // Reset position when switching source/pose
+  useEffect(() => { setImgOffset({ x: 0, y: 0 }); setImgScale(1); }, [imageSource, selectedHighlyId, uploadedImage]);
 
   const handleSelectSub = (id: string) => {
     const sub = SUB_TEMPLATES.find(s => s.id === id);
@@ -321,14 +355,28 @@ export function EmailTemplatesWorkspace() {
               {/* Right-side image area */}
               {imageSource !== "none" && (
                 <div
-                  className="absolute z-[4] flex items-center justify-center"
-                  style={{ top: "10%", right: "4%", width: "38%", height: "82%" }}
+                  className="absolute z-[4] flex items-center justify-center select-none"
+                  style={{
+                    top: "10%",
+                    right: "4%",
+                    width: "38%",
+                    height: "82%",
+                    transform: `translate(${imgOffset.x}%, ${imgOffset.y}%) scale(${imgScale})`,
+                    transformOrigin: "center",
+                    cursor: displayedImage ? (dragRef.current ? "grabbing" : "grab") : "default",
+                    touchAction: "none",
+                  }}
+                  onPointerDown={displayedImage ? handleImgPointerDown : undefined}
+                  onPointerMove={displayedImage ? handleImgPointerMove : undefined}
+                  onPointerUp={displayedImage ? handleImgPointerUp : undefined}
+                  onPointerCancel={displayedImage ? handleImgPointerUp : undefined}
                 >
                   {displayedImage ? (
                     <img
                       src={displayedImage}
                       alt=""
-                      className="max-w-full max-h-full object-contain"
+                      draggable={false}
+                      className="max-w-full max-h-full object-contain pointer-events-none"
                       style={{ filter: imageSource === "highly" ? "drop-shadow(0 12px 30px rgba(0,0,0,0.5))" : undefined }}
                       crossOrigin={imageSource === "highly" ? "anonymous" : undefined}
                     />

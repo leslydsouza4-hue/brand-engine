@@ -133,13 +133,17 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             <Gift className={iconCls(currentMode === 'super-promo')} />
             Super Promo
           </button>
+        </div>
+
+        <div className="px-[12px] mb-[10px] relative">
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Email Templates</div>
 
           <button 
             onClick={() => handleSetMode('email-templates')}
             className={`${btnBase} cursor-pointer ${currentMode === 'email-templates' ? activeClass : inactiveClass}`}
           >
             <Mail className={iconCls(currentMode === 'email-templates')} />
-            Email Templates
+            Churned Email Workflow
           </button>
         </div>
 

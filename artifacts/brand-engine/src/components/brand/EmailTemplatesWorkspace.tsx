@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, RefreshCw } from "lucide-react";
+import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, RefreshCw, Sparkles } from "lucide-react";
 import { useExport } from "./useExport";
 import { BatchExportQueue } from "./BatchExportQueue";
 import type { QueuedThumbnail } from "./useExport";
+import { HIGHLY_POSES } from "./highlyData";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/email-templates/BG_BLUE.jpg`;
@@ -15,22 +16,46 @@ interface EmailTemplate {
   subhead: string;
 }
 
-const EMAIL_TEMPLATES: EmailTemplate[] = [
-  { id: "email-1a", label: "Email 1A", headline: "Overwhelmed? We can help.", subhead: "Come back and claim your free trial extension." },
-  { id: "email-1bc", label: "Emails 1B + 1C", headline: "There's a lot more to see. We can help.", subhead: "Come back and extend your free trial." },
-  { id: "email-1d", label: "Email 1D", headline: "You put in real time. It showed.", subhead: "Come back and claim your free trial extension." },
-  { id: "email-1ef", label: "Emails 1E + 1F", headline: "You were THIS close to building a real solution.", subhead: "Come back and finish what you started." },
-  { id: "email-2", label: "Email 2", headline: "No prior tech experience needed.", subhead: "Come back and extend your trial." },
-  { id: "email-3", label: "Email 3", headline: "There's an easier way to scale your business.", subhead: "Come back and extend your trial." },
-  { id: "email-4", label: "Email 4", headline: "Remember that problem you came here to solve?", subhead: "Come back. We can help." },
-  { id: "email-5", label: "Email 5", headline: "Last chance to extend your trial.", subhead: "Come back to HighLevel. We can help." },
+interface SubTemplate {
+  id: string;
+  label: string;
+  description: string;
+  templates: EmailTemplate[];
+  comingSoon?: boolean;
+}
+
+const SUB_TEMPLATES: SubTemplate[] = [
+  {
+    id: "churned-workflow",
+    label: "Churned Email Workflow",
+    description: "8 templates for the churned-user re-engagement sequence",
+    templates: [
+      { id: "email-1a", label: "Email 1A", headline: "Overwhelmed? We can help.", subhead: "Come back and claim your free trial extension." },
+      { id: "email-1bc", label: "Emails 1B + 1C", headline: "There's a lot more to see. We can help.", subhead: "Come back and extend your free trial." },
+      { id: "email-1d", label: "Email 1D", headline: "You put in real time. It showed.", subhead: "Come back and claim your free trial extension." },
+      { id: "email-1ef", label: "Emails 1E + 1F", headline: "You were THIS close to building a real solution.", subhead: "Come back and finish what you started." },
+      { id: "email-2", label: "Email 2", headline: "No prior tech experience needed.", subhead: "Come back and extend your trial." },
+      { id: "email-3", label: "Email 3", headline: "There's an easier way to scale your business.", subhead: "Come back and extend your trial." },
+      { id: "email-4", label: "Email 4", headline: "Remember that problem you came here to solve?", subhead: "Come back. We can help." },
+      { id: "email-5", label: "Email 5", headline: "Last chance to extend your trial.", subhead: "Come back to HighLevel. We can help." },
+    ],
+  },
 ];
 
+type ImageSource = "highly" | "upload" | "none";
+
 export function EmailTemplatesWorkspace() {
-  const [activeId, setActiveId] = useState<string>(EMAIL_TEMPLATES[0]!.id);
-  const [headline, setHeadline] = useState<string>(EMAIL_TEMPLATES[0]!.headline);
-  const [subhead, setSubhead] = useState<string>(EMAIL_TEMPLATES[0]!.subhead);
-  const [rightImage, setRightImage] = useState<string | null>(null);
+  const [activeSubId, setActiveSubId] = useState<string>(SUB_TEMPLATES[0]!.id);
+  const activeSub = SUB_TEMPLATES.find(s => s.id === activeSubId) || SUB_TEMPLATES[0]!;
+
+  const [activeId, setActiveId] = useState<string>(activeSub.templates[0]!.id);
+  const [headline, setHeadline] = useState<string>(activeSub.templates[0]!.headline);
+  const [subhead, setSubhead] = useState<string>(activeSub.templates[0]!.subhead);
+
+  const [imageSource, setImageSource] = useState<ImageSource>("highly");
+  const [selectedHighlyId, setSelectedHighlyId] = useState<string>(HIGHLY_POSES[0]!.id);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+
   const [queue, setQueue] = useState<QueuedThumbnail[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -38,10 +63,21 @@ export function EmailTemplatesWorkspace() {
   const [headlineFontPx, setHeadlineFontPx] = useState(64);
   const { isExporting, handleExport, captureToQueue } = useExport();
 
-  const activeTpl = EMAIL_TEMPLATES.find(t => t.id === activeId)!;
+  const activeTpl = activeSub.templates.find(t => t.id === activeId) || activeSub.templates[0]!;
+  const selectedHighly = HIGHLY_POSES.find(h => h.id === selectedHighlyId);
+
+  const handleSelectSub = (id: string) => {
+    const sub = SUB_TEMPLATES.find(s => s.id === id);
+    if (!sub || sub.comingSoon) return;
+    setActiveSubId(id);
+    const first = sub.templates[0]!;
+    setActiveId(first.id);
+    setHeadline(first.headline);
+    setSubhead(first.subhead);
+  };
 
   const handleSelectTemplate = (id: string) => {
-    const tpl = EMAIL_TEMPLATES.find(t => t.id === id);
+    const tpl = activeSub.templates.find(t => t.id === id);
     if (!tpl) return;
     setActiveId(id);
     setHeadline(tpl.headline);
@@ -57,12 +93,15 @@ export function EmailTemplatesWorkspace() {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setRightImage(ev.target?.result as string);
+    reader.onload = (ev) => {
+      setUploadedImage(ev.target?.result as string);
+      setImageSource("upload");
+    };
     reader.readAsDataURL(file);
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  // Dynamic headline sizing — binary search for best font size
+  // Dynamic headline sizing
   useEffect(() => {
     const el = headlineRef.current;
     if (!el || !headline) { setHeadlineFontPx(64); return; }
@@ -91,16 +130,44 @@ export function EmailTemplatesWorkspace() {
     if (item) setQueue(prev => [...prev, item]);
   };
 
-  const exportName = `Email Template - ${activeTpl.label} ${(() => { const d = new Date(); return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; })()}`;
+  const exportName = `Email - ${activeSub.label} - ${activeTpl.label} ${(() => { const d = new Date(); return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; })()}`;
+
+  const displayedImage = imageSource === "upload" ? uploadedImage : (imageSource === "highly" ? selectedHighly?.image : null);
 
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
       {/* Sidebar / Controls */}
       <div className="w-full md:w-[340px] shrink-0 overflow-y-auto sidebar-scroll border-r border-[rgba(255,255,255,0.06)] p-[24px] flex flex-col gap-[20px]">
+        {/* Sub-template selector */}
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px]">Email Template</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px]">Workflow</div>
+          <div className="flex flex-col gap-[6px]">
+            {SUB_TEMPLATES.map(sub => (
+              <button
+                key={sub.id}
+                onClick={() => handleSelectSub(sub.id)}
+                disabled={sub.comingSoon}
+                className={`text-left py-[10px] px-[12px] rounded-[10px] border cursor-pointer transition-all ${
+                  sub.comingSoon
+                    ? "opacity-40 cursor-not-allowed bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.04)]"
+                    : activeSubId === sub.id
+                    ? "bg-[rgba(40,150,251,0.12)] border-[rgba(40,150,251,0.25)]"
+                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.12)]"
+                }`}
+              >
+                <div className={`text-[12px] font-bold ${activeSubId === sub.id ? "text-[#7CC8FF]" : "text-[#E2E8F0]"}`}>
+                  {sub.label} {sub.comingSoon && <span className="text-[8px] uppercase tracking-[1px] text-[#64748B] ml-[4px]">Soon</span>}
+                </div>
+                <div className="text-[10px] text-[#64748B] mt-[2px]">{sub.description}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px]">Email</div>
           <div className="grid grid-cols-2 gap-[6px]">
-            {EMAIL_TEMPLATES.map(tpl => (
+            {activeSub.templates.map(tpl => (
               <button
                 key={tpl.id}
                 onClick={() => handleSelectTemplate(tpl.id)}
@@ -145,36 +212,88 @@ export function EmailTemplatesWorkspace() {
           />
         </div>
 
+        {/* Right-side image: Highly / Upload / None */}
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Right-side Image</div>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
-          {rightImage ? (
-            <div className="relative rounded-[10px] overflow-hidden border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.2)]">
-              <img src={rightImage} alt="Preview" className="w-full h-[120px] object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-end p-[8px] gap-[6px]">
+
+          <div className="flex gap-[4px] mb-[10px] p-[3px] bg-[rgba(255,255,255,0.04)] rounded-[10px] border border-[rgba(255,255,255,0.06)]">
+            {[
+              { id: "highly", label: "Highly", icon: Sparkles },
+              { id: "upload", label: "Upload", icon: Upload },
+              { id: "none", label: "None", icon: X },
+            ].map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setImageSource(id as ImageSource)}
+                className={`flex-1 flex items-center justify-center gap-[5px] py-[6px] px-[8px] rounded-[7px] text-[11px] font-semibold cursor-pointer transition-all border-none ${
+                  imageSource === id
+                    ? "bg-[rgba(40,150,251,0.18)] text-[#7CC8FF]"
+                    : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                }`}
+              >
+                <Icon className="w-[11px] h-[11px]" />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {imageSource === "highly" && (
+            <div className="grid grid-cols-3 gap-[6px] max-h-[260px] overflow-y-auto sidebar-scroll p-[2px]">
+              {HIGHLY_POSES.map(pose => (
+                <button
+                  key={pose.id}
+                  onClick={() => setSelectedHighlyId(pose.id)}
+                  title={pose.name}
+                  className={`relative aspect-square rounded-[8px] border cursor-pointer transition-all overflow-hidden ${
+                    selectedHighlyId === pose.id
+                      ? "border-[#2896FB] shadow-[0_0_0_2px_rgba(40,150,251,0.25)] bg-[rgba(40,150,251,0.08)]"
+                      : "border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] hover:border-[rgba(255,255,255,0.15)]"
+                  }`}
+                >
+                  <img src={pose.image} alt={pose.name} className="w-full h-full object-contain p-[4px]" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {imageSource === "upload" && (
+            <>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
+              {uploadedImage ? (
+                <div className="relative rounded-[10px] overflow-hidden border border-[rgba(255,255,255,0.08)] bg-[rgba(0,0,0,0.2)]">
+                  <img src={uploadedImage} alt="Preview" className="w-full h-[120px] object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-end p-[8px] gap-[6px]">
+                    <button
+                      onClick={() => fileRef.current?.click()}
+                      className="py-[5px] px-[10px] rounded-[6px] text-[11px] font-semibold bg-[rgba(255,255,255,0.15)] backdrop-blur-md border border-white/20 text-white hover:bg-[rgba(255,255,255,0.25)] cursor-pointer transition-all"
+                    >
+                      Replace
+                    </button>
+                    <button
+                      onClick={() => { setUploadedImage(null); }}
+                      className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(239,68,68,0.2)] backdrop-blur-md border border-[rgba(239,68,68,0.3)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.3)] cursor-pointer transition-all"
+                    >
+                      <X className="w-[12px] h-[12px]" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
                 <button
                   onClick={() => fileRef.current?.click()}
-                  className="py-[5px] px-[10px] rounded-[6px] text-[11px] font-semibold bg-[rgba(255,255,255,0.15)] backdrop-blur-md border border-white/20 text-white hover:bg-[rgba(255,255,255,0.25)] cursor-pointer transition-all"
+                  className="w-full flex flex-col items-center justify-center gap-[6px] py-[24px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border border-dashed border-[rgba(255,255,255,0.12)] text-[#64748B] hover:text-[#94A3B8] hover:border-[rgba(40,150,251,0.3)] cursor-pointer transition-all"
                 >
-                  Replace
+                  <Upload className="w-[18px] h-[18px]" />
+                  <span className="text-[12px] font-semibold">Upload image</span>
+                  <span className="text-[10px]">PNG, JPG, screenshots</span>
                 </button>
-                <button
-                  onClick={() => setRightImage(null)}
-                  className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(239,68,68,0.2)] backdrop-blur-md border border-[rgba(239,68,68,0.3)] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.3)] cursor-pointer transition-all"
-                >
-                  <X className="w-[12px] h-[12px]" />
-                </button>
-              </div>
+              )}
+            </>
+          )}
+
+          {imageSource === "none" && (
+            <div className="text-[11px] text-[#64748B] py-[12px] px-[14px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.05)] text-center">
+              No image — text only layout
             </div>
-          ) : (
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="w-full flex flex-col items-center justify-center gap-[6px] py-[24px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border border-dashed border-[rgba(255,255,255,0.12)] text-[#64748B] hover:text-[#94A3B8] hover:border-[rgba(40,150,251,0.3)] cursor-pointer transition-all"
-            >
-              <Upload className="w-[18px] h-[18px]" />
-              <span className="text-[12px] font-semibold">Upload image</span>
-              <span className="text-[10px]">PNG, JPG, screenshots</span>
-            </button>
           )}
         </div>
 
@@ -204,7 +323,7 @@ export function EmailTemplatesWorkspace() {
         <div className="shrink-0 px-[32px] py-[16px] border-b border-[rgba(255,255,255,0.06)] flex items-center gap-[8px]">
           <Mail className="w-[16px] h-[16px] text-[#2896FB]" />
           <div className="text-white text-[14px] font-bold">Email Templates</div>
-          <span className="text-[#64748B] text-[11px]">— {activeTpl.label}</span>
+          <span className="text-[#64748B] text-[11px]">— {activeSub.label} / {activeTpl.label}</span>
         </div>
         <div className="flex-1 overflow-auto p-[32px] flex items-start justify-center">
           <div className="w-full max-w-[1080px]">
@@ -217,7 +336,6 @@ export function EmailTemplatesWorkspace() {
             >
               {/* Background */}
               <img src={BG_URL} alt="" className="absolute inset-0 w-full h-full object-cover" crossOrigin="anonymous" />
-              {/* Subtle vignette/overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-[rgba(6,11,22,0.45)] via-transparent to-transparent" />
 
               {/* Logo top-left */}
@@ -229,10 +347,10 @@ export function EmailTemplatesWorkspace() {
                 crossOrigin="anonymous"
               />
 
-              {/* Text block (left, aligned to logo) */}
+              {/* Text block */}
               <div
                 className="absolute z-[4] flex flex-col"
-                style={{ top: "28%", left: "5%", width: "52%" }}
+                style={{ top: "28%", left: "5%", width: imageSource === "none" ? "90%" : "52%" }}
               >
                 <div
                   ref={headlineRef}
@@ -260,24 +378,28 @@ export function EmailTemplatesWorkspace() {
               </div>
 
               {/* Right-side image area */}
-              <div
-                className="absolute z-[4] flex items-center justify-center"
-                style={{ top: "12%", right: "5%", width: "36%", height: "76%" }}
-              >
-                {rightImage ? (
-                  <img
-                    src={rightImage}
-                    alt=""
-                    className="max-w-full max-h-full object-contain rounded-[12px] shadow-[0_12px_40px_rgba(0,0,0,0.5)]"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-white/15 bg-white/[0.03]">
-                    <ImageIcon className="w-[40px] h-[40px] text-white/20 mb-[8px]" />
-                    <div className="text-[12px] text-white/40 font-semibold uppercase tracking-[1px]">Image area</div>
-                    <div className="text-[10px] text-white/25 mt-[2px]">Upload from sidebar</div>
-                  </div>
-                )}
-              </div>
+              {imageSource !== "none" && (
+                <div
+                  className="absolute z-[4] flex items-center justify-center"
+                  style={{ top: "10%", right: "4%", width: "38%", height: "82%" }}
+                >
+                  {displayedImage ? (
+                    <img
+                      src={displayedImage}
+                      alt=""
+                      className="max-w-full max-h-full object-contain"
+                      style={{ filter: imageSource === "highly" ? "drop-shadow(0 12px 30px rgba(0,0,0,0.5))" : undefined }}
+                      crossOrigin={imageSource === "highly" ? "anonymous" : undefined}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-white/15 bg-white/[0.03]">
+                      <ImageIcon className="w-[40px] h-[40px] text-white/20 mb-[8px]" />
+                      <div className="text-[12px] text-white/40 font-semibold uppercase tracking-[1px]">Image area</div>
+                      <div className="text-[10px] text-white/25 mt-[2px]">Pick from sidebar</div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <BatchExportQueue

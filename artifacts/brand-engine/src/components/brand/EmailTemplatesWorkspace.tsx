@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, Package, Copy } from "lucide-react";
 import JSZip from "jszip";
 import { useExport } from "./useExport";
@@ -291,13 +291,35 @@ export function EmailTemplatesWorkspace() {
 
   const activeEmail = emails.find(e => e.id === activeId) || emails[0]!;
 
-  const registerRef = (id: string, el: HTMLDivElement | null) => {
+  const registerRef = useCallback((id: string, el: HTMLDivElement | null) => {
     if (el) refsMap.current.set(id, el);
     else refsMap.current.delete(id);
+  }, []);
+
+  const patchActive = useCallback((patch: Partial<EmailItem>) => {
+    setEmails(prev => prev.map(e => e.id === activeId ? { ...e, ...patch } : e));
+  }, [activeId]);
+
+  const handleHeadlinePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const pasted = e.clipboardData.getData("text");
+    const ta = e.currentTarget;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    const next = ta.value.slice(0, start) + pasted + ta.value.slice(end);
+    patchActive({ headline: next });
   };
 
-  const patchActive = (patch: Partial<EmailItem>) => {
-    setEmails(prev => prev.map(e => e.id === activeId ? { ...e, ...patch } : e));
+  const handleSubheadPaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const pasted = e.clipboardData.getData("text");
+    const ta = e.currentTarget;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    const next = ta.value.slice(0, start) + pasted + ta.value.slice(end);
+    patchActive({ subhead: next });
   };
 
   const patchEmail = (id: string, patch: Partial<EmailItem>) => {
@@ -405,8 +427,9 @@ export function EmailTemplatesWorkspace() {
           <textarea
             value={activeEmail.headline}
             onChange={e => patchActive({ headline: e.target.value })}
+            onPaste={handleHeadlinePaste}
             rows={2}
-            placeholder="Type your headline..."
+            placeholder="Type or paste your headline..."
             className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
         </div>
@@ -416,8 +439,9 @@ export function EmailTemplatesWorkspace() {
           <textarea
             value={activeEmail.subhead}
             onChange={e => patchActive({ subhead: e.target.value })}
+            onPaste={handleSubheadPaste}
             rows={2}
-            placeholder="Type your subheadline..."
+            placeholder="Type or paste your subheadline..."
             className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
         </div>

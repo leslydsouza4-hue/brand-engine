@@ -340,8 +340,10 @@ export function TemplatesWorkspace() {
       html, body { width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #0B1426 !important; }
       body { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 100% !important; }
       body > * { flex-shrink: 0 !important; transform-origin: center center !important; }
-      [data-edit-hover]:not([data-edit-active]) { outline: 2px dashed #5EE6DE !important; outline-offset: 2px !important; cursor: text !important; }
+      [data-edit-hover]:not([data-edit-active]):not([data-edit-dragging]) { outline: 2px dashed #5EE6DE !important; outline-offset: 2px !important; cursor: grab !important; }
       [data-edit-active] { outline: 2px solid #FFC328 !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(255,195,40,0.18) !important; cursor: text !important; }
+      [data-edit-dragging] { outline: 2px solid #2896FB !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(40,150,251,0.22) !important; cursor: grabbing !important; opacity: 0.95 !important; }
+      [data-edit-moved] { outline: 1px dashed rgba(40,150,251,0.5) !important; outline-offset: 2px !important; }
     </style>
     <script data-editor-injected>
       (function(){
@@ -361,6 +363,19 @@ export function TemplatesWorkspace() {
           var t = (el.textContent || '').trim();
           return t.length > 0;
         }
+        function isMovable(el){
+          if (!el || el === document.body || el === document.documentElement) return false;
+          var root = document.body && document.body.firstElementChild;
+          if (!el || el === root) return false;
+          if (el.closest('[data-edit-active]')) return false;
+          return true;
+        }
+        function getScale(){
+          var root = document.body && document.body.firstElementChild;
+          if (!root) return 1;
+          var m = (root.style.transform || '').match(/scale\\(([\\d.]+)\\)/);
+          return m ? parseFloat(m[1]) : 1;
+        }
         function clearActive(){
           document.querySelectorAll('[data-edit-active]').forEach(function(n){
             n.removeAttribute('data-edit-active');
@@ -368,10 +383,12 @@ export function TemplatesWorkspace() {
             n.blur && n.blur();
           });
         }
+        var dragState = null;
+        var suppressClick = false;
         document.addEventListener('mouseover', function(e){
           var el = e.target;
           if (!el || !(el instanceof Element)) return;
-          if (!isLeafText(el)) return;
+          if (!isMovable(el)) return;
           el.setAttribute('data-edit-hover', '1');
         }, true);
         document.addEventListener('mouseout', function(e){
@@ -379,7 +396,49 @@ export function TemplatesWorkspace() {
           if (!el || !(el instanceof Element)) return;
           el.removeAttribute('data-edit-hover');
         }, true);
+        document.addEventListener('mousedown', function(e){
+          if (e.button !== 0) return;
+          var el = e.target;
+          if (!el || !(el instanceof Element)) return;
+          if (!isMovable(el)) return;
+          if (el.getAttribute('contenteditable') === 'true') return;
+          dragState = {
+            el: el,
+            startX: e.clientX, startY: e.clientY,
+            moved: false,
+            base: el.getAttribute('data-edit-base-transform') || el.style.transform || ''
+          };
+          if (!el.hasAttribute('data-edit-base-transform')) {
+            el.setAttribute('data-edit-base-transform', el.style.transform || '');
+          }
+        }, true);
+        document.addEventListener('mousemove', function(e){
+          if (!dragState) return;
+          var dx = e.clientX - dragState.startX;
+          var dy = e.clientY - dragState.startY;
+          if (!dragState.moved && (Math.abs(dx) + Math.abs(dy)) < 5) return;
+          dragState.moved = true;
+          e.preventDefault();
+          var s = getScale() || 1;
+          dragState.el.setAttribute('data-edit-dragging', '1');
+          var base = dragState.base || '';
+          var sep = base ? ' ' : '';
+          dragState.el.style.transform = (base + sep + 'translate(' + (dx/s) + 'px,' + (dy/s) + 'px)').trim();
+        }, true);
+        document.addEventListener('mouseup', function(e){
+          if (!dragState) return;
+          var st = dragState; dragState = null;
+          st.el.removeAttribute('data-edit-dragging');
+          if (st.moved) {
+            st.el.setAttribute('data-edit-moved', '1');
+            suppressClick = true;
+            setTimeout(function(){ suppressClick = false; }, 50);
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }, true);
         document.addEventListener('click', function(e){
+          if (suppressClick) { e.preventDefault(); e.stopPropagation(); return; }
           var el = e.target;
           if (!el || !(el instanceof Element)) return;
           if (!isLeafText(el)) { clearActive(); return; }
@@ -475,7 +534,7 @@ export function TemplatesWorkspace() {
       let cleaned = html
         .replace(/<style\s+data-editor-injected[^>]*>[\s\S]*?<\/style>/gi, "")
         .replace(/<script\s+data-editor-injected[^>]*>[\s\S]*?<\/script>/gi, "")
-        .replace(/\s+data-edit-(?:hover|active)="[^"]*"/gi, "")
+        .replace(/\s+data-edit-(?:hover|active|dragging|moved|base-transform)="[^"]*"/gi, "")
         .replace(/\s+contenteditable="[^"]*"/gi, "");
       setAiSlides((prev) => {
         if (!prev.length) return prev;

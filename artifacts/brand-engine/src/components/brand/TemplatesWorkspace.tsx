@@ -1010,51 +1010,73 @@ export function TemplatesWorkspace() {
   const renderHtmlToCanvas = async (html: string): Promise<HTMLCanvasElement | null> => {
     if (!html) return null;
     const { w, h } = aiCanvasDims;
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.left = "-99999px";
-    iframe.style.top = "0";
-    iframe.style.width = `${w}px`;
-    iframe.style.height = `${h}px`;
-    iframe.style.border = "0";
-    iframe.setAttribute("sandbox", "allow-same-origin allow-scripts");
-    document.body.appendChild(iframe);
+
+    // Render the full HTML (head + body) into a host div in the PARENT document
+    // so modern-screenshot can capture it. Capturing nodes inside an iframe's
+    // contentDocument fails silently because the foreignObject SVG can't
+    // resolve cross-document nodes/styles reliably.
+
+    // 1. Parse the slide HTML and extract <head> assets + body content.
+    const parser = new DOMParser();
+    const parsed = parser.parseFromString(html, "text/html");
+    const headChildren = Array.from(parsed.head.children);
+    const bodyHtml = parsed.body.innerHTML;
+    const bodyClass = parsed.body.className;
+    const bodyStyle = parsed.body.getAttribute("style") ?? "";
+
+    // 2. Build an isolation host: an offscreen wrapper sized exactly to the
+    //    slide. Inject the head assets (fonts, styles) once, scoped to the host
+    //    via a class so they don't leak into the parent app's styles.
+    const SCOPE = `mse-${Math.random().toString(36).slice(2, 9)}`;
+    const host = document.createElement("div");
+    host.className = SCOPE;
+    Object.assign(host.style, {
+      position: "fixed",
+      left: "-99999px",
+      top: "0",
+      width: `${w}px`,
+      height: `${h}px`,
+      overflow: "hidden",
+      background: "#0B1426",
+      isolation: "isolate",
+      contain: "layout style paint",
+    } as Partial<CSSStyleDeclaration>);
+
+    // The body wrapper inside the host so the slide's body styles still apply.
+    const bodyWrap = document.createElement("div");
+    bodyWrap.setAttribute("data-slide-body", "true");
+    if (bodyClass) bodyWrap.className = bodyClass;
+    bodyWrap.setAttribute(
+      "style",
+      `margin:0;padding:0;width:${w}px;height:${h}px;display:block;position:relative;left:0;top:0;${bodyStyle}`,
+    );
+    bodyWrap.innerHTML = bodyHtml;
+    host.appendChild(bodyWrap);
+
+    // Inline head assets at the top of the host (style/link to fonts/script).
+    for (const node of headChildren) {
+      const tag = node.tagName.toUpperCase();
+      if (tag === "TITLE" || tag === "META" || tag === "BASE") continue;
+      host.insertBefore(node.cloneNode(true), host.firstChild);
+    }
+
+    document.body.appendChild(host);
+
     try {
-      await new Promise<void>((resolve) => {
-        iframe.onload = () => resolve();
-        iframe.srcdoc = html;
-      });
-      const doc = iframe.contentDocument;
-      if (!doc) return null;
+      // Wait for images inside the host to load.
+      const imgs = Array.from(host.querySelectorAll("img"));
+      await Promise.all(imgs.map(img =>
+        img.complete && img.naturalWidth > 0
+          ? Promise.resolve()
+          : new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r(); setTimeout(() => r(), 8000); })
+      ));
+      // Wait for web fonts.
+      try { if ((document as any).fonts && (document as any).fonts.ready) await (document as any).fonts.ready; } catch {}
+      // Settle one frame.
+      await new Promise(r => setTimeout(r, 250));
 
-      // Strip body's flex-centering so the canvas root sits at (0,0).
-      // The system prompt always centers .canvas inside body via flex —
-      // for export we want it pinned to origin so html2canvas captures it
-      // crisply at native size with no offset.
-      const fixStyle = doc.createElement("style");
-      fixStyle.textContent = `
-        html, body { margin:0 !important; padding:0 !important; width:${w}px !important; height:${h}px !important; min-height:0 !important; overflow:hidden !important; display:block !important; background:#0B1426 !important; }
-        body > .canvas, body > div:first-child { position: relative !important; left: 0 !important; top: 0 !important; margin: 0 !important; transform: none !important; }
-      `;
-      doc.head.appendChild(fixStyle);
+      const target = (host.querySelector(".canvas") as HTMLElement | null) ?? bodyWrap;
 
-      // Wait for images.
-      const imgs = Array.from(doc.images);
-      await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r(); })));
-      // Wait for web fonts (Poppins etc.) — biggest cause of layout shift.
-      try { if ((doc as any).fonts && (doc as any).fonts.ready) await (doc as any).fonts.ready; } catch {}
-      // Settle.
-      await new Promise(r => setTimeout(r, 200));
-
-      // Prefer capturing the .canvas root if present; otherwise body.
-      const target = (doc.querySelector(".canvas") as HTMLElement | null) ?? doc.body;
-
-      // Use modern-screenshot (SVG foreignObject) instead of html2canvas. The
-      // browser's own rendering engine paints the DOM into the SVG image, so
-      // modern CSS — :has(), mask-image, backdrop-filter, flex gap, clip-path,
-      // grid template areas — all render exactly like the live preview. With
-      // html2canvas these would silently drift because it re-implements CSS
-      // and skips features it doesn't know.
       const { domToCanvas } = await import("modern-screenshot");
       const EXPORT_SCALE = 3;
       const canvas = await domToCanvas(target, {
@@ -1062,11 +1084,13 @@ export function TemplatesWorkspace() {
         height: h,
         scale: EXPORT_SCALE,
         backgroundColor: "#0B1426",
-        style: { margin: "0", transform: "none", left: "0", top: "0" },
       });
       return canvas;
+    } catch (err) {
+      console.error("[renderHtmlToCanvas] failed", err);
+      return null;
     } finally {
-      document.body.removeChild(iframe);
+      document.body.removeChild(host);
     }
   };
 

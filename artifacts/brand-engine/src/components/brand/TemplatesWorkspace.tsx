@@ -1050,6 +1050,11 @@ export function TemplatesWorkspace() {
       const target = (doc.querySelector(".canvas") as HTMLElement | null) ?? doc.body;
 
       const html2canvas = (await import("html2canvas")).default;
+      // Render at 3x for crisp text/icons/SVG. html2canvas downsamples nothing —
+      // a higher scale means every pixel of the source is rendered at 3x density,
+      // so the resulting canvas is 3*w by 3*h. Downstream PNG/PDF export keeps
+      // the full pixel count for hi-res output.
+      const EXPORT_SCALE = 3;
       const canvas = await html2canvas(target, {
         width: w,
         height: h,
@@ -1057,11 +1062,14 @@ export function TemplatesWorkspace() {
         windowHeight: h,
         backgroundColor: "#0B1426",
         useCORS: true,
-        scale: 1,
+        allowTaint: true,
+        scale: EXPORT_SCALE,
         logging: false,
+        imageTimeout: 30000,
+        letterRendering: true,
         x: 0,
         y: 0,
-      });
+      } as any);
       return canvas;
     } finally {
       document.body.removeChild(iframe);

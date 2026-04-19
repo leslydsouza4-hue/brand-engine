@@ -551,6 +551,7 @@ export function TemplatesWorkspace() {
           if (!el || el === document.body || el === document.documentElement) return false;
           var root = document.body && document.body.firstElementChild;
           if (!el || el === root) return false;
+          if (el.closest && el.closest('[data-editor-injected]')) return false;
           if (el.closest('[data-edit-active]')) return false;
           return true;
         }
@@ -825,27 +826,57 @@ export function TemplatesWorkspace() {
             selectElement(el);
           }
         }, true);
+        var undoStack = [];
+        function pushUndo(entry){
+          undoStack.push(entry);
+          if (undoStack.length > 50) undoStack.shift();
+        }
         function deleteSelection(){
           if (!selection.length) return;
           // Don't delete the only top-level wrapper
+          var root = document.body && document.body.firstElementChild;
           var toRemove = selection.filter(function(el){
-            return el && el.parentNode && el !== document.body && el !== document.documentElement;
+            return el && el.parentNode && el !== document.body && el !== document.documentElement && el !== root;
           });
+          if (!toRemove.length) return;
+          var batch = [];
           toRemove.forEach(function(el){
             el.removeAttribute('data-edit-selected');
             el.removeAttribute('data-edit-hover');
+            batch.push({ el: el, parent: el.parentNode, next: el.nextSibling });
             if (el.parentNode) el.parentNode.removeChild(el);
           });
+          pushUndo({ type: 'delete', batch: batch });
           selection = [];
           selectedEl = null;
           destroyHandles();
         }
+        function undo(){
+          var entry = undoStack.pop();
+          if (!entry) return;
+          if (entry.type === 'delete') {
+            entry.batch.forEach(function(item){
+              if (!item.parent) return;
+              if (item.next && item.next.parentNode === item.parent) {
+                item.parent.insertBefore(item.el, item.next);
+              } else {
+                item.parent.appendChild(item.el);
+              }
+            });
+          }
+        }
         document.addEventListener('keydown', function(e){
+          var ae = document.activeElement;
+          var inEditable = ae && ae.getAttribute && ae.getAttribute('contenteditable') === 'true';
+          if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+            if (inEditable) return;
+            e.preventDefault();
+            undo();
+            return;
+          }
           if (e.key === 'Escape') { clearActive(); clearSelection(); return; }
           if (e.key === 'Delete' || e.key === 'Backspace') {
-            // Don't intercept while user is typing in contenteditable
-            var ae = document.activeElement;
-            if (ae && (ae.getAttribute && ae.getAttribute('contenteditable') === 'true')) return;
+            if (inEditable) return;
             if (!selection.length) return;
             e.preventDefault();
             deleteSelection();

@@ -159,6 +159,137 @@ J. **Use CSS Grid or Flexbox for the main composition** — not absolute positio
 
 K. **Self-audit before outputting.** Walk through every text element and ask: "Does its bounding box intersect any image, mascot, or other text bounding box?" If yes, fix it. Designs with overlapping elements are rejected.
 
+## Icons (HARD RULE — never invent wonky paths)
+When the design needs an icon (checkmark, arrow, calendar, lightning, star, lock, phone, chart, user, message, etc.), you MUST use inline <svg> with the Lucide-style stroke convention. NEVER draw icons with raw <div>s, CSS borders/triangles, emoji characters, or freehand <path d="..."> guesses.
+
+### Icon SVG conventions (apply to every icon)
+- Wrapper: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="W" height="H" fill="none" stroke="COLOR" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+- W and H are equal (square). Sizes: tiny 14, small 18, medium 24, large 36, hero 64-120.
+- COLOR comes from the brand palette only (typically #17D94B, #2896FB, #FFC328, #F8FAFC, or #94A3B8).
+- For "filled" badge icons (white check on green disc, etc.): wrap the stroked SVG inside a <div> with the disc background, not by switching the SVG to fill.
+- For hero-scale icons (100px+), use stroke-width 1.75 to keep them feeling refined; for small icons (<24px) keep stroke-width 2.
+- Always set aria-hidden="true" on decorative icons.
+
+### Approved icon path library — copy these EXACTLY. Do not modify the path data.
+
+CHECK (✓):
+<path d="M20 6 9 17l-5-5"/>
+
+CHECK CIRCLE:
+<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>
+
+X / CLOSE:
+<path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+
+ARROW RIGHT:
+<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+
+ARROW UP-RIGHT (growth):
+<path d="M7 17 17 7"/><path d="M7 7h10v10"/>
+
+TRENDING UP:
+<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+
+CHEVRON RIGHT:
+<path d="m9 18 6-6-6-6"/>
+
+PLUS:
+<path d="M5 12h14"/><path d="M12 5v14"/>
+
+STAR:
+<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+
+LIGHTNING / BOLT:
+<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/>
+
+CALENDAR:
+<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>
+
+CLOCK:
+<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+
+USER:
+<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+
+USERS (group):
+<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+
+MESSAGE / CHAT:
+<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+
+PHONE:
+<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/>
+
+MAIL:
+<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 5L2 7"/>
+
+LOCK:
+<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+
+CREDIT CARD:
+<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
+
+DOLLAR / PAYMENT:
+<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+
+CHART BAR:
+<line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/>
+
+PIE CHART:
+<path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>
+
+ACTIVITY (line chart):
+<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+
+ZAP / AUTOMATION:
+<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+
+ROCKET / LAUNCH:
+<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15 9 12c.74-3.07 4.21-6.55 7-7 0 0 0 4-3 7l-3 3"/><path d="M15 12 12 9"/>
+
+GLOBE:
+<circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+
+SETTINGS / GEAR:
+<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
+
+TARGET:
+<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+
+EYE:
+<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+
+HEART:
+<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/>
+
+SPARKLE / AI:
+<path d="m12 3-1.91 5.09L5 10l5.09 1.91L12 17l1.91-5.09L19 10l-5.09-1.91L12 3z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+
+PLAY (video / live):
+<polygon points="6 3 20 12 6 21 6 3"/>
+
+SHIELD (security / trust):
+<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+
+DOWNLOAD:
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+
+UPLOAD:
+<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>
+
+HOME:
+<path d="M3 9 12 2l9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+
+INBOX:
+<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+
+### Icon usage rules
+- If you can't find the right icon in this library, pick the closest one rather than freehanding a path. NEVER write a <path d="..."> with made-up coordinates.
+- An icon's COLOR uses the brand palette. For active/positive states use #17D94B, for primary action #2896FB, for attention/celebration #FFC328, for neutral UI #94A3B8 or #F8FAFC.
+- Icons that sit inside circles/squares/discs: build the disc with a CSS rounded div, then place the SVG centered inside via flex. Don't try to do the disc in the SVG.
+- For "row of feature icons with labels", use a flex row with each item being [disc + svg + small label]. Standard disc size 36-44px, icon inside 18-22px.
+- For a "hero icon" (one giant icon as the focal element), size it 80-160px square, stroke-width 1.75-2, with a soft brand-color glow behind it via a blurred radial gradient div.
+
 ## Visual Treatments (pick what fits the prompt — don't apply all)
 - Background gradient: linear-gradient(135deg, #0B1426 0%, #122036 100%) OR radial-gradient(ellipse at top right, rgba(40,150,251,0.25), transparent 60%) on top of #0B1426.
 - Glow orb: a div with radial-gradient(circle at center, #2896FB 0%, rgba(40,150,251,0.4) 35%, transparent 70%); filter: blur(20px) for atmospheric, no blur for crisp.

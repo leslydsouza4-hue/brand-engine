@@ -1049,27 +1049,21 @@ export function TemplatesWorkspace() {
       // Prefer capturing the .canvas root if present; otherwise body.
       const target = (doc.querySelector(".canvas") as HTMLElement | null) ?? doc.body;
 
-      const html2canvas = (await import("html2canvas")).default;
-      // Render at 3x for crisp text/icons/SVG. html2canvas downsamples nothing —
-      // a higher scale means every pixel of the source is rendered at 3x density,
-      // so the resulting canvas is 3*w by 3*h. Downstream PNG/PDF export keeps
-      // the full pixel count for hi-res output.
+      // Use modern-screenshot (SVG foreignObject) instead of html2canvas. The
+      // browser's own rendering engine paints the DOM into the SVG image, so
+      // modern CSS — :has(), mask-image, backdrop-filter, flex gap, clip-path,
+      // grid template areas — all render exactly like the live preview. With
+      // html2canvas these would silently drift because it re-implements CSS
+      // and skips features it doesn't know.
+      const { domToCanvas } = await import("modern-screenshot");
       const EXPORT_SCALE = 3;
-      const canvas = await html2canvas(target, {
+      const canvas = await domToCanvas(target, {
         width: w,
         height: h,
-        windowWidth: w,
-        windowHeight: h,
-        backgroundColor: "#0B1426",
-        useCORS: true,
-        allowTaint: true,
         scale: EXPORT_SCALE,
-        logging: false,
-        imageTimeout: 30000,
-        letterRendering: true,
-        x: 0,
-        y: 0,
-      } as any);
+        backgroundColor: "#0B1426",
+        style: { margin: "0", transform: "none", left: "0", top: "0" },
+      });
       return canvas;
     } finally {
       document.body.removeChild(iframe);

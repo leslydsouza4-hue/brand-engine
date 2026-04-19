@@ -281,6 +281,8 @@ export function TemplatesWorkspace() {
   const [aiSlideCount, setAiSlideCount] = useState(1);
   const [aiEditMode, setAiEditMode] = useState(false);
   const [aiSavingEdits, setAiSavingEdits] = useState(false);
+  const [aiLoadingPhrase, setAiLoadingPhrase] = useState(0);
+  const [aiLoadingProgress, setAiLoadingProgress] = useState(0);
   const aiPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -510,6 +512,33 @@ export function TemplatesWorkspace() {
       setAiPolishing(false);
     }
   };
+
+  const AI_LOADING_PHRASES = [
+    "Studying the HighLevel brand voice…",
+    "Selecting palette accents…",
+    "Composing the headline…",
+    "Placing the focal orb…",
+    "Balancing whitespace…",
+    "Sketching badge clusters…",
+    "Aligning the wordmark…",
+    "Tuning hierarchy…",
+    "Polishing the CTA pill…",
+    "Rendering final pixels…",
+  ];
+
+  useEffect(() => {
+    if (!aiLoading) { setAiLoadingPhrase(0); setAiLoadingProgress(0); return; }
+    const t0 = Date.now();
+    const phraseTimer = window.setInterval(() => {
+      setAiLoadingPhrase((p) => (p + 1) % AI_LOADING_PHRASES.length);
+    }, 1700);
+    const progressTimer = window.setInterval(() => {
+      const elapsed = (Date.now() - t0) / 1000;
+      const target = 1 - Math.exp(-elapsed / 14);
+      setAiLoadingProgress(Math.min(0.96, target));
+    }, 120);
+    return () => { window.clearInterval(phraseTimer); window.clearInterval(progressTimer); };
+  }, [aiLoading]);
 
   const handleSaveInlineEdits = useCallback(async () => {
     const iframe = aiPreviewIframeRef.current;
@@ -1645,44 +1674,134 @@ export function TemplatesWorkspace() {
           {aiMode ? (
             aiLoading ? (
               <div
-                className="relative w-full max-w-[840px] mx-auto overflow-hidden rounded-[12px] ai-skeleton-wrap"
+                className="relative w-full max-w-[840px] mx-auto overflow-hidden rounded-[12px]"
                 style={{
                   aspectRatio: aiAspectRatio,
                   boxShadow: "0 8px 50px rgba(0,0,0,0.4)",
-                  background: "linear-gradient(135deg, #0B1426 0%, #0F1B30 100%)",
-                  border: "1px solid rgba(0,178,169,0.15)",
+                  background: "radial-gradient(120% 80% at 30% 20%, #142244 0%, #0B1426 60%, #060B18 100%)",
+                  border: "1px solid rgba(94,230,222,0.18)",
                 }}
               >
-                <div className="ai-skeleton-shimmer absolute inset-0" />
-                <div className="absolute inset-0 p-[6%] flex flex-col gap-[3%]">
-                  <div className="flex items-center justify-between">
-                    <div className="ai-skeleton-block h-[4%] w-[22%] rounded-[6px]" />
-                    <div className="ai-skeleton-block h-[3.5%] w-[10%] rounded-[999px]" />
-                  </div>
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="ai-skeleton-block w-[55%] h-[55%] rounded-[20px]" style={{ animationDelay: "0.1s" }} />
-                  </div>
-                  <div className="flex flex-col gap-[8px]">
-                    <div className="ai-skeleton-block h-[8%] w-[80%] rounded-[8px]" style={{ animationDelay: "0.2s" }} />
-                    <div className="ai-skeleton-block h-[8%] w-[60%] rounded-[8px]" style={{ animationDelay: "0.3s" }} />
-                    <div className="ai-skeleton-block h-[3%] w-[40%] rounded-[6px] mt-[6px]" style={{ animationDelay: "0.4s" }} />
-                    <div className="ai-skeleton-block h-[3%] w-[35%] rounded-[6px]" style={{ animationDelay: "0.5s" }} />
-                  </div>
-                  <div className="flex items-center gap-[10px] mt-[2%]">
-                    <div className="ai-skeleton-block h-[7%] w-[28%] rounded-[999px]" style={{ animationDelay: "0.6s" }} />
-                    <div className="ai-skeleton-block h-[7%] w-[18%] rounded-[999px]" style={{ animationDelay: "0.7s" }} />
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ width: "55%", aspectRatio: "1", left: "5%", top: "10%", background: "radial-gradient(closest-side, rgba(40,150,251,0.55), rgba(40,150,251,0) 70%)", filter: "blur(20px)" }}
+                  animate={{ x: ["0%", "12%", "-6%", "0%"], y: ["0%", "-8%", "10%", "0%"], scale: [1, 1.1, 0.95, 1] }}
+                  transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ width: "50%", aspectRatio: "1", right: "0%", top: "30%", background: "radial-gradient(closest-side, rgba(94,230,222,0.55), rgba(94,230,222,0) 70%)", filter: "blur(20px)" }}
+                  animate={{ x: ["0%", "-10%", "8%", "0%"], y: ["0%", "12%", "-8%", "0%"], scale: [1, 0.92, 1.08, 1] }}
+                  transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{ width: "45%", aspectRatio: "1", left: "20%", bottom: "0%", background: "radial-gradient(closest-side, rgba(255,195,40,0.45), rgba(255,195,40,0) 70%)", filter: "blur(20px)" }}
+                  animate={{ x: ["0%", "8%", "-12%", "0%"], y: ["0%", "-10%", "6%", "0%"], scale: [1, 1.06, 0.94, 1] }}
+                  transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
+                />
+                <motion.div
+                  className="absolute inset-x-0 h-[2px] pointer-events-none z-[2]"
+                  style={{ background: "linear-gradient(90deg, transparent, rgba(94,230,222,0.85), transparent)", boxShadow: "0 0 24px rgba(94,230,222,0.6)" }}
+                  animate={{ top: ["0%", "100%"] }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                />
+
+                <div className="absolute inset-0 flex items-center justify-center z-[3]">
+                  <div className="relative" style={{ width: "min(60%, 320px)", aspectRatio: "1" }}>
+                    {[
+                      { size: 100, dur: 14, dir: 1, dots: 8, color: "#5EE6DE", op: 0.85 },
+                      { size: 78, dur: 10, dir: -1, dots: 6, color: "#2896FB", op: 0.9 },
+                      { size: 56, dur: 7, dir: 1, dots: 5, color: "#FFC328", op: 0.95 },
+                    ].map((ring, ri) => (
+                      <motion.div
+                        key={ri}
+                        className="absolute inset-0 m-auto"
+                        style={{ width: `${ring.size}%`, height: `${ring.size}%`, borderRadius: "50%", border: `1px solid ${ring.color}33` }}
+                        animate={{ rotate: ring.dir * 360 }}
+                        transition={{ duration: ring.dur, repeat: Infinity, ease: "linear" }}
+                      >
+                        {Array.from({ length: ring.dots }).map((_, di) => {
+                          const angle = (di / ring.dots) * Math.PI * 2;
+                          const r = 50;
+                          const cx = 50 + Math.cos(angle) * r;
+                          const cy = 50 + Math.sin(angle) * r;
+                          return (
+                            <span
+                              key={di}
+                              className="absolute"
+                              style={{
+                                left: `${cx}%`, top: `${cy}%`,
+                                width: 8, height: 8,
+                                marginLeft: -4, marginTop: -4,
+                                borderRadius: "50%",
+                                background: ring.color,
+                                opacity: ring.op,
+                                boxShadow: `0 0 12px ${ring.color}, 0 0 22px ${ring.color}`,
+                              }}
+                            />
+                          );
+                        })}
+                      </motion.div>
+                    ))}
+                    <motion.div
+                      className="absolute inset-0 m-auto flex items-center justify-center"
+                      style={{
+                        width: "32%", height: "32%",
+                        borderRadius: "50%",
+                        background: "radial-gradient(closest-side, rgba(255,255,255,0.12), rgba(11,20,38,0.95))",
+                        border: "1px solid rgba(94,230,222,0.4)",
+                        boxShadow: "0 0 60px rgba(40,150,251,0.45), inset 0 0 30px rgba(94,230,222,0.18)",
+                      }}
+                      animate={{ scale: [1, 1.06, 1] }}
+                      transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      <Sparkles className="w-[40%] h-[40%] text-[#5EE6DE]" />
+                    </motion.div>
                   </div>
                 </div>
-                <div className="absolute top-[14px] right-[14px] flex items-center gap-[8px] py-[7px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(0,178,169,0.35)] z-[10]">
+
+                <div className="absolute top-[14px] right-[14px] flex items-center gap-[8px] py-[7px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.4)] z-[10]">
                   <span className="relative flex w-[8px] h-[8px]">
                     <span className="absolute inline-flex h-full w-full rounded-full bg-[#5EE6DE] opacity-70 animate-ping" />
                     <span className="relative inline-flex rounded-full w-[8px] h-[8px] bg-[#5EE6DE]" />
                   </span>
-                  <span className="text-[11px] font-bold tracking-[0.12em] text-[#5EE6DE]">GENERATING</span>
+                  <span className="text-[11px] font-bold tracking-[0.14em] text-[#5EE6DE]">GENERATING</span>
                 </div>
-                <div className="absolute bottom-[14px] left-1/2 -translate-x-1/2 flex items-center gap-[8px] py-[7px] px-[14px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.08)] z-[10]">
-                  <Sparkles className="w-[12px] h-[12px] text-[#5EE6DE] animate-pulse" />
-                  <span className="text-[11px] text-[#94A3B8]">Claude is composing your design…</span>
+
+                <div className="absolute bottom-[14px] left-[14px] right-[14px] z-[10] flex flex-col gap-[8px]">
+                  <div className="h-[28px] flex items-center justify-center">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={aiLoadingPhrase}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.35 }}
+                        className="flex items-center gap-[8px] py-[6px] px-[14px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.08)]"
+                      >
+                        <span className="relative flex w-[6px] h-[6px]">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-[#FFC328] opacity-70 animate-ping" />
+                          <span className="relative inline-flex rounded-full w-[6px] h-[6px] bg-[#FFC328]" />
+                        </span>
+                        <span className="text-[11px] text-[#CBD5E1] font-medium">{AI_LOADING_PHRASES[aiLoadingPhrase]}</span>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                  <div className="relative h-[3px] w-full rounded-full overflow-hidden bg-[rgba(255,255,255,0.06)]">
+                    <motion.div
+                      className="absolute inset-y-0 left-0 rounded-full"
+                      style={{ background: "linear-gradient(90deg, #2896FB, #5EE6DE, #FFC328)", boxShadow: "0 0 10px rgba(94,230,222,0.6)" }}
+                      animate={{ width: `${Math.round(aiLoadingProgress * 100)}%` }}
+                      transition={{ duration: 0.3, ease: "easeOut" }}
+                    />
+                    <motion.div
+                      className="absolute inset-y-0 w-[40%] pointer-events-none"
+                      style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)" }}
+                      animate={{ left: ["-40%", "100%"] }}
+                      transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+                    />
+                  </div>
                 </div>
               </div>
             ) : aiHtml ? (

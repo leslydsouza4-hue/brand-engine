@@ -279,6 +279,7 @@ export function TemplatesWorkspace() {
   const [aiSlides, setAiSlides] = useState<string[]>([]);
   const [aiSlideIndex, setAiSlideIndex] = useState(0);
   const [aiSlideCount, setAiSlideCount] = useState(1);
+  const [aiSlidePrompts, setAiSlidePrompts] = useState<string[]>([]);
   const [aiEditMode, setAiEditMode] = useState(false);
   const [aiGridView, setAiGridView] = useState(false);
   const [aiSavingEdits, setAiSavingEdits] = useState(false);
@@ -601,6 +602,25 @@ export function TemplatesWorkspace() {
     return `${inject}${html}`;
   };
 
+  useEffect(() => {
+    setAiSlidePrompts(prev => {
+      if (aiSlideCount <= 1) return [];
+      const next = prev.slice(0, aiSlideCount);
+      while (next.length < aiSlideCount) next.push("");
+      return next;
+    });
+  }, [aiSlideCount]);
+
+  const composedPrompt = (() => {
+    const topic = aiPrompt.trim();
+    if (aiSlideCount <= 1) return topic;
+    const lines = aiSlidePrompts.map((p, i) => {
+      const t = (p || "").trim();
+      return `Slide ${i + 1}: ${t || "(use your judgment to follow the overall theme above)"}`;
+    });
+    return `${topic}\n\nPer-slide breakdown (use these as the spec for each slide; keep visual rhythm across the deck):\n${lines.join("\n")}`;
+  })();
+
   const handlePolishPrompt = async () => {
     const idea = aiPrompt.trim();
     if (!idea || aiPolishing) return;
@@ -724,7 +744,7 @@ export function TemplatesWorkspace() {
   }, [aiSavingEdits, aiSlideIndex]);
 
   const handleGenerateAI = async () => {
-    const prompt = aiPrompt.trim();
+    const prompt = composedPrompt.trim();
     if (!prompt || aiLoading) return;
     setAiLoading(true);
     setAiError(null);
@@ -1399,7 +1419,9 @@ export function TemplatesWorkspace() {
 
 
             <div className="flex items-center justify-between mb-[6px]">
-              <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Prompt</div>
+              <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">
+                {aiSlideCount > 1 ? "Overall Theme" : "Prompt"}
+              </div>
               <button
                 onClick={handlePolishPrompt}
                 disabled={!aiPrompt.trim() || aiPolishing}
@@ -1416,10 +1438,43 @@ export function TemplatesWorkspace() {
             <textarea
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              placeholder="e.g. Launch graphic for our new AI Voice Agent — bold headline, glowing blue orb, capture-yellow accent badge"
-              rows={7}
+              placeholder={aiSlideCount > 1
+                ? "e.g. 'The Operator Era' — a 4-slide carousel about agencies switching to HighLevel. Dark editorial vibe, teal + yellow accents, bold display type."
+                : "e.g. Launch graphic for our new AI Voice Agent — bold headline, glowing blue orb, capture-yellow accent badge"}
+              rows={aiSlideCount > 1 ? 4 : 7}
               className="w-full py-[12px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[12.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
             />
+
+            {aiSlideCount > 1 && (
+              <div className="mt-[14px] flex flex-col gap-[10px]">
+                <div className="flex items-center justify-between">
+                  <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Per-Slide Prompts</div>
+                  <span className="text-[9px] text-[#475569]">Leave blank to let Claude decide</span>
+                </div>
+                {aiSlidePrompts.map((p, i) => (
+                  <div key={i} className="flex flex-col gap-[5px]">
+                    <div className="flex items-center gap-[6px]">
+                      <div className="w-[20px] h-[20px] flex items-center justify-center rounded-[5px] bg-[rgba(94,230,222,0.1)] border border-[rgba(94,230,222,0.25)] text-[10px] font-bold text-[#5EE6DE]">
+                        {i + 1}
+                      </div>
+                      <span className="text-[10.5px] font-semibold text-[#94A3B8]">Slide {i + 1}</span>
+                    </div>
+                    <textarea
+                      value={p}
+                      onChange={(e) => setAiSlidePrompts(prev => prev.map((v, idx) => idx === i ? e.target.value : v))}
+                      placeholder={
+                        i === 0 ? "Hook slide — bold headline that stops the scroll, big portrait, brand chip" :
+                        i === aiSlidePrompts.length - 1 ? "CTA slide — group photo, overlay headline, yellow CTA pill linking to gohighlevel.com" :
+                        i === 1 ? "Proof / problem — split layout, candid human moment, 2 stat cards" :
+                        "Data card — no humans, 4 stat tiles, big numbers in yellow"
+                      }
+                      rows={3}
+                      className="w-full py-[10px] px-[12px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[11.5px] text-[#E2E8F0] outline-none focus:border-[rgba(94,230,222,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
             {aiPolishError && (
               <div className="mt-[8px] py-[8px] px-[10px] rounded-[8px] text-[11px] text-[#FCA5A5] bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)]">
                 {aiPolishError}

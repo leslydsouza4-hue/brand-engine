@@ -274,10 +274,18 @@ const POLISH_SYSTEM = `You are a senior brand designer at HighLevel. The user gi
 
 Output rules:
 - Return ONLY the polished prompt as plain text. No preamble, no headings, no markdown, no explanation, no quotes.
-- 90-160 words, written as a confident creative direction (not a question).
-- Cover: headline (in quotes, 3-8 words, punchy), optional subline, visual focal point, composition, color usage from HighLevel palette (Primary Blue #2896FB, Light Blue #7CC8FF, Deep Navy #0B1426, Yellow #FFC328, Green #00B2A9), accent treatments (orbs/chips/badges), and where the HighLevel wordmark sits.
+- 80-160 words, written as a confident creative direction (not a question).
+- Cover: headline (in quotes, 3-8 words, punchy), optional subline, visual focal point, composition, color usage from HighLevel palette (Primary Blue #2896FB, Light Blue #7CC8FF, Deep Navy #0B1426, Yellow #FFC328, Green #00B2A9, Teal #5EE6DE), accent treatments (orbs/chips/badges), and where the HighLevel wordmark sits.
 - Match the energy of the user's idea — don't pad with corporate fluff.
-- Tailor density to the canvas size: tiny banners get a single-line hook + logo + CTA only.`;
+- Tailor density to the canvas size: tiny banners get a single-line hook + logo + CTA only.
+
+# Format-specific direction (apply rules for the given format)
+- **social**: Hook-driven. The headline is a thumb-stopper — a question, claim, or bold stat. Eyebrow-style category label on top. Strong focal visual (orb/illustrated subject/chip cluster). Dense color contrast. If the size is portrait or square, stack vertically; if landscape (1200×628), split 60/40. Always mention "scroll-stopping" energy.
+- **ads**: Conversion-first. Single benefit headline (5-7 words), sharp CTA pill ("Start Free", "Try It", "See Demo"), wordmark in a corner, minimal decoration so the eye lands on the CTA. For tiny units (728×90, 300×250) prescribe a one-line hook + CTA only — no subline.
+- **presentation**: Slide-grade composition. Big editorial hero headline (8-12 words is fine), generous negative space, calm decorative orb behind, readable subline below. Wordmark small in a corner. Suggest a single supporting visual element on the opposite side. Avoid CTAs unless explicitly requested — presentations don't sell, they explain.
+- **email**: Inbox-readable on small screens. Short headline (3-6 words), one supporting line, prominent CTA pill, wordmark left. Decorative treatment minimal — flat color blocks, soft gradients, no heavy orbs. Specify safe text contrast (#F8FAFC on #0B1426 or #0F172A on #F8FAFC). Email graphics often render as static images, so call out alt-text-friendly composition.
+
+Pick the rules matching the user-provided format and lean into them. Do not list the format name in the output — just write the brief in that style.`;
 
 router.post("/polish-prompt", async (req, res) => {
   const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
@@ -294,9 +302,13 @@ router.post("/polish-prompt", async (req, res) => {
   const highlyPoseDescription = typeof req.body?.highlyPoseDescription === "string" ? req.body.highlyPoseDescription : "";
   const sceneName = typeof req.body?.sceneName === "string" ? req.body.sceneName : "";
   const sceneDescription = typeof req.body?.sceneDescription === "string" ? req.body.sceneDescription : "";
+  const format = typeof req.body?.format === "string" ? req.body.format : "social";
+  const slideCountP = Math.min(10, Math.max(1, Math.round(Number(req.body?.slideCount) || 1)));
 
   const userMsg = [
+    `Format: ${format}.`,
     `Canvas: ${aspect}.`,
+    slideCountP > 1 ? `Carousel: ${slideCountP} cohesive slides (cover → content → CTA).` : "",
     sceneDescription ? `Scene direction (${sceneName}): ${sceneDescription}` : "",
     includeLogo ? `Include the HighLevel logo in a corner — variant: ${logoDescription || "wordmark"}.` : "",
     includeHighly ? `Include the Highly mascot as a hero visual${highlyPoseDescription ? ` (pose: ${highlyPoseDescription})` : ""}.` : "",

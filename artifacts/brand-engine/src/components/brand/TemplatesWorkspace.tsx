@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, Sparkles, ExternalLink, Download as DownloadIcon, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, Sparkles, ExternalLink, Download as DownloadIcon, Edit3, Save, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 import { LOGO_VARIANTS, DESIGN_SCENES } from "./aiPickers";
 import { LivePreview } from "./LivePreview";
@@ -279,6 +279,9 @@ export function TemplatesWorkspace() {
   const [aiSlides, setAiSlides] = useState<string[]>([]);
   const [aiSlideIndex, setAiSlideIndex] = useState(0);
   const [aiSlideCount, setAiSlideCount] = useState(1);
+  const [aiEditMode, setAiEditMode] = useState(false);
+  const [aiSavingEdits, setAiSavingEdits] = useState(false);
+  const aiPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiIncludeLogo, setAiIncludeLogo] = useState(true);
@@ -332,6 +335,89 @@ export function TemplatesWorkspace() {
   const aiHtml = aiSlides[aiSlideIndex] ?? null;
   const aiHtmlScaled = aiHtml ? wrapWithFit(aiHtml, aiCanvasDims.w, aiCanvasDims.h) : null;
 
+  const wrapWithEditor = (html: string, w: number, h: number) => {
+    const inject = `<style data-editor-injected>
+      html, body { width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #0B1426 !important; }
+      body { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 100% !important; }
+      body > * { flex-shrink: 0 !important; transform-origin: center center !important; }
+      [data-edit-hover]:not([data-edit-active]) { outline: 2px dashed #5EE6DE !important; outline-offset: 2px !important; cursor: text !important; }
+      [data-edit-active] { outline: 2px solid #FFC328 !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(255,195,40,0.18) !important; cursor: text !important; }
+    </style>
+    <script data-editor-injected>
+      (function(){
+        var W = ${w}, H = ${h};
+        function fit() {
+          var root = document.body && document.body.firstElementChild;
+          if (!root) return;
+          root.style.width = W + 'px';
+          root.style.height = H + 'px';
+          var s = Math.min(window.innerWidth / W, window.innerHeight / H);
+          root.style.transform = 'scale(' + s + ')';
+        }
+        window.addEventListener('resize', fit);
+        function isLeafText(el){
+          if (!el || el === document.body || el === document.documentElement) return false;
+          if (el.children && el.children.length > 0) return false;
+          var t = (el.textContent || '').trim();
+          return t.length > 0;
+        }
+        function clearActive(){
+          document.querySelectorAll('[data-edit-active]').forEach(function(n){
+            n.removeAttribute('data-edit-active');
+            n.removeAttribute('contenteditable');
+            n.blur && n.blur();
+          });
+        }
+        document.addEventListener('mouseover', function(e){
+          var el = e.target;
+          if (!el || !(el instanceof Element)) return;
+          if (!isLeafText(el)) return;
+          el.setAttribute('data-edit-hover', '1');
+        }, true);
+        document.addEventListener('mouseout', function(e){
+          var el = e.target;
+          if (!el || !(el instanceof Element)) return;
+          el.removeAttribute('data-edit-hover');
+        }, true);
+        document.addEventListener('click', function(e){
+          var el = e.target;
+          if (!el || !(el instanceof Element)) return;
+          if (!isLeafText(el)) { clearActive(); return; }
+          e.preventDefault();
+          e.stopPropagation();
+          clearActive();
+          el.setAttribute('contenteditable', 'true');
+          el.setAttribute('data-edit-active', '1');
+          el.focus();
+          var range = document.createRange();
+          range.selectNodeContents(el);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }, true);
+        window.addEventListener('message', function(ev){
+          var data = ev.data || {};
+          if (data && data.type === 'editor:get-html') {
+            clearActive();
+            document.querySelectorAll('[data-edit-hover]').forEach(function(n){ n.removeAttribute('data-edit-hover'); });
+            document.querySelectorAll('[data-editor-injected]').forEach(function(n){ n.parentNode && n.parentNode.removeChild(n); });
+            var root = document.body && document.body.firstElementChild;
+            if (root) { root.style.transform=''; root.style.width=''; root.style.height=''; }
+            var html = '<!doctype html>\\n' + document.documentElement.outerHTML;
+            window.parent.postMessage({ type: 'editor:html', html: html }, '*');
+          }
+        });
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', fit);
+        } else { fit(); }
+        setTimeout(fit, 60);
+      })();
+    </script>`;
+    if (/<\/head>/i.test(html)) return html.replace(/<\/head>/i, `${inject}</head>`);
+    if (/<body[^>]*>/i.test(html)) return html.replace(/<body([^>]*)>/i, `<head>${inject}</head><body$1>`);
+    return `${inject}${html}`;
+  };
+
   const handlePolishPrompt = async () => {
     const idea = aiPrompt.trim();
     if (!idea || aiPolishing) return;
@@ -351,6 +437,8 @@ export function TemplatesWorkspace() {
           highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
           sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
           sceneDescription: DESIGN_SCENES.find(s => s.id === aiSceneId)?.description ?? "",
+          format: aiCategoryId,
+          slideCount: aiSlideCount,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -363,6 +451,45 @@ export function TemplatesWorkspace() {
       setAiPolishing(false);
     }
   };
+
+  const handleSaveInlineEdits = useCallback(async () => {
+    const iframe = aiPreviewIframeRef.current;
+    if (!iframe || !iframe.contentWindow || aiSavingEdits) return;
+    setAiSavingEdits(true);
+    try {
+      const html: string = await new Promise((resolve, reject) => {
+        const timeout = window.setTimeout(() => {
+          window.removeEventListener("message", onMsg);
+          reject(new Error("Timed out reading edited HTML"));
+        }, 4000);
+        function onMsg(ev: MessageEvent) {
+          const d: any = ev.data;
+          if (!d || d.type !== "editor:html" || typeof d.html !== "string") return;
+          window.clearTimeout(timeout);
+          window.removeEventListener("message", onMsg);
+          resolve(d.html);
+        }
+        window.addEventListener("message", onMsg);
+        iframe.contentWindow!.postMessage({ type: "editor:get-html" }, "*");
+      });
+      let cleaned = html
+        .replace(/<style\s+data-editor-injected[^>]*>[\s\S]*?<\/style>/gi, "")
+        .replace(/<script\s+data-editor-injected[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/\s+data-edit-(?:hover|active)="[^"]*"/gi, "")
+        .replace(/\s+contenteditable="[^"]*"/gi, "");
+      setAiSlides((prev) => {
+        if (!prev.length) return prev;
+        const next = prev.slice();
+        next[aiSlideIndex] = cleaned;
+        return next;
+      });
+      setAiEditMode(false);
+    } catch (err) {
+      // swallow — leave edit mode active so user can retry
+    } finally {
+      setAiSavingEdits(false);
+    }
+  }, [aiSavingEdits, aiSlideIndex]);
 
   const handleGenerateAI = async () => {
     const prompt = aiPrompt.trim();
@@ -1505,8 +1632,9 @@ export function TemplatesWorkspace() {
                 style={{ aspectRatio: aiAspectRatio, boxShadow: "0 8px 50px rgba(0,0,0,0.4)" }}
               >
                 <iframe
+                  ref={aiPreviewIframeRef}
                   title="Claude Design preview"
-                  srcDoc={aiHtmlScaled ?? aiHtml}
+                  srcDoc={aiEditMode && aiHtml ? wrapWithEditor(aiHtml, aiCanvasDims.w, aiCanvasDims.h) : (aiHtmlScaled ?? aiHtml)}
                   sandbox="allow-same-origin allow-scripts"
                   className="w-full h-full block border-0"
                   style={{ background: "#0B1426" }}
@@ -1516,6 +1644,35 @@ export function TemplatesWorkspace() {
                     <span className="text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE]">SLIDE {aiSlideIndex + 1} / {aiSlides.length}</span>
                   </div>
                 )}
+                <div className="absolute top-[12px] left-[12px] flex items-center gap-[8px] z-[6]">
+                  {!aiEditMode ? (
+                    <button
+                      onClick={() => setAiEditMode(true)}
+                      className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                      title="Click any text in the preview to edit it"
+                    >
+                      <Edit3 className="w-[12px] h-[12px]" /> EDIT
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleSaveInlineEdits}
+                        disabled={aiSavingEdits}
+                        className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[#FFC328] border border-[#FFC328] text-[11px] font-bold tracking-[0.1em] text-[#0B1426] hover:brightness-110 cursor-pointer disabled:opacity-60"
+                      >
+                        <Save className="w-[12px] h-[12px]" /> {aiSavingEdits ? "SAVING…" : "SAVE EDITS"}
+                      </button>
+                      <button
+                        onClick={() => setAiEditMode(false)}
+                        disabled={aiSavingEdits}
+                        className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.18)] text-[11px] font-bold tracking-[0.1em] text-[#94A3B8] hover:text-white cursor-pointer disabled:opacity-60"
+                      >
+                        CANCEL
+                      </button>
+                      <span className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.08)] text-[10px] tracking-[0.08em] text-[#94A3B8]">Click any text to edit</span>
+                    </>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-[10px] text-center max-w-[420px] px-[20px]">

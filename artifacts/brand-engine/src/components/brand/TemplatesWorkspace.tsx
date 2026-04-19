@@ -1269,7 +1269,49 @@ export function TemplatesWorkspace() {
       <LivePreview>
         <div className="flex-1 flex items-center justify-center relative overflow-hidden w-full">
           {aiMode ? (
-            aiHtml ? (
+            aiLoading ? (
+              <div
+                className="relative w-full max-w-[840px] mx-auto overflow-hidden rounded-[12px] ai-skeleton-wrap"
+                style={{
+                  aspectRatio: aiAspectRatio,
+                  boxShadow: "0 8px 50px rgba(0,0,0,0.4)",
+                  background: "linear-gradient(135deg, #0B1426 0%, #0F1B30 100%)",
+                  border: "1px solid rgba(0,178,169,0.15)",
+                }}
+              >
+                <div className="ai-skeleton-shimmer absolute inset-0" />
+                <div className="absolute inset-0 p-[6%] flex flex-col gap-[3%]">
+                  <div className="flex items-center justify-between">
+                    <div className="ai-skeleton-block h-[4%] w-[22%] rounded-[6px]" />
+                    <div className="ai-skeleton-block h-[3.5%] w-[10%] rounded-[999px]" />
+                  </div>
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="ai-skeleton-block w-[55%] h-[55%] rounded-[20px]" style={{ animationDelay: "0.1s" }} />
+                  </div>
+                  <div className="flex flex-col gap-[8px]">
+                    <div className="ai-skeleton-block h-[8%] w-[80%] rounded-[8px]" style={{ animationDelay: "0.2s" }} />
+                    <div className="ai-skeleton-block h-[8%] w-[60%] rounded-[8px]" style={{ animationDelay: "0.3s" }} />
+                    <div className="ai-skeleton-block h-[3%] w-[40%] rounded-[6px] mt-[6px]" style={{ animationDelay: "0.4s" }} />
+                    <div className="ai-skeleton-block h-[3%] w-[35%] rounded-[6px]" style={{ animationDelay: "0.5s" }} />
+                  </div>
+                  <div className="flex items-center gap-[10px] mt-[2%]">
+                    <div className="ai-skeleton-block h-[7%] w-[28%] rounded-[999px]" style={{ animationDelay: "0.6s" }} />
+                    <div className="ai-skeleton-block h-[7%] w-[18%] rounded-[999px]" style={{ animationDelay: "0.7s" }} />
+                  </div>
+                </div>
+                <div className="absolute top-[14px] right-[14px] flex items-center gap-[8px] py-[7px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(0,178,169,0.35)] z-[10]">
+                  <span className="relative flex w-[8px] h-[8px]">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-[#5EE6DE] opacity-70 animate-ping" />
+                    <span className="relative inline-flex rounded-full w-[8px] h-[8px] bg-[#5EE6DE]" />
+                  </span>
+                  <span className="text-[11px] font-bold tracking-[0.12em] text-[#5EE6DE]">GENERATING</span>
+                </div>
+                <div className="absolute bottom-[14px] left-1/2 -translate-x-1/2 flex items-center gap-[8px] py-[7px] px-[14px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.08)] z-[10]">
+                  <Sparkles className="w-[12px] h-[12px] text-[#5EE6DE] animate-pulse" />
+                  <span className="text-[11px] text-[#94A3B8]">Claude is composing your design…</span>
+                </div>
+              </div>
+            ) : aiHtml ? (
               <div
                 className="relative w-full max-w-[840px] mx-auto overflow-hidden rounded-[12px]"
                 style={{ aspectRatio: aiAspectRatio, boxShadow: "0 8px 50px rgba(0,0,0,0.4)" }}

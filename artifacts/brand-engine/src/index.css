@@ -204,3 +204,23 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
   border: 2px solid rgba(0,0,0,0.3);
 }
+@keyframes ai-skeleton-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.85; }
+}
+@keyframes ai-skeleton-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.ai-skeleton-block {
+  background: linear-gradient(135deg, rgba(0,178,169,0.18) 0%, rgba(40,150,251,0.12) 50%, rgba(0,178,169,0.08) 100%);
+  border: 1px solid rgba(0,178,169,0.12);
+  animation: ai-skeleton-pulse 1.6s ease-in-out infinite;
+}
+.ai-skeleton-shimmer {
+  background: linear-gradient(105deg, transparent 30%, rgba(94,230,222,0.12) 50%, transparent 70%);
+  animation: ai-skeleton-shimmer 2.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+.ai-skeleton-wrap { position: relative; }

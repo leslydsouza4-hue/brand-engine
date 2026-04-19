@@ -531,15 +531,48 @@ Variant description: ${logoDescription || "official HighLevel lockup"}.
 <img src="${HUMAN_PLACEHOLDER}" alt="Featured person" data-ai-human="true" />
 You MUST keep the data-ai-human="true" attribute on this <img> tag exactly as written so the editor can find it later.
 Subject description: ${humanDescription}
-- This is a high-resolution photoreal portrait. Use it as a hero visual focal point.
-- Apply object-fit: cover; on a fixed-dimension wrapper. For portrait/square canvases, the photo should occupy 45-65% of the canvas (right column or top half). For landscape, 40-55%.
-- Add a subtle dark gradient overlay only over text-bearing edges, never across the face.
-- Round corners minimally (8-12px) or leave full-bleed; do NOT crop into a circle unless the design explicitly calls for an avatar.
+
+# LAYOUT (HARD RULES — failure to follow these = unusable design)
+
+**Rule 1: TWO MUTUALLY-EXCLUSIVE ZONES.**
+The canvas MUST be split into a TEXT ZONE and a PHOTO ZONE that never overlap. Use CSS grid or flex with explicit columns/rows — not absolute-positioned siblings stacking on top of each other.
+
+For PORTRAIT or SQUARE canvas:
+- Photo ZONE = RIGHT half (50% width, 100% height). Photo lives here. Nothing else.
+- Text ZONE = LEFT half (50% width, 100% height). Headline, subhead, eyebrow, CTA, logo, badges all live here.
+- The two zones share NO pixels. The headline never crosses past the 50% vertical line. The photo never crosses LEFT past the 50% line.
+
+For LANDSCAPE canvas:
+- Photo ZONE = RIGHT 40-50% width, full height.
+- Text ZONE = LEFT 50-60% width, full height.
+- Same non-overlap rule.
+
+For ULTRA-WIDE BANNERS (ratio > 3:1):
+- Photo ZONE = LEFT or RIGHT 25-35%, full height. Text fills the rest. Same non-overlap rule.
+
+**Rule 2: PHOTO IS FULL-BLEED INSIDE ITS ZONE.**
+The <img data-ai-human> uses width:100%; height:100%; object-fit:cover; object-position:center top. The photo container has its OWN background (a brand gradient like linear-gradient(180deg,#1a2a47,#0B1426)) so the cutout sits cleanly on top.
+
+**Rule 3: TEXT ZONE FILL — NEVER LEAVE IT EMPTY.**
+Whatever zone the photo doesn't occupy MUST contain ALL the named elements (headline, subhead, eyebrow, bullets, CTA, logo) PLUS one or more supporting elements (stat card, quote, mini-feature list, badge cluster) so it doesn't feel sparse. Empty space in the text zone is a fail.
+
+**Rule 4: NO TEXT OVER FACE/BODY.**
+Headline, subhead, CTAs MUST all be inside the text zone. They never overlap the photo container. If you find yourself wanting to put text over the person, STOP and move the text into the text zone.
+
+**Rule 5: PHOTO ZONE EXTRAS.**
+The photo zone may contain ONLY: the <img>, a subtle scrim/glow behind the subject, and ONE small floating chip/badge in a corner (e.g. "AI ON CALL" pill, "LIVE NOW" badge, a single stat card). Maximum ONE extra element. Never leave it visually empty AND never crowd it.
+
+# Photo styling
+- Apply object-fit: cover; object-position: center top; on the <img>. The wrapper is the full-zone container with overflow:hidden and the brand-gradient background.
+- Add a soft inner radial glow behind the subject: radial-gradient(60% 50% at 50% 45%, rgba(40,150,251,0.35), transparent 70%).
+- Round corners minimally (8-12px) or leave full-bleed; do NOT crop into a circle unless the brief explicitly calls for an avatar.
 - NEVER render the person as SVG — use the <img> tag with this exact src.
-- **CRITICAL — Background-removal compatibility**: the user can click "Remove BG" to make the photo's background transparent. So:
-  • The container that holds the <img data-ai-human> MUST have its OWN visible background — either inheriting the slide's main background gradient, or a solid brand color (#0B1426 / #122036 / a brand gradient). NEVER use a checkered pattern, no transparent/grid texture, no diagonal stripes, no "image placeholder" pattern, no semi-transparent overlay-only container.
-  • If you place the photo inside a card or column on the right, that card's background must be a real brand color or gradient that looks intentional WITHOUT the photo (e.g. linear-gradient(180deg, #122036, #0B1426)). After cutout, the subject should sit cleanly on top of that gradient.
-  • Do NOT decorate the photo container with subtle dot-grids, line-grids, or noise textures — those become very visible once the photo background is removed.`);
+
+# Background-removal compatibility (CRITICAL)
+The photo's background is auto-removed (transparent alpha). So:
+- The photo CONTAINER MUST have its own visible brand-color or brand-gradient background — never a checker, grid, dot-pattern, stripes, noise, or "image placeholder" texture. Those become hideously visible after cutout.
+- The container's background should look intentional and complete WITHOUT the photo on top.
+- Do NOT decorate the photo container with subtle dot-grids or line-grids — they show through.`);
   }
   if (hasItem) {
     assetBlock.push(`User-supplied custom image (REQUIRED — this IS the hero subject of the design):

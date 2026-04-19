@@ -1767,7 +1767,126 @@ export function TemplatesWorkspace() {
         {aiMode ? (
           <>
             <div className="text-[14px] font-bold text-white mb-[1px]">Generate with Claude</div>
-            <div className="text-[11.5px] text-[#475569] mb-[16px]">Trained on HighLevel brand. Describe what you want.</div>
+            <div className="text-[11.5px] text-[#475569] mb-[14px]">Trained on HighLevel brand. Describe what you want.</div>
+
+            {/* PROMPT FIRST — this is the main thing the user does, no scrolling required */}
+            <div className="mb-[8px] text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">
+              {aiSlideCount > 1 ? "Overall Theme" : "Prompt"}
+            </div>
+            <textarea
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder={aiSlideCount > 1
+                ? "e.g. 'The Operator Era' — a 4-slide carousel about agencies switching to HighLevel. Dark editorial vibe, teal + yellow accents, bold display type."
+                : "e.g. Launch graphic for our new AI Voice Agent — bold headline, glowing blue orb, capture-yellow accent badge"}
+              rows={aiSlideCount > 1 ? 9 : 7}
+              style={{ minHeight: aiSlideCount > 1 ? 200 : 160 }}
+              className="w-full mb-[10px] py-[14px] px-[16px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[12.5px] leading-[1.55] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
+            />
+
+            <button
+              onClick={handleGenerateAI}
+              disabled={!aiPrompt.trim() || aiLoading}
+              className="mb-[14px] w-full flex items-center justify-center gap-[8px] py-[13px] px-[14px] rounded-[12px] text-[13px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                background: aiLoading ? "rgba(0,178,169,0.08)" : "linear-gradient(135deg, rgba(0,178,169,0.25) 0%, rgba(40,150,251,0.2) 100%)",
+                borderColor: "rgba(0,178,169,0.4)",
+                color: "#17D94B",
+              }}
+            >
+              {aiLoading ? (<><Loader2 className="w-[14px] h-[14px] animate-spin" /><span>Generating…</span></>) : (<><Sparkles className="w-[14px] h-[14px]" /><span>Generate Design</span></>)}
+            </button>
+
+            {/* Prompt helpers — collapsed below the main flow but still above all config */}
+            <details className="mb-[14px] group">
+              <summary className="flex items-center gap-[6px] py-[6px] px-[10px] rounded-[8px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.18)] cursor-pointer text-[10.5px] font-bold uppercase tracking-[1.3px] text-[#2896FB] hover:bg-[rgba(40,150,251,0.1)] list-none [&::-webkit-details-marker]:hidden">
+                <Sparkles className="w-[11px] h-[11px]" />
+                Need help writing the prompt?
+                <span className="ml-auto text-[#475569] group-open:rotate-90 transition-transform">›</span>
+              </summary>
+              <div className="mt-[8px] p-[12px] rounded-[10px] bg-[rgba(40,150,251,0.04)] border border-[rgba(40,150,251,0.18)]">
+                <div className="grid grid-cols-[1fr_auto] gap-[6px] mb-[6px]">
+                  <select
+                    value={aiSuggestType}
+                    onChange={(e) => setAiSuggestType(e.target.value)}
+                    className="w-full py-[8px] pr-[28px] pl-[10px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.10)] rounded-[8px] font-inherit text-[11px] font-semibold text-white cursor-pointer outline-none appearance-none focus:border-[rgba(40,150,251,0.45)]"
+                    disabled={aiSuggesting}
+                  >
+                    {PROMPT_TYPE_OPTIONS.map(opt => (
+                      <option key={opt.id} value={opt.id} className="bg-[#0a1628]">{opt.label}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleSuggestPrompt}
+                    disabled={aiSuggesting}
+                    className="flex items-center gap-[5px] py-[8px] px-[12px] rounded-[8px] text-[11px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-40 bg-[rgba(40,150,251,0.18)] border-[rgba(40,150,251,0.45)] text-[#7CC8FF] hover:bg-[rgba(40,150,251,0.28)]"
+                  >
+                    {aiSuggesting ? (<><Loader2 className="w-[11px] h-[11px] animate-spin" /><span>Thinking…</span></>) : (<><Sparkles className="w-[11px] h-[11px]" /><span>Write it for me</span></>)}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={aiSuggestRough}
+                  onChange={(e) => setAiSuggestRough(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSuggestPrompt(); } }}
+                  placeholder="Optional rough idea (e.g. 'AI calling launch', 'Black Friday 50% off')"
+                  disabled={aiSuggesting}
+                  className="w-full py-[8px] px-[10px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.08)] rounded-[8px] font-inherit text-[11px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.35)] placeholder:text-[#475569]"
+                />
+                {aiSuggestError && (<div className="text-[10px] text-[#FCA5A5] mt-[6px]">{aiSuggestError}</div>)}
+                <div className="mt-[10px] pt-[10px] border-t border-[rgba(255,255,255,0.05)]">
+                  <div className="text-[9.5px] font-bold uppercase tracking-[1.3px] text-[#17D94B] mb-[6px]">Or pick a starter</div>
+                  <div className="flex flex-wrap gap-[5px]">
+                    {STARTER_PROMPTS.map((s) => (
+                      <button
+                        key={s.label}
+                        onClick={() => setAiPrompt(s.prompt)}
+                        title={s.hint}
+                        className="py-[4px] px-[9px] rounded-full text-[10px] font-semibold bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[#CBD5E1] hover:bg-[rgba(23,217,75,0.1)] hover:border-[rgba(23,217,75,0.4)] hover:text-[#17D94B] cursor-pointer transition-all"
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            {aiSlideCount > 1 && (
+              <div className="mb-[18px] p-[14px] rounded-[14px] bg-[rgba(23,217,75,0.03)] border border-[rgba(23,217,75,0.12)] flex flex-col gap-[14px]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-[8px]">
+                    <div className="w-[22px] h-[22px] flex items-center justify-center rounded-[6px] bg-[rgba(23,217,75,0.12)] border border-[rgba(23,217,75,0.3)]">
+                      <LayoutGrid className="w-[12px] h-[12px] text-[#17D94B]" />
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-[1.5px] text-[#17D94B]">Per-Slide Prompts</span>
+                  </div>
+                  <span className="text-[9.5px] text-[#64748B]">Blank = Claude decides</span>
+                </div>
+                {aiSlidePrompts.map((p, i) => (
+                  <div key={i} className="flex flex-col gap-[8px] pt-[4px]" style={i > 0 ? { borderTop: "1px dashed rgba(23,217,75,0.12)", paddingTop: "14px" } : undefined}>
+                    <div className="flex items-center gap-[8px]">
+                      <div className="w-[24px] h-[24px] flex items-center justify-center rounded-[6px] bg-[rgba(23,217,75,0.12)] border border-[rgba(23,217,75,0.3)] text-[11px] font-bold text-[#17D94B]">{i + 1}</div>
+                      <span className="text-[12px] font-bold tracking-[0.02em] text-[#E2E8F0]">Slide {i + 1}</span>
+                      <span className="text-[10px] text-[#64748B] ml-auto">{i === 0 ? "Hook" : i === aiSlidePrompts.length - 1 ? "CTA" : `Content ${i}`}</span>
+                    </div>
+                    <textarea
+                      value={p}
+                      onChange={(e) => setAiSlidePrompts(prev => prev.map((v, idx) => idx === i ? e.target.value : v))}
+                      placeholder={i === 0 ? "Hook slide — bold headline that stops the scroll" : i === aiSlidePrompts.length - 1 ? "CTA slide — overlay headline, yellow CTA pill" : "Content card — one idea, one focal element"}
+                      rows={4}
+                      className="w-full py-[11px] px-[13px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] leading-[1.55] text-[#E2E8F0] outline-none focus:border-[rgba(23,217,75,0.35)] focus:bg-[rgba(0,0,0,0.35)] placeholder:text-[#475569] resize-y"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mb-[14px] mt-[2px] flex items-center gap-[8px]">
+              <div className="flex-1 h-px bg-[rgba(255,255,255,0.06)]" />
+              <span className="text-[9.5px] font-bold uppercase tracking-[1.5px] text-[#475569]">Settings</span>
+              <div className="flex-1 h-px bg-[rgba(255,255,255,0.06)]" />
+            </div>
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Model</div>
             <div className="flex gap-[4px] p-[3px] mb-[14px] bg-[rgba(255,255,255,0.025)] rounded-[10px] border border-[rgba(255,255,255,0.05)]">
@@ -1970,141 +2089,6 @@ export function TemplatesWorkspace() {
                 )}
               </div>
             </div>
-
-            <div className="mb-[10px] mt-[6px]">
-              <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">
-                {aiSlideCount > 1 ? "Overall Theme" : "Prompt"}
-              </div>
-            </div>
-
-            <div className="mb-[10px] p-[12px] rounded-[10px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.22)]">
-              <div className="flex items-center gap-[6px] mb-[8px]">
-                <Sparkles className="w-[12px] h-[12px] text-[#2896FB]" />
-                <div className="text-[9.5px] font-bold uppercase tracking-[1.3px] text-[#2896FB]">Give me a prompt</div>
-              </div>
-              <div className="grid grid-cols-[1fr_auto] gap-[6px] mb-[6px]">
-                <select
-                  value={aiSuggestType}
-                  onChange={(e) => setAiSuggestType(e.target.value)}
-                  className="w-full py-[8px] pr-[28px] pl-[10px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.10)] rounded-[8px] font-inherit text-[11px] font-semibold text-white cursor-pointer outline-none appearance-none focus:border-[rgba(40,150,251,0.45)]"
-                  disabled={aiSuggesting}
-                >
-                  {PROMPT_TYPE_OPTIONS.map(opt => (
-                    <option key={opt.id} value={opt.id} className="bg-[#0a1628]">{opt.label}</option>
-                  ))}
-                </select>
-                <button
-                  onClick={handleSuggestPrompt}
-                  disabled={aiSuggesting}
-                  className="flex items-center gap-[5px] py-[8px] px-[12px] rounded-[8px] text-[11px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-40 bg-[rgba(40,150,251,0.18)] border-[rgba(40,150,251,0.45)] text-[#7CC8FF] hover:bg-[rgba(40,150,251,0.28)]"
-                >
-                  {aiSuggesting ? (
-                    <><Loader2 className="w-[11px] h-[11px] animate-spin" /><span>Thinking…</span></>
-                  ) : (
-                    <><Sparkles className="w-[11px] h-[11px]" /><span>Generate</span></>
-                  )}
-                </button>
-              </div>
-              <input
-                type="text"
-                value={aiSuggestRough}
-                onChange={(e) => setAiSuggestRough(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSuggestPrompt(); } }}
-                placeholder="Optional rough idea (e.g. 'AI calling launch', 'agency wins 312%', 'Black Friday 50% off')"
-                disabled={aiSuggesting}
-                className="w-full py-[8px] px-[10px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.08)] rounded-[8px] font-inherit text-[11px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.35)] placeholder:text-[#475569]"
-              />
-              <div className="text-[9.5px] text-[#64748B] mt-[6px] leading-[1.4]">
-                Pick a graphic type → optionally type a rough angle → I'll write the full design brief for you, sized to your current canvas. Then hit <span className="text-[#17D94B] font-semibold">Generate</span>.
-              </div>
-              {aiSuggestError && (
-                <div className="text-[10px] text-[#FCA5A5] mt-[6px]">{aiSuggestError}</div>
-              )}
-            </div>
-
-            <div className="mb-[10px] p-[10px] rounded-[10px] bg-[rgba(23,217,75,0.04)] border border-[rgba(23,217,75,0.14)]">
-              <div className="text-[9.5px] font-bold uppercase tracking-[1.3px] text-[#17D94B] mb-[8px]">Or pick a starter →</div>
-              <div className="flex flex-wrap gap-[6px]">
-                {STARTER_PROMPTS.map((s) => (
-                  <button
-                    key={s.label}
-                    onClick={() => setAiPrompt(s.prompt)}
-                    title={s.hint}
-                    className="py-[5px] px-[10px] rounded-full text-[10.5px] font-semibold bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[#CBD5E1] hover:bg-[rgba(23,217,75,0.1)] hover:border-[rgba(23,217,75,0.4)] hover:text-[#17D94B] cursor-pointer transition-all"
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-              <div className="text-[9.5px] text-[#64748B] mt-[8px] leading-[1.4]">
-                Click any chip → fills the prompt with a tested brief. Tweak the headline / numbers and hit Generate.
-              </div>
-            </div>
-            <textarea
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              placeholder={aiSlideCount > 1
-                ? "e.g. 'The Operator Era' — a 4-slide carousel about agencies switching to HighLevel. Dark editorial vibe, teal + yellow accents, bold display type."
-                : "e.g. Launch graphic for our new AI Voice Agent — bold headline, glowing blue orb, capture-yellow accent badge"}
-              rows={aiSlideCount > 1 ? 9 : 8}
-              style={{ minHeight: aiSlideCount > 1 ? 200 : 180 }}
-              className="w-full py-[14px] px-[16px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[12.5px] leading-[1.55] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
-            />
-
-            {aiSlideCount > 1 && (
-              <div className="mt-[18px] p-[14px] rounded-[14px] bg-[rgba(23,217,75,0.03)] border border-[rgba(23,217,75,0.12)] flex flex-col gap-[14px]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-[8px]">
-                    <div className="w-[22px] h-[22px] flex items-center justify-center rounded-[6px] bg-[rgba(23,217,75,0.12)] border border-[rgba(23,217,75,0.3)]">
-                      <LayoutGrid className="w-[12px] h-[12px] text-[#17D94B]" />
-                    </div>
-                    <span className="text-[11px] font-bold uppercase tracking-[1.5px] text-[#17D94B]">Per-Slide Prompts</span>
-                  </div>
-                  <span className="text-[9.5px] text-[#64748B]">Blank = Claude decides</span>
-                </div>
-                {aiSlidePrompts.map((p, i) => (
-                  <div key={i} className="flex flex-col gap-[8px] pt-[4px]" style={i > 0 ? { borderTop: "1px dashed rgba(23,217,75,0.12)", paddingTop: "14px" } : undefined}>
-                    <div className="flex items-center gap-[8px]">
-                      <div className="w-[24px] h-[24px] flex items-center justify-center rounded-[6px] bg-[rgba(23,217,75,0.12)] border border-[rgba(23,217,75,0.3)] text-[11px] font-bold text-[#17D94B]">
-                        {i + 1}
-                      </div>
-                      <span className="text-[12px] font-bold tracking-[0.02em] text-[#E2E8F0]">Slide {i + 1}</span>
-                      <span className="text-[10px] text-[#64748B] ml-auto">
-                        {i === 0 ? "Hook" : i === aiSlidePrompts.length - 1 ? "CTA" : `Content ${i}`}
-                      </span>
-                    </div>
-                    <textarea
-                      value={p}
-                      onChange={(e) => setAiSlidePrompts(prev => prev.map((v, idx) => idx === i ? e.target.value : v))}
-                      placeholder={
-                        i === 0 ? "Hook slide — bold headline that stops the scroll, big portrait, brand chip top-left" :
-                        i === aiSlidePrompts.length - 1 ? "CTA slide — group photo, overlay headline, yellow CTA pill linking to gohighlevel.com" :
-                        i === 1 ? "Proof / problem — split layout, candid human moment, 2 stat cards" :
-                        "Data card — no humans, 4 stat tiles, big numbers in yellow"
-                      }
-                      rows={5}
-                      className="w-full py-[11px] px-[13px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] leading-[1.55] text-[#E2E8F0] outline-none focus:border-[rgba(23,217,75,0.35)] focus:bg-[rgba(0,0,0,0.35)] placeholder:text-[#475569] resize-y"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-            <button
-              onClick={handleGenerateAI}
-              disabled={!aiPrompt.trim() || aiLoading}
-              className="mt-[18px] w-full flex items-center justify-center gap-[8px] py-[14px] px-[14px] rounded-[12px] text-[13px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50"
-              style={{
-                background: aiLoading ? "rgba(0,178,169,0.08)" : "linear-gradient(135deg, rgba(0,178,169,0.25) 0%, rgba(40,150,251,0.2) 100%)",
-                borderColor: "rgba(0,178,169,0.4)",
-                color: "#17D94B",
-              }}
-            >
-              {aiLoading ? (
-                <><Loader2 className="w-[14px] h-[14px] animate-spin" /><span>Generating…</span></>
-              ) : (
-                <><Sparkles className="w-[14px] h-[14px]" /><span>Generate Design</span></>
-              )}
-            </button>
 
             {aiError && (
               <div className="mt-[10px] py-[10px] px-[12px] rounded-[10px] text-[11.5px] text-[#FCA5A5] bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)]">

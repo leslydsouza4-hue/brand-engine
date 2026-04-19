@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, Sparkles, ExternalLink, Download as DownloadIcon, Edit3, Save, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, Sparkles, ExternalLink, Download as DownloadIcon, Edit3, Save, LayoutGrid, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 import { LOGO_VARIANTS, DESIGN_SCENES } from "./aiPickers";
 import { LivePreview } from "./LivePreview";
@@ -280,6 +280,7 @@ export function TemplatesWorkspace() {
   const [aiSlideIndex, setAiSlideIndex] = useState(0);
   const [aiSlideCount, setAiSlideCount] = useState(1);
   const [aiEditMode, setAiEditMode] = useState(false);
+  const [aiGridView, setAiGridView] = useState(false);
   const [aiSavingEdits, setAiSavingEdits] = useState(false);
   const [aiLoadingPhrase, setAiLoadingPhrase] = useState(0);
   const [aiLoadingProgress, setAiLoadingProgress] = useState(0);
@@ -1939,6 +1940,44 @@ export function TemplatesWorkspace() {
                 </div>
               </div>
             ) : aiHtml ? (
+              aiGridView && aiSlides.length > 1 ? (
+                <div className="w-full max-w-[920px] mx-auto flex flex-col gap-[12px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold tracking-[0.14em] text-[#5EE6DE]">ALL SLIDES ・ {aiSlides.length}</span>
+                    <button
+                      onClick={() => setAiGridView(false)}
+                      className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                    >
+                      SINGLE VIEW
+                    </button>
+                  </div>
+                  <div
+                    className="grid gap-[12px]"
+                    style={{ gridTemplateColumns: `repeat(${aiSlides.length <= 2 ? aiSlides.length : 2}, minmax(0, 1fr))` }}
+                  >
+                    {aiSlides.map((html, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setAiSlideIndex(i); setAiGridView(false); }}
+                        className={`relative w-full overflow-hidden rounded-[10px] cursor-pointer transition-all hover:scale-[1.01] ${i === aiSlideIndex ? "ring-2 ring-[#5EE6DE]" : "ring-1 ring-[rgba(255,255,255,0.08)]"}`}
+                        style={{ aspectRatio: aiAspectRatio, boxShadow: "0 6px 30px rgba(0,0,0,0.35)" }}
+                        title={`Open slide ${i + 1}`}
+                      >
+                        <iframe
+                          title={`Slide ${i + 1}`}
+                          srcDoc={wrapWithFit(html, aiCanvasDims.w, aiCanvasDims.h)}
+                          sandbox="allow-same-origin allow-scripts"
+                          className="w-full h-full block border-0 pointer-events-none"
+                          style={{ background: "#0B1426" }}
+                        />
+                        <div className="absolute top-[8px] left-[8px] py-[3px] px-[8px] rounded-[999px] bg-[rgba(0,0,0,0.7)] backdrop-blur-[8px] border border-[rgba(94,230,222,0.25)] text-[9px] font-bold tracking-[0.12em] text-[#5EE6DE]">
+                          {i + 1} / {aiSlides.length}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
               <div
                 className="relative w-full max-w-[600px] mx-auto overflow-hidden rounded-[12px]"
                 style={{ aspectRatio: aiAspectRatio, boxShadow: "0 8px 50px rgba(0,0,0,0.4)" }}
@@ -1952,8 +1991,17 @@ export function TemplatesWorkspace() {
                   style={{ background: "#0B1426" }}
                 />
                 {aiSlides.length > 1 && (
-                  <div className="absolute top-[12px] right-[12px] flex items-center gap-[6px] py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)] z-[5]">
-                    <span className="text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE]">SLIDE {aiSlideIndex + 1} / {aiSlides.length}</span>
+                  <div className="absolute top-[12px] right-[12px] flex items-center gap-[6px] z-[5]">
+                    <button
+                      onClick={() => { setAiEditMode(false); setAiGridView(true); }}
+                      className="flex items-center gap-[5px] py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)] text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                      title="See all slides at once"
+                    >
+                      <LayoutGrid className="w-[11px] h-[11px]" /> ALL {aiSlides.length}
+                    </button>
+                    <div className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)]">
+                      <span className="text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE]">SLIDE {aiSlideIndex + 1} / {aiSlides.length}</span>
+                    </div>
                   </div>
                 )}
                 <div className="absolute top-[12px] left-[12px] flex items-center gap-[8px] z-[6]">
@@ -1986,6 +2034,7 @@ export function TemplatesWorkspace() {
                   )}
                 </div>
               </div>
+              )
             ) : (
               <div className="flex flex-col items-center justify-center gap-[10px] text-center max-w-[420px] px-[20px]">
                 <div className="w-[56px] h-[56px] rounded-[16px] flex items-center justify-center"

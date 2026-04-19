@@ -103,14 +103,14 @@ You MUST use ONLY the hex values below. You may NOT invent new colors, use gener
 - DO NOT use rgba() with hue values outside this palette. Transparent overlays must be derived from these hex values only (e.g. rgba(40,150,251,0.3) is the rgb of #2896FB — that is allowed).
 
 ## Typography Scale (proportional to canvas height H)
-- Hero headline: font-size ~ 0.13H, **font-weight 900 (Poppins Black) — NEVER lower**, letter-spacing -0.03em, line-height 0.92. The headline must look chunky, dense, and editorial. No light or medium weights for headlines, ever.
-- Subhead: font-size ~ 0.045H, font-weight 600, letter-spacing 0, line-height 1.25, color #94A3B8.
-- Eyebrow / kicker: font-size ~ 0.022H, font-weight 700, uppercase, letter-spacing 0.18em, color #5EE6DE or #FFC328.
-- Body: font-size ~ 0.028H, font-weight 500, line-height 1.45.
-- CTA pill text: font-size ~ 0.032H, font-weight 800.
+- Hero headline: font-size ~ 0.13H, **font-weight 700 (Poppins Bold)** — clean editorial bold, NOT chunky. Letter-spacing -0.02em, line-height 1.0. Avoid the heavy "Black 900" look — keep it refined.
+- Subhead: font-size ~ 0.045H, font-weight 500, letter-spacing 0, line-height 1.3, color #94A3B8.
+- Eyebrow / kicker: font-size ~ 0.022H, font-weight 600, uppercase, letter-spacing 0.18em, color #5EE6DE or #FFC328.
+- Body: font-size ~ 0.028H, font-weight 400, line-height 1.45.
+- CTA pill text: font-size ~ 0.032H, font-weight 700.
 - **Font loading is REQUIRED**: include this exact line at the top of <head> so Poppins renders correctly:
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  Then set body { font-family: 'Poppins', system-ui, -apple-system, sans-serif; }. Headlines explicitly: font-family: 'Poppins', sans-serif; font-weight: 900;
+  Then set body { font-family: 'Poppins', system-ui, -apple-system, sans-serif; }. Headlines explicitly: font-family: 'Poppins', sans-serif; font-weight: 700;
 
 ## Layout Rules (CRITICAL — this is what makes it look pro)
 1. The root container MUST have the EXACT pixel width and height the user requested. Set both width and height in pixels. Use position: relative; overflow: hidden.

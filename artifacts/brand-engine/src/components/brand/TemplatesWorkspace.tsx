@@ -483,6 +483,8 @@ export function TemplatesWorkspace() {
     return m ? { w: parseInt(m[1]!, 10), h: parseInt(m[2]!, 10) } : { w: 1200, h: 630 };
   })();
 
+  const loadingCompact = aiCanvasDims.w < 800 || aiCanvasDims.w / aiCanvasDims.h < 0.85;
+
   const wrapWithFit = (html: string, w: number, h: number) => {
     const inject = `<style>
       html, body { width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #0B1426 !important; }
@@ -2580,77 +2582,97 @@ export function TemplatesWorkspace() {
                   border: "1px solid rgba(23,217,75,0.18)",
                 }}
               >
-                <motion.div
-                  className="absolute rounded-full pointer-events-none"
-                  style={{ width: "55%", aspectRatio: "1", left: "5%", top: "10%", background: "radial-gradient(closest-side, rgba(40,150,251,0.55), rgba(40,150,251,0) 70%)", filter: "blur(20px)" }}
-                  animate={{ x: ["0%", "12%", "-6%", "0%"], y: ["0%", "-8%", "10%", "0%"], scale: [1, 1.1, 0.95, 1] }}
-                  transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
-                />
-                <motion.div
-                  className="absolute rounded-full pointer-events-none"
-                  style={{ width: "50%", aspectRatio: "1", right: "0%", top: "30%", background: "radial-gradient(closest-side, rgba(23,217,75,0.55), rgba(23,217,75,0) 70%)", filter: "blur(20px)" }}
-                  animate={{ x: ["0%", "-10%", "8%", "0%"], y: ["0%", "12%", "-8%", "0%"], scale: [1, 0.92, 1.08, 1] }}
-                  transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-                />
-                <motion.div
-                  className="absolute rounded-full pointer-events-none"
-                  style={{ width: "45%", aspectRatio: "1", left: "20%", bottom: "0%", background: "radial-gradient(closest-side, rgba(255,195,40,0.45), rgba(255,195,40,0) 70%)", filter: "blur(20px)" }}
-                  animate={{ x: ["0%", "8%", "-12%", "0%"], y: ["0%", "-10%", "6%", "0%"], scale: [1, 1.06, 0.94, 1] }}
-                  transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
-                />
+                {!loadingCompact && (
+                  <>
+                    <motion.div
+                      className="absolute rounded-full pointer-events-none"
+                      style={{ width: "55%", aspectRatio: "1", left: "5%", top: "10%", background: "radial-gradient(closest-side, rgba(40,150,251,0.55), rgba(40,150,251,0) 70%)", filter: "blur(20px)" }}
+                      animate={{ x: ["0%", "12%", "-6%", "0%"], y: ["0%", "-8%", "10%", "0%"], scale: [1, 1.1, 0.95, 1] }}
+                      transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                      className="absolute rounded-full pointer-events-none"
+                      style={{ width: "50%", aspectRatio: "1", right: "0%", top: "30%", background: "radial-gradient(closest-side, rgba(23,217,75,0.55), rgba(23,217,75,0) 70%)", filter: "blur(20px)" }}
+                      animate={{ x: ["0%", "-10%", "8%", "0%"], y: ["0%", "12%", "-8%", "0%"], scale: [1, 0.92, 1.08, 1] }}
+                      transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                    <motion.div
+                      className="absolute rounded-full pointer-events-none"
+                      style={{ width: "45%", aspectRatio: "1", left: "20%", bottom: "0%", background: "radial-gradient(closest-side, rgba(255,195,40,0.45), rgba(255,195,40,0) 70%)", filter: "blur(20px)" }}
+                      animate={{ x: ["0%", "8%", "-12%", "0%"], y: ["0%", "-10%", "6%", "0%"], scale: [1, 1.06, 0.94, 1] }}
+                      transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
+                    />
+                  </>
+                )}
+                {loadingCompact && (
+                  <>
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ background: "radial-gradient(60% 45% at 50% 30%, rgba(40,150,251,0.28), transparent 70%), radial-gradient(55% 40% at 50% 75%, rgba(23,217,75,0.22), transparent 70%)" }}
+                    />
+                    <motion.div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ background: "linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%)", backgroundSize: "200% 100%" }}
+                      animate={{ backgroundPosition: ["200% 0%", "-200% 0%"] }}
+                      transition={{ duration: 4.5, repeat: Infinity, ease: "linear" }}
+                    />
+                  </>
+                )}
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-[18px] z-[3] px-[24px]">
-                  <div className="relative" style={{ width: "min(46%, 260px)", aspectRatio: "1" }}>
-                    {[
-                      { size: 100, dur: 14, dir: 1, dots: 8, color: "#17D94B", op: 0.85 },
-                      { size: 78, dur: 10, dir: -1, dots: 6, color: "#2896FB", op: 0.9 },
-                      { size: 56, dur: 7, dir: 1, dots: 5, color: "#FFC328", op: 0.95 },
-                    ].map((ring, ri) => (
+                  {!loadingCompact && (
+                    <div className="relative" style={{ width: "min(46%, 260px)", aspectRatio: "1" }}>
+                      {[
+                        { size: 100, dur: 14, dir: 1, dots: 8, color: "#17D94B", op: 0.85 },
+                        { size: 78, dur: 10, dir: -1, dots: 6, color: "#2896FB", op: 0.9 },
+                        { size: 56, dur: 7, dir: 1, dots: 5, color: "#FFC328", op: 0.95 },
+                      ].map((ring, ri) => (
+                        <motion.div
+                          key={ri}
+                          className="absolute inset-0 m-auto"
+                          style={{ width: `${ring.size}%`, height: `${ring.size}%`, borderRadius: "50%", border: `1px solid ${ring.color}33` }}
+                          animate={{ rotate: ring.dir * 360 }}
+                          transition={{ duration: ring.dur, repeat: Infinity, ease: "linear" }}
+                        >
+                          {Array.from({ length: ring.dots }).map((_, di) => {
+                            const angle = (di / ring.dots) * Math.PI * 2;
+                            const r = 50;
+                            const cx = 50 + Math.cos(angle) * r;
+                            const cy = 50 + Math.sin(angle) * r;
+                            return (
+                              <span
+                                key={di}
+                                className="absolute"
+                                style={{
+                                  left: `${cx}%`, top: `${cy}%`,
+                                  width: 8, height: 8,
+                                  marginLeft: -4, marginTop: -4,
+                                  borderRadius: "50%",
+                                  background: ring.color,
+                                  opacity: ring.op,
+                                  boxShadow: `0 0 12px ${ring.color}, 0 0 22px ${ring.color}`,
+                                }}
+                              />
+                            );
+                          })}
+                        </motion.div>
+                      ))}
                       <motion.div
-                        key={ri}
-                        className="absolute inset-0 m-auto"
-                        style={{ width: `${ring.size}%`, height: `${ring.size}%`, borderRadius: "50%", border: `1px solid ${ring.color}33` }}
-                        animate={{ rotate: ring.dir * 360 }}
-                        transition={{ duration: ring.dur, repeat: Infinity, ease: "linear" }}
+                        className="absolute inset-0 m-auto flex items-center justify-center"
+                        style={{
+                          width: "32%", height: "32%",
+                          borderRadius: "50%",
+                          background: "radial-gradient(closest-side, rgba(255,255,255,0.12), rgba(11,20,38,0.95))",
+                          border: "1px solid rgba(23,217,75,0.4)",
+                          boxShadow: "0 0 60px rgba(40,150,251,0.45), inset 0 0 30px rgba(23,217,75,0.18)",
+                        }}
+                        animate={{ scale: [1, 1.06, 1] }}
+                        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                       >
-                        {Array.from({ length: ring.dots }).map((_, di) => {
-                          const angle = (di / ring.dots) * Math.PI * 2;
-                          const r = 50;
-                          const cx = 50 + Math.cos(angle) * r;
-                          const cy = 50 + Math.sin(angle) * r;
-                          return (
-                            <span
-                              key={di}
-                              className="absolute"
-                              style={{
-                                left: `${cx}%`, top: `${cy}%`,
-                                width: 8, height: 8,
-                                marginLeft: -4, marginTop: -4,
-                                borderRadius: "50%",
-                                background: ring.color,
-                                opacity: ring.op,
-                                boxShadow: `0 0 12px ${ring.color}, 0 0 22px ${ring.color}`,
-                              }}
-                            />
-                          );
-                        })}
+                        <Sparkles className="w-[40%] h-[40%] text-[#17D94B]" />
                       </motion.div>
-                    ))}
-                    <motion.div
-                      className="absolute inset-0 m-auto flex items-center justify-center"
-                      style={{
-                        width: "32%", height: "32%",
-                        borderRadius: "50%",
-                        background: "radial-gradient(closest-side, rgba(255,255,255,0.12), rgba(11,20,38,0.95))",
-                        border: "1px solid rgba(23,217,75,0.4)",
-                        boxShadow: "0 0 60px rgba(40,150,251,0.45), inset 0 0 30px rgba(23,217,75,0.18)",
-                      }}
-                      animate={{ scale: [1, 1.06, 1] }}
-                      transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      <Sparkles className="w-[40%] h-[40%] text-[#17D94B]" />
-                    </motion.div>
-                  </div>
+                    </div>
+                  )}
                   <div className="flex flex-col items-center gap-[8px] pointer-events-none">
                     <span className="text-[9px] font-bold tracking-[0.32em] text-[#FFC328]/80 uppercase">Joke break</span>
                     <AnimatePresence mode="wait">
@@ -2660,7 +2682,7 @@ export function TemplatesWorkspace() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.55, ease: "easeOut" }}
-                        className="text-[15px] leading-[1.5] text-[#E2E8F0] font-medium text-center max-w-[480px]"
+                        className={`${loadingCompact ? "text-[13px] max-w-[280px]" : "text-[15px] max-w-[480px]"} leading-[1.5] text-[#E2E8F0] font-medium text-center px-[8px]`}
                       >
                         {AI_LOADING_FACTS[aiLoadingFact]}
                       </motion.div>

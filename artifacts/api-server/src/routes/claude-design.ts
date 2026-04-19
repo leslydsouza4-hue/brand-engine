@@ -394,7 +394,9 @@ Variant description: ${logoDescription || "official HighLevel lockup"}.
 - Reserve a clear-space rectangle around it equal to ~half the logo height on every side. No text, orb, or other element may enter that rectangle.`);
   }
   // Auto-detect: prompt mentions a human → generate one with Nano Banana Pro.
-  const wantsHuman = HUMAN_KEYWORDS.test(prompt);
+  // BUT: if the user uploaded a custom item, treat that as the hero person/product
+  // and never generate a separate AI human — the custom item wins, period.
+  const wantsHuman = HUMAN_KEYWORDS.test(prompt) && !hasItem;
   let humanDataUrl = "";
   let humanDescription = "";
   if (wantsHuman) {
@@ -428,12 +430,15 @@ Subject description: ${humanDescription}
   • Do NOT decorate the photo container with subtle dot-grids, line-grids, or noise textures — those become very visible once the photo background is removed.`);
   }
   if (hasItem) {
-    assetBlock.push(`User-supplied item / product image (REQUIRED — feature prominently):
-<img src="${ITEM_PLACEHOLDER}" alt="Featured item" />
-${itemDescription ? `Item description: ${itemDescription}` : ""}
-- This is a real product/asset uploaded by the user. Treat it as a co-hero visual alongside any other focal element.
-- Render with style="max-height: 50%; max-width: 45%; object-fit: contain; display: block;". Place it in the VISUAL zone of the slide, never overlapping headline text.
+    assetBlock.push(`User-supplied custom image (REQUIRED — this IS the hero subject of the design):
+<img src="${ITEM_PLACEHOLDER}" alt="Featured subject" />
+${itemDescription ? `What this image is: ${itemDescription}` : ""}
+- This image is the user's OWN asset. It could be a person (speaker, host, customer, founder, team member), a product, a UI screenshot, a logo, or any other real thing they want featured. Whatever the description says it is — that's what it is.
+- **HARD RULE — IF the description identifies a PERSON (e.g. "our speaker", "the host", "John our customer", "founder", "guest", "guy/girl/woman/man attending"), then THIS IMAGE IS THAT PERSON.** Do NOT add, render, illustrate, or describe any other person on the canvas. The featured-person slot, the speaker portrait, the headshot, the testimonial photo, the host avatar — all of those are filled by THIS image. No SVG silhouettes, no "person illustration", no second portrait, no stock-photo-style human. Only this <img>.
+- Render with style="max-height: 70%; max-width: 50%; object-fit: cover; display: block;" when used as a person/portrait. For products use object-fit: contain at max 50% / 45%.
+- Place it in the VISUAL zone of the slide (typically the right column or opposite side from the headline), never overlapping headline text.
 - Add a soft glow behind it: filter: drop-shadow(0 8px 30px rgba(40,150,251,0.35));
+- If it is a person, add an attribution caption directly under or beside it (name + role, e.g. "Dr. Priya Mehta · AI Researcher"). Pull the name from the description if present; if not, use a placeholder like "Featured Speaker".
 - NEVER replace this with an SVG illustration — always use the <img> tag with this exact src.`);
   }
   if (highlyUrl) {

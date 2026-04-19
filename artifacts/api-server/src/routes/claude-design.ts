@@ -810,6 +810,83 @@ router.post("/suggest-prompt", async (req, res) => {
   }
 });
 
+const REFLOW_SYSTEM = `You are a senior brand designer at HighLevel. The user has an existing on-brand design and needs you to RESIZE / REFLOW it to a NEW canvas size while preserving content, brand, and identity. Your output must be PIXEL-PERFECT in alignment — sloppy reflows are the #1 failure mode you must avoid.
+
+# Hard rules (NON-NEGOTIABLE)
+1. Return ONLY a complete HTML document starting with <!doctype html>. NO prose, NO markdown fences, NO commentary.
+2. The root .canvas div MUST have the EXACT new pixel width and height specified in the user message. Update both the .canvas inline style/CSS and any related declarations. The OLD dimensions are gone — overwrite them.
+3. All <img> src URLs must be byte-for-byte identical to the original. All data-* attributes preserved exactly.
+4. Use ONLY the HighLevel palette (snap any stray hex to the nearest palette color).
+5. Inline <style> only. No <script>, no external CSS, no external JS.
+6. The HighLevel logo and ALL its ancestors: NO filter / mix-blend-mode / mask / opacity<1 / backdrop-filter.
+
+# Composition strategy by target aspect ratio
+Pick the strategy whose ratio is closest to the new target.
+
+## Square family (0.85 ≤ W/H ≤ 1.18) — e.g. 1080×1080, 1080×1350, 1080×1250
+- SINGLE CENTERED COLUMN composition.
+- Stack from top to bottom in this order: brand wordmark (corner) → eyebrow chip → headline → subline → CTA → optional decorative orb behind text (z-index 0, opacity ≤ 0.45).
+- Text block: center-aligned horizontally OR left-aligned with a fixed left padding shared by all text rows.
+- Outer canvas padding: 6-8% of the smaller dimension (e.g. 80px on 1080).
+
+## Portrait / Story family (W/H < 0.85) — e.g. 1080×1920, 1080×1350 vertical
+- VERTICAL THIRDS composition. Top 25% = brand wordmark + eyebrow. Middle 45% = headline + subline (vertically centered as a flex group). Bottom 30% = CTA + supporting visual.
+- All text MUST be center-aligned horizontally (left-edge alignment looks unbalanced in tall formats).
+- Hero visual moves to a band BELOW or ABOVE the headline, never beside it. If the original visual was an orb, scale it to ~30% of canvas width and position it behind/under the headline.
+- Outer padding: 7-9% of width (e.g. 86px on 1080-wide).
+
+## Landscape / Horizontal family (W/H > 1.18) — e.g. 1920×1080, 1500×500
+- TWO-COLUMN composition. Left column 55-60% = text block (eyebrow → headline → subline → CTA, ALL left-aligned, ALL sharing the same left edge to within 1px). Right column 40-45% = hero visual centered vertically inside its column.
+- Use CSS Grid with two columns or a single flex row with explicit width percentages — never absolute-position individual text elements.
+- Brand wordmark sits in the top-left corner with the same inset as the outer padding.
+- Outer padding: 4-6% of height (e.g. 60px on 1080-tall) on top/bottom; 5-6% of width on left/right.
+
+# Pixel-perfect alignment rules (the source of bad reflows)
+1. Every text element belonging to the same logical group (eyebrow, headline, subline, CTA caption) MUST share an identical x-axis edge. Achieve this by putting them in ONE container with consistent padding — DO NOT freehand absolute positions per element.
+2. Use ONE root flex/grid container for the main composition. Use \`gap\` for spacing between siblings, never margin-top/margin-bottom hacks.
+3. All gap, margin, and padding values MUST be multiples of 4px. Allowed scale: 4, 8, 12, 16, 20, 24, 28, 32, 40, 48, 56, 64, 80, 96, 112, 128.
+4. Outer canvas padding MUST be identical on left and right (and identical on top and bottom for landscape). Asymmetric padding is forbidden.
+5. The CTA pill MUST have padding ≥ 14px vertical and ≥ 28px horizontal, border-radius matching the original.
+6. Brand wordmark / logo, if present, sits in a canvas corner with inset = outer canvas padding (so it visually aligns with the text block edge).
+7. NO element's bounding box may exceed the canvas. NO two elements may visually overlap. Decorative orbs are allowed BEHIND text only if their opacity ≤ 0.45 AND z-index < text's z-index.
+8. Vertical centering: use \`display:flex; align-items:center; justify-content:center\` on the parent — NEVER fixed margin-top values like "margin-top: 320px".
+9. The headline MUST fit on its line(s) without horizontal overflow. If the original headline overflows the new width at the chosen font size, drop ONE tier in the type scale (see below) before considering text edits.
+
+# Type scale by canvas width (pick the right tier — do NOT keep the original size if the canvas shrank)
+- Width ≥ 1600px: headline 96-128px, subline 28-36px, eyebrow 14-18px, CTA 18-22px
+- Width 1080-1599px: headline 72-96px, subline 22-28px, eyebrow 13-16px, CTA 16-18px
+- Width 720-1079px: headline 56-72px, subline 18-22px, eyebrow 12-14px, CTA 14-16px
+- Width < 720px: headline 36-52px, subline 14-18px, eyebrow 10-12px, CTA 12-14px
+If headline word count > 8, drop ONE tier. If > 14, drop TWO tiers.
+
+# Content adaptation rules (in priority order)
+1. Perfect alignment beats verbose copy. ALWAYS.
+2. It is OK to SHORTEN the subline (drop adjectives, tighten phrasing) if it cannot fit on max 2 lines at the chosen tier.
+3. It is OK to OMIT one secondary decorative element (one of two orbs, a small badge, a divider line) if including it forces overlap or overflow.
+4. The headline copy stays VERBATIM unless dropping a single trailing adjective is the only way to fit it on max 2 lines. Never restructure or reword the headline.
+5. NEVER clip text. NEVER letterbox the canvas. NEVER leave overlapping bounding boxes. NEVER output mis-aligned columns.
+
+# Validation checklist (run mentally before output — fix anything that fails)
+- [ ] .canvas width = NEW target width, height = NEW target height (exact pixels)
+- [ ] No element's computed bounding box exceeds the canvas
+- [ ] All text in the main column shares one x-edge anchor (left or center) within 1px
+- [ ] All gaps/paddings/margins are 4px multiples
+- [ ] Outer padding identical on left/right (and top/bottom in landscape)
+- [ ] No overlap between text and decorative visuals (orb opacity ≤ 0.45 if behind text)
+- [ ] All <img> src URLs preserved exactly, all data-* attrs preserved
+- [ ] Palette colors only
+- [ ] Headline fits on 1-2 lines at the chosen type tier
+
+# HighLevel palette
+- Primary Blue: #2896FB · Mid Blue: #0B6FD4 · Light Blue: #7CC8FF
+- Green Bright: #17D94B · Green: #00B2A9
+- Yellow: #FFC328
+- Deep Navy: #0B1426 · Mid Navy: #122036 · Soft Navy: #1A2942
+- Off-white: #F8FAFC · Slate Light: #E2E8F0 · Slate Mid: #94A3B8
+- Charcoal: #0F172A · Charcoal Mid: #475569
+
+Output the full reflowed HTML now. Nothing else.`;
+
 router.post("/refine-design", async (req, res) => {
   const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
   const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
@@ -827,6 +904,8 @@ router.post("/refine-design", async (req, res) => {
     : [];
   const slideIndex = Number.isFinite(Number(req.body?.slideIndex)) ? Math.max(0, Math.round(Number(req.body.slideIndex))) : 0;
   const slideCount = Number.isFinite(Number(req.body?.slideCount)) ? Math.max(1, Math.round(Number(req.body.slideCount))) : 1;
+  const mode = req.body?.mode === "reflow" ? "reflow" : "refine";
+  const previousAspect = typeof req.body?.previousAspect === "string" ? req.body.previousAspect : "";
 
   // If aspect wasn't provided, try to read it off the .canvas div in the HTML.
   let resolvedAspect = aspect;
@@ -843,7 +922,28 @@ router.post("/refine-design", async (req, res) => {
   const dataAttrs = Array.from(html.matchAll(/(data-[a-z0-9-]+)=/gi)).map(m => m[1]);
   const uniqueDataAttrs = Array.from(new Set(dataAttrs));
 
-  const invariantBlock = `# Preservation invariants (MUST hold byte-for-byte)
+  // Compute aspect family for reflow guidance.
+  const newW = refineBrief.W;
+  const newH = refineBrief.H;
+  const ratio = newW / newH;
+  const aspectFamily =
+    ratio < 0.85 ? "PORTRAIT (vertical thirds composition, all text center-aligned)" :
+    ratio > 1.18 ? "LANDSCAPE (two-column composition: text left, visual right, all text left-aligned, sharing one left edge)" :
+    "SQUARE (single centered column, stack vertically)";
+  const [pw, ph] = previousAspect.split("x").map(n => parseInt(n, 10));
+  const previousFamilyNote = (pw && ph)
+    ? `Previous canvas: ${pw}×${ph}px (ratio ${(pw / ph).toFixed(2)}). New canvas: ${newW}×${newH}px (ratio ${ratio.toFixed(2)}). The composition family is changing from ${pw / ph < 0.85 ? "portrait" : pw / ph > 1.18 ? "landscape" : "square"} to ${ratio < 0.85 ? "portrait" : ratio > 1.18 ? "landscape" : "square"} — REBUILD the layout, do not just stretch.`
+    : "";
+
+  const invariantBlock = mode === "reflow"
+    ? `# Reflow target (THE NEW CANVAS DIMENSIONS — overwrite the old ones)
+- NEW canvas dimensions: ${newW}×${newH}px (root .canvas MUST be exactly this size)
+- Composition family: ${aspectFamily}
+${previousFamilyNote ? "- " + previousFamilyNote : ""}
+- Image src URLs to preserve EXACTLY (${imgSrcs.length} total): ${imgSrcs.length ? imgSrcs.map(s => s.length > 80 ? s.slice(0, 60) + "…[" + s.length + " chars]" : s).join(" | ") : "none"}
+- data-* attributes to preserve EXACTLY: ${uniqueDataAttrs.length ? uniqueDataAttrs.join(", ") : "none"}
+- The HighLevel logo <img> and ALL its ancestor elements: NO filter / mix-blend-mode / mask / opacity<1 / backdrop-filter`
+    : `# Preservation invariants (MUST hold byte-for-byte)
 - Canvas dimensions: ${refineBrief.W}×${refineBrief.H}px (do not change root .canvas width/height)
 - Image src URLs to preserve EXACTLY (${imgSrcs.length} total): ${imgSrcs.length ? imgSrcs.map(s => s.length > 80 ? s.slice(0, 60) + "…[" + s.length + " chars]" : s).join(" | ") : "none"}
 - data-* attributes to preserve EXACTLY: ${uniqueDataAttrs.length ? uniqueDataAttrs.join(", ") : "none"}
@@ -882,7 +982,7 @@ This is slide ${slideIndex + 1} of ${slideCount}. Apply the edit ONLY to this sl
     const message = await client.messages.create({
       model,
       max_tokens: 16000,
-      system: REFINE_SYSTEM,
+      system: mode === "reflow" ? REFLOW_SYSTEM : REFINE_SYSTEM,
       messages: [{ role: "user", content: userContent }],
     });
     const block = message.content[0];

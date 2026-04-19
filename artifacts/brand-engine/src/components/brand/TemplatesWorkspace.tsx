@@ -902,13 +902,17 @@ export function TemplatesWorkspace() {
     setAiRefineError(null);
     try {
       const apiBase = import.meta.env.BASE_URL;
-      const instruction = `Reflow this design to a new canvas size of ${tw}×${th}px. Keep the same content, copy, brand colors, fonts and overall composition idea — but reposition every element to fit the new aspect ratio cleanly, scale type proportionally, and re-balance whitespace. Do not crop or letterbox.`;
+      const ratio = tw / th;
+      const family = ratio < 0.85 ? "portrait" : ratio > 1.18 ? "landscape" : "square";
+      const instruction = `REFLOW the design to a NEW canvas size: ${tw}×${th}px (${family} composition). Rebuild the layout from scratch for this new aspect ratio — DO NOT stretch, scale, or letterbox the old layout. Preserve all copy verbatim, all brand colors, all fonts, all images, and the overall design intent. Use the composition strategy and pixel-perfect alignment rules from the system prompt. If copy or a secondary decorative element cannot fit cleanly at the new size, shorten the subline or omit one decorative element rather than allowing overlap or misalignment. Alignment must be perfect — every shared-group text element on a single x-anchor, all spacing on a 4px grid, identical outer padding on left/right.`;
       const res = await fetch(`${apiBase}api/refine-design`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           html,
           instruction,
+          mode: "reflow",
+          previousAspect: aiGeneratedAspect,
           model: aiModel,
           aspect: aiAspect,
           format: aiCategoryId,

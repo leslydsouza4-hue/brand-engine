@@ -1723,8 +1723,8 @@ export function TemplatesWorkspace() {
                   transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
                 />
 
-                <div className="absolute inset-0 flex items-center justify-center z-[3]">
-                  <div className="relative" style={{ width: "min(60%, 320px)", aspectRatio: "1" }}>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-[18px] z-[3] px-[24px]">
+                  <div className="relative" style={{ width: "min(46%, 260px)", aspectRatio: "1" }}>
                     {[
                       { size: 100, dur: 14, dir: 1, dots: 8, color: "#5EE6DE", op: 0.85 },
                       { size: 78, dur: 10, dir: -1, dots: 6, color: "#2896FB", op: 0.9 },
@@ -1775,7 +1775,7 @@ export function TemplatesWorkspace() {
                       <Sparkles className="w-[40%] h-[40%] text-[#5EE6DE]" />
                     </motion.div>
                   </div>
-                  <div className="absolute left-0 right-0 -bottom-[80px] flex flex-col items-center gap-[6px] px-[24px] pointer-events-none">
+                  <div className="flex flex-col items-center gap-[6px] pointer-events-none">
                     <span className="text-[8.5px] font-bold tracking-[0.28em] text-[#5EE6DE]/70 uppercase">Did you know</span>
                     <AnimatePresence mode="wait">
                       <motion.div
@@ -1784,7 +1784,7 @@ export function TemplatesWorkspace() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.55, ease: "easeOut" }}
-                        className="text-[12.5px] leading-[1.45] text-[#CBD5E1]/80 font-light italic text-center max-w-[420px]"
+                        className="text-[12.5px] leading-[1.45] text-[#CBD5E1]/85 font-light italic text-center max-w-[440px]"
                       >
                         {AI_LOADING_FACTS[aiLoadingFact]}
                       </motion.div>

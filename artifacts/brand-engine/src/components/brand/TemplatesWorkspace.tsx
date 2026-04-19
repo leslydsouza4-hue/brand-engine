@@ -1385,22 +1385,34 @@ export function TemplatesWorkspace() {
             }
             // Inject safety stylesheet so the photo container shows the slide bg,
             // not any decorative checker / grid Claude may have placed behind.
+            // Walk up EVERY ancestor of the photo and strip its background, border,
+            // and shadow so the slide's body bg shows through cleanly. Catches the
+            // case where Claude wraps the img in nested divs each with their own bg.
             const safetyCss = `<style data-removebg-safety="true">
   [data-ai-human]{
     background:transparent !important;
-    -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 70%,rgba(0,0,0,0.92) 84%,rgba(0,0,0,0.55) 94%,rgba(0,0,0,0) 100%),radial-gradient(120% 100% at 50% 40%,#000 65%,rgba(0,0,0,0.85) 82%,rgba(0,0,0,0) 100%) !important;
-            mask-image:linear-gradient(180deg,#000 0%,#000 70%,rgba(0,0,0,0.92) 84%,rgba(0,0,0,0.55) 94%,rgba(0,0,0,0) 100%),radial-gradient(120% 100% at 50% 40%,#000 65%,rgba(0,0,0,0.85) 82%,rgba(0,0,0,0) 100%) !important;
-    -webkit-mask-composite:source-in;
-            mask-composite:intersect;
-    filter:drop-shadow(0 30px 40px rgba(11,20,38,0.65)) drop-shadow(0 0 18px rgba(11,20,38,0.55)) saturate(0.95) contrast(1.02) !important;
+    /* Soft alpha feather around hair / shoulders to hide cutout halo */
+    -webkit-mask-image:radial-gradient(115% 110% at 50% 50%, #000 78%, rgba(0,0,0,0.6) 92%, rgba(0,0,0,0) 100%) !important;
+            mask-image:radial-gradient(115% 110% at 50% 50%, #000 78%, rgba(0,0,0,0.6) 92%, rgba(0,0,0,0) 100%) !important;
+    filter:drop-shadow(0 22px 30px rgba(11,20,38,0.55)) saturate(0.97) contrast(1.02) !important;
   }
-  *:has(> [data-ai-human]){
+  /* Direct parent of the human img */
+  :has(> [data-ai-human]){
     background:transparent !important;
     background-image:none !important;
     border:none !important;
     box-shadow:none !important;
-    position:relative !important;
     overflow:visible !important;
+  }
+  /* Any deeper ancestor too — kill nested card / panel backgrounds so the slide
+     body bg is what's actually visible behind the cutout. */
+  :has([data-ai-human]):not(html):not(body){
+    background:transparent !important;
+    background-image:none !important;
+    border:none !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    -webkit-backdrop-filter:none !important;
   }
 </style>`;
             if (!/data-removebg-safety/.test(out)) {

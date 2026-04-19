@@ -553,8 +553,17 @@ For ULTRA-WIDE BANNERS (ratio > 3:1):
 **Rule 2: PHOTO IS FULL-BLEED INSIDE ITS ZONE.**
 The <img data-ai-human> uses width:100%; height:100%; object-fit:cover; object-position:center top. The photo container itself has **background: transparent** — it does NOT have its own card/panel background. The cutout floats DIRECTLY on the slide's main background (the body / outermost wrapper background) so the subject blends seamlessly into the design without a visible panel or gradient seam behind them. NO border, NO border-radius (full bleed), NO box-shadow, NO inset gradient on the container. The slide's main background MUST extend continuously across the entire canvas — including under the photo zone — so the cutout's transparent edges have something to blend into.
 
-**Rule 3: TEXT ZONE FILL — NEVER LEAVE IT EMPTY.**
-Whatever zone the photo doesn't occupy MUST contain ALL the named elements (headline, subhead, eyebrow, bullets, CTA, logo) PLUS one or more supporting elements (stat card, quote, mini-feature list, badge cluster) so it doesn't feel sparse. Empty space in the text zone is a fail.
+**Rule 3: TEXT ZONE — DENSITY BUDGET (don't overfill).**
+The text zone has a strict content budget. Pick from this list — do NOT use everything:
+- Eyebrow / kicker pill (≤ 4 words). Optional.
+- Headline (3-8 words MAX, can break to 2-3 lines). Required.
+- Subhead (ONE short sentence, ≤ 14 words). Optional.
+- Supporting block — pick ONE: 2-3 feature pills (≤ 6 words each), OR a single stat card, OR a 1-line quote. NOT all three.
+- Primary CTA pill. Required.
+- Logo (top-left or top of text zone). Required if the asset block included one.
+- Tiny footer line (≤ 6 words, e.g. "No credit card · 5-minute setup"). Optional.
+
+Hard caps: total readable words in text zone ≤ 50. No more than 6 distinct text blocks. Generous vertical spacing between blocks (gap ≥ 0.04 * canvas-height). If something feels crammed, cut a feature pill or shorten the subhead — don't shrink the type.
 
 **Rule 4: NO TEXT OVER FACE/BODY.**
 Headline, subhead, CTAs MUST all be inside the text zone. They never overlap the photo container. If you find yourself wanting to put text over the person, STOP and move the text into the text zone.

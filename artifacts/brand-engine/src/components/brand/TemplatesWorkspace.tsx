@@ -662,21 +662,31 @@ export function TemplatesWorkspace() {
   };
 
   const AI_LOADING_FACTS = [
-    "HighLevel powers 40,000+ agencies and 1.2M+ businesses worldwide.",
-    "12.2 billion conversations have flowed through HighLevel.",
-    "1.9 billion leads facilitated — and counting.",
-    "3,000+ new customers join HighLevel every month.",
-    "One platform. CRM, automations, funnels, AI agents, calls, payments.",
-    "Voice AI answers calls 24/7, with unlimited simultaneous conversations.",
-    "Snapshots clone an entire sub-account — onboarding in minutes, not days.",
-    "SaaS Mode lets agencies resell HighLevel as their own product.",
-    "Rebilling agencies have collected over $13.4M in margin.",
-    "$297/mo unlocks unlimited sub-accounts, users, and contacts.",
-    "Founded in 2018 by Shaun, Robin, and Varun.",
-    "Affiliates have earned $13M+ — four became millionaires through it.",
-    "Workflow AI Assistant builds automations step-by-step alongside you.",
-    "White-label the whole platform on your own domain.",
-    "Replaces ClickFunnels, Mailchimp, Calendly, Kajabi, ActiveCampaign — combined.",
+    "My CRM has more pipelines than a Texas oil field — and just as many leaks.",
+    "I don't have trust issues, I just have a lead that's been \"interested\" for 14 months.",
+    "SaaS pricing tiers: Free, Pro, Enterprise, and Please-Just-Call-Sales.",
+    "Marketing said the leads are warm. They're room temperature. From 2021.",
+    "My funnel is so leaky, I'm pretty sure it's just a colander now.",
+    "ChatGPT writes my follow-ups. The leads write me back with ChatGPT. Nobody's home.",
+    "Status: \"Decision-maker is on PTO.\" Permanent PTO. Since Q3.",
+    "Our automation is so smart it just sent a birthday email to a guy who unsubscribed in 2019.",
+    "Closed-won? More like closed-WON'T-respond.",
+    "I added a deal to the pipeline. The pipeline added me to its list of disappointments.",
+    "The agency life: 12 tabs, 4 dashboards, 1 client asking if you got their voicemail.",
+    "Cold email open rate: 2%. Cold email reply rate: my mom.",
+    "Built a 47-step automation. It does exactly what a sticky note used to do.",
+    "Onboarding call moved 3 times. Client now thinks we're ghosting them. We are not. We forgot.",
+    "MRR is up. Sleep is down. Coffee is a food group.",
+    "Someone please tell sales that \"left voicemail\" is not a sales activity.",
+    "We integrated 14 tools to replace the spreadsheet. The spreadsheet is still open.",
+    "AI agent qualified the lead. Lead qualified for a refund.",
+    "\"Just circling back\" — emails I have sent: 4,182. Replies: 3.",
+    "Our funnel converts at 0.4%. The good news: the math gets easier when you round down.",
+    "Booked a discovery call. Discovered they wanted a free consultation. Classic.",
+    "My CRM has a \"hot lead\" tag. It is decorative.",
+    "Agency owner starter pack: Loom, Zoom, doom.",
+    "Snapshots are great until you snapshot the bug too.",
+    "White-labeled the platform. Forgot to white-label the support email. Whoops.",
   ];
   const AI_LOADING_PHRASES = [
     "Studying the HighLevel brand voice…",
@@ -2030,68 +2040,17 @@ export function TemplatesWorkspace() {
                   transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
                 />
 
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-[18px] z-[3] px-[24px]">
-                  <div className="relative" style={{ width: "min(46%, 260px)", aspectRatio: "1" }}>
-                    {[
-                      { size: 100, dur: 14, dir: 1, dots: 8, color: "#5EE6DE", op: 0.85 },
-                      { size: 78, dur: 10, dir: -1, dots: 6, color: "#2896FB", op: 0.9 },
-                      { size: 56, dur: 7, dir: 1, dots: 5, color: "#FFC328", op: 0.95 },
-                    ].map((ring, ri) => (
-                      <motion.div
-                        key={ri}
-                        className="absolute inset-0 m-auto"
-                        style={{ width: `${ring.size}%`, height: `${ring.size}%`, borderRadius: "50%", border: `1px solid ${ring.color}33` }}
-                        animate={{ rotate: ring.dir * 360 }}
-                        transition={{ duration: ring.dur, repeat: Infinity, ease: "linear" }}
-                      >
-                        {Array.from({ length: ring.dots }).map((_, di) => {
-                          const angle = (di / ring.dots) * Math.PI * 2;
-                          const r = 50;
-                          const cx = 50 + Math.cos(angle) * r;
-                          const cy = 50 + Math.sin(angle) * r;
-                          return (
-                            <span
-                              key={di}
-                              className="absolute"
-                              style={{
-                                left: `${cx}%`, top: `${cy}%`,
-                                width: 8, height: 8,
-                                marginLeft: -4, marginTop: -4,
-                                borderRadius: "50%",
-                                background: ring.color,
-                                opacity: ring.op,
-                                boxShadow: `0 0 12px ${ring.color}, 0 0 22px ${ring.color}`,
-                              }}
-                            />
-                          );
-                        })}
-                      </motion.div>
-                    ))}
-                    <motion.div
-                      className="absolute inset-0 m-auto flex items-center justify-center"
-                      style={{
-                        width: "32%", height: "32%",
-                        borderRadius: "50%",
-                        background: "radial-gradient(closest-side, rgba(255,255,255,0.12), rgba(11,20,38,0.95))",
-                        border: "1px solid rgba(94,230,222,0.4)",
-                        boxShadow: "0 0 60px rgba(40,150,251,0.45), inset 0 0 30px rgba(94,230,222,0.18)",
-                      }}
-                      animate={{ scale: [1, 1.06, 1] }}
-                      transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      <Sparkles className="w-[40%] h-[40%] text-[#5EE6DE]" />
-                    </motion.div>
-                  </div>
-                  <div className="flex flex-col items-center gap-[6px] pointer-events-none">
-                    <span className="text-[8.5px] font-bold tracking-[0.28em] text-[#5EE6DE]/70 uppercase">Did you know</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-[14px] z-[3] px-[32px]">
+                  <div className="flex flex-col items-center gap-[10px] pointer-events-none">
+                    <span className="text-[9px] font-bold tracking-[0.32em] text-[#FFC328]/80 uppercase">Joke break</span>
                     <AnimatePresence mode="wait">
                       <motion.div
                         key={aiLoadingFact}
-                        initial={{ opacity: 0, y: 6 }}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
+                        exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.55, ease: "easeOut" }}
-                        className="text-[12.5px] leading-[1.45] text-[#CBD5E1]/85 font-light italic text-center max-w-[440px]"
+                        className="text-[15px] leading-[1.5] text-[#E2E8F0] font-medium text-center max-w-[480px]"
                       >
                         {AI_LOADING_FACTS[aiLoadingFact]}
                       </motion.div>

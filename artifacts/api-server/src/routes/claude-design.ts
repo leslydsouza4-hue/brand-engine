@@ -1,7 +1,11 @@
 import { Router, type IRouter } from "express";
 import Anthropic from "@anthropic-ai/sdk";
+import { generateImage } from "@workspace/integrations-gemini-ai/image";
 
 const router: IRouter = Router();
+
+const HUMAN_PLACEHOLDER = "https://placeholder.brand-engine/ai-human.png";
+const ITEM_PLACEHOLDER = "https://placeholder.brand-engine/custom-item.png";
 
 const HIGHLEVEL_BRAND_SYSTEM = `You are a senior brand designer at HighLevel (also "GoHighLevel" / "GHL") shipping production-ready marketing graphics. You output a single, self-contained HTML document that renders a polished, perfectly aligned design for the user's prompt. The output should look like it came out of Figma from a top-tier in-house design team — never like a wireframe or a default Bootstrap page.
 
@@ -161,6 +165,10 @@ router.post("/claude-design", async (req, res) => {
   const sceneName = typeof req.body?.sceneName === "string" ? req.body.sceneName : "";
   const sceneDescription = typeof req.body?.sceneDescription === "string" ? req.body.sceneDescription : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim() : "";
+  const humanDescription = typeof req.body?.humanDescription === "string" ? req.body.humanDescription.trim() : "";
+  const itemDescription = typeof req.body?.itemDescription === "string" ? req.body.itemDescription.trim() : "";
+  const hasHuman = !!req.body?.hasHuman && humanDescription;
+  const hasItem = !!req.body?.hasItem;
   const rawSlideCount = Number(req.body?.slideCount);
   const slideCount = Number.isFinite(rawSlideCount)
     ? Math.min(10, Math.max(1, Math.round(rawSlideCount)))
@@ -183,6 +191,25 @@ Variant description: ${logoDescription || "official HighLevel lockup"}.
 - Place it in the top-left OR bottom-left corner with the same 6% padding as the rest of the canvas. On extremely small banners (height < 120px) shrink to 18-22px.
 - Do NOT recolor or filter the logo. Use the variant exactly as provided.
 - Reserve a clear-space rectangle around it equal to ~half the logo height on every side. No text, orb, or other element may enter that rectangle.`);
+  }
+  if (hasHuman) {
+    assetBlock.push(`AI-generated human photo (REQUIRED — embed as the hero portrait):
+<img src="${HUMAN_PLACEHOLDER}" alt="Featured person" />
+Subject description: ${humanDescription}
+- This is a high-resolution photoreal portrait. Use it as a hero visual focal point.
+- Apply object-fit: cover; on a fixed-dimension wrapper. For portrait/square canvases, the photo should occupy 45-65% of the canvas (right column or top half). For landscape, 40-55%.
+- Add a subtle dark gradient overlay only over text-bearing edges, never across the face.
+- Round corners minimally (8-12px) or leave full-bleed; do NOT crop into a circle unless the design explicitly calls for an avatar.
+- NEVER render the person as SVG — use the <img> tag with this exact src.`);
+  }
+  if (hasItem) {
+    assetBlock.push(`User-supplied item / product image (REQUIRED — feature prominently):
+<img src="${ITEM_PLACEHOLDER}" alt="Featured item" />
+${itemDescription ? `Item description: ${itemDescription}` : ""}
+- This is a real product/asset uploaded by the user. Treat it as a co-hero visual alongside any other focal element.
+- Render with style="max-height: 50%; max-width: 45%; object-fit: contain; display: block;". Place it in the VISUAL zone of the slide, never overlapping headline text.
+- Add a soft glow behind it: filter: drop-shadow(0 8px 30px rgba(40,150,251,0.35));
+- NEVER replace this with an SVG illustration — always use the <img> tag with this exact src.`);
   }
   if (highlyUrl) {
     assetBlock.push(`Highly mascot (REQUIRED — include in the design as a hero visual element):
@@ -333,6 +360,76 @@ router.post("/polish-prompt", async (req, res) => {
   } catch (err: any) {
     console.error("[polish-prompt] error", err);
     return res.status(500).json({ error: err?.message || "Failed to polish prompt" });
+  }
+});
+
+router.post("/generate-human", async (req, res) => {
+  const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
+  const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
+
+  const theme = typeof req.body?.theme === "string" ? req.body.theme.trim() : "";
+  const slidePrompt = typeof req.body?.slidePrompt === "string" ? req.body.slidePrompt.trim() : "";
+  const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "1024x1024";
+  const sceneName = typeof req.body?.sceneName === "string" ? req.body.sceneName : "";
+  if (!theme && !slidePrompt) {
+    return res.status(400).json({ error: "theme or slidePrompt is required" });
+  }
+
+  let imagePrompt = "";
+  let description = "";
+
+  // Step 1: ask Claude to write a tight image-gen prompt + a one-line subject description
+  if (baseUrl && apiKey) {
+    try {
+      const client = new Anthropic({ baseURL: baseUrl, apiKey });
+      const msg = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 500,
+        system: `You write image-generation prompts for a state-of-the-art photoreal model (Google Imagen / Nano Banana Pro). Given a marketing graphic's theme and slide context, you write a SINGLE prompt for a high-quality professional photograph of a HUMAN that fits the theme.
+
+Rules:
+- The output is one paragraph, 60-120 words, no preamble, no markdown.
+- Always describe: who the person is (age, gender, role, ethnicity is optional and should reflect a diverse pool), wardrobe matched to the brand vibe, expression, framing (close-up / mid / full body), camera and lens (e.g. "shot on Canon R5, 50mm, f/1.8"), lighting (warm, editorial, golden hour, studio softbox, etc.), background that matches the slide's scene/brand colors, and the overall mood.
+- The brand context is HighLevel (modern SaaS, agency operators, founders): teal #5EE6DE, blue #2896FB, navy #0B1426, yellow #FFC328 accents. Wardrobe and palette should be tasteful and modern.
+- The photo will be cut out and placed on a dark navy slide, so prefer subjects with clean separation from the background OR a complementary brand-color backdrop.
+- End with: "ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks".
+
+Then on a NEW LINE after the prompt, write:
+DESCRIPTION: <one short sentence (under 18 words) describing the subject for layout purposes>`,
+        messages: [
+          {
+            role: "user",
+            content: `Marketing graphic theme: ${theme || "(not specified)"}
+Slide context: ${slidePrompt || "(not specified)"}
+Scene direction: ${sceneName || "(none)"}
+Canvas aspect: ${aspect}
+
+Write the image prompt now.`,
+          },
+        ],
+      });
+      const block = msg.content[0];
+      const text = (block && block.type === "text" ? block.text : "").trim();
+      const descMatch = text.match(/DESCRIPTION:\s*(.+)$/im);
+      description = descMatch ? descMatch[1].trim() : "";
+      imagePrompt = text.replace(/DESCRIPTION:.*$/im, "").trim();
+    } catch (err: any) {
+      console.error("[generate-human] prompt-builder failed", err);
+    }
+  }
+
+  if (!imagePrompt) {
+    imagePrompt = `Editorial photograph of a confident modern professional matching this brief: ${theme}. ${slidePrompt}. Shot on Canon R5, 50mm, f/1.8, soft natural light, neutral wardrobe with subtle teal or blue accents, calm modern background. Ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks.`;
+    description = "Confident modern professional matching the brand theme";
+  }
+
+  try {
+    const result = await generateImage(imagePrompt, "gemini-3-pro-image-preview");
+    const dataUrl = `data:${result.mimeType || "image/png"};base64,${result.b64_json}`;
+    return res.json({ image: dataUrl, description, prompt: imagePrompt });
+  } catch (err: any) {
+    console.error("[generate-human] image gen failed", err);
+    return res.status(500).json({ error: err?.message || "Failed to generate human image" });
   }
 });
 

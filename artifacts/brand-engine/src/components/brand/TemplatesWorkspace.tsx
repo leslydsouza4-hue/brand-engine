@@ -270,7 +270,7 @@ export function TemplatesWorkspace() {
     },
   ] as const;
 
-  const [aiMode, setAiMode] = useState(false);
+  const [aiMode, setAiMode] = useState(true);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiCategoryId, setAiCategoryId] = useState<typeof AI_FORMATS[number]["id"]>("social");
   const [aiAspect, setAiAspect] = useState("1080x1080");
@@ -781,27 +781,6 @@ export function TemplatesWorkspace() {
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
 
       <div className="w-full md:w-[340px] md:min-w-[340px] overflow-y-auto overflow-x-hidden py-[16px] px-[16px] md:px-[20px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.04)] flex flex-col max-h-[50vh] md:max-h-none">
-        <div className="flex gap-[4px] p-[3px] mb-[14px] bg-[rgba(255,255,255,0.025)] rounded-[10px] border border-[rgba(255,255,255,0.05)]">
-          <button
-            onClick={() => setAiMode(false)}
-            className={`flex-1 flex items-center justify-center gap-[6px] py-[7px] rounded-[7px] text-[11.5px] font-bold transition-all border-none cursor-pointer ${
-              !aiMode ? "bg-[rgba(0,178,169,0.18)] text-[#5EE6DE]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
-            }`}
-          >
-            <LayoutTemplate className="w-[12px] h-[12px]" />
-            Templates
-          </button>
-          <button
-            onClick={() => setAiMode(true)}
-            className={`flex-1 flex items-center justify-center gap-[6px] py-[7px] rounded-[7px] text-[11.5px] font-bold transition-all border-none cursor-pointer ${
-              aiMode ? "bg-[rgba(0,178,169,0.18)] text-[#5EE6DE]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
-            }`}
-          >
-            <Sparkles className="w-[12px] h-[12px]" />
-            Claude Design
-          </button>
-        </div>
-
         {aiMode ? (
           <>
             <div className="text-[14px] font-bold text-white mb-[1px]">Generate with Claude</div>

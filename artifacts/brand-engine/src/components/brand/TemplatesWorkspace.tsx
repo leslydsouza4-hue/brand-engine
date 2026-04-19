@@ -1769,6 +1769,55 @@ export function TemplatesWorkspace() {
             <div className="text-[14px] font-bold text-white mb-[1px]">Generate with Claude</div>
             <div className="text-[11.5px] text-[#475569] mb-[14px]">Trained on HighLevel brand. Describe what you want.</div>
 
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Model</div>
+            <div className="flex gap-[4px] p-[3px] mb-[12px] bg-[rgba(255,255,255,0.025)] rounded-[10px] border border-[rgba(255,255,255,0.05)]">
+              {([
+                { id: "claude-sonnet-4-6", label: "Sonnet 4.6", hint: "Fast" },
+                { id: "claude-opus-4-6", label: "Opus 4.6", hint: "Smart" },
+                { id: "claude-opus-4-7", label: "Opus 4.7", hint: "Best" },
+              ] as const).map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => setAiModel(m.id)}
+                  title={m.hint}
+                  className={`flex-1 py-[7px] rounded-[7px] text-[10.5px] font-bold transition-all border-none cursor-pointer ${
+                    aiModel === m.id ? "bg-[rgba(0,178,169,0.18)] text-[#17D94B]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Format</div>
+            <div className="grid grid-cols-4 gap-[6px] mb-[14px]">
+              {AI_FORMATS.map(fmt => {
+                const Icon = fmt.icon;
+                const isActive = aiCategoryId === fmt.id;
+                return (
+                  <motion.button
+                    key={fmt.id}
+                    type="button"
+                    onClick={() => {
+                      setAiCategoryId(fmt.id);
+                      setAiAspect(fmt.sizes[0].value);
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    className={`flex flex-col items-center justify-center gap-[4px] py-[10px] px-[4px] rounded-[10px] cursor-pointer transition-all border ${
+                      isActive
+                        ? "bg-[rgba(23,217,75,0.14)] border-[rgba(23,217,75,0.55)] shadow-[0_0_20px_rgba(23,217,75,0.15)]"
+                        : "bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:border-[rgba(255,255,255,0.18)]"
+                    }`}
+                    style={{ outline: "none" }}
+                  >
+                    <Icon className={`w-[18px] h-[18px] ${isActive ? "text-[#17D94B]" : "text-[#94A3B8]"}`} />
+                    <div className={`text-[10.5px] font-bold ${isActive ? "text-white" : "text-[#CBD5E1]"}`}>{fmt.name}</div>
+                  </motion.button>
+                );
+              })}
+            </div>
+
             {/* PROMPT FIRST — this is the main thing the user does, no scrolling required */}
             <div className="mb-[8px] text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">
               {aiSlideCount > 1 ? "Overall Theme" : "Prompt"}
@@ -1886,55 +1935,6 @@ export function TemplatesWorkspace() {
               <div className="flex-1 h-px bg-[rgba(255,255,255,0.06)]" />
               <span className="text-[9.5px] font-bold uppercase tracking-[1.5px] text-[#475569]">Settings</span>
               <div className="flex-1 h-px bg-[rgba(255,255,255,0.06)]" />
-            </div>
-
-            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Model</div>
-            <div className="flex gap-[4px] p-[3px] mb-[14px] bg-[rgba(255,255,255,0.025)] rounded-[10px] border border-[rgba(255,255,255,0.05)]">
-              {([
-                { id: "claude-sonnet-4-6", label: "Sonnet 4.6", hint: "Fast" },
-                { id: "claude-opus-4-6", label: "Opus 4.6", hint: "Smart" },
-                { id: "claude-opus-4-7", label: "Opus 4.7", hint: "Best" },
-              ] as const).map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => setAiModel(m.id)}
-                  title={m.hint}
-                  className={`flex-1 py-[7px] rounded-[7px] text-[10.5px] font-bold transition-all border-none cursor-pointer ${
-                    aiModel === m.id ? "bg-[rgba(0,178,169,0.18)] text-[#17D94B]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
-                  }`}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Format</div>
-            <div className="grid grid-cols-4 gap-[8px] mb-[12px]">
-              {AI_FORMATS.map(fmt => {
-                const Icon = fmt.icon;
-                const isActive = aiCategoryId === fmt.id;
-                return (
-                  <motion.button
-                    key={fmt.id}
-                    type="button"
-                    onClick={() => {
-                      setAiCategoryId(fmt.id);
-                      setAiAspect(fmt.sizes[0].value);
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    className={`flex flex-col items-center justify-center gap-[6px] py-[14px] px-[4px] rounded-[12px] cursor-pointer transition-all border ${
-                      isActive
-                        ? "bg-[rgba(23,217,75,0.14)] border-[rgba(23,217,75,0.55)] shadow-[0_0_20px_rgba(23,217,75,0.15)]"
-                        : "bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:border-[rgba(255,255,255,0.18)]"
-                    }`}
-                    style={{ outline: "none" }}
-                  >
-                    <Icon className={`w-[20px] h-[20px] ${isActive ? "text-[#17D94B]" : "text-[#94A3B8]"}`} />
-                    <div className={`text-[11px] font-bold ${isActive ? "text-white" : "text-[#CBD5E1]"}`}>{fmt.name}</div>
-                  </motion.button>
-                );
-              })}
             </div>
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Size</div>

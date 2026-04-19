@@ -423,6 +423,16 @@ export function TemplatesWorkspace() {
 
   const [aiMode, setAiMode] = useState(true);
   const [aiPrompt, setAiPrompt] = useState("");
+  // Auto-enable HL brand-asset toggles when the prompt mentions them, so the user
+  // sees visual confirmation that the real asset will be used (not a Claude approximation).
+  useEffect(() => {
+    const text = aiPrompt;
+    if (!text) return;
+    const LOGO_RE = /\blogo[s]?\b|\bwordmark\b|\bbrand\s*mark\b|\blockup\b/i;
+    const HIGHLY_RE = /\bhighly\b|\bmascot[s]?\b/i;
+    if (LOGO_RE.test(text)) setAiIncludeLogo(true);
+    if (HIGHLY_RE.test(text)) setAiIncludeHighly(true);
+  }, [aiPrompt]);
   const [aiSuggestType, setAiSuggestType] = useState("promo");
   const [aiSuggestRough, setAiSuggestRough] = useState("");
   const [aiSuggesting, setAiSuggesting] = useState(false);

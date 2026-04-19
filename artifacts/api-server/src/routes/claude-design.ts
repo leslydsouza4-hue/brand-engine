@@ -373,8 +373,10 @@ router.post("/claude-design", async (req, res) => {
 
   // Auto-include HL brand assets when the user mentions them in the prompt, even if the toggle is off.
   // We never want Claude to invent a fake HighLevel logo or Highly mascot from scratch.
-  const LOGO_MENTION = /\b(highlevel\s*logo|hl\s*logo|the\s*logo|wordmark|brand\s*mark|brand\s*lockup|company\s*logo|highlevel\s*mark|highlevel\s*brand|hl\s*brand)\b/i;
-  const HIGHLY_MENTION = /\b(highly|mascot|hl\s*mascot|highlevel\s*mascot|company\s*mascot)\b/i;
+  // Liberal matching — this is the HighLevel brand engine. Any mention of "logo",
+  // "wordmark", "brand mark", "Highly", or "mascot" should pull in the real asset.
+  const LOGO_MENTION = /\blogo[s]?\b|\bwordmark\b|\bbrand\s*mark\b|\bbrand\s*lockup\b|\blockup\b|\bhl\s*mark\b|\bhighlevel\s*mark\b/i;
+  const HIGHLY_MENTION = /\bhighly\b|\bmascot[s]?\b/i;
   if (!logoUrl && defaultLogoUrl && LOGO_MENTION.test(prompt)) {
     logoUrl = defaultLogoUrl;
     logoDescription = defaultLogoDescription || logoDescription;

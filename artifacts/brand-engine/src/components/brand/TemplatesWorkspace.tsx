@@ -1722,21 +1722,6 @@ export function TemplatesWorkspace() {
                   animate={{ x: ["0%", "8%", "-12%", "0%"], y: ["0%", "-10%", "6%", "0%"], scale: [1, 1.06, 0.94, 1] }}
                   transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
                 />
-                <div className="absolute top-[14px] left-[14px] right-[140px] z-[4] pointer-events-none">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={aiLoadingFact}
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 6 }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                      className="flex flex-col gap-[3px] max-w-[360px]"
-                    >
-                      <span className="text-[8.5px] font-bold tracking-[0.22em] text-[#5EE6DE]/60 uppercase">Did you know</span>
-                      <span className="text-[12px] leading-[1.45] text-[#CBD5E1]/80 font-light italic">{AI_LOADING_FACTS[aiLoadingFact]}</span>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
 
                 <div className="absolute inset-0 flex items-center justify-center z-[3]">
                   <div className="relative" style={{ width: "min(60%, 320px)", aspectRatio: "1" }}>
@@ -1790,6 +1775,21 @@ export function TemplatesWorkspace() {
                       <Sparkles className="w-[40%] h-[40%] text-[#5EE6DE]" />
                     </motion.div>
                   </div>
+                  <div className="absolute left-0 right-0 -bottom-[80px] flex flex-col items-center gap-[6px] px-[24px] pointer-events-none">
+                    <span className="text-[8.5px] font-bold tracking-[0.28em] text-[#5EE6DE]/70 uppercase">Did you know</span>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={aiLoadingFact}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.55, ease: "easeOut" }}
+                        className="text-[12.5px] leading-[1.45] text-[#CBD5E1]/80 font-light italic text-center max-w-[420px]"
+                      >
+                        {AI_LOADING_FACTS[aiLoadingFact]}
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                 </div>
 
                 <div className="absolute top-[14px] right-[14px] flex items-center gap-[8px] py-[7px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.4)] z-[10]">
@@ -1800,25 +1800,7 @@ export function TemplatesWorkspace() {
                   <span className="text-[11px] font-bold tracking-[0.14em] text-[#5EE6DE]">GENERATING</span>
                 </div>
 
-                <div className="absolute bottom-[14px] left-[14px] right-[14px] z-[10] flex flex-col gap-[8px]">
-                  <div className="h-[28px] flex items-center justify-center">
-                    <AnimatePresence mode="wait">
-                      <motion.div
-                        key={aiLoadingPhrase}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.35 }}
-                        className="flex items-center gap-[8px] py-[6px] px-[14px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.08)]"
-                      >
-                        <span className="relative flex w-[6px] h-[6px]">
-                          <span className="absolute inline-flex h-full w-full rounded-full bg-[#FFC328] opacity-70 animate-ping" />
-                          <span className="relative inline-flex rounded-full w-[6px] h-[6px] bg-[#FFC328]" />
-                        </span>
-                        <span className="text-[11px] text-[#CBD5E1] font-medium">{AI_LOADING_PHRASES[aiLoadingPhrase]}</span>
-                      </motion.div>
-                    </AnimatePresence>
-                  </div>
+                <div className="absolute bottom-[14px] left-[14px] right-[14px] z-[10]">
                   <div className="relative h-[3px] w-full rounded-full overflow-hidden bg-[rgba(255,255,255,0.06)]">
                     <motion.div
                       className="absolute inset-y-0 left-0 rounded-full"

@@ -1133,6 +1133,18 @@ export function TemplatesWorkspace() {
             return pose ? `${window.location.origin}${pose.image}` : "";
           })() : "",
           highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
+          // Defaults so the server can auto-include the real HL assets if the prompt mentions them
+          // (prevents Claude from inventing a fake HighLevel logo / mascot from scratch).
+          defaultLogoUrl: (() => {
+            const v = LOGO_VARIANTS[0];
+            return v ? `${window.location.origin}${v.file}` : "";
+          })(),
+          defaultLogoDescription: LOGO_VARIANTS[0]?.description ?? "",
+          defaultHighlyUrl: (() => {
+            const p = HIGHLY_POSES.find(h => h.id === "happy-hover") ?? HIGHLY_POSES[0];
+            return p ? `${window.location.origin}${p.image}` : "";
+          })(),
+          defaultHighlyDescription: (HIGHLY_POSES.find(h => h.id === "happy-hover") ?? HIGHLY_POSES[0])?.description ?? "",
           sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
           sceneDescription: DESIGN_SCENES.find(s => s.id === aiSceneId)?.description ?? "",
           slideCount: aiSlideCount,

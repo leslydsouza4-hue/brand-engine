@@ -342,6 +342,8 @@ Carousel rules:
 - <img> tags are ONLY allowed for asset URLs explicitly provided by the user in the "Required Assets" section of the message. NEVER hotlink any other image.
 - If a HighLevel logo URL is provided, you MUST use that <img> rather than typing "HighLevel" as text in CSS.
 - If a Highly mascot URL is provided, you MUST place that <img> as the hero visual.
+- **HARD RULE — HighLevel brand mark integrity:** NEVER invent, draw, redraw, illustrate, or recreate the HighLevel logo, wordmark, icon, or any HighLevel brand mark in CSS, SVG, divs, or text styling. The HighLevel mark is a specific registered asset (3 colored arrows in green/blue/yellow forming a stylized "H" next to the "HighLevel" wordmark in Poppins). You are NOT permitted to approximate it. If the prompt mentions the HighLevel logo / wordmark / brand mark and NO logo asset URL was provided in the Required Assets block, you MUST fall back to plain text "HighLevel" in Poppins weight 700, in the appropriate brand color (white on dark, #0B1426 on light) — and you MUST NOT draw any icon, arrows, "H" mark, geometric shapes, or decoration next to it. The plain wordmark only.
+- **HARD RULE — Highly mascot integrity:** NEVER invent, draw, or illustrate the Highly mascot in SVG/CSS. Highly is a specific 3D-rendered character (rounded head with black visor, teal eyes, white-and-blue body, jet thruster). You are NOT permitted to approximate it. If the prompt mentions Highly / the mascot and no Highly URL was provided, OMIT the mascot entirely and rebalance the layout — do NOT substitute with a generic robot, blob, smiley, or character illustration.
 - The <body> must contain a single root <div class="canvas"> with EXACT pixel width and height matching the requested aspect ratio. Set body { margin:0; background:#0B1426; display:flex; align-items:center; justify-content:center; min-height:100vh; } so the canvas centers in the viewport for preview.
 - Set box-sizing: border-box on everything (* { box-sizing: border-box; margin: 0; padding: 0; }).
 - Test mentally: would a designer at Linear, Stripe, or Vercel be okay with shipping this? If no, refine before outputting.`;
@@ -360,10 +362,27 @@ router.post("/claude-design", async (req, res) => {
   }
 
   const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "1200x630";
-  const logoUrl = typeof req.body?.logoUrl === "string" ? req.body.logoUrl : "";
-  const logoDescription = typeof req.body?.logoDescription === "string" ? req.body.logoDescription : "";
-  const highlyUrl = typeof req.body?.highlyUrl === "string" ? req.body.highlyUrl : "";
-  const highlyPoseDescription = typeof req.body?.highlyPoseDescription === "string" ? req.body.highlyPoseDescription : "";
+  let logoUrl = typeof req.body?.logoUrl === "string" ? req.body.logoUrl : "";
+  let logoDescription = typeof req.body?.logoDescription === "string" ? req.body.logoDescription : "";
+  let highlyUrl = typeof req.body?.highlyUrl === "string" ? req.body.highlyUrl : "";
+  let highlyPoseDescription = typeof req.body?.highlyPoseDescription === "string" ? req.body.highlyPoseDescription : "";
+  const defaultLogoUrl = typeof req.body?.defaultLogoUrl === "string" ? req.body.defaultLogoUrl : "";
+  const defaultLogoDescription = typeof req.body?.defaultLogoDescription === "string" ? req.body.defaultLogoDescription : "";
+  const defaultHighlyUrl = typeof req.body?.defaultHighlyUrl === "string" ? req.body.defaultHighlyUrl : "";
+  const defaultHighlyDescription = typeof req.body?.defaultHighlyDescription === "string" ? req.body.defaultHighlyDescription : "";
+
+  // Auto-include HL brand assets when the user mentions them in the prompt, even if the toggle is off.
+  // We never want Claude to invent a fake HighLevel logo or Highly mascot from scratch.
+  const LOGO_MENTION = /\b(highlevel\s*logo|hl\s*logo|the\s*logo|wordmark|brand\s*mark|brand\s*lockup|company\s*logo|highlevel\s*mark|highlevel\s*brand|hl\s*brand)\b/i;
+  const HIGHLY_MENTION = /\b(highly|mascot|hl\s*mascot|highlevel\s*mascot|company\s*mascot)\b/i;
+  if (!logoUrl && defaultLogoUrl && LOGO_MENTION.test(prompt)) {
+    logoUrl = defaultLogoUrl;
+    logoDescription = defaultLogoDescription || logoDescription;
+  }
+  if (!highlyUrl && defaultHighlyUrl && HIGHLY_MENTION.test(prompt)) {
+    highlyUrl = defaultHighlyUrl;
+    highlyPoseDescription = defaultHighlyDescription || highlyPoseDescription;
+  }
   const sceneName = typeof req.body?.sceneName === "string" ? req.body.sceneName : "";
   const sceneDescription = typeof req.body?.sceneDescription === "string" ? req.body.sceneDescription : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim() : "";

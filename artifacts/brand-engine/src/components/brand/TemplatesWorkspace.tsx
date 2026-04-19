@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, Sparkles, ExternalLink, Download as DownloadIcon, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
@@ -230,6 +230,61 @@ export function TemplatesWorkspace() {
   const [bgRemoved, setBgRemoved] = useState(false);
   const [showLogoOverlay, setShowLogoOverlay] = useState(false);
   const [logoPlacement, setLogoPlacement] = useState<"top-left" | "bottom-left">("top-left");
+
+  const [aiMode, setAiMode] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiAspect, setAiAspect] = useState("1200x630");
+  const [aiHtml, setAiHtml] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const aiAspectRatio = (() => {
+    const m = aiAspect.match(/^(\d+)\s*x\s*(\d+)$/i);
+    if (!m) return 1200 / 630;
+    return parseInt(m[1]!, 10) / parseInt(m[2]!, 10);
+  })();
+
+  const handleGenerateAI = async () => {
+    const prompt = aiPrompt.trim();
+    if (!prompt || aiLoading) return;
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/claude-design`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, aspect: aiAspect }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      if (!data.html) throw new Error("No HTML returned");
+      setAiHtml(data.html);
+    } catch (err: any) {
+      setAiError(err?.message || "Generation failed");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleAIDownloadHtml = () => {
+    if (!aiHtml) return;
+    const blob = new Blob([aiHtml], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `claude-design-${Date.now()}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleAIOpen = () => {
+    if (!aiHtml) return;
+    const w = window.open("", "_blank");
+    if (w) { w.document.open(); w.document.write(aiHtml); w.document.close(); }
+  };
 
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
 
@@ -504,6 +559,99 @@ export function TemplatesWorkspace() {
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
 
       <div className="w-full md:w-[340px] md:min-w-[340px] overflow-y-auto overflow-x-hidden py-[16px] px-[16px] md:px-[20px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.04)] flex flex-col max-h-[50vh] md:max-h-none">
+        <div className="flex gap-[4px] p-[3px] mb-[14px] bg-[rgba(255,255,255,0.025)] rounded-[10px] border border-[rgba(255,255,255,0.05)]">
+          <button
+            onClick={() => setAiMode(false)}
+            className={`flex-1 flex items-center justify-center gap-[6px] py-[7px] rounded-[7px] text-[11.5px] font-bold transition-all border-none cursor-pointer ${
+              !aiMode ? "bg-[rgba(0,178,169,0.18)] text-[#5EE6DE]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+            }`}
+          >
+            <LayoutTemplate className="w-[12px] h-[12px]" />
+            Templates
+          </button>
+          <button
+            onClick={() => setAiMode(true)}
+            className={`flex-1 flex items-center justify-center gap-[6px] py-[7px] rounded-[7px] text-[11.5px] font-bold transition-all border-none cursor-pointer ${
+              aiMode ? "bg-[rgba(0,178,169,0.18)] text-[#5EE6DE]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+            }`}
+          >
+            <Sparkles className="w-[12px] h-[12px]" />
+            Claude Design
+          </button>
+        </div>
+
+        {aiMode ? (
+          <>
+            <div className="text-[14px] font-bold text-white mb-[1px]">Generate with Claude</div>
+            <div className="text-[11.5px] text-[#475569] mb-[16px]">Trained on HighLevel brand. Describe what you want.</div>
+
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Aspect</div>
+            <select
+              value={aiAspect}
+              onChange={(e) => setAiAspect(e.target.value)}
+              className="w-full mb-[12px] py-[10px] pr-[38px] pl-[14px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-inherit text-[12px] font-medium text-white cursor-pointer outline-none appearance-none focus:border-[rgba(0,178,169,0.3)]"
+            >
+              <option value="1200x630" className="bg-[#0a1628]">Landscape (1200×630)</option>
+              <option value="1080x1080" className="bg-[#0a1628]">Square (1080×1080)</option>
+              <option value="1080x1350" className="bg-[#0a1628]">Portrait (1080×1350)</option>
+              <option value="1080x1920" className="bg-[#0a1628]">Story / Reel (1080×1920)</option>
+              <option value="1920x1080" className="bg-[#0a1628]">HD Wide (1920×1080)</option>
+            </select>
+
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Prompt</div>
+            <textarea
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="e.g. Launch graphic for our new AI Voice Agent — bold headline, glowing blue orb, capture-yellow accent badge"
+              rows={6}
+              className="w-full py-[12px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[12.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
+            />
+
+            <button
+              onClick={handleGenerateAI}
+              disabled={!aiPrompt.trim() || aiLoading}
+              className="mt-[10px] w-full flex items-center justify-center gap-[8px] py-[12px] px-[14px] rounded-[12px] text-[13px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                background: aiLoading ? "rgba(0,178,169,0.08)" : "linear-gradient(135deg, rgba(0,178,169,0.25) 0%, rgba(40,150,251,0.2) 100%)",
+                borderColor: "rgba(0,178,169,0.4)",
+                color: "#5EE6DE",
+              }}
+            >
+              {aiLoading ? (
+                <><Loader2 className="w-[14px] h-[14px] animate-spin" /><span>Generating…</span></>
+              ) : (
+                <><Sparkles className="w-[14px] h-[14px]" /><span>Generate Design</span></>
+              )}
+            </button>
+
+            {aiError && (
+              <div className="mt-[10px] py-[10px] px-[12px] rounded-[10px] text-[11.5px] text-[#FCA5A5] bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)]">
+                {aiError}
+              </div>
+            )}
+
+            {aiHtml && (
+              <div className="mt-[16px] flex flex-col gap-[8px]">
+                <button
+                  onClick={handleAIOpen}
+                  className="w-full flex items-center justify-center gap-[8px] py-[10px] px-[14px] rounded-[10px] text-[12px] font-semibold bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[#E2E8F0] hover:bg-[rgba(255,255,255,0.07)] cursor-pointer transition-all"
+                >
+                  <ExternalLink className="w-[13px] h-[13px]" />
+                  Open in new tab
+                </button>
+                <button
+                  onClick={handleAIDownloadHtml}
+                  className="w-full flex items-center justify-center gap-[8px] py-[10px] px-[14px] rounded-[10px] text-[12px] font-semibold bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[#E2E8F0] hover:bg-[rgba(255,255,255,0.07)] cursor-pointer transition-all"
+                >
+                  <DownloadIcon className="w-[13px] h-[13px]" />
+                  Download HTML
+                </button>
+                <div className="text-[10.5px] text-[#475569] text-center mt-[2px]">Tip: open in new tab and screenshot at full size for a PNG export.</div>
+              </div>
+            )}
+          </>
+        ) : (
+        <>
         <div className="text-[14px] font-bold text-white mb-[1px]">Create something new</div>
         <div className="text-[11.5px] text-[#475569] mb-[16px]">Pick a format, size, then a template.</div>
 
@@ -771,10 +919,38 @@ export function TemplatesWorkspace() {
             <DownloadButton onExport={handleExport} isExporting={isExporting} label="Download Current" />
           </div>
         )}
+        </>
+        )}
       </div>
 
       <LivePreview>
         <div className="flex-1 flex items-center justify-center relative overflow-hidden w-full">
+          {aiMode ? (
+            aiHtml ? (
+              <div
+                className="relative w-full max-w-[840px] mx-auto overflow-hidden rounded-[12px]"
+                style={{ aspectRatio: aiAspectRatio, boxShadow: "0 8px 50px rgba(0,0,0,0.4)" }}
+              >
+                <iframe
+                  title="Claude Design preview"
+                  srcDoc={aiHtml}
+                  sandbox="allow-same-origin"
+                  className="w-full h-full block border-0 bg-white"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-[10px] text-center max-w-[420px] px-[20px]">
+                <div className="w-[56px] h-[56px] rounded-[16px] flex items-center justify-center"
+                  style={{ background: "linear-gradient(135deg, rgba(0,178,169,0.18), rgba(40,150,251,0.14))", border: "1px solid rgba(0,178,169,0.3)" }}>
+                  <Sparkles className="w-[24px] h-[24px] text-[#5EE6DE]" />
+                </div>
+                <div className="text-[16px] font-bold text-white">Claude Design</div>
+                <div className="text-[12.5px] text-[#64748B] leading-[1.5]">
+                  Describe the design you need in the sidebar and click <span className="text-[#94A3B8] font-semibold">Generate Design</span>. Claude is briefed on the HighLevel brand — colors, typography, voice, and layout.
+                </div>
+              </div>
+            )
+          ) : (
           <AnimatePresence mode="wait">
             {activeTemplate ? (
               <motion.div
@@ -1090,6 +1266,7 @@ export function TemplatesWorkspace() {
               </motion.div>
             )}
           </AnimatePresence>
+          )}
         </div>
       </LivePreview>
     </div>

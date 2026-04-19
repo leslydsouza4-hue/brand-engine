@@ -62,10 +62,18 @@ router.post("/claude-design", async (req, res) => {
 
   const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "1200x630";
 
+  const ALLOWED_MODELS = new Set([
+    "claude-sonnet-4-6",
+    "claude-opus-4-6",
+    "claude-opus-4-7",
+  ]);
+  const requestedModel = typeof req.body?.model === "string" ? req.body.model : "claude-sonnet-4-6";
+  const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : "claude-sonnet-4-6";
+
   try {
     const client = new Anthropic({ baseURL: baseUrl, apiKey });
     const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model,
       max_tokens: 8192,
       system: HIGHLEVEL_BRAND_SYSTEM,
       messages: [

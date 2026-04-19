@@ -234,6 +234,7 @@ export function TemplatesWorkspace() {
   const [aiMode, setAiMode] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiAspect, setAiAspect] = useState("1200x630");
+  const [aiModel, setAiModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-sonnet-4-6");
   const [aiHtml, setAiHtml] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -254,7 +255,7 @@ export function TemplatesWorkspace() {
       const res = await fetch(`${apiBase}api/claude-design`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, aspect: aiAspect }),
+        body: JSON.stringify({ prompt, aspect: aiAspect, model: aiModel }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
@@ -585,17 +586,59 @@ export function TemplatesWorkspace() {
             <div className="text-[14px] font-bold text-white mb-[1px]">Generate with Claude</div>
             <div className="text-[11.5px] text-[#475569] mb-[16px]">Trained on HighLevel brand. Describe what you want.</div>
 
-            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Aspect</div>
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Model</div>
+            <div className="flex gap-[4px] p-[3px] mb-[14px] bg-[rgba(255,255,255,0.025)] rounded-[10px] border border-[rgba(255,255,255,0.05)]">
+              {([
+                { id: "claude-sonnet-4-6", label: "Sonnet 4.6", hint: "Fast" },
+                { id: "claude-opus-4-6", label: "Opus 4.6", hint: "Smart" },
+                { id: "claude-opus-4-7", label: "Opus 4.7", hint: "Best" },
+              ] as const).map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => setAiModel(m.id)}
+                  title={m.hint}
+                  className={`flex-1 py-[7px] rounded-[7px] text-[10.5px] font-bold transition-all border-none cursor-pointer ${
+                    aiModel === m.id ? "bg-[rgba(0,178,169,0.18)] text-[#5EE6DE]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Size</div>
             <select
               value={aiAspect}
               onChange={(e) => setAiAspect(e.target.value)}
               className="w-full mb-[12px] py-[10px] pr-[38px] pl-[14px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-inherit text-[12px] font-medium text-white cursor-pointer outline-none appearance-none focus:border-[rgba(0,178,169,0.3)]"
             >
-              <option value="1200x630" className="bg-[#0a1628]">Landscape (1200×630)</option>
-              <option value="1080x1080" className="bg-[#0a1628]">Square (1080×1080)</option>
-              <option value="1080x1350" className="bg-[#0a1628]">Portrait (1080×1350)</option>
-              <option value="1080x1920" className="bg-[#0a1628]">Story / Reel (1080×1920)</option>
-              <option value="1920x1080" className="bg-[#0a1628]">HD Wide (1920×1080)</option>
+              <optgroup label="Social" className="bg-[#0a1628]">
+                <option value="1080x1080" className="bg-[#0a1628]">Instagram Square (1080×1080)</option>
+                <option value="1080x1350" className="bg-[#0a1628]">Instagram Portrait (1080×1350)</option>
+                <option value="1080x1920" className="bg-[#0a1628]">Story / Reel (1080×1920)</option>
+                <option value="1200x628" className="bg-[#0a1628]">Twitter / FB Landscape (1200×628)</option>
+              </optgroup>
+              <optgroup label="Ads" className="bg-[#0a1628]">
+                <option value="728x90" className="bg-[#0a1628]">Leaderboard (728×90)</option>
+                <option value="300x250" className="bg-[#0a1628]">Medium Rectangle (300×250)</option>
+                <option value="1200x628" className="bg-[#0a1628]">Wide Banner (1200×628)</option>
+                <option value="1280x720" className="bg-[#0a1628]">YouTube Thumbnail (1280×720)</option>
+              </optgroup>
+              <optgroup label="Presentation" className="bg-[#0a1628]">
+                <option value="1920x1080" className="bg-[#0a1628]">Widescreen 16:9 (1920×1080)</option>
+                <option value="1024x768" className="bg-[#0a1628]">Standard 4:3 (1024×768)</option>
+                <option value="2520x1080" className="bg-[#0a1628]">Ultra Wide 21:9 (2520×1080)</option>
+                <option value="1080x1080" className="bg-[#0a1628]">Square 1:1 (1080×1080)</option>
+              </optgroup>
+              <optgroup label="Email" className="bg-[#0a1628]">
+                <option value="600x200" className="bg-[#0a1628]">Email Header (600×200)</option>
+                <option value="600x300" className="bg-[#0a1628]">Email Banner (600×300)</option>
+                <option value="600x400" className="bg-[#0a1628]">Email Hero (600×400)</option>
+                <option value="600x600" className="bg-[#0a1628]">Email Square (600×600)</option>
+              </optgroup>
+              <optgroup label="Other" className="bg-[#0a1628]">
+                <option value="1200x630" className="bg-[#0a1628]">OG / Landscape (1200×630)</option>
+              </optgroup>
             </select>
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Prompt</div>

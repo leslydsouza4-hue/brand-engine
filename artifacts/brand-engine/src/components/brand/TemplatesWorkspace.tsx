@@ -1696,7 +1696,7 @@ export function TemplatesWorkspace() {
           {aiMode ? (
             aiLoading ? (
               <div
-                className="relative w-full max-w-[840px] mx-auto overflow-hidden rounded-[12px]"
+                className="relative w-full max-w-[600px] mx-auto overflow-hidden rounded-[12px]"
                 style={{
                   aspectRatio: aiAspectRatio,
                   boxShadow: "0 8px 50px rgba(0,0,0,0.4)",
@@ -1819,7 +1819,7 @@ export function TemplatesWorkspace() {
               </div>
             ) : aiHtml ? (
               <div
-                className="relative w-full max-w-[840px] mx-auto overflow-hidden rounded-[12px]"
+                className="relative w-full max-w-[600px] mx-auto overflow-hidden rounded-[12px]"
                 style={{ aspectRatio: aiAspectRatio, boxShadow: "0 8px 50px rgba(0,0,0,0.4)" }}
               >
                 <iframe

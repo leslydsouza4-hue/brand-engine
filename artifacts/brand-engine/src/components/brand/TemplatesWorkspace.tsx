@@ -884,11 +884,23 @@ export function TemplatesWorkspace() {
 
             {aiIncludeLogo && (
               <>
-                <div className="flex items-center justify-between mb-[6px]">
-                  <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Logo Variant</div>
-                  <div className="text-[10px] text-[#64748B] font-medium">{LOGO_VARIANTS.find(l => l.id === aiLogoId)?.name ?? ""}</div>
-                </div>
-                <div className="flex flex-col gap-[4px] mb-[14px] max-h-[260px] overflow-y-auto sidebar-scroll pr-[4px]">
+                <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Logo Variant</div>
+                <div className="relative flex p-[3px] mb-[14px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.05)] rounded-[10px]">
+                  {(() => {
+                    const activeIndex = Math.max(0, LOGO_VARIANTS.findIndex(l => l.id === aiLogoId));
+                    return (
+                      <div
+                        className="absolute top-[3px] bottom-[3px] rounded-[8px] transition-all duration-200 ease-out"
+                        style={{
+                          left: `calc(${activeIndex * 50}% + 3px)`,
+                          width: "calc(50% - 6px)",
+                          background: "linear-gradient(135deg, rgba(0,178,169,0.22), rgba(40,150,251,0.18))",
+                          border: "1px solid rgba(0,178,169,0.35)",
+                          boxShadow: "0 4px 16px rgba(0,178,169,0.15)",
+                        }}
+                      />
+                    );
+                  })()}
                   {LOGO_VARIANTS.map(variant => {
                     const isActive = aiLogoId === variant.id;
                     const tileBg = variant.recommendedOn === "light" ? "#F8FAFC" : "#0B1426";
@@ -897,31 +909,17 @@ export function TemplatesWorkspace() {
                         key={variant.id}
                         onClick={() => setAiLogoId(variant.id)}
                         title={variant.description}
-                        className={`group flex items-center gap-[10px] py-[6px] pl-[6px] pr-[10px] rounded-[8px] border cursor-pointer transition-all text-left ${
-                          isActive
-                            ? "border-[rgba(0,178,169,0.45)] bg-[rgba(0,178,169,0.07)]"
-                            : "border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.015)] hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.03)]"
-                        }`}
+                        className="relative z-[2] flex-1 flex items-center justify-center gap-[8px] py-[8px] px-[10px] rounded-[8px] cursor-pointer transition-colors bg-transparent border-none"
                       >
                         <div
-                          className="flex-shrink-0 w-[44px] h-[32px] rounded-[5px] flex items-center justify-center overflow-hidden border border-[rgba(255,255,255,0.04)]"
+                          className="flex-shrink-0 w-[40px] h-[26px] rounded-[4px] flex items-center justify-center overflow-hidden"
                           style={{ background: tileBg }}
                         >
-                          <img src={variant.file} alt={variant.name} className="max-w-[80%] max-h-[78%] object-contain" />
+                          <img src={variant.file} alt={variant.name} className="max-w-[82%] max-h-[80%] object-contain" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className={`text-[11.5px] font-semibold leading-[1.2] truncate ${isActive ? "text-[#5EE6DE]" : "text-[#E2E8F0]"}`}>
-                            {variant.name}
-                          </div>
-                          <div className="text-[9.5px] text-[#475569] uppercase tracking-[0.08em] mt-[2px]">
-                            {variant.recommendedOn === "any" ? "Universal" : `Best on ${variant.recommendedOn}`}
-                          </div>
-                        </div>
-                        {isActive && (
-                          <div className="flex-shrink-0 w-[14px] h-[14px] rounded-full bg-[#5EE6DE] flex items-center justify-center">
-                            <Check className="w-[9px] h-[9px] text-[#0B1426]" strokeWidth={3} />
-                          </div>
-                        )}
+                        <span className={`text-[11px] font-bold tracking-[0.02em] transition-colors ${isActive ? "text-[#5EE6DE]" : "text-[#64748B]"}`}>
+                          {variant.recommendedOn === "dark" ? "Light" : "Dark"}
+                        </span>
                       </button>
                     );
                   })}

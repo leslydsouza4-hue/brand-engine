@@ -472,8 +472,13 @@ Separate slides with EXACTLY this delimiter on its own line:
 Output nothing else — no prose, no explanation, no markdown.`
     : "";
 
+  const format = typeof req.body?.format === "string" ? req.body.format : "social";
+  const designBrief = buildCanvasBrief(aspect, format);
   const userContent = [
     `Canvas size: ${aspect} pixels (width × height). The root container MUST be exactly these dimensions.`,
+    "",
+    designBrief.text,
+    "",
     sceneBlock,
     subjectBlock,
     slideBlock,
@@ -529,22 +534,110 @@ Output nothing else — no prose, no explanation, no markdown.`
   }
 });
 
+function buildCanvasBrief(aspect: string, format: string) {
+  const m = aspect.match(/^(\d+)\s*x\s*(\d+)$/i);
+  const W = m ? parseInt(m[1], 10) : 1080;
+  const H = m ? parseInt(m[2], 10) : 1080;
+  const ratio = W / H;
+  const area = W * H;
+
+  const orientation = ratio > 1.25 ? "landscape" : ratio < 0.8 ? "portrait" : "square";
+
+  // Density tier driven by both raw area AND short edge — a 728×90 banner has
+  // huge area-vs-90px constraints, so use minEdge as the actual budget signal.
+  const minEdge = Math.min(W, H);
+  let tier: "micro" | "small" | "medium" | "large";
+  if (minEdge < 160) tier = "micro";
+  else if (minEdge < 400) tier = "small";
+  else if (minEdge < 900) tier = "medium";
+  else tier = "large";
+
+  // Element budget: how many distinct content blocks the canvas can hold without overlap.
+  const elementBudget = tier === "micro" ? 3
+    : tier === "small" ? 4
+    : tier === "medium" ? 6
+    : 9;
+
+  // Recommended layout pattern.
+  let layout: string;
+  if (tier === "micro") {
+    layout = orientation === "landscape"
+      ? "Single horizontal row: [logo][headline][CTA pill]. NO subline, NO orbs, NO icons inside the CTA, NO decorative chips. Padding 12-16px. Vertical centering only."
+      : "Single vertical stack centered: [logo][1-line headline][CTA]. Nothing else fits.";
+  } else if (tier === "small") {
+    layout = orientation === "landscape"
+      ? "Split 55/45: left side [eyebrow + headline + CTA pill], right side [one focal visual OR one stat number]. Logo top-left. Padding 24-32px."
+      : "Stacked: [logo top-left][eyebrow][headline 2-3 lines][short subline][CTA]. One small accent element (orb or chip), nothing more.";
+  } else if (tier === "medium") {
+    layout = orientation === "landscape"
+      ? "Split 60/40 or 50/50: text column on one side (eyebrow + headline + subline + CTA), focal visual on the other (subject, illustration, or stat block). Logo in a corner."
+      : "Vertical hero: [logo top-left][eyebrow][big headline][subline][focal visual or chip cluster][CTA bottom]. Generous breathing room.";
+  } else {
+    layout = orientation === "landscape"
+      ? "Editorial spread: hero headline + subline on one side, rich visual composition (charts/tiles/grid/subject) on the other. Plenty of room for icons, badges, and supporting columns."
+      : "Full editorial poster: [eyebrow + logo top][massive hero headline][subline][grid of feature tiles or stat row][CTA]. Use the height — don't crowd everything into one band.";
+  }
+
+  // Type sizes (proportional to short edge so they always read).
+  const headlineMin = Math.round(minEdge * (tier === "micro" ? 0.18 : tier === "small" ? 0.10 : tier === "medium" ? 0.08 : 0.07));
+  const headlineMax = Math.round(minEdge * (tier === "micro" ? 0.28 : tier === "small" ? 0.16 : tier === "medium" ? 0.13 : 0.11));
+  const sublineSize = Math.max(11, Math.round(minEdge * (tier === "micro" ? 0 : tier === "small" ? 0.045 : 0.035)));
+  const padding = tier === "micro" ? 12 : tier === "small" ? 24 : tier === "medium" ? 48 : 64;
+
+  // Word/length caps so Claude doesn't write a paragraph for a 728x90.
+  const headlineWords = tier === "micro" ? "3-5" : tier === "small" ? "4-7" : tier === "medium" ? "5-9" : "6-12";
+  const sublineRule = tier === "micro" ? "NO subline." : tier === "small" ? "Optional 1-line subline (max 8 words)." : "Subline 1-2 lines (max 18 words).";
+  const ctaRule = tier === "micro" ? "CTA pill: 1-2 words ONLY (e.g. 'Try It', 'Start')." : "CTA pill: 2-4 words.";
+
+  // Format-specific overrides on top of the size brief.
+  let formatDirective: string;
+  switch (format) {
+    case "ads":
+      formatDirective = "Conversion-first: every element earns its keep, headline ladders into the CTA, wordmark in a corner, decoration minimal. For micro/small ad units prefer flat brand-color blocks over orbs.";
+      break;
+    case "presentation":
+      formatDirective = "Slide-grade: big editorial headline, generous negative space, one calm decorative orb behind, no CTA unless explicitly requested. Wordmark small in a corner.";
+      break;
+    case "email":
+      formatDirective = "Inbox-readable: short headline, one supporting line, prominent CTA, wordmark left. Flat color blocks, soft gradients, NO heavy orbs. Safe contrast pairs only (#F8FAFC on #0B1426 or #0F172A on #F8FAFC).";
+      break;
+    case "social":
+    default:
+      formatDirective = "Scroll-stopping: thumb-stopper headline (question/claim/stat), eyebrow label on top, strong focal visual, dense brand color contrast.";
+      break;
+  }
+
+  return {
+    W, H, ratio: ratio.toFixed(3),
+    orientation, tier, elementBudget,
+    layout, headlineMin, headlineMax, sublineSize, padding,
+    headlineWords, sublineRule, ctaRule, formatDirective,
+    text: `# Canvas Brief (HARD CONSTRAINTS — obey these over your own taste)
+- Dimensions: ${W}×${H}px (${orientation}, ratio ${ratio.toFixed(2)}, density tier: ${tier.toUpperCase()})
+- Element budget: AT MOST ${elementBudget} distinct content blocks. Counted blocks: logo, eyebrow chip, headline, subline, focal visual, CTA, decorative orb, etc. Going over WILL break alignment.
+- Layout pattern: ${layout}
+- Edge padding: ${padding}px on all sides minimum. Nothing touches the canvas edge except orbs that bleed intentionally.
+- Headline: ${headlineWords} words, font-size ${headlineMin}-${headlineMax}px, weight 800, tight leading.
+- Subline: ${sublineRule}${sublineSize ? ` Font-size ${sublineSize}px.` : ""}
+- CTA: ${ctaRule}
+- Format directive: ${formatDirective}
+- Anti-overlap rule: every element must have ≥${Math.max(8, Math.round(padding / 2))}px clear-space around it. If you can't fit everything with that gutter, REMOVE elements (start with decorative ones), don't shrink type below the min above.
+- For tier MICRO and SMALL ad/banner units: do NOT specify icons inside CTAs, do NOT specify multi-row tile grids, do NOT specify bullet lists. They will not fit.`
+  };
+}
+
 const POLISH_SYSTEM = `You are a senior brand designer at HighLevel. The user gives you a rough, vague idea for a marketing graphic. You rewrite it into a tight, vivid design brief that another designer (or design AI) could build from without asking questions.
 
 Output rules:
 - Return ONLY the polished prompt as plain text. No preamble, no headings, no markdown, no explanation, no quotes.
-- 80-160 words, written as a confident creative direction (not a question).
-- Cover: headline (in quotes, 3-8 words, punchy), optional subline, visual focal point, composition, color usage from HighLevel palette (Primary Blue #2896FB, Light Blue #7CC8FF, Deep Navy #0B1426, Yellow #FFC328, Green #00B2A9, Green #17D94B), accent treatments (orbs/chips/badges), and where the HighLevel wordmark sits.
-- Match the energy of the user's idea — don't pad with corporate fluff.
-- Tailor density to the canvas size: tiny banners get a single-line hook + logo + CTA only.
+- Length: scale to the canvas. MICRO tier: 25-50 words. SMALL: 50-90 words. MEDIUM: 90-150 words. LARGE: 130-200 words.
+- The Canvas Brief block in the user message is AUTHORITATIVE. Element budget, headline word count, layout pattern, padding, and font sizes from that brief override your defaults. NEVER exceed the element budget. NEVER specify a sub-element (icon-in-CTA, multi-tile grid, bullet list) that the brief explicitly forbids.
+- Open the polished prompt by NAMING the canvas dimensions and orientation in plain English ("Banner 728×90, landscape strip" or "Square 1080×1080, social post" or "Tall 1080×1920, vertical story"). This is so the downstream renderer cannot miss the format.
+- Cover: dimensions line, headline (in quotes), optional subline, visual focal point, composition pattern from the brief, color usage from HighLevel palette (Primary Blue #2896FB, Light Blue #7CC8FF, Deep Navy #0B1426, Yellow #FFC328, Green #00B2A9, Green #17D94B), accent treatments allowed at this density tier, and where the HighLevel wordmark sits.
+- Match the energy of the user's idea — don't pad with corporate fluff. If the canvas is tiny, the polished brief is short. Don't write a 150-word paragraph for a 728×90.
+- Do NOT list the format name as a label — just write the brief in that style.
 
-# Format-specific direction (apply rules for the given format)
-- **social**: Hook-driven. The headline is a thumb-stopper — a question, claim, or bold stat. Eyebrow-style category label on top. Strong focal visual (orb/illustrated subject/chip cluster). Dense color contrast. If the size is portrait or square, stack vertically; if landscape (1200×628), split 60/40. Always mention "scroll-stopping" energy.
-- **ads**: Conversion-first. Single benefit headline (5-7 words), sharp CTA pill ("Start Free", "Try It", "See Demo"), wordmark in a corner, minimal decoration so the eye lands on the CTA. For tiny units (728×90, 300×250) prescribe a one-line hook + CTA only — no subline.
-- **presentation**: Slide-grade composition. Big editorial hero headline (8-12 words is fine), generous negative space, calm decorative orb behind, readable subline below. Wordmark small in a corner. Suggest a single supporting visual element on the opposite side. Avoid CTAs unless explicitly requested — presentations don't sell, they explain.
-- **email**: Inbox-readable on small screens. Short headline (3-6 words), one supporting line, prominent CTA pill, wordmark left. Decorative treatment minimal — flat color blocks, soft gradients, no heavy orbs. Specify safe text contrast (#F8FAFC on #0B1426 or #0F172A on #F8FAFC). Email graphics often render as static images, so call out alt-text-friendly composition.
-
-Pick the rules matching the user-provided format and lean into them. Do not list the format name in the output — just write the brief in that style.`;
+When in doubt, REMOVE elements rather than cram. A clean micro-banner with logo + 4-word headline + CTA beats a cluttered one every time.`;
 
 const REFINE_SYSTEM = `You are a senior brand designer at HighLevel making targeted edits to an existing marketing graphic. The user gives you the current HTML document and a single edit instruction. You return the FULL updated HTML document with the requested change applied.
 
@@ -632,10 +725,14 @@ router.post("/polish-prompt", async (req, res) => {
   const format = typeof req.body?.format === "string" ? req.body.format : "social";
   const slideCountP = Math.min(10, Math.max(1, Math.round(Number(req.body?.slideCount) || 1)));
 
+  const brief = buildCanvasBrief(aspect, format);
   const userMsg = [
     `Format: ${format}.`,
     `Canvas: ${aspect}.`,
-    slideCountP > 1 ? `Carousel: ${slideCountP} cohesive slides (cover → content → CTA).` : "",
+    "",
+    brief.text,
+    "",
+    slideCountP > 1 ? `Carousel: ${slideCountP} cohesive slides (cover → content → CTA). Apply the brief to EACH slide individually.` : "",
     sceneDescription ? `Scene direction (${sceneName}): ${sceneDescription}` : "",
     includeLogo ? `Include the HighLevel logo in a corner — variant: ${logoDescription || "wordmark"}.` : "",
     includeHighly ? `Include the Highly mascot as a hero visual${highlyPoseDescription ? ` (pose: ${highlyPoseDescription})` : ""}.` : "",

@@ -441,6 +441,8 @@ export function TemplatesWorkspace() {
   const [aiAspect, setAiAspect] = useState("1080x1080");
   const [aiModel, setAiModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-sonnet-4-6");
   const [aiSlides, setAiSlides] = useState<string[]>([]);
+  const [aiGeneratedAspect, setAiGeneratedAspect] = useState<string>("");
+  const [aiReflowing, setAiReflowing] = useState(false);
   const [aiSlideIndex, setAiSlideIndex] = useState(0);
   const [aiSlideCount, setAiSlideCount] = useState(1);
   const [aiSlidePrompts, setAiSlidePrompts] = useState<string[]>([]);
@@ -603,6 +605,19 @@ export function TemplatesWorkspace() {
             h.addEventListener('mousedown', function(ev){ startResize(ev, c); }, true);
             handlesRoot.appendChild(h);
           });
+          // Floating delete button (top-right, above the selection)
+          var del = document.createElement('button');
+          del.setAttribute('data-editor-delete', '1');
+          del.setAttribute('data-editor-injected', '1');
+          del.setAttribute('type', 'button');
+          del.setAttribute('title', 'Delete (Del / Backspace)');
+          del.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>';
+          del.style.cssText = 'position:fixed;z-index:2147483647;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#EF4444;color:#fff;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 12px rgba(239,68,68,0.45);cursor:pointer;padding:0;';
+          del.addEventListener('mousedown', function(ev){ ev.preventDefault(); ev.stopPropagation(); }, true);
+          del.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); deleteSelection(); }, true);
+          del.addEventListener('mouseenter', function(){ del.style.background = '#DC2626'; });
+          del.addEventListener('mouseleave', function(){ del.style.background = '#EF4444'; });
+          handlesRoot.appendChild(del);
           document.body.appendChild(handlesRoot);
         }
         function destroyHandles(){
@@ -611,9 +626,27 @@ export function TemplatesWorkspace() {
         }
         function positionHandles(){
           if (!selectedEl || !handlesRoot) return;
-          var r = selectedEl.getBoundingClientRect();
+          // Compute combined bounding box of all selected elements so the delete
+          // button + handles wrap the whole multi-selection
+          var minL = Infinity, minT = Infinity, maxR = -Infinity, maxB = -Infinity;
+          (selection.length ? selection : [selectedEl]).forEach(function(el){
+            var rr = el.getBoundingClientRect();
+            if (rr.left < minL) minL = rr.left;
+            if (rr.top < minT) minT = rr.top;
+            if (rr.right > maxR) maxR = rr.right;
+            if (rr.bottom > maxB) maxB = rr.bottom;
+          });
+          var r = { left: minL, top: minT, right: maxR, bottom: maxB };
           var pts = { nw:[r.left,r.top], ne:[r.right,r.top], sw:[r.left,r.bottom], se:[r.right,r.bottom] };
           Array.prototype.forEach.call(handlesRoot.children, function(h){
+            if (h.hasAttribute('data-editor-delete')) {
+              // Place above top-right, clamp to viewport
+              var dx = Math.max(8, Math.min(window.innerWidth - 36, r.right - 28));
+              var dy = Math.max(8, r.top - 36);
+              h.style.left = dx + 'px';
+              h.style.top = dy + 'px';
+              return;
+            }
             var p = pts[h.getAttribute('data-editor-handle')];
             if (!p) return;
             h.style.left = (p[0] - 7) + 'px';
@@ -790,9 +823,34 @@ export function TemplatesWorkspace() {
             selectElement(el);
           }
         }, true);
+        function deleteSelection(){
+          if (!selection.length) return;
+          // Don't delete the only top-level wrapper
+          var toRemove = selection.filter(function(el){
+            return el && el.parentNode && el !== document.body && el !== document.documentElement;
+          });
+          toRemove.forEach(function(el){
+            el.removeAttribute('data-edit-selected');
+            el.removeAttribute('data-edit-hover');
+            if (el.parentNode) el.parentNode.removeChild(el);
+          });
+          selection = [];
+          selectedEl = null;
+          destroyHandles();
+        }
         document.addEventListener('keydown', function(e){
-          if (e.key === 'Escape') { clearActive(); clearSelection(); }
+          if (e.key === 'Escape') { clearActive(); clearSelection(); return; }
+          if (e.key === 'Delete' || e.key === 'Backspace') {
+            // Don't intercept while user is typing in contenteditable
+            var ae = document.activeElement;
+            if (ae && (ae.getAttribute && ae.getAttribute('contenteditable') === 'true')) return;
+            if (!selection.length) return;
+            e.preventDefault();
+            deleteSelection();
+          }
         }, true);
+        // Expose for the floating delete button
+        window.__brandEditorDelete = deleteSelection;
         window.addEventListener('message', function(ev){
           var data = ev.data || {};
           if (data && data.type === 'editor:get-html') {
@@ -834,6 +892,41 @@ export function TemplatesWorkspace() {
     });
     return `${topic}\n\nPer-slide breakdown (use these as the spec for each slide; keep visual rhythm across the deck):\n${lines.join("\n")}`;
   })();
+
+  const handleReflowToSize = async () => {
+    const html = aiSlides[aiSlideIndex];
+    if (!html || aiReflowing) return;
+    const [tw, th] = aiAspect.split("x").map(n => parseInt(n, 10));
+    if (!tw || !th) return;
+    setAiReflowing(true);
+    setAiRefineError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const instruction = `Reflow this design to a new canvas size of ${tw}×${th}px. Keep the same content, copy, brand colors, fonts and overall composition idea — but reposition every element to fit the new aspect ratio cleanly, scale type proportionally, and re-balance whitespace. Do not crop or letterbox.`;
+      const res = await fetch(`${apiBase}api/refine-design`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html,
+          instruction,
+          model: aiModel,
+          aspect: aiAspect,
+          format: aiCategoryId,
+          slideIndex: aiSlideIndex,
+          slideCount: aiSlides.length,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Reflow failed (${res.status})`);
+      if (!data.html) throw new Error("Empty response");
+      setAiSlides(prev => prev.map((s, i) => (i === aiSlideIndex ? data.html : s)));
+      setAiGeneratedAspect(aiAspect);
+    } catch (err: any) {
+      setAiRefineError(err?.message || "Reflow failed");
+    } finally {
+      setAiReflowing(false);
+    }
+  };
 
   const handleRefineDesign = async () => {
     const html = aiSlides[aiSlideIndex];
@@ -1183,6 +1276,7 @@ export function TemplatesWorkspace() {
       });
       setAiSlides(slides);
       setAiSlideIndex(0);
+      setAiGeneratedAspect(aiAspect);
       // Auto-cut the AI human out of its background and swap it in-place. Runs in
       // the browser via @imgly/background-removal — proper alpha channel, no API.
       void (async () => {
@@ -1941,12 +2035,21 @@ export function TemplatesWorkspace() {
             <select
               value={aiAspect}
               onChange={(e) => setAiAspect(e.target.value)}
-              className="w-full mb-[12px] py-[10px] pr-[38px] pl-[14px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-inherit text-[12px] font-medium text-white cursor-pointer outline-none appearance-none focus:border-[rgba(0,178,169,0.3)]"
+              className="w-full mb-[8px] py-[10px] pr-[38px] pl-[14px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-inherit text-[12px] font-medium text-white cursor-pointer outline-none appearance-none focus:border-[rgba(0,178,169,0.3)]"
             >
               {(AI_FORMATS.find(f => f.id === aiCategoryId) ?? AI_FORMATS[0]).sizes.map(s => (
                 <option key={s.value} value={s.value} className="bg-[#0a1628]">{s.label}</option>
               ))}
             </select>
+            {aiSlides.length > 0 && aiGeneratedAspect && aiGeneratedAspect !== aiAspect && (
+              <button
+                onClick={handleReflowToSize}
+                disabled={aiReflowing}
+                className="w-full mb-[12px] flex items-center justify-center gap-[6px] py-[9px] px-[12px] rounded-[10px] text-[11px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50 bg-[rgba(255,195,40,0.10)] border-[rgba(255,195,40,0.45)] text-[#FFC328] hover:bg-[rgba(255,195,40,0.18)]"
+              >
+                {aiReflowing ? (<><Loader2 className="w-[12px] h-[12px] animate-spin" /><span>Reflowing to {aiAspect}…</span></>) : (<><Sparkles className="w-[12px] h-[12px]" /><span>Reflow design → {aiAspect}</span></>)}
+              </button>
+            )}
 
             <div className="grid grid-cols-2 gap-[10px] mb-[14px]">
               <div>

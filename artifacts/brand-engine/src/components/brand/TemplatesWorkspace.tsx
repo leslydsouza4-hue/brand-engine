@@ -588,7 +588,8 @@ export function TemplatesWorkspace() {
           if (origin) el.style.transformOrigin = origin;
         }
 
-        var selectedEl = null;
+        var selection = [];
+        var selectedEl = null; // primary (last clicked) — handles attach here
         var handlesRoot = null;
         var rafId = 0;
         function buildHandles(){
@@ -622,19 +623,40 @@ export function TemplatesWorkspace() {
           });
         }
         function selectElement(el){
-          if (selectedEl === el) { positionHandles(); return; }
+          if (selection.length === 1 && selection[0] === el) { positionHandles(); return; }
           clearSelection();
+          selection = [el];
           selectedEl = el;
           el.setAttribute('data-edit-selected', '1');
           ensureBase(el);
           buildHandles();
           positionHandles();
         }
-        function clearSelection(){
-          if (selectedEl) {
-            selectedEl.removeAttribute('data-edit-selected');
-            selectedEl = null;
+        function toggleSelectElement(el){
+          var idx = selection.indexOf(el);
+          if (idx >= 0) {
+            // Deselect this one
+            el.removeAttribute('data-edit-selected');
+            selection.splice(idx, 1);
+            if (selectedEl === el) {
+              selectedEl = selection.length ? selection[selection.length - 1] : null;
+            }
+            if (!selectedEl) destroyHandles();
+            else { buildHandles(); positionHandles(); }
+          } else {
+            // Add to selection
+            selection.push(el);
+            selectedEl = el;
+            el.setAttribute('data-edit-selected', '1');
+            ensureBase(el);
+            buildHandles();
+            positionHandles();
           }
+        }
+        function clearSelection(){
+          selection.forEach(function(s){ s.removeAttribute('data-edit-selected'); });
+          selection = [];
+          selectedEl = null;
           destroyHandles();
         }
 
@@ -661,11 +683,21 @@ export function TemplatesWorkspace() {
           if (!isMovable(el)) return;
           if (el.getAttribute('contenteditable') === 'true') return;
           ensureBase(el);
+          // If the user mousedowns on an already-selected element (part of a multi-selection),
+          // drag the whole group. Otherwise drag just this one (selection happens on click).
+          var group = (selection.indexOf(el) >= 0 && selection.length > 1) ? selection.slice() : [el];
+          group.forEach(ensureBase);
           dragState = {
             el: el,
+            group: group,
+            starts: group.map(function(g){
+              return {
+                el: g,
+                tx: parseFloat(g.getAttribute('data-edit-tx') || '0'),
+                ty: parseFloat(g.getAttribute('data-edit-ty') || '0'),
+              };
+            }),
             startX: e.clientX, startY: e.clientY,
-            startTx: parseFloat(el.getAttribute('data-edit-tx') || '0'),
-            startTy: parseFloat(el.getAttribute('data-edit-ty') || '0'),
             moved: false
           };
         }, true);
@@ -687,11 +719,13 @@ export function TemplatesWorkspace() {
           dragState.moved = true;
           e.preventDefault();
           var s = getScale() || 1;
-          dragState.el.setAttribute('data-edit-dragging', '1');
-          dragState.el.setAttribute('data-edit-tx', String(dragState.startTx + dx/s));
-          dragState.el.setAttribute('data-edit-ty', String(dragState.startTy + dy/s));
-          applyTransform(dragState.el);
-          if (selectedEl === dragState.el && !rafId) rafId = requestAnimationFrame(function(){ rafId = 0; positionHandles(); });
+          dragState.starts.forEach(function(st){
+            st.el.setAttribute('data-edit-dragging', '1');
+            st.el.setAttribute('data-edit-tx', String(st.tx + dx/s));
+            st.el.setAttribute('data-edit-ty', String(st.ty + dy/s));
+            applyTransform(st.el);
+          });
+          if (!rafId) rafId = requestAnimationFrame(function(){ rafId = 0; positionHandles(); });
         }, true);
         document.addEventListener('mouseup', function(e){
           if (resizeState) {
@@ -704,7 +738,7 @@ export function TemplatesWorkspace() {
           }
           if (!dragState) return;
           var st = dragState; dragState = null;
-          st.el.removeAttribute('data-edit-dragging');
+          (st.group || [st.el]).forEach(function(g){ g.removeAttribute('data-edit-dragging'); });
           if (st.moved) {
             suppressClick = true;
             setTimeout(function(){ suppressClick = false; }, 50);
@@ -735,6 +769,13 @@ export function TemplatesWorkspace() {
           if (!isMovable(el)) { clearActive(); clearSelection(); return; }
           e.preventDefault();
           e.stopPropagation();
+          // Shift / Ctrl / Cmd + click → toggle this element in the multi-selection.
+          // Multi-select disables inline text editing — only single-select can edit text.
+          if (e.shiftKey || e.ctrlKey || e.metaKey) {
+            clearActive();
+            toggleSelectElement(el);
+            return;
+          }
           if (isLeafText(el)) {
             clearActive();
             selectElement(el);

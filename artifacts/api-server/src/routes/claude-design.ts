@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import Anthropic from "@anthropic-ai/sdk";
-import { generateImage } from "@workspace/integrations-gemini-ai/image";
+import { generateImage, editImage } from "@workspace/integrations-gemini-ai/image";
 
 const router: IRouter = Router();
 
@@ -29,8 +29,11 @@ Rules:
 - The output is one paragraph, 60-120 words, no preamble, no markdown.
 - Always describe: who the person is (age, gender, role; ethnicity should reflect a diverse pool), wardrobe matched to the brand vibe, expression, framing (close-up / mid / full body), camera and lens (e.g. "shot on Canon R5, 50mm, f/1.8"), lighting (warm, editorial, golden hour, studio softbox, etc.), background that matches the slide's scene/brand colors, and the overall mood.
 - The brand context is HighLevel (modern SaaS, agency operators, founders): teal #5EE6DE, blue #2896FB, navy #0B1426, yellow #FFC328 accents. Wardrobe and palette should be tasteful and modern.
-- The photo will be cut out and placed on a dark navy slide, so prefer subjects with clean separation from the background OR a complementary brand-color backdrop.
-- End with: "ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks".
+- The photo will be cut out and placed on a dark navy slide. STRONGLY PREFER one of these two background treatments (pick whichever fits the mood best):
+  (A) A solid Deep Navy #0B1426 studio background OR a smooth dark gradient that matches the brand palette — so the subject blends seamlessly into the slide with no visible seam.
+  (B) A clean, evenly lit subject against a plain neutral backdrop suitable for crisp background removal (clean edges around hair/shoulders, no busy environment, no harsh shadows on the floor or wall).
+- Avoid messy interiors, cluttered desks, complex outdoor scenes, or props that compete with the subject.
+- End with: "ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks, clean background suitable for cutout".
 
 Then on a NEW LINE after the prompt, write:
 DESCRIPTION: <one short sentence (under 18 words) describing the subject for layout purposes>`,
@@ -265,7 +268,8 @@ Variant description: ${logoDescription || "official HighLevel lockup"}.
 
   if (humanDataUrl) {
     assetBlock.push(`AI-generated human photo (REQUIRED — embed as the hero portrait):
-<img src="${HUMAN_PLACEHOLDER}" alt="Featured person" />
+<img src="${HUMAN_PLACEHOLDER}" alt="Featured person" data-ai-human="true" />
+You MUST keep the data-ai-human="true" attribute on this <img> tag exactly as written so the editor can find it later.
 Subject description: ${humanDescription}
 - This is a high-resolution photoreal portrait. Use it as a hero visual focal point.
 - Apply object-fit: cover; on a fixed-dimension wrapper. For portrait/square canvases, the photo should occupy 45-65% of the canvas (right column or top half). For landscape, 40-55%.
@@ -465,6 +469,29 @@ router.post("/generate-human", async (req, res) => {
   } catch (err: any) {
     console.error("[generate-human] image gen failed", err);
     return res.status(500).json({ error: err?.message || "Failed to generate human image" });
+  }
+});
+
+router.post("/remove-human-bg", async (req, res) => {
+  const dataUrl = typeof req.body?.image === "string" ? req.body.image : "";
+  const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) return res.status(400).json({ error: "image must be a base64 data URL" });
+  const mimeType = m[1] || "image/png";
+  const b64 = m[2] || "";
+
+  try {
+    const result = await editImage(
+      "Remove the background completely from this photo. Output the same person with full transparency outside the subject. Clean, sharp cutout edges around hair, shoulders, and clothing. Preserve all original lighting, skin tones, and details. Return a PNG with an alpha channel — no shadows, no halo, no remnants of the old background.",
+      b64,
+      mimeType,
+      "gemini-2.5-flash-image",
+    );
+    return res.json({
+      image: `data:${result.mimeType || "image/png"};base64,${result.b64_json}`,
+    });
+  } catch (err: any) {
+    console.error("[remove-human-bg] failed", err);
+    return res.status(500).json({ error: err?.message || "Background removal failed" });
   }
 });
 

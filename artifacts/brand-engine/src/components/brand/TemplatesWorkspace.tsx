@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, Sparkles, ExternalLink, Download as DownloadIcon, Edit3, Save, LayoutGrid, type LucideIcon } from "lucide-react";
+import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, Sparkles, ExternalLink, Download as DownloadIcon, Edit3, Save, LayoutGrid, Wand2, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
 import { LOGO_VARIANTS, DESIGN_SCENES } from "./aiPickers";
 import { LivePreview } from "./LivePreview";
@@ -300,6 +300,8 @@ export function TemplatesWorkspace() {
   const [aiCustomItemDescription, setAiCustomItemDescription] = useState<string>("");
   const [aiCustomItemInclude, setAiCustomItemInclude] = useState(false);
   const [aiCustomItemError, setAiCustomItemError] = useState<string | null>(null);
+  const [aiRemovingBg, setAiRemovingBg] = useState(false);
+  const [aiRemoveBgError, setAiRemoveBgError] = useState<string | null>(null);
 
   const aiAspectRatio = (() => {
     const m = aiAspect.match(/^(\d+)\s*x\s*(\d+)$/i);
@@ -746,6 +748,46 @@ export function TemplatesWorkspace() {
       setAiSavingEdits(false);
     }
   }, [aiSavingEdits, aiSlideIndex]);
+
+  const handleRemoveHumanBg = async () => {
+    if (aiRemovingBg) return;
+    const html = aiSlides[aiSlideIndex];
+    if (!html) return;
+    // Find the AI human <img> tag.
+    const re = /<img\b([^>]*?\bdata-ai-human\s*=\s*["']true["'][^>]*?)>/i;
+    const m = html.match(re);
+    if (!m) {
+      setAiRemoveBgError("No AI human image found in this slide.");
+      return;
+    }
+    const tag = m[0];
+    const srcMatch = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+    const src = srcMatch?.[1] || "";
+    if (!src.startsWith("data:")) {
+      setAiRemoveBgError("Image must be a generated data URL.");
+      return;
+    }
+    setAiRemovingBg(true);
+    setAiRemoveBgError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/remove-human-bg`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: src }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.image) throw new Error(data.error || `Request failed (${res.status})`);
+      // Replace the src in the matched tag, keep all other attrs (including data-ai-human).
+      const newTag = tag.replace(/\bsrc\s*=\s*["'][^"']+["']/i, `src="${data.image}"`);
+      const updated = html.replace(tag, newTag);
+      setAiSlides(prev => prev.map((s, i) => (i === aiSlideIndex ? updated : s)));
+    } catch (err: any) {
+      setAiRemoveBgError(err?.message || "Failed to remove background");
+    } finally {
+      setAiRemovingBg(false);
+    }
+  };
 
   const handleCustomItemUpload = (file: File | null | undefined) => {
     if (!file) return;
@@ -2149,13 +2191,32 @@ export function TemplatesWorkspace() {
                 )}
                 <div className="absolute top-[12px] left-[12px] flex items-center gap-[8px] z-[6]">
                   {!aiEditMode ? (
-                    <button
-                      onClick={() => setAiEditMode(true)}
-                      className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
-                      title="Click any text in the preview to edit it"
-                    >
-                      <Edit3 className="w-[12px] h-[12px]" /> EDIT
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setAiEditMode(true)}
+                        className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                        title="Click any text in the preview to edit it"
+                      >
+                        <Edit3 className="w-[12px] h-[12px]" /> EDIT
+                      </button>
+                      {aiHtml && /data-ai-human\s*=\s*["']true["']/i.test(aiHtml) && (
+                        <button
+                          onClick={handleRemoveHumanBg}
+                          disabled={aiRemovingBg}
+                          className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(40,150,251,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#7CC8FF] hover:bg-[rgba(40,150,251,0.18)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                          title="Cut the human out of the background using Nano Banana"
+                        >
+                          {aiRemovingBg
+                            ? <><Loader2 className="w-[12px] h-[12px] animate-spin" /> REMOVING…</>
+                            : <><Wand2 className="w-[12px] h-[12px]" /> REMOVE BG</>}
+                        </button>
+                      )}
+                      {aiRemoveBgError && (
+                        <span className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(255,195,40,0.15)] border border-[rgba(255,195,40,0.4)] text-[10px] text-[#FFC328]">
+                          {aiRemoveBgError}
+                        </span>
+                      )}
+                    </>
                   ) : (
                     <>
                       <button

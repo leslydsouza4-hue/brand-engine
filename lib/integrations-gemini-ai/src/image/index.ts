@@ -1,1 +1,1 @@
-export { ai, generateImage, type GeminiImageModel } from "./client";
+export { ai, generateImage, editImage, type GeminiImageModel } from "./client";

@@ -48,3 +48,40 @@ export async function generateImage(
     mimeType: imagePart.inlineData.mimeType || "image/png",
   };
 }
+
+export async function editImage(
+  prompt: string,
+  inputB64: string,
+  inputMimeType: string = "image/png",
+  model: GeminiImageModel = "gemini-2.5-flash-image"
+): Promise<{ b64_json: string; mimeType: string }> {
+  const response = await ai.models.generateContent({
+    model,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { data: inputB64, mimeType: inputMimeType } },
+          { text: prompt },
+        ],
+      },
+    ],
+    config: {
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+    },
+  });
+
+  const candidate = response.candidates?.[0];
+  const imagePart = candidate?.content?.parts?.find(
+    (part: { inlineData?: { data?: string; mimeType?: string } }) => part.inlineData
+  );
+
+  if (!imagePart?.inlineData?.data) {
+    throw new Error("No image data in response");
+  }
+
+  return {
+    b64_json: imagePart.inlineData.data,
+    mimeType: imagePart.inlineData.mimeType || "image/png",
+  };
+}

@@ -2040,8 +2040,59 @@ export function TemplatesWorkspace() {
                   transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
                 />
 
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-[14px] z-[3] px-[32px]">
-                  <div className="flex flex-col items-center gap-[10px] pointer-events-none">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-[18px] z-[3] px-[24px]">
+                  <div className="relative" style={{ width: "min(46%, 260px)", aspectRatio: "1" }}>
+                    {[
+                      { size: 100, dur: 14, dir: 1, dots: 8, color: "#5EE6DE", op: 0.85 },
+                      { size: 78, dur: 10, dir: -1, dots: 6, color: "#2896FB", op: 0.9 },
+                      { size: 56, dur: 7, dir: 1, dots: 5, color: "#FFC328", op: 0.95 },
+                    ].map((ring, ri) => (
+                      <motion.div
+                        key={ri}
+                        className="absolute inset-0 m-auto"
+                        style={{ width: `${ring.size}%`, height: `${ring.size}%`, borderRadius: "50%", border: `1px solid ${ring.color}33` }}
+                        animate={{ rotate: ring.dir * 360 }}
+                        transition={{ duration: ring.dur, repeat: Infinity, ease: "linear" }}
+                      >
+                        {Array.from({ length: ring.dots }).map((_, di) => {
+                          const angle = (di / ring.dots) * Math.PI * 2;
+                          const r = 50;
+                          const cx = 50 + Math.cos(angle) * r;
+                          const cy = 50 + Math.sin(angle) * r;
+                          return (
+                            <span
+                              key={di}
+                              className="absolute"
+                              style={{
+                                left: `${cx}%`, top: `${cy}%`,
+                                width: 8, height: 8,
+                                marginLeft: -4, marginTop: -4,
+                                borderRadius: "50%",
+                                background: ring.color,
+                                opacity: ring.op,
+                                boxShadow: `0 0 12px ${ring.color}, 0 0 22px ${ring.color}`,
+                              }}
+                            />
+                          );
+                        })}
+                      </motion.div>
+                    ))}
+                    <motion.div
+                      className="absolute inset-0 m-auto flex items-center justify-center"
+                      style={{
+                        width: "32%", height: "32%",
+                        borderRadius: "50%",
+                        background: "radial-gradient(closest-side, rgba(255,255,255,0.12), rgba(11,20,38,0.95))",
+                        border: "1px solid rgba(94,230,222,0.4)",
+                        boxShadow: "0 0 60px rgba(40,150,251,0.45), inset 0 0 30px rgba(94,230,222,0.18)",
+                      }}
+                      animate={{ scale: [1, 1.06, 1] }}
+                      transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      <Sparkles className="w-[40%] h-[40%] text-[#5EE6DE]" />
+                    </motion.div>
+                  </div>
+                  <div className="flex flex-col items-center gap-[8px] pointer-events-none">
                     <span className="text-[9px] font-bold tracking-[0.32em] text-[#FFC328]/80 uppercase">Joke break</span>
                     <AnimatePresence mode="wait">
                       <motion.div

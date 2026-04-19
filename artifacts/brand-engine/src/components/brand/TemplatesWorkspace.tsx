@@ -879,6 +879,58 @@ export function TemplatesWorkspace() {
       });
       setAiSlides(slides);
       setAiSlideIndex(0);
+      // Auto-cut the AI human out of its background and swap it in-place. Runs in
+      // the browser via @imgly/background-removal — proper alpha channel, no API.
+      void (async () => {
+        try {
+          const humanRe = /<img\b[^>]*?\bdata-ai-human\s*=\s*["']true["'][^>]*?>/gi;
+          const srcRe = /\bsrc\s*=\s*["'](data:[^"']+)["']/i;
+          const needsBg = slides.some(s => humanRe.test(s));
+          humanRe.lastIndex = 0;
+          if (!needsBg) return;
+          const { default: removeBackground } = await import("@imgly/background-removal");
+          const cache = new Map<string, string>();
+          const processed = await Promise.all(slides.map(async (slide) => {
+            let out = slide;
+            const tags = slide.match(humanRe) || [];
+            for (const tag of tags) {
+              const m = tag.match(srcRe);
+              if (!m) continue;
+              const src = m[1];
+              let cutout = cache.get(src);
+              if (!cutout) {
+                try {
+                  const blob = await removeBackground(src);
+                  cutout = await new Promise<string>((resolve, reject) => {
+                    const r = new FileReader();
+                    r.onload = () => resolve(r.result as string);
+                    r.onerror = reject;
+                    r.readAsDataURL(blob);
+                  });
+                  cache.set(src, cutout);
+                } catch (e) {
+                  console.error("[bg-removal] failed for one image", e);
+                  continue;
+                }
+              }
+              const newTag = tag.replace(srcRe, `src="${cutout}"`);
+              out = out.replace(tag, newTag);
+            }
+            // Inject safety stylesheet so the photo container shows the slide bg,
+            // not any decorative checker / grid Claude may have placed behind.
+            const safetyCss = `<style data-removebg-safety="true">[data-ai-human]{background:transparent !important;}*:has(> [data-ai-human]){background-image:none !important;background:linear-gradient(180deg,#122036 0%,#0B1426 100%) !important;}</style>`;
+            if (!/data-removebg-safety/.test(out)) {
+              out = /<\/head>/i.test(out)
+                ? out.replace(/<\/head>/i, `${safetyCss}</head>`)
+                : safetyCss + out;
+            }
+            return out;
+          }));
+          setAiSlides(processed);
+        } catch (err) {
+          console.error("[bg-removal] pipeline failed", err);
+        }
+      })();
     } catch (err: any) {
       setAiError(err?.message || "Generation failed");
     } finally {
@@ -2188,35 +2240,10 @@ export function TemplatesWorkspace() {
                   </div>
                 </div>
               ) : (
-              <div
-                className="relative w-full max-w-[600px] mx-auto overflow-hidden rounded-[12px]"
-                style={{ aspectRatio: aiAspectRatio, boxShadow: "0 8px 50px rgba(0,0,0,0.4)" }}
-              >
-                <iframe
-                  ref={aiPreviewIframeRef}
-                  title="Claude Design preview"
-                  srcDoc={aiEditMode && aiHtml ? wrapWithEditor(aiHtml, aiCanvasDims.w, aiCanvasDims.h) : (aiHtmlScaled ?? aiHtml)}
-                  sandbox="allow-same-origin allow-scripts"
-                  className="w-full h-full block border-0"
-                  style={{ background: "#0B1426" }}
-                />
-                {aiSlides.length > 1 && (
-                  <div className="absolute top-[12px] right-[12px] flex items-center gap-[6px] z-[5]">
-                    <button
-                      onClick={() => { setAiEditMode(false); setAiGridView(true); }}
-                      className="flex items-center gap-[5px] py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)] text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
-                      title="See all slides at once"
-                    >
-                      <LayoutGrid className="w-[11px] h-[11px]" /> ALL {aiSlides.length}
-                    </button>
-                    <div className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)]">
-                      <span className="text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE]">SLIDE {aiSlideIndex + 1} / {aiSlides.length}</span>
-                    </div>
-                  </div>
-                )}
-                <div className="absolute top-[12px] left-[12px] flex items-center gap-[8px] z-[6]">
-                  {!aiEditMode ? (
-                    <>
+              <div className="w-full max-w-[600px] mx-auto flex flex-col gap-[10px]">
+                <div className="flex items-center justify-between gap-[8px] flex-wrap">
+                  <div className="flex items-center gap-[8px]">
+                    {!aiEditMode ? (
                       <button
                         onClick={() => setAiEditMode(true)}
                         className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
@@ -2224,43 +2251,53 @@ export function TemplatesWorkspace() {
                       >
                         <Edit3 className="w-[12px] h-[12px]" /> EDIT
                       </button>
-                      {aiHtml && /data-ai-human\s*=\s*["']true["']/i.test(aiHtml) && (
+                    ) : (
+                      <>
                         <button
-                          onClick={handleRemoveHumanBg}
-                          disabled={aiRemovingBg}
-                          className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(40,150,251,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#7CC8FF] hover:bg-[rgba(40,150,251,0.18)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                          title="Cut the human out of the background using Nano Banana"
+                          onClick={handleSaveInlineEdits}
+                          disabled={aiSavingEdits}
+                          className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[#FFC328] border border-[#FFC328] text-[11px] font-bold tracking-[0.1em] text-[#0B1426] hover:brightness-110 cursor-pointer disabled:opacity-60"
                         >
-                          {aiRemovingBg
-                            ? <><Loader2 className="w-[12px] h-[12px] animate-spin" /> REMOVING…</>
-                            : <><Wand2 className="w-[12px] h-[12px]" /> REMOVE BG</>}
+                          <Save className="w-[12px] h-[12px]" /> {aiSavingEdits ? "SAVING…" : "SAVE EDITS"}
                         </button>
-                      )}
-                      {aiRemoveBgError && (
-                        <span className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(255,195,40,0.15)] border border-[rgba(255,195,40,0.4)] text-[10px] text-[#FFC328]">
-                          {aiRemoveBgError}
-                        </span>
-                      )}
-                    </>
-                  ) : (
-                    <>
+                        <button
+                          onClick={() => setAiEditMode(false)}
+                          disabled={aiSavingEdits}
+                          className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.18)] text-[11px] font-bold tracking-[0.1em] text-[#94A3B8] hover:text-white cursor-pointer disabled:opacity-60"
+                        >
+                          CANCEL
+                        </button>
+                        <span className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.08)] text-[10px] tracking-[0.08em] text-[#94A3B8]">Click any text to edit</span>
+                      </>
+                    )}
+                  </div>
+                  {aiSlides.length > 1 && (
+                    <div className="flex items-center gap-[6px]">
                       <button
-                        onClick={handleSaveInlineEdits}
-                        disabled={aiSavingEdits}
-                        className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[#FFC328] border border-[#FFC328] text-[11px] font-bold tracking-[0.1em] text-[#0B1426] hover:brightness-110 cursor-pointer disabled:opacity-60"
+                        onClick={() => { setAiEditMode(false); setAiGridView(true); }}
+                        className="flex items-center gap-[5px] py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)] text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                        title="See all slides at once"
                       >
-                        <Save className="w-[12px] h-[12px]" /> {aiSavingEdits ? "SAVING…" : "SAVE EDITS"}
+                        <LayoutGrid className="w-[11px] h-[11px]" /> ALL {aiSlides.length}
                       </button>
-                      <button
-                        onClick={() => setAiEditMode(false)}
-                        disabled={aiSavingEdits}
-                        className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.18)] text-[11px] font-bold tracking-[0.1em] text-[#94A3B8] hover:text-white cursor-pointer disabled:opacity-60"
-                      >
-                        CANCEL
-                      </button>
-                      <span className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(255,255,255,0.08)] text-[10px] tracking-[0.08em] text-[#94A3B8]">Click any text to edit</span>
-                    </>
+                      <div className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)]">
+                        <span className="text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE]">SLIDE {aiSlideIndex + 1} / {aiSlides.length}</span>
+                      </div>
+                    </div>
                   )}
+                </div>
+                <div
+                  className="relative w-full overflow-hidden rounded-[12px]"
+                  style={{ aspectRatio: aiAspectRatio, boxShadow: "0 8px 50px rgba(0,0,0,0.4)" }}
+                >
+                  <iframe
+                    ref={aiPreviewIframeRef}
+                    title="Claude Design preview"
+                    srcDoc={aiEditMode && aiHtml ? wrapWithEditor(aiHtml, aiCanvasDims.w, aiCanvasDims.h) : (aiHtmlScaled ?? aiHtml)}
+                    sandbox="allow-same-origin allow-scripts"
+                    className="w-full h-full block border-0"
+                    style={{ background: "#0B1426" }}
+                  />
                 </div>
               </div>
               )

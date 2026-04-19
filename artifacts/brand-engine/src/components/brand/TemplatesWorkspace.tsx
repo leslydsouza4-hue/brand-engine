@@ -780,7 +780,7 @@ export function TemplatesWorkspace() {
     setAiRemovingBg(true);
     setAiRemoveBgError(null);
     try {
-      const { default: removeBackground } = await import("@imgly/background-removal");
+      const { removeBackground } = await import("@imgly/background-removal");
       const blob = await removeBackground(src);
       const transparentDataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -888,7 +888,7 @@ export function TemplatesWorkspace() {
           const needsBg = slides.some(s => humanRe.test(s));
           humanRe.lastIndex = 0;
           if (!needsBg) return;
-          const { default: removeBackground } = await import("@imgly/background-removal");
+          const { removeBackground } = await import("@imgly/background-removal");
           const cache = new Map<string, string>();
           const processed = await Promise.all(slides.map(async (slide) => {
             let out = slide;

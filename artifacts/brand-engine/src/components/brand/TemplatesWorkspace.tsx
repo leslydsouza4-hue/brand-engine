@@ -463,8 +463,6 @@ export function TemplatesWorkspace() {
   const [aiIncludeHighly, setAiIncludeHighly] = useState(false);
   const [aiHighlyPoseId, setAiHighlyPoseId] = useState<string>(HIGHLY_POSES[0]?.id ?? "");
   const [aiSceneId, setAiSceneId] = useState<string>(DESIGN_SCENES[0]?.id ?? "auto");
-  const [aiPolishing, setAiPolishing] = useState(false);
-  const [aiPolishError, setAiPolishError] = useState<string | null>(null);
   const [aiCustomItemImage, setAiCustomItemImage] = useState<string>("");
   const [aiCustomItemDescription, setAiCustomItemDescription] = useState<string>("");
   const [aiCustomItemInclude, setAiCustomItemInclude] = useState(false);
@@ -913,40 +911,6 @@ export function TemplatesWorkspace() {
       setAiSuggestError(err?.message || "Suggest failed");
     } finally {
       setAiSuggesting(false);
-    }
-  };
-
-  const handlePolishPrompt = async () => {
-    const idea = aiPrompt.trim();
-    if (!idea || aiPolishing) return;
-    setAiPolishing(true);
-    setAiPolishError(null);
-    try {
-      const apiBase = import.meta.env.BASE_URL;
-      const res = await fetch(`${apiBase}api/polish-prompt`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idea,
-          aspect: aiAspect,
-          includeLogo: aiIncludeLogo,
-          logoDescription: aiIncludeLogo ? (LOGO_VARIANTS.find(l => l.id === aiLogoId)?.description ?? "") : "",
-          includeHighly: aiIncludeHighly,
-          highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
-          sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
-          sceneDescription: DESIGN_SCENES.find(s => s.id === aiSceneId)?.description ?? "",
-          format: aiCategoryId,
-          slideCount: aiSlideCount,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      if (!data.prompt) throw new Error("Empty polished prompt");
-      setAiPrompt(data.prompt);
-    } catch (err: any) {
-      setAiPolishError(err?.message || "Polish failed");
-    } finally {
-      setAiPolishing(false);
     }
   };
 
@@ -2007,22 +1971,10 @@ export function TemplatesWorkspace() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-[10px] mt-[6px]">
+            <div className="mb-[10px] mt-[6px]">
               <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">
                 {aiSlideCount > 1 ? "Overall Theme" : "Prompt"}
               </div>
-              <button
-                onClick={handlePolishPrompt}
-                disabled={!aiPrompt.trim() || aiPolishing}
-                title="Rewrite your rough idea as a designer-grade brief"
-                className="flex items-center gap-[5px] py-[4px] px-[9px] rounded-[6px] text-[10px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-40 bg-[rgba(255,195,40,0.08)] border-[rgba(255,195,40,0.3)] text-[#FFC328] hover:bg-[rgba(255,195,40,0.14)]"
-              >
-                {aiPolishing ? (
-                  <><Loader2 className="w-[10px] h-[10px] animate-spin" /><span>Polishing…</span></>
-                ) : (
-                  <><Sparkles className="w-[10px] h-[10px]" /><span>Polish my idea</span></>
-                )}
-              </button>
             </div>
 
             <div className="mb-[10px] p-[12px] rounded-[10px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.22)]">
@@ -2085,7 +2037,7 @@ export function TemplatesWorkspace() {
                 ))}
               </div>
               <div className="text-[9.5px] text-[#64748B] mt-[8px] leading-[1.4]">
-                Click any chip → fills the prompt with a tested brief. Tweak the headline / numbers and hit Generate. Or type a rough idea and use <span className="text-[#FFC328] font-semibold">Polish my idea</span> to expand it.
+                Click any chip → fills the prompt with a tested brief. Tweak the headline / numbers and hit Generate.
               </div>
             </div>
             <textarea
@@ -2137,12 +2089,6 @@ export function TemplatesWorkspace() {
                 ))}
               </div>
             )}
-            {aiPolishError && (
-              <div className="mt-[8px] py-[8px] px-[10px] rounded-[8px] text-[11px] text-[#FCA5A5] bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)]">
-                {aiPolishError}
-              </div>
-            )}
-
             <button
               onClick={handleGenerateAI}
               disabled={!aiPrompt.trim() || aiLoading}

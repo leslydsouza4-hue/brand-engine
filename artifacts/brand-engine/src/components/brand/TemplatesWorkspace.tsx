@@ -801,8 +801,28 @@ export function TemplatesWorkspace() {
       // drawn behind the photo (which becomes visible once the bg is transparent).
       const safetyCss = `
 <style data-removebg-safety="true">
-  [data-ai-human]{background:transparent !important;}
-  *:has(> [data-ai-human]){background-image:none !important;background:linear-gradient(180deg,#122036 0%,#0B1426 100%) !important;}
+  [data-ai-human]{
+    background:transparent !important;
+    -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 70%,rgba(0,0,0,0.92) 84%,rgba(0,0,0,0.55) 94%,rgba(0,0,0,0) 100%),radial-gradient(120% 100% at 50% 40%,#000 65%,rgba(0,0,0,0.85) 82%,rgba(0,0,0,0) 100%) !important;
+            mask-image:linear-gradient(180deg,#000 0%,#000 70%,rgba(0,0,0,0.92) 84%,rgba(0,0,0,0.55) 94%,rgba(0,0,0,0) 100%),radial-gradient(120% 100% at 50% 40%,#000 65%,rgba(0,0,0,0.85) 82%,rgba(0,0,0,0) 100%) !important;
+    -webkit-mask-composite:source-in;
+            mask-composite:intersect;
+    filter:drop-shadow(0 30px 40px rgba(11,20,38,0.65)) drop-shadow(0 0 18px rgba(11,20,38,0.55)) saturate(0.95) contrast(1.02) !important;
+  }
+  *:has(> [data-ai-human]){
+    background-image:none !important;
+    background:radial-gradient(80% 60% at 50% 55%,#1a2a47 0%,#122036 45%,#0B1426 100%) !important;
+    position:relative !important;
+    overflow:hidden !important;
+  }
+  *:has(> [data-ai-human])::after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    pointer-events:none !important;
+    background:linear-gradient(180deg,rgba(11,20,38,0) 60%,rgba(11,20,38,0.55) 88%,rgba(11,20,38,1) 100%) !important;
+    z-index:2 !important;
+  }
 </style>`;
       if (!/data-removebg-safety/.test(updated)) {
         if (/<\/head>/i.test(updated)) {
@@ -923,7 +943,30 @@ export function TemplatesWorkspace() {
             }
             // Inject safety stylesheet so the photo container shows the slide bg,
             // not any decorative checker / grid Claude may have placed behind.
-            const safetyCss = `<style data-removebg-safety="true">[data-ai-human]{background:transparent !important;}*:has(> [data-ai-human]){background-image:none !important;background:linear-gradient(180deg,#122036 0%,#0B1426 100%) !important;}</style>`;
+            const safetyCss = `<style data-removebg-safety="true">
+  [data-ai-human]{
+    background:transparent !important;
+    -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 70%,rgba(0,0,0,0.92) 84%,rgba(0,0,0,0.55) 94%,rgba(0,0,0,0) 100%),radial-gradient(120% 100% at 50% 40%,#000 65%,rgba(0,0,0,0.85) 82%,rgba(0,0,0,0) 100%) !important;
+            mask-image:linear-gradient(180deg,#000 0%,#000 70%,rgba(0,0,0,0.92) 84%,rgba(0,0,0,0.55) 94%,rgba(0,0,0,0) 100%),radial-gradient(120% 100% at 50% 40%,#000 65%,rgba(0,0,0,0.85) 82%,rgba(0,0,0,0) 100%) !important;
+    -webkit-mask-composite:source-in;
+            mask-composite:intersect;
+    filter:drop-shadow(0 30px 40px rgba(11,20,38,0.65)) drop-shadow(0 0 18px rgba(11,20,38,0.55)) saturate(0.95) contrast(1.02) !important;
+  }
+  *:has(> [data-ai-human]){
+    background-image:none !important;
+    background:radial-gradient(80% 60% at 50% 55%,#1a2a47 0%,#122036 45%,#0B1426 100%) !important;
+    position:relative !important;
+    overflow:hidden !important;
+  }
+  *:has(> [data-ai-human])::after{
+    content:"" !important;
+    position:absolute !important;
+    inset:0 !important;
+    pointer-events:none !important;
+    background:linear-gradient(180deg,rgba(11,20,38,0) 60%,rgba(11,20,38,0.55) 88%,rgba(11,20,38,1) 100%) !important;
+    z-index:2 !important;
+  }
+</style>`;
             if (!/data-removebg-safety/.test(out)) {
               out = /<\/head>/i.test(out)
                 ? out.replace(/<\/head>/i, `${safetyCss}</head>`)

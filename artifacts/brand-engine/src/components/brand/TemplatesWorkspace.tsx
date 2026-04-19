@@ -2244,13 +2244,32 @@ export function TemplatesWorkspace() {
                 <div className="flex items-center justify-between gap-[8px] flex-wrap">
                   <div className="flex items-center gap-[8px]">
                     {!aiEditMode ? (
-                      <button
-                        onClick={() => setAiEditMode(true)}
-                        className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
-                        title="Click any text in the preview to edit it"
-                      >
-                        <Edit3 className="w-[12px] h-[12px]" /> EDIT
-                      </button>
+                      <>
+                        <button
+                          onClick={() => setAiEditMode(true)}
+                          className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                          title="Click any text in the preview to edit it"
+                        >
+                          <Edit3 className="w-[12px] h-[12px]" /> EDIT
+                        </button>
+                        {aiHtml && /data-ai-human\s*=\s*["']true["']/i.test(aiHtml) && (
+                          <button
+                            onClick={handleRemoveHumanBg}
+                            disabled={aiRemovingBg}
+                            className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(40,150,251,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#7CC8FF] hover:bg-[rgba(40,150,251,0.18)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                            title="Re-run background removal on the human photo"
+                          >
+                            {aiRemovingBg
+                              ? <><Loader2 className="w-[12px] h-[12px] animate-spin" /> REMOVING…</>
+                              : <><Wand2 className="w-[12px] h-[12px]" /> REMOVE BG</>}
+                          </button>
+                        )}
+                        {aiRemoveBgError && (
+                          <span className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(255,195,40,0.15)] border border-[rgba(255,195,40,0.4)] text-[10px] text-[#FFC328]">
+                            {aiRemoveBgError}
+                          </span>
+                        )}
+                      </>
                     ) : (
                       <>
                         <button

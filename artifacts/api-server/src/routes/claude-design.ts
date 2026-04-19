@@ -103,12 +103,14 @@ You MUST use ONLY the hex values below. You may NOT invent new colors, use gener
 - DO NOT use rgba() with hue values outside this palette. Transparent overlays must be derived from these hex values only (e.g. rgba(40,150,251,0.3) is the rgb of #2896FB — that is allowed).
 
 ## Typography Scale (proportional to canvas height H)
-- Hero headline: font-size ~ 0.13H, font-weight 800-900, letter-spacing -0.025em, line-height 0.95.
+- Hero headline: font-size ~ 0.13H, **font-weight 900 (Poppins Black) — NEVER lower**, letter-spacing -0.03em, line-height 0.92. The headline must look chunky, dense, and editorial. No light or medium weights for headlines, ever.
 - Subhead: font-size ~ 0.045H, font-weight 600, letter-spacing 0, line-height 1.25, color #94A3B8.
 - Eyebrow / kicker: font-size ~ 0.022H, font-weight 700, uppercase, letter-spacing 0.18em, color #5EE6DE or #FFC328.
 - Body: font-size ~ 0.028H, font-weight 500, line-height 1.45.
-- CTA pill text: font-size ~ 0.032H, font-weight 700.
-- Always use 'Poppins' first, then system fallback.
+- CTA pill text: font-size ~ 0.032H, font-weight 800.
+- **Font loading is REQUIRED**: include this exact line at the top of <head> so Poppins renders correctly:
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  Then set body { font-family: 'Poppins', system-ui, -apple-system, sans-serif; }. Headlines explicitly: font-family: 'Poppins', sans-serif; font-weight: 900;
 
 ## Layout Rules (CRITICAL — this is what makes it look pro)
 1. The root container MUST have the EXACT pixel width and height the user requested. Set both width and height in pixels. Use position: relative; overflow: hidden.
@@ -192,7 +194,7 @@ Carousel rules:
 
 # Output Rules (NON-NEGOTIABLE)
 - Return ONLY a complete HTML document starting with <!doctype html>. NO prose, NO markdown fences, NO explanation, NO comments outside the HTML.
-- Inline all CSS in a single <style> tag inside <head>. No external CSS, no scripts, no @import, no fonts that require network access.
+- Inline all CSS in a single <style> tag inside <head>. No external CSS, no scripts, no @import. The ONLY external resource permitted is the Poppins Google Fonts <link> tags specified in the Typography section.
 - Use shaped <div> elements, CSS gradients, CSS shadows, SVG (inline) for icons, and text.
 - <img> tags are ONLY allowed for asset URLs explicitly provided by the user in the "Required Assets" section of the message. NEVER hotlink any other image.
 - If a HighLevel logo URL is provided, you MUST use that <img> rather than typing "HighLevel" as text in CSS.
@@ -275,7 +277,11 @@ Subject description: ${humanDescription}
 - Apply object-fit: cover; on a fixed-dimension wrapper. For portrait/square canvases, the photo should occupy 45-65% of the canvas (right column or top half). For landscape, 40-55%.
 - Add a subtle dark gradient overlay only over text-bearing edges, never across the face.
 - Round corners minimally (8-12px) or leave full-bleed; do NOT crop into a circle unless the design explicitly calls for an avatar.
-- NEVER render the person as SVG — use the <img> tag with this exact src.`);
+- NEVER render the person as SVG — use the <img> tag with this exact src.
+- **CRITICAL — Background-removal compatibility**: the user can click "Remove BG" to make the photo's background transparent. So:
+  • The container that holds the <img data-ai-human> MUST have its OWN visible background — either inheriting the slide's main background gradient, or a solid brand color (#0B1426 / #122036 / a brand gradient). NEVER use a checkered pattern, no transparent/grid texture, no diagonal stripes, no "image placeholder" pattern, no semi-transparent overlay-only container.
+  • If you place the photo inside a card or column on the right, that card's background must be a real brand color or gradient that looks intentional WITHOUT the photo (e.g. linear-gradient(180deg, #122036, #0B1426)). After cutout, the subject should sit cleanly on top of that gradient.
+  • Do NOT decorate the photo container with subtle dot-grids, line-grids, or noise textures — those become very visible once the photo background is removed.`);
   }
   if (hasItem) {
     assetBlock.push(`User-supplied item / product image (REQUIRED — feature prominently):

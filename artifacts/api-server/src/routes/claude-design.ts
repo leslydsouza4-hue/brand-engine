@@ -258,7 +258,8 @@ router.post("/claude-design", async (req, res) => {
 Variant description: ${logoDescription || "official HighLevel lockup"}.
 - Render with style="height: <appropriate>px; width: auto; display: block;". For wordmark/horizontal lockups use height ~ 0.05H to 0.07H. For icon/circle/square marks use height ~ 0.08H to 0.10H (squarer aspect can go larger).
 - Place it in the top-left OR bottom-left corner with the same 6% padding as the rest of the canvas. On extremely small banners (height < 120px) shrink to 18-22px.
-- Do NOT recolor or filter the logo. Use the variant exactly as provided.
+- **Logo integrity (HARD RULE — no exceptions):** the <img> tag for the logo must have NO style or class that applies any of: filter, -webkit-filter, mix-blend-mode, opacity below 1, mask, mask-image, -webkit-mask, background-clip: text, color (irrelevant on img but never apply), or any CSS transform that distorts. The logo's parent and ancestor elements must also not apply filter, mix-blend-mode, or backdrop-filter that would bleed onto it (no parent with filter: brightness/grayscale/invert/hue-rotate/sepia/blur/drop-shadow). The colored arrows mark inside the lockup MUST render in its native green/blue/yellow — if you ever see yourself writing filter:, mix-blend-mode:, or opacity:0.x on the logo or any wrapping div, delete it.
+- Use the variant exactly as provided. Do NOT recolor, tint, mask, or composite it. Do NOT wrap it in a div with mix-blend-mode: screen / overlay / luminosity. Do NOT place it on top of a glow that uses mix-blend-mode.
 - Reserve a clear-space rectangle around it equal to ~half the logo height on every side. No text, orb, or other element may enter that rectangle.`);
   }
   // Auto-detect: prompt mentions a human → generate one with Nano Banana Pro.

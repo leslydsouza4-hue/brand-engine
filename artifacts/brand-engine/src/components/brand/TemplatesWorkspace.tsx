@@ -1715,29 +1715,30 @@ export function TemplatesWorkspace() {
             </div>
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Format</div>
-            <div className="flex gap-[8px] mb-[12px] overflow-x-auto sidebar-scroll">
+            <div className="grid grid-cols-4 gap-[8px] mb-[12px]">
               {AI_FORMATS.map(fmt => {
                 const Icon = fmt.icon;
                 const isActive = aiCategoryId === fmt.id;
                 return (
-                  <motion.div
+                  <motion.button
                     key={fmt.id}
+                    type="button"
                     onClick={() => {
                       setAiCategoryId(fmt.id);
                       setAiAspect(fmt.sizes[0].value);
                     }}
                     whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`flex-1 min-w-[64px] flex flex-col items-center justify-center gap-[6px] py-[12px] px-[6px] rounded-[12px] cursor-pointer transition-all border ${
+                    whileTap={{ scale: 0.97 }}
+                    className={`flex flex-col items-center justify-center gap-[6px] py-[14px] px-[4px] rounded-[12px] cursor-pointer transition-all border ${
                       isActive
-                        ? "bg-[rgba(0,178,169,0.12)] border-[rgba(0,178,169,0.35)]"
-                        : "bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.04)]"
+                        ? "bg-[rgba(23,217,75,0.14)] border-[rgba(23,217,75,0.55)] shadow-[0_0_20px_rgba(23,217,75,0.15)]"
+                        : "bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:border-[rgba(255,255,255,0.18)]"
                     }`}
+                    style={{ outline: "none" }}
                   >
-                    <Icon className={`w-[18px] h-[18px] ${isActive ? "text-[#17D94B]" : "text-[#64748B]"}`} />
-                    <div className={`text-[10.5px] font-semibold ${isActive ? "text-white" : "text-[#94A3B8]"}`}>{fmt.name}</div>
-                    {isActive && <div className="h-[2px] w-[16px] rounded-full bg-[#17D94B]" />}
-                  </motion.div>
+                    <Icon className={`w-[20px] h-[20px] ${isActive ? "text-[#17D94B]" : "text-[#94A3B8]"}`} />
+                    <div className={`text-[11px] font-bold ${isActive ? "text-white" : "text-[#CBD5E1]"}`}>{fmt.name}</div>
+                  </motion.button>
                 );
               })}
             </div>

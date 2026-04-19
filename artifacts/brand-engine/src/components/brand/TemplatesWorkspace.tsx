@@ -202,6 +202,156 @@ const COLOR_OPTIONS = [
   { id: "text-[#FFD700]", label: "Gold", color: "bg-[#FFD700]" },
 ] as const;
 
+const STARTER_PROMPTS: { label: string; hint: string; prompt: string }[] = [
+  {
+    label: "Promo / Sale",
+    hint: "Discount or limited-time offer",
+    prompt: `Square 1080x1080 promo. No human.
+
+Big yellow "50% OFF" badge tilted -8° in the top-right corner, with a thin white outline and soft drop shadow. The badge is the loudest thing on the slide.
+
+Center: bold white headline 2 lines, left-aligned, "The agency stack, half off."
+Underneath the headline: subtext one line in slate grey: "Annual plans only. 14 days left."
+
+Bottom row:
+- Yellow CTA pill on the left: "CLAIM 50% OFF →"
+- Small slate-grey microcopy on the right: "Use code: AGENCY50"
+
+HighLevel wordmark top-left. Deep navy gradient background with one soft green glow orb behind the headline.`,
+  },
+  {
+    label: "Big Stat",
+    hint: "Hero number flex",
+    prompt: `Square 1080x1080. No human.
+
+Center the slide with a single massive number "1.4M" in HighLevel green #17D94B, ~520px tall, bold, with a subtle outer glow. Below it, a thin yellow underline 60% the width of the number.
+
+Above the number: small green eyebrow caps centered: "AGENCIES ON HIGHLEVEL"
+Below the number: bold white subhead 2 lines centered: "Businesses run on one platform. Theirs."
+
+Bottom: yellow CTA pill: "JOIN THEM →"
+
+HighLevel wordmark top-left. Deep navy gradient background. Soft green glow behind the number. Lots of whitespace.`,
+  },
+  {
+    label: "Customer Quote",
+    hint: "Testimonial pull-quote",
+    prompt: `Square 1080x1080. No human.
+
+Top-left: HighLevel wordmark. Top-right: small green eyebrow chip "CUSTOMER STORY".
+
+Center: a giant yellow opening quote glyph " ~180px tall sitting just left of a 4-line editorial headline:
+"We replaced
+six tools with
+HighLevel and
+doubled our team."
+
+Below the quote, a small attribution row left-aligned:
+- A 56x56 rounded-square brand badge with green initials "BD" on navy
+- Stacked text: "Briana Diaz" (white, semibold) / "Founder, Beacon Digital" (slate grey, smaller)
+
+Bottom-right: small yellow CTA pill: "READ THE STORY →".
+
+Deep navy gradient background with one soft green glow orb behind the giant quote glyph.`,
+  },
+  {
+    label: "Webinar Invite",
+    hint: "Live event / workshop promo",
+    prompt: `Square 1080x1080 webinar invite. No human.
+
+Top-left: HighLevel wordmark.
+Top-right: small green pulsing dot + "LIVE WEBINAR · FREE" chip.
+
+Center, large and bold:
+- Bold white headline 2 lines: "How agencies hit $50K MRR with HighLevel."
+- Subtext one line in slate grey: "60-minute workshop with the GHL growth team."
+
+Below the subtext, a row of 3 frosted info pills evenly spaced, each with a tiny green dot:
+- "● THU · APR 25"
+- "● 11AM PT"
+- "● LIVE Q&A"
+
+Bottom: yellow CTA pill: "SAVE MY SEAT →".
+
+Deep navy gradient background with two soft glow orbs (green left, blue right) behind the headline.`,
+  },
+  {
+    label: "Product Launch",
+    hint: "New feature announcement",
+    prompt: `Square 1080x1080 launch announcement. No human.
+
+Top-left: HighLevel wordmark.
+Top-right: yellow "NEW" badge tilted +6°.
+
+Center: a small green eyebrow caps row "JUST SHIPPED · AI VOICE AGENT"
+Below it, bold white headline 3 lines, centered: "Your phone lines just got a brain."
+Subtext one line: "AI Voice Agent answers, qualifies, and books — 24/7."
+
+Below the text, 3 frosted feature pills in a row with tiny green checkmarks:
+- "✓ Answers in 0.4s"
+- "✓ Books on calendar"
+- "✓ Speaks 12 languages"
+
+Bottom: yellow CTA pill: "TURN IT ON →".
+
+Deep navy gradient with a soft blue glow orb behind the headline. Whitespace.`,
+  },
+  {
+    label: "Milestone",
+    hint: "Celebrate a number / win",
+    prompt: `Square 1080x1080 milestone celebration. No human.
+
+Confetti background: small yellow and green rounded squares, circles, and plus shapes scattered at 15-30° rotations around the edges of the slide, never over the center text.
+
+Center: small green eyebrow "WE DID A THING"
+Bold white headline 2 lines centered: "1,000,000 businesses. One platform."
+Subtext one line in slate grey: "Thanks to every agency, founder, and operator who made it happen."
+
+Bottom: yellow CTA pill: "JOIN THE MILLION →".
+
+HighLevel wordmark top-left. Deep navy gradient background with a soft green glow orb behind the headline.`,
+  },
+  {
+    label: "Quick Tip",
+    hint: "Educational / value post",
+    prompt: `Square 1080x1080 educational tip. No human.
+
+Top-left: HighLevel wordmark.
+Top-right: small green chip "DAILY TIP · #047".
+
+Center: large bold white headline 3 lines, left-aligned in a 75% width column: "Reply in 5 minutes. Close 9× more deals."
+
+Below the headline, a 4-row mini list, each row left-aligned with a small green numeric badge (01, 02, 03, 04) and a single short instruction:
+01 · Turn on lead-routing
+02 · Set the AI auto-reply
+03 · Auto-book on the calendar
+04 · Send the recap text
+
+Bottom: yellow CTA pill: "SET IT UP →".
+
+Deep navy gradient with one subtle dotted grid pattern at 4% opacity in the background.`,
+  },
+  {
+    label: "Case Study",
+    hint: "Result-driven proof point",
+    prompt: `Square 1080x1080 case study. No human.
+
+Top-left: HighLevel wordmark. Top-right: small green chip "CASE STUDY".
+
+Center: a 3-column row of big stats, each in its own frosted card with thin green hairline border:
+- Card 1: "+312%" in green, label below "PIPELINE GROWTH"
+- Card 2: "-$8.4K" in yellow, label below "MONTHLY TOOL SPEND"
+- Card 3: "47s" in blue, label below "AVG LEAD RESPONSE"
+
+Above the cards: small eyebrow caps "BEACON DIGITAL · 90 DAYS ON HIGHLEVEL"
+Below the cards: bold white headline 2 lines centered: "Six tools out. One platform in. Numbers up."
+
+Bottom: yellow CTA pill: "READ THE FULL STORY →".
+
+Deep navy gradient background with a soft green glow orb behind the center card.`,
+  },
+];
+
 export function TemplatesWorkspace() {
   const { isExporting, handleExport } = useExport();
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0]);
@@ -1698,15 +1848,34 @@ export function TemplatesWorkspace() {
               <button
                 onClick={handlePolishPrompt}
                 disabled={!aiPrompt.trim() || aiPolishing}
-                title="Rewrite your prompt as a designer-grade brief"
+                title="Rewrite your rough idea as a designer-grade brief"
                 className="flex items-center gap-[5px] py-[4px] px-[9px] rounded-[6px] text-[10px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-40 bg-[rgba(255,195,40,0.08)] border-[rgba(255,195,40,0.3)] text-[#FFC328] hover:bg-[rgba(255,195,40,0.14)]"
               >
                 {aiPolishing ? (
                   <><Loader2 className="w-[10px] h-[10px] animate-spin" /><span>Polishing…</span></>
                 ) : (
-                  <><Sparkles className="w-[10px] h-[10px]" /><span>Polish</span></>
+                  <><Sparkles className="w-[10px] h-[10px]" /><span>Polish my idea</span></>
                 )}
               </button>
+            </div>
+
+            <div className="mb-[10px] p-[10px] rounded-[10px] bg-[rgba(23,217,75,0.04)] border border-[rgba(23,217,75,0.14)]">
+              <div className="text-[9.5px] font-bold uppercase tracking-[1.3px] text-[#17D94B] mb-[8px]">No idea? Start here →</div>
+              <div className="flex flex-wrap gap-[6px]">
+                {STARTER_PROMPTS.map((s) => (
+                  <button
+                    key={s.label}
+                    onClick={() => setAiPrompt(s.prompt)}
+                    title={s.hint}
+                    className="py-[5px] px-[10px] rounded-full text-[10.5px] font-semibold bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[#CBD5E1] hover:bg-[rgba(23,217,75,0.1)] hover:border-[rgba(23,217,75,0.4)] hover:text-[#17D94B] cursor-pointer transition-all"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <div className="text-[9.5px] text-[#64748B] mt-[8px] leading-[1.4]">
+                Click any chip → fills the prompt with a tested brief. Tweak the headline / numbers and hit Generate. Or type a rough idea and use <span className="text-[#FFC328] font-semibold">Polish my idea</span> to expand it.
+              </div>
             </div>
             <textarea
               value={aiPrompt}

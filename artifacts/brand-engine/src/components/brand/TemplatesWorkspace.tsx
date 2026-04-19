@@ -276,7 +276,10 @@ export function TemplatesWorkspace() {
   const [aiCategoryId, setAiCategoryId] = useState<typeof AI_FORMATS[number]["id"]>("social");
   const [aiAspect, setAiAspect] = useState("1080x1080");
   const [aiModel, setAiModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-sonnet-4-6");
-  const [aiHtml, setAiHtml] = useState<string | null>(null);
+  const [aiSlides, setAiSlides] = useState<string[]>([]);
+  const [aiSlideIndex, setAiSlideIndex] = useState(0);
+  const [aiSubject, setAiSubject] = useState("");
+  const [aiSlideCount, setAiSlideCount] = useState(1);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiIncludeLogo, setAiIncludeLogo] = useState(true);
@@ -327,6 +330,7 @@ export function TemplatesWorkspace() {
     return `${inject}${html}`;
   };
 
+  const aiHtml = aiSlides[aiSlideIndex] ?? null;
   const aiHtmlScaled = aiHtml ? wrapWithFit(aiHtml, aiCanvasDims.w, aiCanvasDims.h) : null;
 
   const handlePolishPrompt = async () => {
@@ -387,12 +391,18 @@ export function TemplatesWorkspace() {
           highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
           sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
           sceneDescription: DESIGN_SCENES.find(s => s.id === aiSceneId)?.description ?? "",
+          subject: aiSubject.trim(),
+          slideCount: aiSlideCount,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      if (!data.html) throw new Error("No HTML returned");
-      setAiHtml(data.html);
+      const slides: string[] = Array.isArray(data.slides) && data.slides.length
+        ? data.slides
+        : (data.html ? [data.html] : []);
+      if (!slides.length) throw new Error("No HTML returned");
+      setAiSlides(slides);
+      setAiSlideIndex(0);
     } catch (err: any) {
       setAiError(err?.message || "Generation failed");
     } finally {
@@ -421,8 +431,8 @@ export function TemplatesWorkspace() {
 
   const [aiExporting, setAiExporting] = useState<null | "png" | "jpeg" | "pdf">(null);
 
-  const renderAIToCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    if (!aiHtml) return null;
+  const renderHtmlToCanvas = async (html: string): Promise<HTMLCanvasElement | null> => {
+    if (!html) return null;
     const { w, h } = aiCanvasDims;
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
@@ -436,15 +446,35 @@ export function TemplatesWorkspace() {
     try {
       await new Promise<void>((resolve) => {
         iframe.onload = () => resolve();
-        iframe.srcdoc = aiHtml;
+        iframe.srcdoc = html;
       });
       const doc = iframe.contentDocument;
       if (!doc) return null;
+
+      // Strip body's flex-centering so the canvas root sits at (0,0).
+      // The system prompt always centers .canvas inside body via flex —
+      // for export we want it pinned to origin so html2canvas captures it
+      // crisply at native size with no offset.
+      const fixStyle = doc.createElement("style");
+      fixStyle.textContent = `
+        html, body { margin:0 !important; padding:0 !important; width:${w}px !important; height:${h}px !important; min-height:0 !important; overflow:hidden !important; display:block !important; background:#0B1426 !important; }
+        body > .canvas, body > div:first-child { position: relative !important; left: 0 !important; top: 0 !important; margin: 0 !important; transform: none !important; }
+      `;
+      doc.head.appendChild(fixStyle);
+
+      // Wait for images.
       const imgs = Array.from(doc.images);
       await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r(); })));
-      await new Promise(r => setTimeout(r, 250));
+      // Wait for web fonts (Poppins etc.) — biggest cause of layout shift.
+      try { if ((doc as any).fonts && (doc as any).fonts.ready) await (doc as any).fonts.ready; } catch {}
+      // Settle.
+      await new Promise(r => setTimeout(r, 200));
+
+      // Prefer capturing the .canvas root if present; otherwise body.
+      const target = (doc.querySelector(".canvas") as HTMLElement | null) ?? doc.body;
+
       const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(doc.documentElement, {
+      const canvas = await html2canvas(target, {
         width: w,
         height: h,
         windowWidth: w,
@@ -453,12 +483,17 @@ export function TemplatesWorkspace() {
         useCORS: true,
         scale: 1,
         logging: false,
+        x: 0,
+        y: 0,
       });
       return canvas;
     } finally {
       document.body.removeChild(iframe);
     }
   };
+
+  const renderAIToCanvas = async (): Promise<HTMLCanvasElement | null> =>
+    aiHtml ? renderHtmlToCanvas(aiHtml) : null;
 
   const downloadBlob = (blob: Blob, filename: string) => {
     const url = URL.createObjectURL(blob);
@@ -516,6 +551,62 @@ export function TemplatesWorkspace() {
       setAiError(err instanceof Error ? err.message : "PDF export failed");
     } finally {
       setAiExporting(null);
+    }
+  };
+
+  const [aiExportAllProgress, setAiExportAllProgress] = useState<{ done: number; total: number } | null>(null);
+  const handleAIDownloadAllPdf = async () => {
+    if (aiSlides.length === 0 || aiExporting) return;
+    setAiExporting("pdf");
+    setAiExportAllProgress({ done: 0, total: aiSlides.length });
+    try {
+      const { jsPDF } = await import("jspdf");
+      const { w, h } = aiCanvasDims;
+      const pdf = new jsPDF({
+        orientation: w >= h ? "landscape" : "portrait",
+        unit: "px",
+        format: [w, h],
+        hotfixes: ["px_scaling"],
+      });
+      for (let i = 0; i < aiSlides.length; i++) {
+        const html = aiSlides[i]!;
+        const canvas = await renderHtmlToCanvas(html);
+        if (!canvas) continue;
+        const dataUrl = canvas.toDataURL("image/png");
+        if (i > 0) pdf.addPage([w, h], w >= h ? "landscape" : "portrait");
+        pdf.addImage(dataUrl, "PNG", 0, 0, w, h);
+        setAiExportAllProgress({ done: i + 1, total: aiSlides.length });
+      }
+      pdf.save(`claude-carousel-${Date.now()}.pdf`);
+    } catch (err) {
+      console.error("[ai-export-all-pdf]", err);
+      setAiError(err instanceof Error ? err.message : "PDF export failed");
+    } finally {
+      setAiExporting(null);
+      setAiExportAllProgress(null);
+    }
+  };
+
+  const handleAIDownloadAllPng = async () => {
+    if (aiSlides.length === 0 || aiExporting) return;
+    setAiExporting("png");
+    setAiExportAllProgress({ done: 0, total: aiSlides.length });
+    try {
+      const stamp = Date.now();
+      for (let i = 0; i < aiSlides.length; i++) {
+        const html = aiSlides[i]!;
+        const canvas = await renderHtmlToCanvas(html);
+        if (!canvas) continue;
+        const blob: Blob | null = await new Promise(r => canvas.toBlob(b => r(b), "image/png"));
+        if (blob) downloadBlob(blob, `claude-carousel-${stamp}-slide-${String(i + 1).padStart(2, "0")}.png`);
+        setAiExportAllProgress({ done: i + 1, total: aiSlides.length });
+      }
+    } catch (err) {
+      console.error("[ai-export-all-png]", err);
+      setAiError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setAiExporting(null);
+      setAiExportAllProgress(null);
     }
   };
 
@@ -856,16 +947,48 @@ export function TemplatesWorkspace() {
               ))}
             </select>
 
-            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Scene</div>
-            <select
-              value={aiSceneId}
-              onChange={(e) => setAiSceneId(e.target.value)}
-              className="w-full mb-[14px] py-[10px] pr-[38px] pl-[14px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-inherit text-[12px] font-medium text-white cursor-pointer outline-none appearance-none focus:border-[rgba(0,178,169,0.3)]"
-            >
-              {DESIGN_SCENES.map(s => (
-                <option key={s.id} value={s.id} className="bg-[#0a1628]">{s.name}</option>
-              ))}
-            </select>
+            <div className="grid grid-cols-2 gap-[10px] mb-[14px]">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Scene</div>
+                <select
+                  value={aiSceneId}
+                  onChange={(e) => setAiSceneId(e.target.value)}
+                  className="w-full py-[10px] pr-[28px] pl-[12px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-inherit text-[12px] font-medium text-white cursor-pointer outline-none appearance-none focus:border-[rgba(0,178,169,0.3)]"
+                >
+                  {DESIGN_SCENES.map(s => (
+                    <option key={s.id} value={s.id} className="bg-[#0a1628]">{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Slides</div>
+                <div className="flex items-center gap-[6px] py-[5px] pl-[6px] pr-[6px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px]">
+                  <button
+                    onClick={() => setAiSlideCount(c => Math.max(1, c - 1))}
+                    disabled={aiSlideCount <= 1 || aiLoading}
+                    className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(255,255,255,0.04)] text-[#94A3B8] hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-[14px] font-bold"
+                  >−</button>
+                  <div className="flex-1 text-center text-[13px] font-bold text-white">
+                    {aiSlideCount}
+                    {aiSlideCount > 1 && <span className="ml-[4px] text-[10px] font-medium text-[#5EE6DE]">carousel</span>}
+                  </div>
+                  <button
+                    onClick={() => setAiSlideCount(c => Math.min(10, c + 1))}
+                    disabled={aiSlideCount >= 10 || aiLoading}
+                    className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(255,255,255,0.04)] text-[#94A3B8] hover:bg-[rgba(255,255,255,0.08)] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer text-[14px] font-bold"
+                  >+</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Subject (optional)</div>
+            <textarea
+              value={aiSubject}
+              onChange={(e) => setAiSubject(e.target.value)}
+              placeholder="e.g. a confident female founder in her 30s, short dark hair, smiling, wearing a teal blazer"
+              rows={2}
+              className="w-full mb-[14px] py-[10px] px-[12px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
+            />
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Brand Assets</div>
             <div className="flex flex-col gap-[6px] mb-[14px]">
@@ -980,12 +1103,36 @@ export function TemplatesWorkspace() {
 
             {aiHtml && (
               <div className="mt-[16px] flex flex-col gap-[8px]">
+                {aiSlides.length > 1 && (
+                  <div className="flex items-center justify-between py-[8px] px-[10px] rounded-[10px] bg-[rgba(94,230,222,0.06)] border border-[rgba(94,230,222,0.18)]">
+                    <button
+                      onClick={() => setAiSlideIndex(i => Math.max(0, i - 1))}
+                      disabled={aiSlideIndex === 0}
+                      className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(255,255,255,0.05)] text-[#5EE6DE] hover:bg-[rgba(255,255,255,0.1)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-[14px] font-bold"
+                    >‹</button>
+                    <div className="flex items-center gap-[5px]">
+                      {aiSlides.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setAiSlideIndex(i)}
+                          className={`transition-all rounded-full cursor-pointer ${i === aiSlideIndex ? "w-[18px] h-[6px] bg-[#5EE6DE]" : "w-[6px] h-[6px] bg-[rgba(94,230,222,0.3)] hover:bg-[rgba(94,230,222,0.5)]"}`}
+                          title={`Slide ${i + 1}`}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setAiSlideIndex(i => Math.min(aiSlides.length - 1, i + 1))}
+                      disabled={aiSlideIndex >= aiSlides.length - 1}
+                      className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(255,255,255,0.05)] text-[#5EE6DE] hover:bg-[rgba(255,255,255,0.1)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-[14px] font-bold"
+                    >›</button>
+                  </div>
+                )}
                 <button
                   onClick={handleAIOpen}
                   className="w-full flex items-center justify-center gap-[8px] py-[10px] px-[14px] rounded-[10px] text-[12px] font-semibold bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[#E2E8F0] hover:bg-[rgba(255,255,255,0.07)] cursor-pointer transition-all"
                 >
                   <ExternalLink className="w-[13px] h-[13px]" />
-                  Open in new tab
+                  Open {aiSlides.length > 1 ? `slide ${aiSlideIndex + 1}` : ""} in new tab
                 </button>
                 <div className="grid grid-cols-3 gap-[6px]">
                   {([
@@ -1008,12 +1155,38 @@ export function TemplatesWorkspace() {
                     </button>
                   ))}
                 </div>
+                {aiSlides.length > 1 && (
+                  <div className="grid grid-cols-2 gap-[6px]">
+                    <button
+                      onClick={handleAIDownloadAllPng}
+                      disabled={!!aiExporting}
+                      className="flex items-center justify-center gap-[6px] py-[10px] rounded-[10px] text-[11.5px] font-bold bg-[rgba(40,150,251,0.1)] border border-[rgba(40,150,251,0.3)] text-[#7CC8FF] hover:bg-[rgba(40,150,251,0.18)] cursor-pointer transition-all disabled:opacity-50 disabled:cursor-wait"
+                    >
+                      {aiExporting === "png" && aiExportAllProgress ? (
+                        <><Loader2 className="w-[12px] h-[12px] animate-spin" />{aiExportAllProgress.done}/{aiExportAllProgress.total}</>
+                      ) : (
+                        <><DownloadIcon className="w-[12px] h-[12px]" />All PNGs</>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleAIDownloadAllPdf}
+                      disabled={!!aiExporting}
+                      className="flex items-center justify-center gap-[6px] py-[10px] rounded-[10px] text-[11.5px] font-bold bg-[rgba(255,195,40,0.1)] border border-[rgba(255,195,40,0.3)] text-[#FFC328] hover:bg-[rgba(255,195,40,0.18)] cursor-pointer transition-all disabled:opacity-50 disabled:cursor-wait"
+                    >
+                      {aiExporting === "pdf" && aiExportAllProgress ? (
+                        <><Loader2 className="w-[12px] h-[12px] animate-spin" />{aiExportAllProgress.done}/{aiExportAllProgress.total}</>
+                      ) : (
+                        <><DownloadIcon className="w-[12px] h-[12px]" />All as PDF</>
+                      )}
+                    </button>
+                  </div>
+                )}
                 <button
                   onClick={handleAIDownloadHtml}
                   className="w-full flex items-center justify-center gap-[8px] py-[8px] px-[14px] rounded-[10px] text-[11px] font-semibold bg-transparent border border-[rgba(255,255,255,0.06)] text-[#64748B] hover:bg-[rgba(255,255,255,0.03)] hover:text-[#94A3B8] cursor-pointer transition-all"
                 >
                   <DownloadIcon className="w-[12px] h-[12px]" />
-                  Download HTML source
+                  Download HTML source {aiSlides.length > 1 ? `(slide ${aiSlideIndex + 1})` : ""}
                 </button>
                 <div className="text-[10.5px] text-[#475569] text-center mt-[2px]">Exports render at native canvas resolution.</div>
               </div>
@@ -1349,6 +1522,11 @@ export function TemplatesWorkspace() {
                   className="w-full h-full block border-0"
                   style={{ background: "#0B1426" }}
                 />
+                {aiSlides.length > 1 && (
+                  <div className="absolute top-[12px] right-[12px] flex items-center gap-[6px] py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)] z-[5]">
+                    <span className="text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE]">SLIDE {aiSlideIndex + 1} / {aiSlides.length}</span>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-[10px] text-center max-w-[420px] px-[20px]">

@@ -99,6 +99,36 @@ K. **Self-audit before outputting.** Walk through every text element and ask: "D
 - **Banner (height < 200px)**: Wordmark left, headline center, CTA right. ALL on one row. Vertically centered. NO subhead.
 - **Story (1080×1920)**: Top third: wordmark + eyebrow. Middle third: huge headline. Bottom third: subhead + CTA. Decorative element behind, blurred.
 
+## Rendering People / Subjects (when a Subject is described in the request)
+When the user provides a Subject (a person, founder, customer, audience archetype, etc.), you MUST render a stylized inline-SVG illustration of that subject — never <img>, never a placeholder, never an emoji. Treat the subject like a hero illustration in a Linear/Stripe/Vercel hero section.
+
+Style rules for the SVG figure:
+- Always inline <svg> with explicit viewBox. Sized via CSS to ~70-90% of canvas height (portrait/square) or ~85-95% of height anchored right (landscape).
+- Use a clean, geometric, slightly editorial style. Soft rounded shapes. No anatomy detail, no hyperrealism.
+- Color palette for the figure (HARD CONSTRAINT, palette only):
+  - Body / silhouette base: gradient from #122036 → #1A2942 (or #0B1426 → #122036 for darker scenes).
+  - Rim light / highlight edge: stroke or thin overlay in #2896FB or #5EE6DE at ~0.6 opacity.
+  - Skin / face plane: a single flat shape filled with #E2E8F0 (no shading detail). Simple eye + smile suggested with 1-2 dark strokes in #0B1426.
+  - Hair: flat #0B1426 or #122036.
+  - Clothing accent: a single brand-color block (#2896FB, #00B2A9, or #FFC328) — pick whichever fits the energy.
+  - Soft glow behind the figure: radial-gradient(circle, rgba(40,150,251,0.45) 0%, transparent 65%); filter: blur(40px); placed in a div behind the SVG.
+- Position: figure sits in the VISUAL zone, NEVER overlapping the TEXT zone. Apply the same anti-overlap rules — at least 32px gap from any text bounding box.
+- If the subject is a group (e.g. "two co-founders"), render 2 figures side by side, slightly overlapping silhouettes, scaled down proportionally.
+- If the subject is non-human (a product, a device, an icon), render a clean geometric SVG illustration in the same brand-color treatment.
+
+## Carousel Mode (when the user requests multiple slides)
+When the user requests N slides, output N complete <!doctype html> documents, each separated by EXACTLY this delimiter on its own line:
+<!--SLIDE-BREAK-->
+
+Carousel rules:
+- Slide 1 is the COVER: bold hook headline, big eyebrow, optional "Swipe →" hint at bottom-right, wordmark top-left.
+- Middle slides are CONTENT: each focuses on ONE idea (a stat, a step, a benefit, a quote). Number them subtly in the corner ("02 / 05") in #5EE6DE 0.022H uppercase.
+- Final slide is the CTA: clear call to action, big button, wordmark, optional handle/URL.
+- Visual cohesion across slides: same background scene, same color story, same wordmark position, same typography scale. Vary the focal element (orb position, accent shape) so they feel like a story, not duplicates.
+- Each slide is the EXACT same canvas dimensions specified.
+- Do not number slides in their headlines; only the small corner counter.
+- Output order: slide 1 first, then delimiter, then slide 2, etc. No prose anywhere.
+
 # Output Rules (NON-NEGOTIABLE)
 - Return ONLY a complete HTML document starting with <!doctype html>. NO prose, NO markdown fences, NO explanation, NO comments outside the HTML.
 - Inline all CSS in a single <style> tag inside <head>. No external CSS, no scripts, no @import, no fonts that require network access.
@@ -130,6 +160,11 @@ router.post("/claude-design", async (req, res) => {
   const highlyPoseDescription = typeof req.body?.highlyPoseDescription === "string" ? req.body.highlyPoseDescription : "";
   const sceneName = typeof req.body?.sceneName === "string" ? req.body.sceneName : "";
   const sceneDescription = typeof req.body?.sceneDescription === "string" ? req.body.sceneDescription : "";
+  const subject = typeof req.body?.subject === "string" ? req.body.subject.trim() : "";
+  const rawSlideCount = Number(req.body?.slideCount);
+  const slideCount = Number.isFinite(rawSlideCount)
+    ? Math.min(10, Math.max(1, Math.round(rawSlideCount)))
+    : 1;
 
   const ALLOWED_MODELS = new Set([
     "claude-sonnet-4-6",
@@ -165,9 +200,31 @@ ${sceneDescription}
 Treat this as the visual stage on top of which the Design Request is composed. The scene defines the background, lighting, and decorative treatment. The Design Request defines the message, headline, and content. Both must coexist without conflict — adjust the scene's color intensity if needed so foreground text remains highly legible (apply scrim if necessary).`
     : "";
 
+  const subjectBlock = subject
+    ? `\n# Subject (render as a stylized inline-SVG illustration per the "Rendering People / Subjects" rules)
+${subject}
+The subject is the visual focal point. Place it in the VISUAL zone, never overlapping any text. Render it as a clean geometric SVG figure in HighLevel brand colors — never as <img>, never as a placeholder, never as an emoji.`
+    : "";
+
+  const slideRoles = (() => {
+    if (slideCount === 2) return "- Slide 1: COVER (hook headline + eyebrow).\n- Slide 2: CTA (call to action + button + wordmark).";
+    return `- Slide 1: COVER (hook headline + eyebrow + "Swipe →" hint).\n- Slides 2 through ${slideCount - 1}: CONTENT (one idea each, with a small \"NN / ${String(slideCount).padStart(2, "0")}\" counter in #5EE6DE in a corner).\n- Slide ${slideCount}: CTA (call to action + button + wordmark).`;
+  })();
+  const slideBlock = slideCount > 1
+    ? `\n# Carousel Output (CRITICAL)
+Generate EXACTLY ${slideCount} slides as a cohesive social-media carousel.
+${slideRoles}
+Each slide must be a COMPLETE, standalone <!doctype html> document at exactly ${aspect}.
+Separate slides with EXACTLY this delimiter on its own line:
+<!--SLIDE-BREAK-->
+Output nothing else — no prose, no explanation, no markdown.`
+    : "";
+
   const userContent = [
     `Canvas size: ${aspect} pixels (width × height). The root container MUST be exactly these dimensions.`,
     sceneBlock,
+    subjectBlock,
+    slideBlock,
     assetBlock.length ? `\n# Required Assets\n${assetBlock.join("\n\n")}` : "",
     `\n# Design Request\n${prompt}`,
   ].filter(Boolean).join("\n");
@@ -197,7 +254,16 @@ Treat this as the visual stage on top of which the Design Request is composed. T
       return res.status(502).json({ error: "Claude did not return an HTML document", raw: text.slice(0, 500) });
     }
 
-    return res.json({ html: cleaned });
+    const slides = cleaned
+      .split(/<!--\s*SLIDE-BREAK\s*-->/i)
+      .map(s => s.trim())
+      .filter(s => /<!doctype|<html/i.test(s));
+
+    if (slides.length === 0) {
+      return res.json({ html: cleaned, slides: [cleaned] });
+    }
+
+    return res.json({ html: slides[0], slides });
   } catch (err: any) {
     console.error("[claude-design] error", err);
     return res.status(500).json({ error: err?.message || "Failed to generate design" });

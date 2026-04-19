@@ -790,7 +790,22 @@ export function TemplatesWorkspace() {
       if (!res.ok || !data.image) throw new Error(data.error || `Request failed (${res.status})`);
       // Replace the src in the matched tag, keep all other attrs (including data-ai-human).
       const newTag = tag.replace(/\bsrc\s*=\s*["'][^"']+["']/i, `src="${data.image}"`);
-      const updated = html.replace(tag, newTag);
+      let updated = html.replace(tag, newTag);
+      // Inject a safety stylesheet so the photo's container shows the slide's brand
+      // background instead of any decorative checker / grid pattern Claude may have
+      // drawn behind the photo (which becomes visible once the bg is transparent).
+      const safetyCss = `
+<style data-removebg-safety="true">
+  [data-ai-human]{background:transparent !important;}
+  *:has(> [data-ai-human]){background-image:none !important;background:linear-gradient(180deg,#122036 0%,#0B1426 100%) !important;}
+</style>`;
+      if (!/data-removebg-safety/.test(updated)) {
+        if (/<\/head>/i.test(updated)) {
+          updated = updated.replace(/<\/head>/i, `${safetyCss}</head>`);
+        } else {
+          updated = safetyCss + updated;
+        }
+      }
       setAiSlides(prev => prev.map((s, i) => (i === aiSlideIndex ? updated : s)));
     } catch (err: any) {
       setAiRemoveBgError(err?.message || "Failed to remove background");

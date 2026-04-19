@@ -233,7 +233,7 @@ Output nothing else — no prose, no explanation, no markdown.`
     const client = new Anthropic({ baseURL: baseUrl, apiKey });
     const message = await client.messages.create({
       model,
-      max_tokens: 8192,
+      max_tokens: slideCount > 1 ? Math.min(32000, 4500 * slideCount + 4000) : 8192,
       system: HIGHLEVEL_BRAND_SYSTEM,
       messages: [
         { role: "user", content: userContent },

@@ -1446,30 +1446,38 @@ export function TemplatesWorkspace() {
             />
 
             {aiSlideCount > 1 && (
-              <div className="mt-[14px] flex flex-col gap-[10px]">
+              <div className="mt-[18px] p-[14px] rounded-[14px] bg-[rgba(94,230,222,0.03)] border border-[rgba(94,230,222,0.12)] flex flex-col gap-[14px]">
                 <div className="flex items-center justify-between">
-                  <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Per-Slide Prompts</div>
-                  <span className="text-[9px] text-[#475569]">Leave blank to let Claude decide</span>
+                  <div className="flex items-center gap-[8px]">
+                    <div className="w-[22px] h-[22px] flex items-center justify-center rounded-[6px] bg-[rgba(94,230,222,0.12)] border border-[rgba(94,230,222,0.3)]">
+                      <LayoutGrid className="w-[12px] h-[12px] text-[#5EE6DE]" />
+                    </div>
+                    <span className="text-[11px] font-bold uppercase tracking-[1.5px] text-[#5EE6DE]">Per-Slide Prompts</span>
+                  </div>
+                  <span className="text-[9.5px] text-[#64748B]">Blank = Claude decides</span>
                 </div>
                 {aiSlidePrompts.map((p, i) => (
-                  <div key={i} className="flex flex-col gap-[5px]">
-                    <div className="flex items-center gap-[6px]">
-                      <div className="w-[20px] h-[20px] flex items-center justify-center rounded-[5px] bg-[rgba(94,230,222,0.1)] border border-[rgba(94,230,222,0.25)] text-[10px] font-bold text-[#5EE6DE]">
+                  <div key={i} className="flex flex-col gap-[8px] pt-[4px]" style={i > 0 ? { borderTop: "1px dashed rgba(94,230,222,0.12)", paddingTop: "14px" } : undefined}>
+                    <div className="flex items-center gap-[8px]">
+                      <div className="w-[24px] h-[24px] flex items-center justify-center rounded-[6px] bg-[rgba(94,230,222,0.12)] border border-[rgba(94,230,222,0.3)] text-[11px] font-bold text-[#5EE6DE]">
                         {i + 1}
                       </div>
-                      <span className="text-[10.5px] font-semibold text-[#94A3B8]">Slide {i + 1}</span>
+                      <span className="text-[12px] font-bold tracking-[0.02em] text-[#E2E8F0]">Slide {i + 1}</span>
+                      <span className="text-[10px] text-[#64748B] ml-auto">
+                        {i === 0 ? "Hook" : i === aiSlidePrompts.length - 1 ? "CTA" : `Content ${i}`}
+                      </span>
                     </div>
                     <textarea
                       value={p}
                       onChange={(e) => setAiSlidePrompts(prev => prev.map((v, idx) => idx === i ? e.target.value : v))}
                       placeholder={
-                        i === 0 ? "Hook slide — bold headline that stops the scroll, big portrait, brand chip" :
+                        i === 0 ? "Hook slide — bold headline that stops the scroll, big portrait, brand chip top-left" :
                         i === aiSlidePrompts.length - 1 ? "CTA slide — group photo, overlay headline, yellow CTA pill linking to gohighlevel.com" :
                         i === 1 ? "Proof / problem — split layout, candid human moment, 2 stat cards" :
                         "Data card — no humans, 4 stat tiles, big numbers in yellow"
                       }
-                      rows={3}
-                      className="w-full py-[10px] px-[12px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[11.5px] text-[#E2E8F0] outline-none focus:border-[rgba(94,230,222,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
+                      rows={5}
+                      className="w-full py-[11px] px-[13px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] leading-[1.55] text-[#E2E8F0] outline-none focus:border-[rgba(94,230,222,0.35)] focus:bg-[rgba(0,0,0,0.35)] placeholder:text-[#475569] resize-y"
                     />
                   </div>
                 ))}

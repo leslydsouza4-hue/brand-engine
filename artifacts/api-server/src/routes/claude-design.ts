@@ -59,8 +59,11 @@ const HIGHLEVEL_BRAND_SYSTEM = `You are a senior brand designer at HighLevel (al
 
 # Output Rules (NON-NEGOTIABLE)
 - Return ONLY a complete HTML document starting with <!doctype html>. NO prose, NO markdown fences, NO explanation, NO comments outside the HTML.
-- Inline all CSS in a single <style> tag inside <head>. No external assets, no <img> tags, no scripts, no @import, no fonts that require network access.
-- Use ONLY: shaped <div> elements, CSS gradients, CSS shadows, SVG (inline) for icons if needed, and text. NO raster images.
+- Inline all CSS in a single <style> tag inside <head>. No external CSS, no scripts, no @import, no fonts that require network access.
+- Use shaped <div> elements, CSS gradients, CSS shadows, SVG (inline) for icons, and text.
+- <img> tags are ONLY allowed for asset URLs explicitly provided by the user in the "Required Assets" section of the message. NEVER hotlink any other image.
+- If a HighLevel logo URL is provided, you MUST use that <img> rather than typing "HighLevel" as text in CSS.
+- If a Highly mascot URL is provided, you MUST place that <img> as the hero visual.
 - The <body> must contain a single root <div class="canvas"> with EXACT pixel width and height matching the requested aspect ratio. Set body { margin:0; background:#0B1426; display:flex; align-items:center; justify-content:center; min-height:100vh; } so the canvas centers in the viewport for preview.
 - Set box-sizing: border-box on everything (* { box-sizing: border-box; margin: 0; padding: 0; }).
 - Test mentally: would a designer at Linear, Stripe, or Vercel be okay with shipping this? If no, refine before outputting.`;
@@ -79,6 +82,9 @@ router.post("/claude-design", async (req, res) => {
   }
 
   const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "1200x630";
+  const logoUrl = typeof req.body?.logoUrl === "string" ? req.body.logoUrl : "";
+  const highlyUrl = typeof req.body?.highlyUrl === "string" ? req.body.highlyUrl : "";
+  const highlyPoseDescription = typeof req.body?.highlyPoseDescription === "string" ? req.body.highlyPoseDescription : "";
 
   const ALLOWED_MODELS = new Set([
     "claude-sonnet-4-6",
@@ -88,6 +94,27 @@ router.post("/claude-design", async (req, res) => {
   const requestedModel = typeof req.body?.model === "string" ? req.body.model : "claude-sonnet-4-6";
   const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : "claude-sonnet-4-6";
 
+  const assetBlock: string[] = [];
+  if (logoUrl) {
+    assetBlock.push(`HighLevel logo (REQUIRED — use this exact URL in an <img> tag, do NOT type the wordmark in CSS):
+<img src="${logoUrl}" alt="HighLevel" style="height: 0.06H; width: auto; display:block;" />
+Place it in the top-left or bottom-left corner with the same 6% padding as the rest of the canvas. On extremely small banners (height < 120px) you may shrink to height: 18-22px.`);
+  }
+  if (highlyUrl) {
+    assetBlock.push(`Highly mascot (REQUIRED — include in the design as a hero visual element):
+<img src="${highlyUrl}" alt="Highly" style="height: auto; width: auto;" />
+Pose: ${highlyPoseDescription || "default"}.
+- Highly is the friendly HighLevel mascot. Treat as the primary visual focal point alongside the headline.
+- Highly's height should be ~70-85% of the canvas height for portrait/square, or ~85-95% for landscape (placed on right side).
+- Add a soft blue glow behind Highly: radial-gradient(circle, rgba(40,150,251,0.45) 0%, transparent 65%); filter: blur(40px); positioned behind the img.
+- NEVER cover Highly's face/visor with text. Headline goes on the opposite side.`);
+  }
+  const userContent = [
+    `Canvas size: ${aspect} pixels (width × height). The root container MUST be exactly these dimensions.`,
+    assetBlock.length ? `\n# Required Assets\n${assetBlock.join("\n\n")}` : "",
+    `\n# Design Request\n${prompt}`,
+  ].filter(Boolean).join("\n");
+
   try {
     const client = new Anthropic({ baseURL: baseUrl, apiKey });
     const message = await client.messages.create({
@@ -95,10 +122,7 @@ router.post("/claude-design", async (req, res) => {
       max_tokens: 8192,
       system: HIGHLEVEL_BRAND_SYSTEM,
       messages: [
-        {
-          role: "user",
-          content: `Aspect ratio: ${aspect}\n\nDesign request:\n${prompt}`,
-        },
+        { role: "user", content: userContent },
       ],
     });
 
@@ -120,6 +144,56 @@ router.post("/claude-design", async (req, res) => {
   } catch (err: any) {
     console.error("[claude-design] error", err);
     return res.status(500).json({ error: err?.message || "Failed to generate design" });
+  }
+});
+
+const POLISH_SYSTEM = `You are a senior brand designer at HighLevel. The user gives you a rough, vague idea for a marketing graphic. You rewrite it into a tight, vivid design brief that another designer (or design AI) could build from without asking questions.
+
+Output rules:
+- Return ONLY the polished prompt as plain text. No preamble, no headings, no markdown, no explanation, no quotes.
+- 90-160 words, written as a confident creative direction (not a question).
+- Cover: headline (in quotes, 3-8 words, punchy), optional subline, visual focal point, composition, color usage from HighLevel palette (Primary Blue #2896FB, Light Blue #7CC8FF, Deep Navy #0B1426, Yellow #FFC328, Green #00B2A9), accent treatments (orbs/chips/badges), and where the HighLevel wordmark sits.
+- Match the energy of the user's idea — don't pad with corporate fluff.
+- Tailor density to the canvas size: tiny banners get a single-line hook + logo + CTA only.`;
+
+router.post("/polish-prompt", async (req, res) => {
+  const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
+  const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
+  if (!baseUrl || !apiKey) return res.status(500).json({ error: "Anthropic integration is not configured" });
+
+  const idea = typeof req.body?.idea === "string" ? req.body.idea.trim() : "";
+  if (!idea) return res.status(400).json({ error: "Idea is required" });
+
+  const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "1200x630";
+  const includeLogo = !!req.body?.includeLogo;
+  const includeHighly = !!req.body?.includeHighly;
+  const highlyPoseDescription = typeof req.body?.highlyPoseDescription === "string" ? req.body.highlyPoseDescription : "";
+
+  const userMsg = [
+    `Canvas: ${aspect}.`,
+    includeLogo ? "Include the HighLevel wordmark logo in a corner." : "",
+    includeHighly ? `Include the Highly mascot as a hero visual${highlyPoseDescription ? ` (pose: ${highlyPoseDescription})` : ""}.` : "",
+    `\nRough idea:\n${idea}`,
+  ].filter(Boolean).join("\n");
+
+  try {
+    const client = new Anthropic({ baseURL: baseUrl, apiKey });
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 600,
+      system: POLISH_SYSTEM,
+      messages: [{ role: "user", content: userMsg }],
+    });
+    const block = message.content[0];
+    const text = (block && block.type === "text" ? block.text : "")
+      .replace(/^```[a-z]*\s*/i, "")
+      .replace(/\s*```\s*$/, "")
+      .trim();
+    if (!text) return res.status(502).json({ error: "Empty response from Claude" });
+    return res.json({ prompt: text });
+  } catch (err: any) {
+    console.error("[polish-prompt] error", err);
+    return res.status(500).json({ error: err?.message || "Failed to polish prompt" });
   }
 });
 

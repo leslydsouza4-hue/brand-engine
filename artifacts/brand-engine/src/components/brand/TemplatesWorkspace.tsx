@@ -278,6 +278,12 @@ export function TemplatesWorkspace() {
   const [aiHtml, setAiHtml] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [aiIncludeLogo, setAiIncludeLogo] = useState(true);
+  const [aiIncludeHighly, setAiIncludeHighly] = useState(false);
+  const [aiHighlyPoseId, setAiHighlyPoseId] = useState<string>(HIGHLY_POSES[0]?.id ?? "");
+  const [aiRoughIdea, setAiRoughIdea] = useState("");
+  const [aiPolishing, setAiPolishing] = useState(false);
+  const [aiPolishError, setAiPolishError] = useState<string | null>(null);
 
   const aiAspectRatio = (() => {
     const m = aiAspect.match(/^(\d+)\s*x\s*(\d+)$/i);
@@ -321,6 +327,35 @@ export function TemplatesWorkspace() {
 
   const aiHtmlScaled = aiHtml ? wrapWithFit(aiHtml, aiCanvasDims.w, aiCanvasDims.h) : null;
 
+  const handlePolishPrompt = async () => {
+    const idea = aiRoughIdea.trim();
+    if (!idea || aiPolishing) return;
+    setAiPolishing(true);
+    setAiPolishError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/polish-prompt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idea,
+          aspect: aiAspect,
+          includeLogo: aiIncludeLogo,
+          includeHighly: aiIncludeHighly,
+          highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      if (!data.prompt) throw new Error("Empty polished prompt");
+      setAiPrompt(data.prompt);
+    } catch (err: any) {
+      setAiPolishError(err?.message || "Polish failed");
+    } finally {
+      setAiPolishing(false);
+    }
+  };
+
   const handleGenerateAI = async () => {
     const prompt = aiPrompt.trim();
     if (!prompt || aiLoading) return;
@@ -331,7 +366,17 @@ export function TemplatesWorkspace() {
       const res = await fetch(`${apiBase}api/claude-design`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, aspect: aiAspect, model: aiModel }),
+        body: JSON.stringify({
+          prompt,
+          aspect: aiAspect,
+          model: aiModel,
+          logoUrl: aiIncludeLogo ? `${window.location.origin}${import.meta.env.BASE_URL}assets/logos/Lockup=Wordmark, Color=Light.png` : "",
+          highlyUrl: aiIncludeHighly ? (() => {
+            const pose = HIGHLY_POSES.find(p => p.id === aiHighlyPoseId) ?? HIGHLY_POSES[0];
+            return pose ? `${window.location.origin}${pose.image}` : "";
+          })() : "",
+          highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
@@ -720,6 +765,81 @@ export function TemplatesWorkspace() {
                 <option key={s.value} value={s.value} className="bg-[#0a1628]">{s.label}</option>
               ))}
             </select>
+
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Brand Assets</div>
+            <div className="flex flex-col gap-[6px] mb-[14px]">
+              <label className="flex items-center gap-[10px] py-[8px] px-[12px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] cursor-pointer hover:bg-[rgba(255,255,255,0.04)]">
+                <input
+                  type="checkbox"
+                  checked={aiIncludeLogo}
+                  onChange={(e) => setAiIncludeLogo(e.target.checked)}
+                  className="w-[14px] h-[14px] accent-[#00B2A9]"
+                />
+                <span className="text-[12px] font-semibold text-[#E2E8F0]">HighLevel logo</span>
+                <span className="ml-auto text-[10px] text-[#475569]">corner</span>
+              </label>
+              <label className="flex items-center gap-[10px] py-[8px] px-[12px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] cursor-pointer hover:bg-[rgba(255,255,255,0.04)]">
+                <input
+                  type="checkbox"
+                  checked={aiIncludeHighly}
+                  onChange={(e) => setAiIncludeHighly(e.target.checked)}
+                  className="w-[14px] h-[14px] accent-[#00B2A9]"
+                />
+                <span className="text-[12px] font-semibold text-[#E2E8F0]">Highly mascot</span>
+                <span className="ml-auto text-[10px] text-[#475569]">hero</span>
+              </label>
+            </div>
+
+            {aiIncludeHighly && (
+              <>
+                <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Highly Pose</div>
+                <div className="grid grid-cols-4 gap-[6px] mb-[14px] max-h-[180px] overflow-y-auto sidebar-scroll p-[2px]">
+                  {HIGHLY_POSES.map(pose => {
+                    const isActive = aiHighlyPoseId === pose.id;
+                    return (
+                      <button
+                        key={pose.id}
+                        onClick={() => setAiHighlyPoseId(pose.id)}
+                        title={pose.name}
+                        className={`relative aspect-square rounded-[8px] border overflow-hidden cursor-pointer transition-all ${
+                          isActive
+                            ? "border-[rgba(0,178,169,0.5)] bg-[rgba(0,178,169,0.08)]"
+                            : "border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] hover:border-[rgba(255,255,255,0.15)]"
+                        }`}
+                      >
+                        <img src={pose.image} alt={pose.name} className="w-full h-full object-contain p-[3px]" />
+                        {isActive && <div className="absolute inset-0 ring-1 ring-[#5EE6DE] ring-inset rounded-[8px]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Rough Idea (optional)</div>
+            <textarea
+              value={aiRoughIdea}
+              onChange={(e) => setAiRoughIdea(e.target.value)}
+              placeholder="e.g. announce our new SMS automation feature"
+              rows={2}
+              className="w-full py-[10px] px-[12px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
+            />
+            <button
+              onClick={handlePolishPrompt}
+              disabled={!aiRoughIdea.trim() || aiPolishing}
+              className="mt-[6px] mb-[14px] w-full flex items-center justify-center gap-[6px] py-[9px] px-[12px] rounded-[10px] text-[11.5px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50 bg-[rgba(255,195,40,0.08)] border-[rgba(255,195,40,0.3)] text-[#FFC328] hover:bg-[rgba(255,195,40,0.14)]"
+            >
+              {aiPolishing ? (
+                <><Loader2 className="w-[12px] h-[12px] animate-spin" /><span>Polishing…</span></>
+              ) : (
+                <><Sparkles className="w-[12px] h-[12px]" /><span>Polish into a designer prompt</span></>
+              )}
+            </button>
+            {aiPolishError && (
+              <div className="mb-[10px] py-[8px] px-[10px] rounded-[8px] text-[11px] text-[#FCA5A5] bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)]">
+                {aiPolishError}
+              </div>
+            )}
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Prompt</div>
             <textarea

@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LayoutTemplate, MonitorPlay, Presentation, Mail, Bot, Check, X, Upload, Image as ImageIcon, Move, AlignCenter, AlignLeft, AlignRight, ArrowUp, ArrowDown, Minus, Type, Palette, Bold, Eraser, Loader2, RotateCcw, Hand, Stamp, Sparkles, ExternalLink, Download as DownloadIcon, type LucideIcon } from "lucide-react";
 import { HIGHLY_POSES } from "./highlyData";
+import { LOGO_VARIANTS, DESIGN_SCENES } from "./aiPickers";
 import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
 import { useExport } from "./useExport";
@@ -279,8 +280,10 @@ export function TemplatesWorkspace() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiIncludeLogo, setAiIncludeLogo] = useState(true);
+  const [aiLogoId, setAiLogoId] = useState<string>(LOGO_VARIANTS[0]?.id ?? "");
   const [aiIncludeHighly, setAiIncludeHighly] = useState(false);
   const [aiHighlyPoseId, setAiHighlyPoseId] = useState<string>(HIGHLY_POSES[0]?.id ?? "");
+  const [aiSceneId, setAiSceneId] = useState<string>(DESIGN_SCENES[0]?.id ?? "auto");
   const [aiRoughIdea, setAiRoughIdea] = useState("");
   const [aiPolishing, setAiPolishing] = useState(false);
   const [aiPolishError, setAiPolishError] = useState<string | null>(null);
@@ -341,8 +344,11 @@ export function TemplatesWorkspace() {
           idea,
           aspect: aiAspect,
           includeLogo: aiIncludeLogo,
+          logoDescription: aiIncludeLogo ? (LOGO_VARIANTS.find(l => l.id === aiLogoId)?.description ?? "") : "",
           includeHighly: aiIncludeHighly,
           highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
+          sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
+          sceneDescription: DESIGN_SCENES.find(s => s.id === aiSceneId)?.description ?? "",
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -370,12 +376,18 @@ export function TemplatesWorkspace() {
           prompt,
           aspect: aiAspect,
           model: aiModel,
-          logoUrl: aiIncludeLogo ? `${window.location.origin}${import.meta.env.BASE_URL}assets/logos/Lockup=Wordmark, Color=Light.png` : "",
+          logoUrl: aiIncludeLogo ? (() => {
+            const variant = LOGO_VARIANTS.find(l => l.id === aiLogoId) ?? LOGO_VARIANTS[0];
+            return variant ? `${window.location.origin}${variant.file}` : "";
+          })() : "",
+          logoDescription: aiIncludeLogo ? (LOGO_VARIANTS.find(l => l.id === aiLogoId)?.description ?? "") : "",
           highlyUrl: aiIncludeHighly ? (() => {
             const pose = HIGHLY_POSES.find(p => p.id === aiHighlyPoseId) ?? HIGHLY_POSES[0];
             return pose ? `${window.location.origin}${pose.image}` : "";
           })() : "",
           highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
+          sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
+          sceneDescription: DESIGN_SCENES.find(s => s.id === aiSceneId)?.description ?? "",
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -845,6 +857,17 @@ export function TemplatesWorkspace() {
               ))}
             </select>
 
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Scene</div>
+            <select
+              value={aiSceneId}
+              onChange={(e) => setAiSceneId(e.target.value)}
+              className="w-full mb-[14px] py-[10px] pr-[38px] pl-[14px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-inherit text-[12px] font-medium text-white cursor-pointer outline-none appearance-none focus:border-[rgba(0,178,169,0.3)]"
+            >
+              {DESIGN_SCENES.map(s => (
+                <option key={s.id} value={s.id} className="bg-[#0a1628]">{s.name}</option>
+              ))}
+            </select>
+
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Brand Assets</div>
             <div className="flex flex-col gap-[6px] mb-[14px]">
               <label className="flex items-center gap-[10px] py-[8px] px-[12px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] cursor-pointer hover:bg-[rgba(255,255,255,0.04)]">
@@ -868,6 +891,34 @@ export function TemplatesWorkspace() {
                 <span className="ml-auto text-[10px] text-[#475569]">hero</span>
               </label>
             </div>
+
+            {aiIncludeLogo && (
+              <>
+                <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Logo Variant</div>
+                <div className="grid grid-cols-3 gap-[6px] mb-[14px] max-h-[210px] overflow-y-auto sidebar-scroll p-[2px]">
+                  {LOGO_VARIANTS.map(variant => {
+                    const isActive = aiLogoId === variant.id;
+                    const isDarkBg = variant.recommendedOn === "light";
+                    return (
+                      <button
+                        key={variant.id}
+                        onClick={() => setAiLogoId(variant.id)}
+                        title={`${variant.name} — ${variant.description}`}
+                        className={`relative aspect-[4/3] rounded-[8px] border overflow-hidden cursor-pointer transition-all flex items-center justify-center ${
+                          isActive
+                            ? "border-[rgba(0,178,169,0.5)] bg-[rgba(0,178,169,0.08)]"
+                            : "border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.15)]"
+                        }`}
+                        style={{ background: isDarkBg ? "#F8FAFC" : (isActive ? "rgba(0,178,169,0.08)" : "rgba(255,255,255,0.02)") }}
+                      >
+                        <img src={variant.file} alt={variant.name} className="max-w-[80%] max-h-[70%] object-contain" />
+                        {isActive && <div className="absolute inset-0 ring-1 ring-[#5EE6DE] ring-inset rounded-[8px]" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
 
             {aiIncludeHighly && (
               <>

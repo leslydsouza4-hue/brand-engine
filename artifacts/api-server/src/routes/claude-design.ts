@@ -108,8 +108,11 @@ router.post("/claude-design", async (req, res) => {
 
   const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "1200x630";
   const logoUrl = typeof req.body?.logoUrl === "string" ? req.body.logoUrl : "";
+  const logoDescription = typeof req.body?.logoDescription === "string" ? req.body.logoDescription : "";
   const highlyUrl = typeof req.body?.highlyUrl === "string" ? req.body.highlyUrl : "";
   const highlyPoseDescription = typeof req.body?.highlyPoseDescription === "string" ? req.body.highlyPoseDescription : "";
+  const sceneName = typeof req.body?.sceneName === "string" ? req.body.sceneName : "";
+  const sceneDescription = typeof req.body?.sceneDescription === "string" ? req.body.sceneDescription : "";
 
   const ALLOWED_MODELS = new Set([
     "claude-sonnet-4-6",
@@ -121,9 +124,13 @@ router.post("/claude-design", async (req, res) => {
 
   const assetBlock: string[] = [];
   if (logoUrl) {
-    assetBlock.push(`HighLevel logo (REQUIRED — use this exact URL in an <img> tag, do NOT type the wordmark in CSS):
-<img src="${logoUrl}" alt="HighLevel" style="height: 0.06H; width: auto; display:block;" />
-Place it in the top-left or bottom-left corner with the same 6% padding as the rest of the canvas. On extremely small banners (height < 120px) you may shrink to height: 18-22px.`);
+    assetBlock.push(`HighLevel logo (REQUIRED — use this exact URL in an <img> tag, do NOT type the wordmark in CSS, do NOT substitute another image):
+<img src="${logoUrl}" alt="HighLevel" />
+Variant description: ${logoDescription || "official HighLevel lockup"}.
+- Render with style="height: <appropriate>px; width: auto; display: block;". For wordmark/horizontal lockups use height ~ 0.05H to 0.07H. For icon/circle/square marks use height ~ 0.08H to 0.10H (squarer aspect can go larger).
+- Place it in the top-left OR bottom-left corner with the same 6% padding as the rest of the canvas. On extremely small banners (height < 120px) shrink to 18-22px.
+- Do NOT recolor or filter the logo. Use the variant exactly as provided.
+- Reserve a clear-space rectangle around it equal to ~half the logo height on every side. No text, orb, or other element may enter that rectangle.`);
   }
   if (highlyUrl) {
     assetBlock.push(`Highly mascot (REQUIRED — include in the design as a hero visual element):
@@ -134,8 +141,16 @@ Pose: ${highlyPoseDescription || "default"}.
 - Add a soft blue glow behind Highly: radial-gradient(circle, rgba(40,150,251,0.45) 0%, transparent 65%); filter: blur(40px); positioned behind the img.
 - NEVER cover Highly's face/visor with text. Headline goes on the opposite side.`);
   }
+  const sceneBlock = sceneDescription
+    ? `\n# Scene Direction (MUST follow this background/atmosphere)
+Scene: ${sceneName}
+${sceneDescription}
+Treat this as the visual stage on top of which the Design Request is composed. The scene defines the background, lighting, and decorative treatment. The Design Request defines the message, headline, and content. Both must coexist without conflict — adjust the scene's color intensity if needed so foreground text remains highly legible (apply scrim if necessary).`
+    : "";
+
   const userContent = [
     `Canvas size: ${aspect} pixels (width × height). The root container MUST be exactly these dimensions.`,
+    sceneBlock,
     assetBlock.length ? `\n# Required Assets\n${assetBlock.join("\n\n")}` : "",
     `\n# Design Request\n${prompt}`,
   ].filter(Boolean).join("\n");
@@ -191,12 +206,16 @@ router.post("/polish-prompt", async (req, res) => {
 
   const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "1200x630";
   const includeLogo = !!req.body?.includeLogo;
+  const logoDescription = typeof req.body?.logoDescription === "string" ? req.body.logoDescription : "";
   const includeHighly = !!req.body?.includeHighly;
   const highlyPoseDescription = typeof req.body?.highlyPoseDescription === "string" ? req.body.highlyPoseDescription : "";
+  const sceneName = typeof req.body?.sceneName === "string" ? req.body.sceneName : "";
+  const sceneDescription = typeof req.body?.sceneDescription === "string" ? req.body.sceneDescription : "";
 
   const userMsg = [
     `Canvas: ${aspect}.`,
-    includeLogo ? "Include the HighLevel wordmark logo in a corner." : "",
+    sceneDescription ? `Scene direction (${sceneName}): ${sceneDescription}` : "",
+    includeLogo ? `Include the HighLevel logo in a corner — variant: ${logoDescription || "wordmark"}.` : "",
     includeHighly ? `Include the Highly mascot as a hero visual${highlyPoseDescription ? ` (pose: ${highlyPoseDescription})` : ""}.` : "",
     `\nRough idea:\n${idea}`,
   ].filter(Boolean).join("\n");

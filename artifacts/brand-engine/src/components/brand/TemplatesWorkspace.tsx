@@ -1460,7 +1460,7 @@ export function TemplatesWorkspace() {
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
 
-      <div className="w-full md:w-[340px] md:min-w-[340px] overflow-y-auto overflow-x-hidden py-[16px] px-[16px] md:px-[20px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.04)] flex flex-col max-h-[50vh] md:max-h-none">
+      <div className="w-full md:w-[400px] md:min-w-[400px] overflow-y-auto overflow-x-hidden py-[22px] px-[20px] md:px-[26px] pb-[36px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.04)] flex flex-col gap-[6px] max-h-[50vh] md:max-h-none">
         {aiMode ? (
           <>
             <div className="text-[14px] font-bold text-white mb-[1px]">Generate with Claude</div>
@@ -1667,7 +1667,7 @@ export function TemplatesWorkspace() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-[6px]">
+            <div className="flex items-center justify-between mb-[10px] mt-[6px]">
               <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">
                 {aiSlideCount > 1 ? "Overall Theme" : "Prompt"}
               </div>
@@ -1690,8 +1690,9 @@ export function TemplatesWorkspace() {
               placeholder={aiSlideCount > 1
                 ? "e.g. 'The Operator Era' — a 4-slide carousel about agencies switching to HighLevel. Dark editorial vibe, teal + yellow accents, bold display type."
                 : "e.g. Launch graphic for our new AI Voice Agent — bold headline, glowing blue orb, capture-yellow accent badge"}
-              rows={aiSlideCount > 1 ? 8 : 7}
-              className="w-full py-[12px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[12.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
+              rows={aiSlideCount > 1 ? 9 : 8}
+              style={{ minHeight: aiSlideCount > 1 ? 200 : 180 }}
+              className="w-full py-[14px] px-[16px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[12.5px] leading-[1.55] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
             />
 
             {aiSlideCount > 1 && (
@@ -1741,7 +1742,7 @@ export function TemplatesWorkspace() {
             <button
               onClick={handleGenerateAI}
               disabled={!aiPrompt.trim() || aiLoading}
-              className="mt-[10px] w-full flex items-center justify-center gap-[8px] py-[12px] px-[14px] rounded-[12px] text-[13px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-[18px] w-full flex items-center justify-center gap-[8px] py-[14px] px-[14px] rounded-[12px] text-[13px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 background: aiLoading ? "rgba(0,178,169,0.08)" : "linear-gradient(135deg, rgba(0,178,169,0.25) 0%, rgba(40,150,251,0.2) 100%)",
                 borderColor: "rgba(0,178,169,0.4)",

@@ -1337,16 +1337,29 @@ export function TemplatesWorkspace() {
       // the browser via @imgly/background-removal — proper alpha channel, no API.
       void (async () => {
         try {
-          const humanRe = /<img\b[^>]*?\bdata-ai-human\s*=\s*["']true["'][^>]*?>/gi;
           const srcRe = /\bsrc\s*=\s*["'](data:[^"']+)["']/i;
-          const needsBg = slides.some(s => humanRe.test(s));
-          humanRe.lastIndex = 0;
+          const humanSrcPrefix: string | undefined = data.humanSrcPrefix;
+          // Find img tags that are EITHER tagged data-ai-human="true" OR carry
+          // the exact human data URL the server returned. Belt + suspenders so
+          // background removal still happens if Claude drops the attribute.
+          const findHumanTags = (slide: string): string[] => {
+            const tags = slide.match(/<img\b[^>]*?>/gi) || [];
+            return tags.filter(t => {
+              if (/\bdata-ai-human\s*=\s*["']true["']/i.test(t)) return true;
+              if (humanSrcPrefix) {
+                const m = t.match(srcRe);
+                if (m && m[1].startsWith(humanSrcPrefix)) return true;
+              }
+              return false;
+            });
+          };
+          const needsBg = slides.some(s => findHumanTags(s).length > 0);
           if (!needsBg) return;
           const { removeBackground } = await import("@imgly/background-removal");
           const cache = new Map<string, string>();
           const processed = await Promise.all(slides.map(async (slide) => {
             let out = slide;
-            const tags = slide.match(humanRe) || [];
+            const tags = findHumanTags(slide);
             for (const tag of tags) {
               const m = tag.match(srcRe);
               if (!m) continue;

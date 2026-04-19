@@ -635,7 +635,19 @@ Output nothing else — no prose, no explanation, no markdown.`
 
     const finalSlides = (slides.length === 0 ? [cleaned] : slides).map((s) => {
       let out = s;
-      if (humanDataUrl) out = out.split(HUMAN_PLACEHOLDER).join(humanDataUrl);
+      if (humanDataUrl) {
+        out = out.split(HUMAN_PLACEHOLDER).join(humanDataUrl);
+        // Bulletproof: guarantee any <img> tag with the human data URL carries
+        // data-ai-human="true" so the client can find + auto-cut it. Claude
+        // sometimes drops attributes during generation.
+        out = out.replace(/<img\b([^>]*?)>/gi, (full, attrs) => {
+          const a = attrs as string;
+          const srcMatch = a.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+          if (!srcMatch || srcMatch[1] !== humanDataUrl) return full;
+          if (/\bdata-ai-human\s*=/.test(a)) return full;
+          return `<img${a} data-ai-human="true">`;
+        });
+      }
       return out;
     });
 
@@ -644,6 +656,9 @@ Output nothing else — no prose, no explanation, no markdown.`
       slides: finalSlides,
       humanGenerated: !!humanDataUrl,
       humanDescription: humanDescription || undefined,
+      // Send the human data URL prefix so the client has a fallback way to
+      // identify the human image even if every attribute hint is stripped.
+      humanSrcPrefix: humanDataUrl ? humanDataUrl.slice(0, 80) : undefined,
     });
   } catch (err: any) {
     console.error("[claude-design] error", err);

@@ -278,7 +278,6 @@ export function TemplatesWorkspace() {
   const [aiModel, setAiModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-sonnet-4-6");
   const [aiSlides, setAiSlides] = useState<string[]>([]);
   const [aiSlideIndex, setAiSlideIndex] = useState(0);
-  const [aiSubject, setAiSubject] = useState("");
   const [aiSlideCount, setAiSlideCount] = useState(1);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -391,7 +390,6 @@ export function TemplatesWorkspace() {
           highlyPoseDescription: aiIncludeHighly ? (HIGHLY_POSES.find(p => p.id === aiHighlyPoseId)?.description ?? "") : "",
           sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
           sceneDescription: DESIGN_SCENES.find(s => s.id === aiSceneId)?.description ?? "",
-          subject: aiSubject.trim(),
           slideCount: aiSlideCount,
         }),
       });
@@ -980,15 +978,6 @@ export function TemplatesWorkspace() {
                 </div>
               </div>
             </div>
-
-            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Subject (optional)</div>
-            <textarea
-              value={aiSubject}
-              onChange={(e) => setAiSubject(e.target.value)}
-              placeholder="e.g. a confident female founder in her 30s, short dark hair, smiling, wearing a teal blazer"
-              rows={2}
-              className="w-full mb-[14px] py-[10px] px-[12px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
-            />
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Brand Assets</div>
             <div className="flex flex-col gap-[6px] mb-[14px]">

@@ -85,7 +85,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
               <Sparkles className="w-[13px] h-[13px] text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] animate-[aiSparkle_2.6s_ease-in-out_infinite]" />
             </span>
             <span className="relative flex-1 text-left text-[13px] font-semibold tracking-[-0.1px] bg-gradient-to-r from-white via-[#E2E8F0] to-white bg-clip-text text-transparent">
-              Craft
+              Craft Magic
             </span>
           </button>
         </div>

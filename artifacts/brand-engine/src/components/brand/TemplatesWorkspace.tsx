@@ -1244,10 +1244,31 @@ export function TemplatesWorkspace() {
     const reader = new FileReader();
     reader.onload = () => {
       const url = typeof reader.result === "string" ? reader.result : "";
-      if (url) {
-        setAiCustomItemImage(url);
-        setAiCustomItemInclude(true);
-      }
+      if (!url) return;
+      setAiCustomItemImage(url);
+      setAiCustomItemInclude(true);
+      // Auto cut out background — runs locally, no API. Always on for uploads
+      // so any human/product the user drops in is immediately ready to composite.
+      void (async () => {
+        setAiRemovingBg(true);
+        setAiRemoveBgError(null);
+        try {
+          const { removeBackground } = await import("@imgly/background-removal");
+          const blob = await removeBackground(url);
+          const cutout: string = await new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onload = () => resolve(r.result as string);
+            r.onerror = reject;
+            r.readAsDataURL(blob);
+          });
+          setAiCustomItemImage(cutout);
+        } catch (e: any) {
+          console.error("[upload-bg-removal] failed", e);
+          setAiRemoveBgError(e?.message || "Background removal failed — using original.");
+        } finally {
+          setAiRemovingBg(false);
+        }
+      })();
     };
     reader.readAsDataURL(file);
   };
@@ -2209,7 +2230,15 @@ export function TemplatesWorkspace() {
                 </div>
                 {aiCustomItemImage && (
                   <div className="mt-[10px] flex gap-[10px] items-start">
-                    <img src={aiCustomItemImage} alt="Custom item" className="w-[64px] h-[64px] rounded-[8px] object-contain bg-[rgba(0,0,0,0.3)] border border-[rgba(255,255,255,0.08)]" />
+                    <div className="relative w-[64px] h-[64px] shrink-0">
+                      <img src={aiCustomItemImage} alt="Custom item" className="w-[64px] h-[64px] rounded-[8px] object-contain bg-[rgba(0,0,0,0.3)] border border-[rgba(255,255,255,0.08)]" style={{ backgroundImage: "linear-gradient(45deg, rgba(255,255,255,0.04) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.04) 75%), linear-gradient(45deg, rgba(255,255,255,0.04) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.04) 75%)", backgroundSize: "10px 10px", backgroundPosition: "0 0, 5px 5px" }} />
+                      {aiRemovingBg && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-[3px] rounded-[8px] bg-[rgba(11,20,38,0.85)] backdrop-blur-sm border border-[rgba(40,150,251,0.3)]">
+                          <Wand2 className="w-[14px] h-[14px] text-[#2896FB] animate-pulse" />
+                          <span className="text-[7.5px] tracking-[0.1em] uppercase text-[#2896FB] font-bold">Cutting</span>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 flex flex-col gap-[4px]">
                       <textarea
                         value={aiCustomItemDescription}

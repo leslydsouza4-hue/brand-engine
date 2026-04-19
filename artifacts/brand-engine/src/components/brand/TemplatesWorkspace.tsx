@@ -440,6 +440,7 @@ export function TemplatesWorkspace() {
   const [aiLoadingPhrase, setAiLoadingPhrase] = useState(0);
   const [aiLoadingProgress, setAiLoadingProgress] = useState(0);
   const [aiLoadingFact, setAiLoadingFact] = useState(0);
+  const [aiLoadingElapsed, setAiLoadingElapsed] = useState(0);
   const aiPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -842,36 +843,46 @@ export function TemplatesWorkspace() {
   };
 
   const AI_LOADING_FACTS = [
-    "I told my wifi we needed space. Now it won't connect anywhere.",
-    "Why did the scarecrow get promoted? He was outstanding in his field.",
-    "I bought shoes from a drug dealer. Don't know what he laced them with but I've been tripping all day.",
-    "My therapist says I have a preoccupation with vengeance. We'll see about that.",
-    "Parallel lines have so much in common. It's a shame they'll never meet.",
-    "I haven't slept for ten days. That'd be too long.",
-    "My bed is a magical place where I suddenly remember everything I forgot to do.",
-    "The early bird gets the worm, but the second mouse gets the cheese.",
-    "I'm reading a book about anti-gravity. It's impossible to put down.",
-    "I used to hate facial hair. Then it grew on me.",
-    "My dog used to chase people on a bike a lot. It got so bad I had to take his bike away.",
-    "I'm not arguing, I'm just explaining why I'm right.",
-    "Time flies like an arrow. Fruit flies like a banana.",
-    "Don't trust atoms. They make up everything.",
-    "I tried to catch fog yesterday. Mist.",
-    "Why don't skeletons fight each other? They don't have the guts.",
-    "My password is the last 8 digits of pi. Good luck.",
-    "I told a chemistry joke. There was no reaction.",
-    "I'm on a seafood diet. I see food and I eat it.",
-    "RIP boiled water. You will be mist.",
-    "Adulthood is just saying \"after this week things will calm down\" until you die.",
-    "I have a few jokes about unemployed people. None of them work.",
-    "The man who invented autocorrect has died. His funfair is next monkey.",
-    "I'm great at multitasking. I can waste time, be unproductive, and procrastinate all at once.",
-    "I named my horse Mayo. Sometimes Mayo neighs.",
-    "Two windmills are standing in a field. One asks, \"What's your favorite kind of music?\" The other says, \"I'm a big metal fan.\"",
-    "Whoever invented knock-knock jokes deserves a no-bell prize.",
-    "My wife told me to stop impersonating a flamingo. I had to put my foot down.",
-    "I would tell you a joke about pizza but it's a little cheesy.",
-    "Gravity. It's not just a good idea, it's the law.",
+    "Claude is sweating. Not in a good way.",
+    "Asked Claude for one icon. It gave me 47. None of them were the right one.",
+    "Generating a checkmark. Claude has invented 8 new geometries. None are checkmarks.",
+    "Claude finished. Claude looked at it. Claude started over. We do this together now.",
+    "Tried to render a person. Claude rendered three quarters of a person and a confused horse.",
+    "Designer says \"add a glow.\" Claude adds a galaxy. We negotiate.",
+    "Claude is centering things. \"Centered\" is a spectrum apparently.",
+    "Asked Claude to align text. Claude is aligning vibes instead.",
+    "Generating a CTA. Claude wrote five CTAs and made them argue.",
+    "Claude says it knows what \"navy\" means. Claude does not know what \"navy\" means.",
+    "Currently waiting for Claude to stop adding placeholder lorem.",
+    "Claude is using \"unleash\" again. Working on it.",
+    "Picking a font weight. Claude picked all of them. Just to be safe.",
+    "Claude added a sparkle. Claude added another sparkle. We are now in a sparkle situation.",
+    "Generating brand-safe colors. Claude tried teal. We had a chat.",
+    "Claude is doing a vibe check on the headline. The vibe is mid.",
+    "Asked for one bento card. Got a buffet. Working through it.",
+    "Claude is currently rotating things by 3°. We did not ask.",
+    "Removing the third gradient. Claude is upset. We are pressing on.",
+    "AI image of a laptop. Six keys, no screen, vaguely wet. Regenerating.",
+    "Hiring an intern would be faster. The intern is also Claude.",
+    "Claude finished the layout. The layout is one giant button. Refining…",
+    "Asked Claude to drop a word. Claude added two. Net positive vocabulary.",
+    "Bg removal in progress. The subject's left ear has filed a missing-person report.",
+    "Claude shipped a stat. The number is 11/10. We are checking sources.",
+    "Claude added a yellow accent. Then a yellow background. Then a yellow CTA. We're in custard now.",
+    "Generating drop shadow. Claude generated four drop shadows. They have started a band.",
+    "Claude says the headline is \"poetic.\" The headline is two words. One is \"the.\"",
+    "Refining the icon stroke. Claude has discovered new dimensions of \"round.\"",
+    "Tried to remove the orb. Three more orbs appeared. This is how we got here.",
+    "Claude is composing an email subject line. It is 41 words. We are negotiating.",
+    "AI just suggested a NFT integration. We did not ask. Closing tab.",
+    "Generated. Regenerated. Re-regenerated. The original was fine.",
+    "Claude is being decisive. This is unsettling. Verifying.",
+    "Asked Claude for editorial. Got infomercial. Tweaking.",
+    "Tried \"minimal.\" Claude heard \"maximalist.\" Same letters, different energy.",
+    "Claude's spacing is mathematically correct and visually wrong. Classic.",
+    "Currently waiting on Claude to admit kerning matters.",
+    "Generating subtle. Claude does not understand subtle. It is loud subtle.",
+    "Claude offered to write a manifesto. Declined. Adding a CTA instead.",
   ];
   const AI_LOADING_PHRASES = [
     "Studying the HighLevel brand voice…",
@@ -887,8 +898,9 @@ export function TemplatesWorkspace() {
   ];
 
   useEffect(() => {
-    if (!aiLoading) { setAiLoadingPhrase(0); setAiLoadingProgress(0); return; }
+    if (!aiLoading) { setAiLoadingPhrase(0); setAiLoadingProgress(0); setAiLoadingElapsed(0); return; }
     setAiLoadingFact(Math.floor(Math.random() * AI_LOADING_FACTS.length));
+    setAiLoadingElapsed(0);
     const t0 = Date.now();
     const phraseTimer = window.setInterval(() => {
       setAiLoadingPhrase((p) => (p + 1) % AI_LOADING_PHRASES.length);
@@ -901,7 +913,10 @@ export function TemplatesWorkspace() {
       const target = 1 - Math.exp(-elapsed / 14);
       setAiLoadingProgress(Math.min(0.96, target));
     }, 120);
-    return () => { window.clearInterval(phraseTimer); window.clearInterval(factTimer); window.clearInterval(progressTimer); };
+    const elapsedTimer = window.setInterval(() => {
+      setAiLoadingElapsed(Math.floor((Date.now() - t0) / 1000));
+    }, 250);
+    return () => { window.clearInterval(phraseTimer); window.clearInterval(factTimer); window.clearInterval(progressTimer); window.clearInterval(elapsedTimer); };
   }, [aiLoading]);
 
   const handleSaveInlineEdits = useCallback(async () => {
@@ -2456,6 +2471,10 @@ export function TemplatesWorkspace() {
                     <span className="relative inline-flex rounded-full w-[8px] h-[8px] bg-[#17D94B]" />
                   </span>
                   <span className="text-[11px] font-bold tracking-[0.14em] text-[#17D94B]">GENERATING</span>
+                  <span className="w-px h-[10px] bg-[rgba(23,217,75,0.4)]" />
+                  <span className="text-[11px] font-bold tracking-[0.04em] text-[#FFC328] tabular-nums">
+                    {Math.floor(aiLoadingElapsed / 60).toString().padStart(2, "0")}:{(aiLoadingElapsed % 60).toString().padStart(2, "0")}
+                  </span>
                 </div>
 
                 <div className="absolute bottom-[14px] left-[14px] right-[14px] z-[10]">

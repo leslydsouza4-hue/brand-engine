@@ -408,6 +408,106 @@ export function TemplatesWorkspace() {
     if (w) { w.document.open(); w.document.write(aiHtml); w.document.close(); }
   };
 
+  const [aiExporting, setAiExporting] = useState<null | "png" | "jpeg" | "pdf">(null);
+
+  const renderAIToCanvas = async (): Promise<HTMLCanvasElement | null> => {
+    if (!aiHtml) return null;
+    const { w, h } = aiCanvasDims;
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.left = "-99999px";
+    iframe.style.top = "0";
+    iframe.style.width = `${w}px`;
+    iframe.style.height = `${h}px`;
+    iframe.style.border = "0";
+    iframe.setAttribute("sandbox", "allow-same-origin allow-scripts");
+    document.body.appendChild(iframe);
+    try {
+      await new Promise<void>((resolve) => {
+        iframe.onload = () => resolve();
+        iframe.srcdoc = aiHtml;
+      });
+      const doc = iframe.contentDocument;
+      if (!doc) return null;
+      const imgs = Array.from(doc.images);
+      await Promise.all(imgs.map(img => img.complete ? Promise.resolve() : new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r(); })));
+      await new Promise(r => setTimeout(r, 250));
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(doc.documentElement, {
+        width: w,
+        height: h,
+        windowWidth: w,
+        windowHeight: h,
+        backgroundColor: "#0B1426",
+        useCORS: true,
+        scale: 1,
+        logging: false,
+      });
+      return canvas;
+    } finally {
+      document.body.removeChild(iframe);
+    }
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleAIDownloadImage = async (kind: "png" | "jpeg") => {
+    if (!aiHtml || aiExporting) return;
+    setAiExporting(kind);
+    try {
+      const canvas = await renderAIToCanvas();
+      if (!canvas) throw new Error("Render failed");
+      const mime = kind === "png" ? "image/png" : "image/jpeg";
+      const ext = kind === "png" ? "png" : "jpg";
+      const quality = kind === "jpeg" ? 0.95 : undefined;
+      await new Promise<void>((resolve) => {
+        canvas.toBlob((blob) => {
+          if (blob) downloadBlob(blob, `claude-design-${Date.now()}.${ext}`);
+          resolve();
+        }, mime, quality);
+      });
+    } catch (err) {
+      console.error("[ai-export]", err);
+      setAiError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setAiExporting(null);
+    }
+  };
+
+  const handleAIDownloadPdf = async () => {
+    if (!aiHtml || aiExporting) return;
+    setAiExporting("pdf");
+    try {
+      const canvas = await renderAIToCanvas();
+      if (!canvas) throw new Error("Render failed");
+      const { jsPDF } = await import("jspdf");
+      const { w, h } = aiCanvasDims;
+      const pdf = new jsPDF({
+        orientation: w >= h ? "landscape" : "portrait",
+        unit: "px",
+        format: [w, h],
+        hotfixes: ["px_scaling"],
+      });
+      const dataUrl = canvas.toDataURL("image/png");
+      pdf.addImage(dataUrl, "PNG", 0, 0, w, h);
+      pdf.save(`claude-design-${Date.now()}.pdf`);
+    } catch (err) {
+      console.error("[ai-export-pdf]", err);
+      setAiError(err instanceof Error ? err.message : "PDF export failed");
+    } finally {
+      setAiExporting(null);
+    }
+  };
+
   const activeHighly = HIGHLY_POSES.find(h => h.id === selectedHighly);
 
   const handleRemoveBackground = async () => {
@@ -882,14 +982,35 @@ export function TemplatesWorkspace() {
                   <ExternalLink className="w-[13px] h-[13px]" />
                   Open in new tab
                 </button>
+                <div className="grid grid-cols-3 gap-[6px]">
+                  {([
+                    { id: "png", label: "PNG" },
+                    { id: "jpeg", label: "JPEG" },
+                    { id: "pdf", label: "PDF" },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => opt.id === "pdf" ? handleAIDownloadPdf() : handleAIDownloadImage(opt.id)}
+                      disabled={!!aiExporting}
+                      className="flex items-center justify-center gap-[6px] py-[10px] rounded-[10px] text-[11.5px] font-bold bg-[rgba(0,178,169,0.1)] border border-[rgba(0,178,169,0.3)] text-[#5EE6DE] hover:bg-[rgba(0,178,169,0.18)] cursor-pointer transition-all disabled:opacity-50 disabled:cursor-wait"
+                    >
+                      {aiExporting === opt.id ? (
+                        <Loader2 className="w-[12px] h-[12px] animate-spin" />
+                      ) : (
+                        <DownloadIcon className="w-[12px] h-[12px]" />
+                      )}
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
                 <button
                   onClick={handleAIDownloadHtml}
-                  className="w-full flex items-center justify-center gap-[8px] py-[10px] px-[14px] rounded-[10px] text-[12px] font-semibold bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[#E2E8F0] hover:bg-[rgba(255,255,255,0.07)] cursor-pointer transition-all"
+                  className="w-full flex items-center justify-center gap-[8px] py-[8px] px-[14px] rounded-[10px] text-[11px] font-semibold bg-transparent border border-[rgba(255,255,255,0.06)] text-[#64748B] hover:bg-[rgba(255,255,255,0.03)] hover:text-[#94A3B8] cursor-pointer transition-all"
                 >
-                  <DownloadIcon className="w-[13px] h-[13px]" />
-                  Download HTML
+                  <DownloadIcon className="w-[12px] h-[12px]" />
+                  Download HTML source
                 </button>
-                <div className="text-[10.5px] text-[#475569] text-center mt-[2px]">Tip: open in new tab and screenshot at full size for a PNG export.</div>
+                <div className="text-[10.5px] text-[#475569] text-center mt-[2px]">Exports render at native canvas resolution.</div>
               </div>
             )}
           </>

@@ -29,16 +29,12 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - **Biz Dev Templates (Virtual Workshop)**: Campaign pack generator — input headline, date, guest name, CTA, person photo (auto bg removal); generates 6 fixed template variants (QL 1080×1080, Portrait 1080×1350, Horizontal CTA/Dates/Day1/Day2 1920×1080); gallery output with individual + bulk download
   - **Super Promo**: Host + Guest campaign pack — input headline, date, CTA, host/guest names+titles+photos; multi-size (Horizontal 1920×1080, Vertical 1080×1920, Portrait 1080×1350, Square 1080×1080); variants (Dates/CTA/No Date/Day 1/Day 2/Replays); individual + ZIP export
   - **Super Promo 2**: Guest-only campaign pack (no Host) — same sizes/variants as Super Promo but with single centered speaker circle; separate background (`assets/superpromo2/`); individual + ZIP export
-  - **AI Image**: Multi-model AI image generation with model picker UI
-    - **Nano Banana 2** (`gemini-2.5-flash-image`) — ultra-fast generation via Gemini
-    - **Nano Banana Pro** (`gemini-3-pro-image-preview`) — high-quality details via Gemini
-    - **GPT-4** (`gpt-image-1`) — OpenAI image model
 - **Design system**: Deep navy (#060B16), brand teal (#00B2A9), electric blue (#2896FB), CTA yellow (#FFD000)
 - **Fonts**: Inter + Poppins (Google Fonts)
 - **AI Features**:
   - Background removal via `@imgly/background-removal` (npm package, runs client-side)
-  - AI image generation via Gemini (default) and OpenAI gpt-image-1, Replit AI Integration (no API key required, billed to Replit credits)
-  - Model picker with animated dropdown in prompt bar (primary) and inline select in regenerate bar
+  - Claude Design (Custom Design) — Anthropic Claude generates the design markup; Nano Banana Pro (Gemini) is used for any inline image needs via `lib/integrations-gemini-ai`
+  - The standalone "AI Image" generator workspace was removed in favor of Claude Design (covers all use cases)
 - **CMYK Export**: Customer Journey PDF export uses server-side Sharp CMYK conversion → DeviceCMYK PDF (true print-ready CMYK color space)
 - **API Proxy**: Vite dev server proxies `/api` to API server at `http://localhost:8080`
 - **Assets**: Shaun images from GitHub raw URLs

@@ -1,6 +1,5 @@
 import { 
   LayoutTemplate, 
-  Image as ImageIcon, 
   User, 
   Video, 
   Gift, 
@@ -76,14 +75,6 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           >
             <LayoutTemplate className={iconCls(currentMode === 'templates')} />
             Custom Design
-          </button>
-          
-          <button 
-            onClick={() => handleSetMode('ai-image')}
-            className={`${btnBase} cursor-pointer ${currentMode === 'ai-image' ? activeClass : inactiveClass}`}
-          >
-            <ImageIcon className={iconCls(currentMode === 'ai-image')} />
-            AI Image
           </button>
         </div>
 

@@ -1,35 +1,15 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Upload, RotateCcw, Check, X, Palette, Image as ImageIcon, Sparkles, Globe, Monitor } from "lucide-react";
+import { Upload, RotateCcw, Check, X, Palette, Image as ImageIcon, Globe, Monitor } from "lucide-react";
 import {
   loadSettings,
   saveSettings,
   resetSettings,
   BrandSettings,
   CANVAS_SIZE_OPTIONS,
-  AI_STYLE_OPTIONS,
   LANGUAGE_OPTIONS,
   DEFAULT_SETTINGS,
 } from "./settingsStore";
-
-function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      onClick={() => onChange(!checked)}
-      className={`relative w-[42px] h-[24px] rounded-full transition-all duration-200 cursor-pointer border-none ${
-        checked
-          ? "bg-gradient-to-r from-[#00B2A9] to-[#2896FB] shadow-[0_0_12px_rgba(0,178,169,0.3)]"
-          : "bg-[rgba(255,255,255,0.08)]"
-      }`}
-    >
-      <div
-        className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow-md transition-all duration-200 ${
-          checked ? "left-[21px]" : "left-[3px]"
-        }`}
-      />
-    </button>
-  );
-}
 
 function ColorInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -290,19 +270,6 @@ export function SettingsWorkspace() {
                 options={CANVAS_SIZE_OPTIONS}
                 onChange={v => update("defaultCanvasSize", v)}
               />
-            </SettingRow>
-          </SettingSection>
-
-          <SettingSection icon={<Sparkles className="w-[14px] h-[14px]" />} title="AI Image Settings" color="#A855F7">
-            <SettingRow label="Default Style" description="AI-generated image visual style">
-              <Select
-                value={settings.aiDefaultStyle}
-                options={AI_STYLE_OPTIONS}
-                onChange={v => update("aiDefaultStyle", v)}
-              />
-            </SettingRow>
-            <SettingRow label="Auto-include Highly" description="Automatically add Highly mascot when detected">
-              <Toggle checked={settings.aiAutoIncludeHighly} onChange={v => update("aiAutoIncludeHighly", v)} />
             </SettingRow>
           </SettingSection>
 

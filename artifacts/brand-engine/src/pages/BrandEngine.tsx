@@ -4,7 +4,6 @@ import { Toolbar } from "@/components/brand/Toolbar";
 import { TemplatesWorkspace } from "@/components/brand/TemplatesWorkspace";
 import { ShaunWorkspace } from "@/components/brand/ShaunWorkspace";
 import { ZoomWorkspace } from "@/components/brand/ZoomWorkspace";
-import { AIImageWorkspace } from "@/components/brand/AIImageWorkspace";
 import { BrandDirectoryWorkspace } from "@/components/brand/BrandDirectoryWorkspace";
 import { SettingsWorkspace } from "@/components/brand/SettingsWorkspace";
 import { MyExportsWorkspace } from "@/components/brand/MyExportsWorkspace";
@@ -20,10 +19,10 @@ import { EmailTemplatesWorkspace } from "@/components/brand/EmailTemplatesWorksp
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    const valid = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
+    const valid = ["templates", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
     return valid.includes(hash) ? hash : "templates";
   });
-  const VALID_MODES = ["templates", "ai-image", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
+  const VALID_MODES = ["templates", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -58,7 +57,6 @@ export default function BrandEngine() {
         
         {currentMode === "bizdev-templates" && <BizDevWorkspace />}
         {currentMode === "super-promo" && <SuperPromo2Workspace />}
-        {currentMode === "ai-image" && <AIImageWorkspace />}
         {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
         {currentMode === "settings" && <SettingsWorkspace />}
 

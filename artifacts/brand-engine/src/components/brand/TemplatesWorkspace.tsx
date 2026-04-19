@@ -231,9 +231,49 @@ export function TemplatesWorkspace() {
   const [showLogoOverlay, setShowLogoOverlay] = useState(false);
   const [logoPlacement, setLogoPlacement] = useState<"top-left" | "bottom-left">("top-left");
 
+  const AI_FORMATS = [
+    {
+      id: "social", name: "Social", icon: LayoutTemplate,
+      sizes: [
+        { value: "1080x1080", label: "Instagram Square (1080×1080)" },
+        { value: "1080x1350", label: "Instagram Portrait (1080×1350)" },
+        { value: "1080x1920", label: "Story / Reel (1080×1920)" },
+        { value: "1200x628", label: "Twitter / FB Landscape (1200×628)" },
+      ],
+    },
+    {
+      id: "ads", name: "Ads", icon: MonitorPlay,
+      sizes: [
+        { value: "728x90", label: "Leaderboard (728×90)" },
+        { value: "300x250", label: "Medium Rectangle (300×250)" },
+        { value: "1200x628", label: "Wide Banner (1200×628)" },
+        { value: "1280x720", label: "YouTube Thumbnail (1280×720)" },
+      ],
+    },
+    {
+      id: "presentation", name: "Presentation", icon: Presentation,
+      sizes: [
+        { value: "1920x1080", label: "Widescreen 16:9 (1920×1080)" },
+        { value: "1024x768", label: "Standard 4:3 (1024×768)" },
+        { value: "2520x1080", label: "Ultra Wide 21:9 (2520×1080)" },
+        { value: "1080x1080", label: "Square 1:1 (1080×1080)" },
+      ],
+    },
+    {
+      id: "email", name: "Email", icon: Mail,
+      sizes: [
+        { value: "600x200", label: "Email Header (600×200)" },
+        { value: "600x300", label: "Email Banner (600×300)" },
+        { value: "600x400", label: "Email Hero (600×400)" },
+        { value: "600x600", label: "Email Square (600×600)" },
+      ],
+    },
+  ] as const;
+
   const [aiMode, setAiMode] = useState(false);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiAspect, setAiAspect] = useState("1200x630");
+  const [aiCategoryId, setAiCategoryId] = useState<typeof AI_FORMATS[number]["id"]>("social");
+  const [aiAspect, setAiAspect] = useState("1080x1080");
   const [aiModel, setAiModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-sonnet-4-6");
   const [aiHtml, setAiHtml] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -606,39 +646,43 @@ export function TemplatesWorkspace() {
               ))}
             </div>
 
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Format</div>
+            <div className="flex gap-[8px] mb-[12px] overflow-x-auto sidebar-scroll">
+              {AI_FORMATS.map(fmt => {
+                const Icon = fmt.icon;
+                const isActive = aiCategoryId === fmt.id;
+                return (
+                  <motion.div
+                    key={fmt.id}
+                    onClick={() => {
+                      setAiCategoryId(fmt.id);
+                      setAiAspect(fmt.sizes[0].value);
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex-1 min-w-[64px] flex flex-col items-center justify-center gap-[6px] py-[12px] px-[6px] rounded-[12px] cursor-pointer transition-all border ${
+                      isActive
+                        ? "bg-[rgba(0,178,169,0.12)] border-[rgba(0,178,169,0.35)]"
+                        : "bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.04)]"
+                    }`}
+                  >
+                    <Icon className={`w-[18px] h-[18px] ${isActive ? "text-[#5EE6DE]" : "text-[#64748B]"}`} />
+                    <div className={`text-[10.5px] font-semibold ${isActive ? "text-white" : "text-[#94A3B8]"}`}>{fmt.name}</div>
+                    {isActive && <div className="h-[2px] w-[16px] rounded-full bg-[#5EE6DE]" />}
+                  </motion.div>
+                );
+              })}
+            </div>
+
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Size</div>
             <select
               value={aiAspect}
               onChange={(e) => setAiAspect(e.target.value)}
               className="w-full mb-[12px] py-[10px] pr-[38px] pl-[14px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-inherit text-[12px] font-medium text-white cursor-pointer outline-none appearance-none focus:border-[rgba(0,178,169,0.3)]"
             >
-              <optgroup label="Social" className="bg-[#0a1628]">
-                <option value="1080x1080" className="bg-[#0a1628]">Instagram Square (1080×1080)</option>
-                <option value="1080x1350" className="bg-[#0a1628]">Instagram Portrait (1080×1350)</option>
-                <option value="1080x1920" className="bg-[#0a1628]">Story / Reel (1080×1920)</option>
-                <option value="1200x628" className="bg-[#0a1628]">Twitter / FB Landscape (1200×628)</option>
-              </optgroup>
-              <optgroup label="Ads" className="bg-[#0a1628]">
-                <option value="728x90" className="bg-[#0a1628]">Leaderboard (728×90)</option>
-                <option value="300x250" className="bg-[#0a1628]">Medium Rectangle (300×250)</option>
-                <option value="1200x628" className="bg-[#0a1628]">Wide Banner (1200×628)</option>
-                <option value="1280x720" className="bg-[#0a1628]">YouTube Thumbnail (1280×720)</option>
-              </optgroup>
-              <optgroup label="Presentation" className="bg-[#0a1628]">
-                <option value="1920x1080" className="bg-[#0a1628]">Widescreen 16:9 (1920×1080)</option>
-                <option value="1024x768" className="bg-[#0a1628]">Standard 4:3 (1024×768)</option>
-                <option value="2520x1080" className="bg-[#0a1628]">Ultra Wide 21:9 (2520×1080)</option>
-                <option value="1080x1080" className="bg-[#0a1628]">Square 1:1 (1080×1080)</option>
-              </optgroup>
-              <optgroup label="Email" className="bg-[#0a1628]">
-                <option value="600x200" className="bg-[#0a1628]">Email Header (600×200)</option>
-                <option value="600x300" className="bg-[#0a1628]">Email Banner (600×300)</option>
-                <option value="600x400" className="bg-[#0a1628]">Email Hero (600×400)</option>
-                <option value="600x600" className="bg-[#0a1628]">Email Square (600×600)</option>
-              </optgroup>
-              <optgroup label="Other" className="bg-[#0a1628]">
-                <option value="1200x630" className="bg-[#0a1628]">OG / Landscape (1200×630)</option>
-              </optgroup>
+              {(AI_FORMATS.find(f => f.id === aiCategoryId) ?? AI_FORMATS[0]).sizes.map(s => (
+                <option key={s.value} value={s.value} className="bg-[#0a1628]">{s.label}</option>
+              ))}
             </select>
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Prompt</div>

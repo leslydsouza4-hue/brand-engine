@@ -346,7 +346,77 @@ Carousel rules:
 - **HARD RULE — Highly mascot integrity:** NEVER invent, draw, or illustrate the Highly mascot in SVG/CSS. Highly is a specific 3D-rendered character (rounded head with black visor, teal eyes, white-and-blue body, jet thruster). You are NOT permitted to approximate it. If the prompt mentions Highly / the mascot and no Highly URL was provided, OMIT the mascot entirely and rebalance the layout — do NOT substitute with a generic robot, blob, smiley, or character illustration.
 - The <body> must contain a single root <div class="canvas"> with EXACT pixel width and height matching the requested aspect ratio. Set body { margin:0; background:#0B1426; display:flex; align-items:center; justify-content:center; min-height:100vh; } so the canvas centers in the viewport for preview.
 - Set box-sizing: border-box on everything (* { box-sizing: border-box; margin: 0; padding: 0; }).
-- Test mentally: would a designer at Linear, Stripe, or Vercel be okay with shipping this? If no, refine before outputting.`;
+- Test mentally: would a designer at Linear, Stripe, or Vercel be okay with shipping this? If no, refine before outputting.
+
+# HighLevel Product UI Reference Library (CRITICAL — use when the prompt asks for any HighLevel screen, app UI, dashboard, workflow, dialer, conversations, pipeline, calendar, sites, automations, ads, reputation, opportunities, or any "product mockup")
+
+When the user prompt mentions any HighLevel product surface (e.g. "workflow UI", "calling UI", "dialer", "inbox", "conversations", "pipeline", "kanban", "dashboard", "CRM screen", "GHL app", "automation builder", "calendar UI", "appointment UI", "opportunities", "snapshots", "sub-account dashboard", "agency dashboard"), you MUST render an inline HTML/CSS mockup that visually mimics the real HighLevel product UI to ~80% accuracy using ONLY divs, spans, inline SVG, and CSS. Never use external images for the UI itself. The mockup is the hero visual of the marketing graphic — frame it as a browser-style chrome (rounded corners, top bar with red/yellow/green dots, subtle drop-shadow), then reproduce the screen below.
+
+## Global app chrome (shared across all HighLevel screens)
+- App background: pure white #FFFFFF for the main canvas. The deep navy #0B1426 brand color is reserved for the OUTER marketing graphic background ONLY (the area around the browser frame). Inside the simulated app, treat it as a real SaaS UI on white.
+- Browser/window frame around the app: border-radius 14px, background #FFFFFF, border 1px solid #E5E9F0, box-shadow 0 30px 80px rgba(11,20,38,0.45). Top chrome bar (28-32px tall) with three traffic-light dots (#FF5F57, #FEBC2E, #28C840) on the left, optionally a faint URL pill in center.
+- Left vertical sidebar (rail): width 56-72px, background #0B1426 (dark navy), full height. Stack of square icon buttons (28x28 inside 44x44 hit area) in #94A3B8, with the ACTIVE icon highlighted by a soft #2896FB background tint (rgba(40,150,251,0.12)) and #2896FB stroke. Icons should be simple line SVGs at stroke-width 1.6. At the very top of the rail: a small HighLevel mark / colored square placeholder. At the bottom: avatar circle.
+- Sidebar icon order (top to bottom, label → icon hint): Dashboard (grid), Conversations (chat-bubble), Calendars (calendar), Contacts (users), Opportunities (funnel/pipeline), Payments (dollar), Marketing (megaphone), Automations (lightning bolt), Sites (globe), Memberships (graduation cap), Reputation (star), Reporting (bar-chart), Settings (gear).
+- Top header bar (40-48px tall, white, border-bottom 1px solid #EEF1F6): page title in #0B1426 weight 600 on the left; right side has a search input pill, a green phone icon (#17D94B background, white phone glyph) for the dialer, a notifications bell, and a circular avatar.
+- Body typography: Inter or Poppins, all weights. Body text 13-14px, color #0F172A. Secondary text #64748B. Borders #E5E9F0. Cards: white, border 1px solid #E5E9F0, border-radius 10px, subtle shadow 0 1px 2px rgba(15,23,42,0.04).
+- Brand color usage inside the app: green #17D94B for "active / live / success / call" states; blue #2896FB for primary buttons + selected nav; yellow #FFC328 for warnings + pending; red #EF4444 for destructive only. Pills/badges have rounded-full corners and 10-11px uppercase text.
+
+## Workflow / Automation Builder UI
+- Two-pane layout INSIDE the app body: left = node canvas (light grid background #FAFBFC with subtle 24px dotted grid #E5E9F0), right = config panel (white, 320-380px wide, border-left 1px #E5E9F0).
+- Top toolbar above the canvas: workflow name in bold + "Draft" pill (yellow #FFC328 background, navy text), then segmented tabs "Builder | Settings | Enrollment History | Execution Logs", then on the right "Save" button (white border) and "Publish" button (green #17D94B, white text).
+- Nodes on the canvas: vertical stack connected by thin #CBD5E1 vertical lines with a small "+" circle between them.
+  • Trigger node (top): pill-shaped card, lightning-bolt icon in #FFC328 circle, label "Trigger" in 11px uppercase #94A3B8, then trigger name in 14px #0F172A weight 600 (e.g. "Form Submitted", "Contact Tag Added", "Appointment Booked").
+  • Action nodes: rounded 8px white cards, 220-260px wide, with a colored left-border stripe by category — blue #2896FB for Communication (Send SMS / Send Email / Make Call), purple #8B5CF6 for AI / Conversation AI, orange #F97316 for CRM (Update Contact, Add Tag), green #17D94B for Internal Notifications.
+  • Each node header: small category icon (16px) + action title (13px weight 600), then a one-line subtitle in #64748B (e.g. "If Lead Score > 50").
+  • Branch / If-Else node: diamond chip in #FFC328 with "If/Else" label, splitting into two horizontal columns labeled "YES" (green border) and "NO" (red border).
+  • Wait nodes: smaller pill, clock icon, "Wait 1 day" text in #64748B.
+- Right config panel: tab strip ("Action | Filters | Goal"), then a form with labeled inputs (label 11px uppercase #64748B, input white with 1px #E5E9F0 border, 8px radius), a "Custom values" insertable token chip in #2896FB tint, and a sticky "Save Action" green button at the bottom.
+
+## Phone Dialer / Calling UI
+- Floating dialer card centered or top-right of the app: 360px wide, white, border-radius 16px, shadow 0 20px 50px rgba(11,20,38,0.18).
+- Header bar of the dialer: green #17D94B (or gradient #17D94B → #00B2A9) at the top, height ~120px, contact avatar circle (60px) center, contact name in white 16px weight 600, contact subtitle (e.g. "+1 (415) 555-0142") in white 12px opacity 0.85, status pill "On Call · 02:14" or "Ringing…" in white border pill below.
+- Body: number-pad grid 3x4 (1-9, *, 0, #), each key a 64x64 rounded square, light gray #F1F5F9 background, big number 18px weight 500 #0B1426, small letters under (e.g. "ABC") in 9px #94A3B8.
+- Action bar at the bottom of the dialer: 4-5 circular icon buttons (mute, keypad, hold, transfer, record) in 44px circles, light gray default, blue #2896FB when active. Center: a large 64px round red #EF4444 button with white phone-down icon to end the call.
+- Side controls (when shown): "Add Notes" expandable section (textarea), "Disposition" dropdown (Answered / No Answer / Voicemail / Wrong Number), "Tag Contact" multi-select chips, "Schedule Follow-up" link.
+- If the prompt says "incoming call" or "calling", show pulsing green ring around the avatar (use a static design — radial concentric circles fading to transparent). If "softphone" or "minimized dialer", render a thin pill at the bottom of the screen instead of the full card.
+- Top-right of the OUTER app header always shows the green phone button (#17D94B circle, white phone icon) — this is the entry point users recognize.
+
+## Conversations / Inbox UI
+- Three-column layout: (1) Inbox/folder rail 200-220px wide (#FAFBFC bg), (2) conversation list 300-340px wide (white, border-right 1px #E5E9F0), (3) message thread (flex 1).
+- Folder rail: section labels "Inboxes" (uppercase 10px #94A3B8), folders Unread (with count pill in blue), All, Recents, Starred, Mentions, Assigned to me, Drafts. Each row 36px tall with icon + label.
+- Conversation list: each row 76-88px tall, contact avatar (40px circle, colored initial fallback), contact name 13px weight 600 #0F172A, last-message preview 12px #64748B truncated, channel icon at top-right (SMS bubble in green, email envelope in blue, FB messenger in #1877F2, Instagram in pink/orange gradient, WhatsApp in #25D366), timestamp 11px #94A3B8, unread = blue dot + name in bold, selected row has #EFF6FF background and #2896FB left border 3px.
+- Filter/search bar at top of list: search input + filter chips ("All channels", "Status: Open", "Assigned: Me") with x to remove.
+- Message thread: header bar with contact name, channel pill, "More" actions (assign, snooze, archive) in icon buttons. Body: chat bubbles — INBOUND messages on the LEFT in #F1F5F9 with #0F172A text, OUTBOUND on the RIGHT in #2896FB with white text, both with 14px radius (sharp corner toward the side of origin). Timestamp + delivery status ("Delivered ✓✓ 2:14pm") under each message in 10px #94A3B8.
+- Composer at bottom: tabbed channel switcher (SMS | Email | WhatsApp | FB | IG), text area, formatting toolbar (B I U link), template dropdown, attachment paperclip, AI-suggest sparkle icon in #2896FB, big green "Send" button on the right.
+- Right side panel (collapsible, 300px): contact card with avatar + name + phone + email + tags + "Open contact" link, then accordion sections: "Recent Activity", "Appointments", "Opportunities", "Notes", "Tasks".
+
+## Pipeline / Opportunities Kanban UI
+- Top bar above the board: pipeline name in 18px weight 700, dropdown to switch pipelines, then "+ Add Opportunity" green button, "Filters" white pill, "Sort" white pill, "Board / List" segmented toggle.
+- Horizontal scrollable columns, each 280-320px wide, separated by 16px gaps.
+- Column header: pill background tinted to the stage color (New = blue, Contacted = #FFC328 yellow, Qualified = #8B5CF6 purple, Proposal = #F97316 orange, Won = #17D94B green, Lost = #94A3B8 gray) with stage name in 13px weight 700, count "(12)" in 12px next to it, total value "$24,400" in 12px #64748B, plus a "+" icon to add. Background of column body: #F8FAFC.
+- Opportunity cards: white, border-radius 10px, padding 12px, border 1px #E5E9F0, soft shadow. Top row: contact avatar + name (13px weight 600). Below: opportunity title (12px #0F172A). Row of meta: dollar value in green weight 600, due date in #64748B with calendar icon, owner avatar (16px circle) on the right. Bottom row: 1-2 small tag chips (rounded, colored backgrounds), and an icons strip showing communication touchpoints (SMS, email, call, last-activity dot in green if active in last 24h).
+- Drag handle indicated by 6 small dots in the top-right of each card on hover.
+
+## Dashboard / Reporting UI
+- Page header: "Dashboard" title + date-range pill ("Last 30 days ▾") + "Customize" button (white) + "+ Add Widget" button (blue).
+- 12-column responsive grid of widget cards: KPI tiles (Revenue, Leads, Booked Calls, Conversion Rate) — each card: label in 11px uppercase #94A3B8, big number 32-40px weight 700 #0B1426, delta chip below ("+12.4%" green or "-3.1%" red with arrow). Larger cards: line chart (Revenue trend, area gradient #2896FB → transparent), bar chart (leads by source), donut (channel mix), pipeline value funnel.
+- Charts use brand colors with #2896FB as primary, #17D94B for "won/converted", #FFC328 for "pending", #94A3B8 for "lost/baseline". Grid lines #EEF1F6, axis labels #94A3B8 11px.
+- Tables: striped rows with #F8FAFC alt background, header in #64748B 11px uppercase, cell text 13px #0F172A.
+
+## Calendar / Appointments UI
+- Week or month view: column headers Mon-Sun in 11px uppercase, day numbers in 14px weight 600.
+- Today indicated by a #2896FB filled circle around the day number.
+- Appointment blocks: rounded 6px, colored by calendar (blue, green, purple, orange), white text 12px weight 600 with start time on top and title below. Stacked vertically inside time slots, with rounded ends.
+- Side panel: mini-calendar at top, then list of upcoming appointments with time + contact + service, "Book Appointment" green button at the bottom.
+
+## CSS class naming and structure
+Use semantic class names so the result is readable: .gh-app, .gh-rail, .gh-rail-icon, .gh-header, .gh-search, .gh-call-btn, .gh-canvas, .gh-node, .gh-node-trigger, .gh-node-action, .gh-config-panel, .gh-dialer, .gh-keypad, .gh-key, .gh-conv-list, .gh-conv-row, .gh-thread, .gh-bubble.in, .gh-bubble.out, .gh-pipeline, .gh-stage, .gh-card, .gh-kpi.
+
+## Marketing graphic framing rules when a HighLevel UI is the visual
+- The simulated app sits in a tilted/floating browser frame with perspective transform: rotateY(-6deg) rotateX(2deg) (3D depth) on LARGE/landscape canvases; flat (no perspective) on SMALL/portrait.
+- Outer canvas background uses the deep navy + brand orbs as usual; the headline / eyebrow / CTA wrap around the device, NEVER overlap the screen content.
+- Add 1-2 floating "callout" chips that point at specific screen elements with a thin 1px line and a small pill containing a feature label (e.g. "AI auto-replies", "Drag-and-drop builder", "One-click dialer"). Use #FFC328 or #17D94B fills.
+- The HighLevel wordmark/logo still goes in the corner of the OUTER canvas — never inside the simulated product UI (the product chrome can show a small placeholder square as the in-app brand mark).`;
 
 router.post("/claude-design", async (req, res) => {
   const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;

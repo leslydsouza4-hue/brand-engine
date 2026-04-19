@@ -1,5 +1,5 @@
 import { 
-  LayoutTemplate, 
+  Sparkles,
   User, 
   Video, 
   Gift, 
@@ -69,12 +69,27 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         <div className="px-[12px] mb-[10px] relative">
           <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Create</div>
           
-          <button 
+          <button
             onClick={() => handleSetMode('templates')}
-            className={`${btnBase} cursor-pointer ${currentMode === 'templates' ? activeClass : inactiveClass}`}
+            className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[11px] rounded-[12px] cursor-pointer border-none overflow-hidden transition-all duration-300 ${
+              currentMode === 'templates'
+                ? 'bg-gradient-to-br from-[rgba(0,178,169,0.22)] via-[rgba(40,150,251,0.18)] to-[rgba(168,85,247,0.18)] shadow-[0_8px_28px_rgba(40,150,251,0.25),inset_0_1px_0_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(40,150,251,0.35)]'
+                : 'bg-gradient-to-br from-[rgba(0,178,169,0.10)] via-[rgba(40,150,251,0.08)] to-[rgba(168,85,247,0.08)] hover:from-[rgba(0,178,169,0.16)] hover:via-[rgba(40,150,251,0.13)] hover:to-[rgba(168,85,247,0.13)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(40,150,251,0.18)] hover:shadow-[0_6px_20px_rgba(40,150,251,0.18),inset_0_1px_0_rgba(255,255,255,0.08),inset_0_0_0_1px_rgba(40,150,251,0.28)]'
+            }`}
           >
-            <LayoutTemplate className={iconCls(currentMode === 'templates')} />
-            Custom Design
+            <span aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(110deg,transparent_30%,rgba(255,255,255,0.08)_50%,transparent_70%)] bg-[length:200%_100%] animate-[shimmer_2.4s_linear_infinite]" />
+            {currentMode === 'templates' && (
+              <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[22px] bg-gradient-to-b from-[#00B2A9] via-[#2896FB] to-[#A855F7] rounded-r-[4px] shadow-[0_0_16px_rgba(40,150,251,0.45)]" />
+            )}
+            <span className="relative w-[26px] h-[26px] rounded-[8px] flex items-center justify-center bg-gradient-to-br from-[#00B2A9] via-[#2896FB] to-[#A855F7] shadow-[0_4px_14px_rgba(40,150,251,0.45),inset_0_1px_0_rgba(255,255,255,0.25)] shrink-0">
+              <Sparkles className="w-[13px] h-[13px] text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.6)] animate-[aiSparkle_2.6s_ease-in-out_infinite]" />
+            </span>
+            <span className="relative flex-1 text-left text-[13px] font-semibold tracking-[-0.1px] bg-gradient-to-r from-white via-[#E2E8F0] to-white bg-clip-text text-transparent">
+              AI Studio
+            </span>
+            <span className="relative text-[9px] font-bold tracking-[0.6px] uppercase px-[6px] py-[2px] rounded-full bg-gradient-to-r from-[#FFD000] to-[#FFB800] text-[#1a1300] shadow-[0_2px_8px_rgba(255,208,0,0.4)]">
+              New
+            </span>
           </button>
         </div>
 

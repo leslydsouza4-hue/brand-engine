@@ -423,6 +423,10 @@ export function TemplatesWorkspace() {
 
   const [aiMode, setAiMode] = useState(true);
   const [aiPrompt, setAiPrompt] = useState("");
+  const [aiSuggestType, setAiSuggestType] = useState("promo");
+  const [aiSuggestRough, setAiSuggestRough] = useState("");
+  const [aiSuggesting, setAiSuggesting] = useState(false);
+  const [aiSuggestError, setAiSuggestError] = useState<string | null>(null);
   const [aiCategoryId, setAiCategoryId] = useState<typeof AI_FORMATS[number]["id"]>("social");
   const [aiAspect, setAiAspect] = useState("1080x1080");
   const [aiModel, setAiModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-sonnet-4-6");
@@ -814,6 +818,50 @@ export function TemplatesWorkspace() {
       setAiRefineError(err?.message || "Refine failed");
     } finally {
       setAiRefining(false);
+    }
+  };
+
+  const PROMPT_TYPE_OPTIONS = [
+    { id: "promo", label: "Promo / Sale" },
+    { id: "stat", label: "Big Stat" },
+    { id: "quote", label: "Customer Quote" },
+    { id: "webinar", label: "Webinar / Event" },
+    { id: "launch", label: "Product Launch" },
+    { id: "milestone", label: "Milestone" },
+    { id: "tip", label: "Quick Tip / DYK" },
+    { id: "caseStudy", label: "Case Study Win" },
+    { id: "comparison", label: "Before vs After" },
+    { id: "announcement", label: "Announcement" },
+    { id: "feature", label: "Feature Highlight" },
+    { id: "event", label: "Save-The-Date" },
+  ];
+
+  const handleSuggestPrompt = async () => {
+    if (aiSuggesting) return;
+    setAiSuggesting(true);
+    setAiSuggestError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/suggest-prompt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promptType: aiSuggestType,
+          roughIdea: aiSuggestRough.trim(),
+          aspect: aiAspect,
+          format: aiCategoryId,
+          includeLogo: aiIncludeLogo,
+          includeHighly: aiIncludeHighly,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      if (!data.prompt) throw new Error("Empty prompt");
+      setAiPrompt(data.prompt);
+    } catch (err: any) {
+      setAiSuggestError(err?.message || "Suggest failed");
+    } finally {
+      setAiSuggesting(false);
     }
   };
 
@@ -1914,8 +1962,53 @@ export function TemplatesWorkspace() {
               </button>
             </div>
 
+            <div className="mb-[10px] p-[12px] rounded-[10px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.22)]">
+              <div className="flex items-center gap-[6px] mb-[8px]">
+                <Sparkles className="w-[12px] h-[12px] text-[#2896FB]" />
+                <div className="text-[9.5px] font-bold uppercase tracking-[1.3px] text-[#2896FB]">Give me a prompt</div>
+              </div>
+              <div className="grid grid-cols-[1fr_auto] gap-[6px] mb-[6px]">
+                <select
+                  value={aiSuggestType}
+                  onChange={(e) => setAiSuggestType(e.target.value)}
+                  className="w-full py-[8px] pr-[28px] pl-[10px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.10)] rounded-[8px] font-inherit text-[11px] font-semibold text-white cursor-pointer outline-none appearance-none focus:border-[rgba(40,150,251,0.45)]"
+                  disabled={aiSuggesting}
+                >
+                  {PROMPT_TYPE_OPTIONS.map(opt => (
+                    <option key={opt.id} value={opt.id} className="bg-[#0a1628]">{opt.label}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleSuggestPrompt}
+                  disabled={aiSuggesting}
+                  className="flex items-center gap-[5px] py-[8px] px-[12px] rounded-[8px] text-[11px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-40 bg-[rgba(40,150,251,0.18)] border-[rgba(40,150,251,0.45)] text-[#7CC8FF] hover:bg-[rgba(40,150,251,0.28)]"
+                >
+                  {aiSuggesting ? (
+                    <><Loader2 className="w-[11px] h-[11px] animate-spin" /><span>Thinking…</span></>
+                  ) : (
+                    <><Sparkles className="w-[11px] h-[11px]" /><span>Generate</span></>
+                  )}
+                </button>
+              </div>
+              <input
+                type="text"
+                value={aiSuggestRough}
+                onChange={(e) => setAiSuggestRough(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSuggestPrompt(); } }}
+                placeholder="Optional rough idea (e.g. 'AI calling launch', 'agency wins 312%', 'Black Friday 50% off')"
+                disabled={aiSuggesting}
+                className="w-full py-[8px] px-[10px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.08)] rounded-[8px] font-inherit text-[11px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.35)] placeholder:text-[#475569]"
+              />
+              <div className="text-[9.5px] text-[#64748B] mt-[6px] leading-[1.4]">
+                Pick a graphic type → optionally type a rough angle → I'll write the full design brief for you, sized to your current canvas. Then hit <span className="text-[#17D94B] font-semibold">Generate</span>.
+              </div>
+              {aiSuggestError && (
+                <div className="text-[10px] text-[#FCA5A5] mt-[6px]">{aiSuggestError}</div>
+              )}
+            </div>
+
             <div className="mb-[10px] p-[10px] rounded-[10px] bg-[rgba(23,217,75,0.04)] border border-[rgba(23,217,75,0.14)]">
-              <div className="text-[9.5px] font-bold uppercase tracking-[1.3px] text-[#17D94B] mb-[8px]">No idea? Start here →</div>
+              <div className="text-[9.5px] font-bold uppercase tracking-[1.3px] text-[#17D94B] mb-[8px]">Or pick a starter →</div>
               <div className="flex flex-wrap gap-[6px]">
                 {STARTER_PROMPTS.map((s) => (
                   <button

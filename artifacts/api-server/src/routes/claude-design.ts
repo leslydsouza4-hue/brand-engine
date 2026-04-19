@@ -700,6 +700,90 @@ You will be given recentEdits — a list of the most recent prior instructions i
 - Off-white: #F8FAFC · Slate Light: #E2E8F0 · Slate Mid: #94A3B8
 - Charcoal: #0F172A · Charcoal Mid: #475569`;
 
+const PROMPT_TYPES: Record<string, { label: string; archetype: string }> = {
+  promo:        { label: "Promo / Sale",        archetype: "Loud promotional graphic. Eyebrow chip with the deal type, oversized discount/percent number as the focal element OR a bold benefit headline, big urgency CTA pill ('GET IT NOW', 'CLAIM DEAL'), expiry note ('Ends Friday', 'Today only'). Yellow + green energy, optional starburst or angled price tag." },
+  stat:         { label: "Big Stat",            archetype: "Editorial stat card. One massive numeric value (with unit/percent) as the absolute hero — sized 25-40% of canvas height. Tiny grey overline above ('LAST QUARTER', 'CUSTOMERS REPORT'), short white headline below contextualizing it (max 8 words), optional thin attribution line. Calm composition, generous whitespace, one soft brand glow behind the number." },
+  quote:        { label: "Customer Quote",      archetype: "Testimonial card. A large opening quote mark in HighLevel green, then a short customer pullquote (12-22 words) in semibold white serif-feeling type, attribution line below ('— Name, Role · Company'). Optional small photo or brand chip on the side. Calm navy background, single accent orb." },
+  webinar:      { label: "Webinar / Event",     archetype: "Event invite. Eyebrow chip 'LIVE WEBINAR' or 'FREE EVENT', headline naming the event topic (5-9 words), date+time row with calendar icon and clock icon, host name + role, RSVP CTA pill. Optional speaker portrait or illustrative motif on the right." },
+  launch:       { label: "Product Launch",      archetype: "Launch announcement. Eyebrow chip 'NEW' or 'JUST LAUNCHED' in green, product name as the headline, one-line benefit subline, focal product visual (screenshot, illustrated UI, or mascot), CTA pill 'See it' or 'Try free'. Energetic background with a green glow orb behind the product." },
+  milestone:    { label: "Milestone",           archetype: "Celebratory milestone. Big numeric milestone (e.g. '10K Users', '1M Calls'), 'WE HIT' or 'CELEBRATING' eyebrow, short thank-you subline, confetti-style decorative dots OR star icon cluster, brand wordmark prominent. Yellow + green festive treatment." },
+  tip:          { label: "Quick Tip / DYK",     archetype: "Did You Know / Tip card. Eyebrow chip 'DID YOU KNOW' or 'PRO TIP' with lightbulb icon, the fact/tip as the headline (8-14 words, framed as a useful insight), tiny supporting line, brand wordmark. Calm composition, single small accent visual." },
+  caseStudy:    { label: "Case Study Win",      archetype: "Case study win. Customer name + industry as eyebrow, big result stat (e.g. '+312% pipeline'), short before→after row with old vs new values in struck-through grey vs bold green, short attribution. Editorial split layout." },
+  comparison:   { label: "Before vs After",     archetype: "Before/After comparison. Two columns labeled BEFORE (grey, muted, X-icon) and AFTER (HighLevel green, check-icon), each listing 3-5 short bullet points contrasting the old way vs HighLevel way. Headline above frames the contrast ('Stop juggling tools. Run everything from one screen.'). CTA at bottom." },
+  announcement: { label: "Announcement",        archetype: "News-style announcement. Eyebrow chip 'ANNOUNCEMENT' or 'JUST IN', headline stating the news plainly (8-14 words), one supporting line, brand wordmark, optional CTA 'Read more' or 'See details'. Editorial restraint — minimal decoration." },
+  feature:      { label: "Feature Highlight",   archetype: "Feature spotlight. Eyebrow naming the feature category, headline naming the feature itself, 2-4 small benefit bullets each with a stroked icon and short label, brand wordmark, CTA. One focal visual (UI screenshot or stylized illustration) on the opposite side." },
+  event:        { label: "Event Save-The-Date", archetype: "Save-the-date. Big date front and center (month + day in a stacked block), event name as headline, location/venue line with pin icon, host badge, optional QR-style brand chip. Tasteful editorial layout with one decorative orb." },
+};
+
+const SUGGEST_SYSTEM = `You are a senior brand designer at HighLevel. The user gives you a TYPE of graphic and an optional rough idea. You write a fully-specced design brief in the following STYLE — the same level of specificity a designer or design AI needs to build the graphic without asking questions.
+
+# Output style (REQUIRED — match this exact tone)
+- Open with the canvas dimensions and orientation in plain English (e.g. "Square 1080×1080. No human." or "Banner 728×90, landscape strip.")
+- Write in declarative, instruction-tone prose. Short sentences. No marketing fluff. No explanation. No "this design will…".
+- Spell out: top-left vs top-right vs center vs bottom placements; what each element contains (eyebrow, headline in quotes, subline, CTA label in quotes, visual focal point); concrete colors from the HighLevel palette by hex; concrete sizes (px or % of canvas); icon names from the approved library when relevant.
+- Group by region: top, center, then bottom. Within each region, list elements in reading order.
+- End with a one-line background description (gradient, glow orbs, grid texture, etc.).
+
+# Output rules
+- Return ONLY the brief as plain text. No preamble, no markdown headers, no bullet points unless the brief itself benefits from them. Use line breaks for paragraphs.
+- HONOR the Canvas Brief block in the user message — element budget, headline word count, layout pattern are HARD constraints.
+- HONOR the requested TYPE archetype the user provides — if they say "Big Stat", the brief MUST center on a giant numeric value, not a paragraph of marketing.
+- If the user provides a rough idea, weave it into the brief (use their topic, their numbers, their angle). If they leave it blank, invent a sharp on-brand topic for the chosen type.
+- Use HighLevel palette only: Primary Blue #2896FB, Light Blue #7CC8FF, Deep Navy #0B1426, Mid Navy #122036, Yellow #FFC328, Green Bright #17D94B, Green #00B2A9, Off-white #F8FAFC, Slate #94A3B8.
+- Headline must be in quotes. CTA label must be in quotes. Other text (subline, eyebrow) doesn't need quotes.
+- Never reference brands or products outside HighLevel. Never use emojis.
+
+When in doubt, write the brief that YOU would want to read if you were the designer building this from scratch.`;
+
+router.post("/suggest-prompt", async (req, res) => {
+  const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
+  const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
+  if (!baseUrl || !apiKey) return res.status(500).json({ error: "Anthropic integration is not configured" });
+
+  const promptType = typeof req.body?.promptType === "string" ? req.body.promptType : "promo";
+  const typeDef = PROMPT_TYPES[promptType] || PROMPT_TYPES.promo;
+  const roughIdea = typeof req.body?.roughIdea === "string" ? req.body.roughIdea.trim() : "";
+  const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "1080x1080";
+  const format = typeof req.body?.format === "string" ? req.body.format : "social";
+  const includeLogo = !!req.body?.includeLogo;
+  const includeHighly = !!req.body?.includeHighly;
+
+  const brief = buildCanvasBrief(aspect, format);
+  const userMsg = [
+    `Type: ${typeDef.label}`,
+    `Type archetype (the brief MUST follow this pattern): ${typeDef.archetype}`,
+    "",
+    brief.text,
+    "",
+    includeLogo ? "Include the HighLevel wordmark in a corner (top-left or top-right)." : "",
+    includeHighly ? "Include the Highly mascot as a hero visual element." : "",
+    "",
+    roughIdea
+      ? `Rough idea from the user (build the brief around this — use their topic, numbers, and angle):\n${roughIdea}`
+      : `No rough idea provided. Invent a sharp on-brand topic that fits the ${typeDef.label} archetype and HighLevel's product (agency software: CRM, automations, AI voice, payments, booking, conversations, reporting).`,
+  ].filter(Boolean).join("\n");
+
+  try {
+    const client = new Anthropic({ baseURL: baseUrl, apiKey });
+    const message = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 800,
+      system: SUGGEST_SYSTEM,
+      messages: [{ role: "user", content: userMsg }],
+    });
+    const block = message.content[0];
+    const text = (block && block.type === "text" ? block.text : "")
+      .replace(/^```[a-z]*\s*/i, "")
+      .replace(/\s*```\s*$/, "")
+      .trim();
+    if (!text) return res.status(502).json({ error: "Empty response from Claude" });
+    return res.json({ prompt: text, type: typeDef.label });
+  } catch (err: any) {
+    console.error("[suggest-prompt] error", err);
+    return res.status(500).json({ error: err?.message || "Failed to suggest prompt" });
+  }
+});
+
 router.post("/refine-design", async (req, res) => {
   const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
   const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;

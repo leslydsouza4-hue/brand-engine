@@ -343,10 +343,12 @@ export function TemplatesWorkspace() {
       html, body { width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #0B1426 !important; }
       body { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 100% !important; }
       body > * { flex-shrink: 0 !important; transform-origin: center center !important; }
-      [data-edit-hover]:not([data-edit-active]):not([data-edit-dragging]) { outline: 2px dashed #5EE6DE !important; outline-offset: 2px !important; cursor: grab !important; }
+      [data-edit-hover]:not([data-edit-active]):not([data-edit-dragging]):not([data-edit-selected]) { outline: 2px dashed #5EE6DE !important; outline-offset: 2px !important; cursor: grab !important; }
       [data-edit-active] { outline: 2px solid #FFC328 !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(255,195,40,0.18) !important; cursor: text !important; }
+      [data-edit-selected]:not([data-edit-active]) { outline: 2px solid #2896FB !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(40,150,251,0.18) !important; }
       [data-edit-dragging] { outline: 2px solid #2896FB !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(40,150,251,0.22) !important; cursor: grabbing !important; opacity: 0.95 !important; }
-      [data-edit-moved] { outline: 1px dashed rgba(40,150,251,0.5) !important; outline-offset: 2px !important; }
+      [data-editor-handles] { position: fixed !important; top: 0 !important; left: 0 !important; pointer-events: none !important; z-index: 99999 !important; }
+      [data-editor-handle] { position: fixed !important; width: 14px !important; height: 14px !important; background: #FFC328 !important; border: 2px solid #0B1426 !important; border-radius: 3px !important; pointer-events: auto !important; box-shadow: 0 0 0 1px rgba(255,195,40,0.5), 0 2px 6px rgba(0,0,0,0.45) !important; }
     </style>
     <script data-editor-injected>
       (function(){
@@ -386,11 +388,86 @@ export function TemplatesWorkspace() {
             n.blur && n.blur();
           });
         }
+        function ensureBase(el){
+          if (!el.hasAttribute('data-edit-base-transform')) {
+            el.setAttribute('data-edit-base-transform', el.style.transform || '');
+          }
+          if (!el.hasAttribute('data-edit-base-origin')) {
+            var co = window.getComputedStyle(el).transformOrigin || '';
+            el.setAttribute('data-edit-base-origin', el.style.transformOrigin || co);
+          }
+        }
+        function applyTransform(el){
+          var base = el.getAttribute('data-edit-base-transform') || '';
+          var tx = parseFloat(el.getAttribute('data-edit-tx') || '0');
+          var ty = parseFloat(el.getAttribute('data-edit-ty') || '0');
+          var s = parseFloat(el.getAttribute('data-edit-scale') || '1');
+          var origin = el.getAttribute('data-edit-origin') || '';
+          var parts = [];
+          if (tx || ty) parts.push('translate(' + tx + 'px,' + ty + 'px)');
+          if (s && s !== 1) parts.push('scale(' + s + ')');
+          if (base) parts.push(base);
+          el.style.transform = parts.join(' ').trim();
+          if (origin) el.style.transformOrigin = origin;
+        }
+
+        var selectedEl = null;
+        var handlesRoot = null;
+        var rafId = 0;
+        function buildHandles(){
+          if (handlesRoot) return;
+          handlesRoot = document.createElement('div');
+          handlesRoot.setAttribute('data-editor-handles', '1');
+          handlesRoot.setAttribute('data-editor-injected', '1');
+          ['nw','ne','sw','se'].forEach(function(c){
+            var h = document.createElement('div');
+            h.setAttribute('data-editor-handle', c);
+            h.setAttribute('data-editor-injected', '1');
+            h.style.cursor = (c === 'nw' || c === 'se' ? 'nwse-resize' : 'nesw-resize');
+            h.addEventListener('mousedown', function(ev){ startResize(ev, c); }, true);
+            handlesRoot.appendChild(h);
+          });
+          document.body.appendChild(handlesRoot);
+        }
+        function destroyHandles(){
+          if (handlesRoot && handlesRoot.parentNode) handlesRoot.parentNode.removeChild(handlesRoot);
+          handlesRoot = null;
+        }
+        function positionHandles(){
+          if (!selectedEl || !handlesRoot) return;
+          var r = selectedEl.getBoundingClientRect();
+          var pts = { nw:[r.left,r.top], ne:[r.right,r.top], sw:[r.left,r.bottom], se:[r.right,r.bottom] };
+          Array.prototype.forEach.call(handlesRoot.children, function(h){
+            var p = pts[h.getAttribute('data-editor-handle')];
+            if (!p) return;
+            h.style.left = (p[0] - 7) + 'px';
+            h.style.top = (p[1] - 7) + 'px';
+          });
+        }
+        function selectElement(el){
+          if (selectedEl === el) { positionHandles(); return; }
+          clearSelection();
+          selectedEl = el;
+          el.setAttribute('data-edit-selected', '1');
+          ensureBase(el);
+          buildHandles();
+          positionHandles();
+        }
+        function clearSelection(){
+          if (selectedEl) {
+            selectedEl.removeAttribute('data-edit-selected');
+            selectedEl = null;
+          }
+          destroyHandles();
+        }
+
         var dragState = null;
+        var resizeState = null;
         var suppressClick = false;
         document.addEventListener('mouseover', function(e){
           var el = e.target;
           if (!el || !(el instanceof Element)) return;
+          if (el.hasAttribute('data-editor-handle')) return;
           if (!isMovable(el)) return;
           el.setAttribute('data-edit-hover', '1');
         }, true);
@@ -403,19 +480,29 @@ export function TemplatesWorkspace() {
           if (e.button !== 0) return;
           var el = e.target;
           if (!el || !(el instanceof Element)) return;
+          if (el.hasAttribute('data-editor-handle')) return;
           if (!isMovable(el)) return;
           if (el.getAttribute('contenteditable') === 'true') return;
+          ensureBase(el);
           dragState = {
             el: el,
             startX: e.clientX, startY: e.clientY,
-            moved: false,
-            base: el.getAttribute('data-edit-base-transform') || el.style.transform || ''
+            startTx: parseFloat(el.getAttribute('data-edit-tx') || '0'),
+            startTy: parseFloat(el.getAttribute('data-edit-ty') || '0'),
+            moved: false
           };
-          if (!el.hasAttribute('data-edit-base-transform')) {
-            el.setAttribute('data-edit-base-transform', el.style.transform || '');
-          }
         }, true);
         document.addEventListener('mousemove', function(e){
+          if (resizeState) {
+            e.preventDefault();
+            var d = Math.hypot(e.clientX - resizeState.anchor[0], e.clientY - resizeState.anchor[1]);
+            var ratio = d / Math.max(resizeState.startDist, 1);
+            var newScale = Math.max(0.2, Math.min(8, resizeState.startScale * ratio));
+            resizeState.el.setAttribute('data-edit-scale', String(newScale));
+            applyTransform(resizeState.el);
+            if (!rafId) rafId = requestAnimationFrame(function(){ rafId = 0; positionHandles(); });
+            return;
+          }
           if (!dragState) return;
           var dx = e.clientX - dragState.startX;
           var dy = e.clientY - dragState.startY;
@@ -424,38 +511,71 @@ export function TemplatesWorkspace() {
           e.preventDefault();
           var s = getScale() || 1;
           dragState.el.setAttribute('data-edit-dragging', '1');
-          var base = dragState.base || '';
-          var sep = base ? ' ' : '';
-          dragState.el.style.transform = (base + sep + 'translate(' + (dx/s) + 'px,' + (dy/s) + 'px)').trim();
+          dragState.el.setAttribute('data-edit-tx', String(dragState.startTx + dx/s));
+          dragState.el.setAttribute('data-edit-ty', String(dragState.startTy + dy/s));
+          applyTransform(dragState.el);
+          if (selectedEl === dragState.el && !rafId) rafId = requestAnimationFrame(function(){ rafId = 0; positionHandles(); });
         }, true);
         document.addEventListener('mouseup', function(e){
+          if (resizeState) {
+            resizeState = null;
+            suppressClick = true;
+            setTimeout(function(){ suppressClick = false; }, 50);
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
           if (!dragState) return;
           var st = dragState; dragState = null;
           st.el.removeAttribute('data-edit-dragging');
           if (st.moved) {
-            st.el.setAttribute('data-edit-moved', '1');
             suppressClick = true;
             setTimeout(function(){ suppressClick = false; }, 50);
             e.preventDefault();
             e.stopPropagation();
           }
         }, true);
+        function startResize(e, corner){
+          if (!selectedEl) return;
+          e.preventDefault();
+          e.stopPropagation();
+          var r = selectedEl.getBoundingClientRect();
+          var anchor = ({ nw:[r.right,r.bottom], ne:[r.left,r.bottom], sw:[r.right,r.top], se:[r.left,r.top] })[corner];
+          var origin = ({ nw:'bottom right', ne:'bottom left', sw:'top right', se:'top left' })[corner];
+          ensureBase(selectedEl);
+          selectedEl.setAttribute('data-edit-origin', origin);
+          var startScale = parseFloat(selectedEl.getAttribute('data-edit-scale') || '1');
+          var startDist = Math.hypot(e.clientX - anchor[0], e.clientY - anchor[1]);
+          resizeState = { el: selectedEl, anchor: anchor, startDist: startDist, startScale: startScale };
+        }
+        window.addEventListener('scroll', positionHandles, true);
+        window.addEventListener('resize', positionHandles);
         document.addEventListener('click', function(e){
           if (suppressClick) { e.preventDefault(); e.stopPropagation(); return; }
           var el = e.target;
           if (!el || !(el instanceof Element)) return;
-          if (!isLeafText(el)) { clearActive(); return; }
+          if (el.hasAttribute('data-editor-handle')) return;
+          if (!isMovable(el)) { clearActive(); clearSelection(); return; }
           e.preventDefault();
           e.stopPropagation();
-          clearActive();
-          el.setAttribute('contenteditable', 'true');
-          el.setAttribute('data-edit-active', '1');
-          el.focus();
-          var range = document.createRange();
-          range.selectNodeContents(el);
-          var sel = window.getSelection();
-          sel.removeAllRanges();
-          sel.addRange(range);
+          if (isLeafText(el)) {
+            clearActive();
+            selectElement(el);
+            el.setAttribute('contenteditable', 'true');
+            el.setAttribute('data-edit-active', '1');
+            el.focus();
+            var range = document.createRange();
+            range.selectNodeContents(el);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          } else {
+            clearActive();
+            selectElement(el);
+          }
+        }, true);
+        document.addEventListener('keydown', function(e){
+          if (e.key === 'Escape') { clearActive(); clearSelection(); }
         }, true);
         window.addEventListener('message', function(ev){
           var data = ev.data || {};
@@ -583,9 +703,10 @@ export function TemplatesWorkspace() {
         iframe.contentWindow!.postMessage({ type: "editor:get-html" }, "*");
       });
       let cleaned = html
+        .replace(/<div\s+data-editor-handles[^>]*>[\s\S]*?<\/div>/gi, "")
         .replace(/<style\s+data-editor-injected[^>]*>[\s\S]*?<\/style>/gi, "")
         .replace(/<script\s+data-editor-injected[^>]*>[\s\S]*?<\/script>/gi, "")
-        .replace(/\s+data-edit-(?:hover|active|dragging|moved|base-transform)="[^"]*"/gi, "")
+        .replace(/\s+data-edit-(?:hover|active|dragging|moved|selected|base-transform|base-origin|tx|ty|scale|origin)="[^"]*"/gi, "")
         .replace(/\s+contenteditable="[^"]*"/gi, "");
       setAiSlides((prev) => {
         if (!prev.length) return prev;

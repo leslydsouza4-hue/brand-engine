@@ -283,6 +283,7 @@ export function TemplatesWorkspace() {
   const [aiSavingEdits, setAiSavingEdits] = useState(false);
   const [aiLoadingPhrase, setAiLoadingPhrase] = useState(0);
   const [aiLoadingProgress, setAiLoadingProgress] = useState(0);
+  const [aiLoadingFact, setAiLoadingFact] = useState(0);
   const aiPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -513,6 +514,23 @@ export function TemplatesWorkspace() {
     }
   };
 
+  const AI_LOADING_FACTS = [
+    "HighLevel powers 40,000+ agencies and 1.2M+ businesses worldwide.",
+    "12.2 billion conversations have flowed through HighLevel.",
+    "1.9 billion leads facilitated — and counting.",
+    "3,000+ new customers join HighLevel every month.",
+    "One platform. CRM, automations, funnels, AI agents, calls, payments.",
+    "Voice AI answers calls 24/7, with unlimited simultaneous conversations.",
+    "Snapshots clone an entire sub-account — onboarding in minutes, not days.",
+    "SaaS Mode lets agencies resell HighLevel as their own product.",
+    "Rebilling agencies have collected over $13.4M in margin.",
+    "$297/mo unlocks unlimited sub-accounts, users, and contacts.",
+    "Founded in 2018 by Shaun, Robin, and Varun.",
+    "Affiliates have earned $13M+ — four became millionaires through it.",
+    "Workflow AI Assistant builds automations step-by-step alongside you.",
+    "White-label the whole platform on your own domain.",
+    "Replaces ClickFunnels, Mailchimp, Calendly, Kajabi, ActiveCampaign — combined.",
+  ];
   const AI_LOADING_PHRASES = [
     "Studying the HighLevel brand voice…",
     "Selecting palette accents…",
@@ -528,16 +546,20 @@ export function TemplatesWorkspace() {
 
   useEffect(() => {
     if (!aiLoading) { setAiLoadingPhrase(0); setAiLoadingProgress(0); return; }
+    setAiLoadingFact(Math.floor(Math.random() * AI_LOADING_FACTS.length));
     const t0 = Date.now();
     const phraseTimer = window.setInterval(() => {
       setAiLoadingPhrase((p) => (p + 1) % AI_LOADING_PHRASES.length);
     }, 1700);
+    const factTimer = window.setInterval(() => {
+      setAiLoadingFact((p) => (p + 1) % AI_LOADING_FACTS.length);
+    }, 4800);
     const progressTimer = window.setInterval(() => {
       const elapsed = (Date.now() - t0) / 1000;
       const target = 1 - Math.exp(-elapsed / 14);
       setAiLoadingProgress(Math.min(0.96, target));
     }, 120);
-    return () => { window.clearInterval(phraseTimer); window.clearInterval(progressTimer); };
+    return () => { window.clearInterval(phraseTimer); window.clearInterval(factTimer); window.clearInterval(progressTimer); };
   }, [aiLoading]);
 
   const handleSaveInlineEdits = useCallback(async () => {
@@ -1700,12 +1722,21 @@ export function TemplatesWorkspace() {
                   animate={{ x: ["0%", "8%", "-12%", "0%"], y: ["0%", "-10%", "6%", "0%"], scale: [1, 1.06, 0.94, 1] }}
                   transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
                 />
-                <motion.div
-                  className="absolute inset-x-0 h-[2px] pointer-events-none z-[2]"
-                  style={{ background: "linear-gradient(90deg, transparent, rgba(94,230,222,0.85), transparent)", boxShadow: "0 0 24px rgba(94,230,222,0.6)" }}
-                  animate={{ top: ["0%", "100%"] }}
-                  transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                />
+                <div className="absolute top-[14px] left-[14px] right-[140px] z-[4] pointer-events-none">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={aiLoadingFact}
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="flex flex-col gap-[3px] max-w-[360px]"
+                    >
+                      <span className="text-[8.5px] font-bold tracking-[0.22em] text-[#5EE6DE]/60 uppercase">Did you know</span>
+                      <span className="text-[12px] leading-[1.45] text-[#CBD5E1]/80 font-light italic">{AI_LOADING_FACTS[aiLoadingFact]}</span>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
 
                 <div className="absolute inset-0 flex items-center justify-center z-[3]">
                   <div className="relative" style={{ width: "min(60%, 320px)", aspectRatio: "1" }}>

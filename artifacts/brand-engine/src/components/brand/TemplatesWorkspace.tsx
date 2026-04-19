@@ -1395,18 +1395,12 @@ export function TemplatesWorkspace() {
     filter:drop-shadow(0 30px 40px rgba(11,20,38,0.65)) drop-shadow(0 0 18px rgba(11,20,38,0.55)) saturate(0.95) contrast(1.02) !important;
   }
   *:has(> [data-ai-human]){
+    background:transparent !important;
     background-image:none !important;
-    background:radial-gradient(80% 60% at 50% 55%,#1a2a47 0%,#122036 45%,#0B1426 100%) !important;
+    border:none !important;
+    box-shadow:none !important;
     position:relative !important;
-    overflow:hidden !important;
-  }
-  *:has(> [data-ai-human])::after{
-    content:"" !important;
-    position:absolute !important;
-    inset:0 !important;
-    pointer-events:none !important;
-    background:linear-gradient(180deg,rgba(11,20,38,0) 60%,rgba(11,20,38,0.55) 88%,rgba(11,20,38,1) 100%) !important;
-    z-index:2 !important;
+    overflow:visible !important;
   }
 </style>`;
             if (!/data-removebg-safety/.test(out)) {

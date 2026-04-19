@@ -551,7 +551,7 @@ For ULTRA-WIDE BANNERS (ratio > 3:1):
 - Photo ZONE = LEFT or RIGHT 25-35%, full height. Text fills the rest. Same non-overlap rule.
 
 **Rule 2: PHOTO IS FULL-BLEED INSIDE ITS ZONE.**
-The <img data-ai-human> uses width:100%; height:100%; object-fit:cover; object-position:center top. The photo container has its OWN background (a brand gradient like linear-gradient(180deg,#1a2a47,#0B1426)) so the cutout sits cleanly on top.
+The <img data-ai-human> uses width:100%; height:100%; object-fit:cover; object-position:center top. The photo container itself has **background: transparent** — it does NOT have its own card/panel background. The cutout floats DIRECTLY on the slide's main background (the body / outermost wrapper background) so the subject blends seamlessly into the design without a visible panel or gradient seam behind them. NO border, NO border-radius (full bleed), NO box-shadow, NO inset gradient on the container. The slide's main background MUST extend continuously across the entire canvas — including under the photo zone — so the cutout's transparent edges have something to blend into.
 
 **Rule 3: TEXT ZONE FILL — NEVER LEAVE IT EMPTY.**
 Whatever zone the photo doesn't occupy MUST contain ALL the named elements (headline, subhead, eyebrow, bullets, CTA, logo) PLUS one or more supporting elements (stat card, quote, mini-feature list, badge cluster) so it doesn't feel sparse. Empty space in the text zone is a fail.
@@ -570,9 +570,9 @@ The photo zone may contain ONLY: the <img>, a subtle scrim/glow behind the subje
 
 # Background-removal compatibility (CRITICAL)
 The photo's background is auto-removed (transparent alpha). So:
-- The photo CONTAINER MUST have its own visible brand-color or brand-gradient background — never a checker, grid, dot-pattern, stripes, noise, or "image placeholder" texture. Those become hideously visible after cutout.
-- The container's background should look intentional and complete WITHOUT the photo on top.
-- Do NOT decorate the photo container with subtle dot-grids or line-grids — they show through.`);
+- The slide's MAIN background (on the body / root wrapper) MUST be a single continuous brand color or gradient that spans the entire canvas — including under the photo zone. The cutout will sit on this background with transparent edges, so the slide bg shows through where the person isn't. This must look intentional.
+- The photo CONTAINER itself has background:transparent (or matches the exact pixel color of the slide bg at that location). Never a card, panel, gradient panel, checker, grid, dot-pattern, stripes, noise, or image-placeholder texture. Those create a visible seam after cutout.
+- If you want a "glow" behind the subject, place it BEHIND the img with z-index, not as the container's background — e.g. an absolutely positioned radial-gradient div with low opacity, NOT a background on the wrapper.`);
   }
   if (hasItem) {
     assetBlock.push(`User-supplied custom image (REQUIRED — this IS the hero subject of the design):

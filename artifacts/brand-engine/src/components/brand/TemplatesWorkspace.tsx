@@ -1441,7 +1441,7 @@ export function TemplatesWorkspace() {
               placeholder={aiSlideCount > 1
                 ? "e.g. 'The Operator Era' — a 4-slide carousel about agencies switching to HighLevel. Dark editorial vibe, teal + yellow accents, bold display type."
                 : "e.g. Launch graphic for our new AI Voice Agent — bold headline, glowing blue orb, capture-yellow accent badge"}
-              rows={aiSlideCount > 1 ? 4 : 7}
+              rows={aiSlideCount > 1 ? 8 : 7}
               className="w-full py-[12px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[12.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
             />
 

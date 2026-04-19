@@ -285,6 +285,42 @@ export function TemplatesWorkspace() {
     return parseInt(m[1]!, 10) / parseInt(m[2]!, 10);
   })();
 
+  const aiCanvasDims = (() => {
+    const m = aiAspect.match(/^(\d+)\s*x\s*(\d+)$/i);
+    return m ? { w: parseInt(m[1]!, 10), h: parseInt(m[2]!, 10) } : { w: 1200, h: 630 };
+  })();
+
+  const wrapWithFit = (html: string, w: number, h: number) => {
+    const inject = `<style>
+      html, body { width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #0B1426 !important; }
+      body { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 100% !important; }
+      body > * { flex-shrink: 0 !important; transform-origin: center center !important; }
+    </style>
+    <script>
+      (function(){
+        var W = ${w}, H = ${h};
+        function fit() {
+          var root = document.body && document.body.firstElementChild;
+          if (!root) return;
+          root.style.width = W + 'px';
+          root.style.height = H + 'px';
+          var s = Math.min(window.innerWidth / W, window.innerHeight / H);
+          root.style.transform = 'scale(' + s + ')';
+        }
+        window.addEventListener('resize', fit);
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', fit);
+        } else { fit(); }
+        setTimeout(fit, 60);
+      })();
+    </script>`;
+    if (/<\/head>/i.test(html)) return html.replace(/<\/head>/i, `${inject}</head>`);
+    if (/<body[^>]*>/i.test(html)) return html.replace(/<body([^>]*)>/i, `<head>${inject}</head><body$1>`);
+    return `${inject}${html}`;
+  };
+
+  const aiHtmlScaled = aiHtml ? wrapWithFit(aiHtml, aiCanvasDims.w, aiCanvasDims.h) : null;
+
   const handleGenerateAI = async () => {
     const prompt = aiPrompt.trim();
     if (!prompt || aiLoading) return;
@@ -1020,9 +1056,10 @@ export function TemplatesWorkspace() {
               >
                 <iframe
                   title="Claude Design preview"
-                  srcDoc={aiHtml}
-                  sandbox="allow-same-origin"
-                  className="w-full h-full block border-0 bg-white"
+                  srcDoc={aiHtmlScaled ?? aiHtml}
+                  sandbox="allow-same-origin allow-scripts"
+                  className="w-full h-full block border-0"
+                  style={{ background: "#0B1426" }}
                 />
               </div>
             ) : (

@@ -218,7 +218,7 @@ input[type="range"]::-moz-range-thumb {
   animation: ai-skeleton-pulse 1.6s ease-in-out infinite;
 }
 .ai-skeleton-shimmer {
-  background: linear-gradient(105deg, transparent 30%, rgba(94,230,222,0.12) 50%, transparent 70%);
+  background: linear-gradient(105deg, transparent 30%, rgba(23,217,75,0.12) 50%, transparent 70%);
   animation: ai-skeleton-shimmer 2.2s ease-in-out infinite;
   pointer-events: none;
   z-index: 5;

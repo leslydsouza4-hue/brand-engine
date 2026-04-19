@@ -351,7 +351,7 @@ export function TemplatesWorkspace() {
       html, body { width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; background: #0B1426 !important; }
       body { display: flex !important; align-items: center !important; justify-content: center !important; min-height: 100% !important; }
       body > * { flex-shrink: 0 !important; transform-origin: center center !important; }
-      [data-edit-hover]:not([data-edit-active]):not([data-edit-dragging]):not([data-edit-selected]) { outline: 2px dashed #5EE6DE !important; outline-offset: 2px !important; cursor: grab !important; }
+      [data-edit-hover]:not([data-edit-active]):not([data-edit-dragging]):not([data-edit-selected]) { outline: 2px dashed #17D94B !important; outline-offset: 2px !important; cursor: grab !important; }
       [data-edit-active] { outline: 2px solid #FFC328 !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(255,195,40,0.18) !important; cursor: text !important; }
       [data-edit-selected]:not([data-edit-active]) { outline: 2px solid #2896FB !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(40,150,251,0.18) !important; }
       [data-edit-dragging] { outline: 2px solid #2896FB !important; outline-offset: 2px !important; box-shadow: 0 0 0 4px rgba(40,150,251,0.22) !important; cursor: grabbing !important; opacity: 0.95 !important; }
@@ -1478,7 +1478,7 @@ export function TemplatesWorkspace() {
                   onClick={() => setAiModel(m.id)}
                   title={m.hint}
                   className={`flex-1 py-[7px] rounded-[7px] text-[10.5px] font-bold transition-all border-none cursor-pointer ${
-                    aiModel === m.id ? "bg-[rgba(0,178,169,0.18)] text-[#5EE6DE]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                    aiModel === m.id ? "bg-[rgba(0,178,169,0.18)] text-[#17D94B]" : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
                   }`}
                 >
                   {m.label}
@@ -1506,9 +1506,9 @@ export function TemplatesWorkspace() {
                         : "bg-[rgba(255,255,255,0.02)] border-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.04)]"
                     }`}
                   >
-                    <Icon className={`w-[18px] h-[18px] ${isActive ? "text-[#5EE6DE]" : "text-[#64748B]"}`} />
+                    <Icon className={`w-[18px] h-[18px] ${isActive ? "text-[#17D94B]" : "text-[#64748B]"}`} />
                     <div className={`text-[10.5px] font-semibold ${isActive ? "text-white" : "text-[#94A3B8]"}`}>{fmt.name}</div>
-                    {isActive && <div className="h-[2px] w-[16px] rounded-full bg-[#5EE6DE]" />}
+                    {isActive && <div className="h-[2px] w-[16px] rounded-full bg-[#17D94B]" />}
                   </motion.div>
                 );
               })}
@@ -1548,7 +1548,7 @@ export function TemplatesWorkspace() {
                   >−</button>
                   <div className="flex-1 text-center text-[13px] font-bold text-white">
                     {aiSlideCount}
-                    {aiSlideCount > 1 && <span className="ml-[4px] text-[10px] font-medium text-[#5EE6DE]">carousel</span>}
+                    {aiSlideCount > 1 && <span className="ml-[4px] text-[10px] font-medium text-[#17D94B]">carousel</span>}
                   </div>
                   <button
                     onClick={() => setAiSlideCount(c => Math.min(10, c + 1))}
@@ -1608,7 +1608,7 @@ export function TemplatesWorkspace() {
                         >
                           <img src={variant.file} alt={variant.name} className="max-w-[82%] max-h-[80%] object-contain" />
                         </div>
-                        <span className={`text-[11px] font-bold tracking-[0.02em] transition-colors ${isActive ? "text-[#5EE6DE]" : "text-[#64748B]"}`}>
+                        <span className={`text-[11px] font-bold tracking-[0.02em] transition-colors ${isActive ? "text-[#17D94B]" : "text-[#64748B]"}`}>
                           {variant.recommendedOn === "dark" ? "Light" : "Dark"}
                         </span>
                       </button>
@@ -1620,7 +1620,7 @@ export function TemplatesWorkspace() {
 
             {/* Custom Item upload (humans are auto-generated server-side from the prompt) */}
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Photo Assets</div>
-            <div className="text-[9.5px] text-[#5EE6DE] mb-[8px]">Mention a person in your prompt → a photo-real human is auto-generated with Nano Banana Pro.</div>
+            <div className="text-[9.5px] text-[#17D94B] mb-[8px]">Mention a person in your prompt → a photo-real human is auto-generated with Nano Banana Pro.</div>
             <div className="flex flex-col gap-[8px] mb-[14px]">
               {/* Custom item row */}
               <div className="p-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px]">
@@ -1636,7 +1636,7 @@ export function TemplatesWorkspace() {
                     <span className="text-[12px] font-semibold text-[#E2E8F0]">Custom Item / Product</span>
                     <span className="text-[9.5px] text-[#64748B]">Upload an image to feature in the design</span>
                   </div>
-                  <label className="ml-auto flex items-center gap-[5px] py-[5px] px-[10px] rounded-[6px] text-[10px] font-bold border cursor-pointer bg-[rgba(94,230,222,0.08)] border-[rgba(94,230,222,0.3)] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.16)]">
+                  <label className="ml-auto flex items-center gap-[5px] py-[5px] px-[10px] rounded-[6px] text-[10px] font-bold border cursor-pointer bg-[rgba(23,217,75,0.08)] border-[rgba(23,217,75,0.3)] text-[#17D94B] hover:bg-[rgba(23,217,75,0.16)]">
                     <span>{aiCustomItemImage ? "Replace" : "Upload"}</span>
                     <input
                       type="file"
@@ -1655,7 +1655,7 @@ export function TemplatesWorkspace() {
                         onChange={(e) => setAiCustomItemDescription(e.target.value)}
                         rows={2}
                         placeholder="What is this? (e.g. 'Our new HighLevel Voice Agent dashboard')"
-                        className="w-full py-[6px] px-[8px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[6px] text-[10.5px] text-[#CBD5E1] outline-none focus:border-[rgba(94,230,222,0.3)] resize-y"
+                        className="w-full py-[6px] px-[8px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[6px] text-[10.5px] text-[#CBD5E1] outline-none focus:border-[rgba(23,217,75,0.3)] resize-y"
                       />
                       <button
                         onClick={() => { setAiCustomItemImage(""); setAiCustomItemDescription(""); setAiCustomItemInclude(false); }}
@@ -1695,20 +1695,20 @@ export function TemplatesWorkspace() {
             />
 
             {aiSlideCount > 1 && (
-              <div className="mt-[18px] p-[14px] rounded-[14px] bg-[rgba(94,230,222,0.03)] border border-[rgba(94,230,222,0.12)] flex flex-col gap-[14px]">
+              <div className="mt-[18px] p-[14px] rounded-[14px] bg-[rgba(23,217,75,0.03)] border border-[rgba(23,217,75,0.12)] flex flex-col gap-[14px]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-[8px]">
-                    <div className="w-[22px] h-[22px] flex items-center justify-center rounded-[6px] bg-[rgba(94,230,222,0.12)] border border-[rgba(94,230,222,0.3)]">
-                      <LayoutGrid className="w-[12px] h-[12px] text-[#5EE6DE]" />
+                    <div className="w-[22px] h-[22px] flex items-center justify-center rounded-[6px] bg-[rgba(23,217,75,0.12)] border border-[rgba(23,217,75,0.3)]">
+                      <LayoutGrid className="w-[12px] h-[12px] text-[#17D94B]" />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-[1.5px] text-[#5EE6DE]">Per-Slide Prompts</span>
+                    <span className="text-[11px] font-bold uppercase tracking-[1.5px] text-[#17D94B]">Per-Slide Prompts</span>
                   </div>
                   <span className="text-[9.5px] text-[#64748B]">Blank = Claude decides</span>
                 </div>
                 {aiSlidePrompts.map((p, i) => (
-                  <div key={i} className="flex flex-col gap-[8px] pt-[4px]" style={i > 0 ? { borderTop: "1px dashed rgba(94,230,222,0.12)", paddingTop: "14px" } : undefined}>
+                  <div key={i} className="flex flex-col gap-[8px] pt-[4px]" style={i > 0 ? { borderTop: "1px dashed rgba(23,217,75,0.12)", paddingTop: "14px" } : undefined}>
                     <div className="flex items-center gap-[8px]">
-                      <div className="w-[24px] h-[24px] flex items-center justify-center rounded-[6px] bg-[rgba(94,230,222,0.12)] border border-[rgba(94,230,222,0.3)] text-[11px] font-bold text-[#5EE6DE]">
+                      <div className="w-[24px] h-[24px] flex items-center justify-center rounded-[6px] bg-[rgba(23,217,75,0.12)] border border-[rgba(23,217,75,0.3)] text-[11px] font-bold text-[#17D94B]">
                         {i + 1}
                       </div>
                       <span className="text-[12px] font-bold tracking-[0.02em] text-[#E2E8F0]">Slide {i + 1}</span>
@@ -1726,7 +1726,7 @@ export function TemplatesWorkspace() {
                         "Data card — no humans, 4 stat tiles, big numbers in yellow"
                       }
                       rows={5}
-                      className="w-full py-[11px] px-[13px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] leading-[1.55] text-[#E2E8F0] outline-none focus:border-[rgba(94,230,222,0.35)] focus:bg-[rgba(0,0,0,0.35)] placeholder:text-[#475569] resize-y"
+                      className="w-full py-[11px] px-[13px] bg-[rgba(0,0,0,0.25)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] leading-[1.55] text-[#E2E8F0] outline-none focus:border-[rgba(23,217,75,0.35)] focus:bg-[rgba(0,0,0,0.35)] placeholder:text-[#475569] resize-y"
                     />
                   </div>
                 ))}
@@ -1745,7 +1745,7 @@ export function TemplatesWorkspace() {
               style={{
                 background: aiLoading ? "rgba(0,178,169,0.08)" : "linear-gradient(135deg, rgba(0,178,169,0.25) 0%, rgba(40,150,251,0.2) 100%)",
                 borderColor: "rgba(0,178,169,0.4)",
-                color: "#5EE6DE",
+                color: "#17D94B",
               }}
             >
               {aiLoading ? (
@@ -1764,18 +1764,18 @@ export function TemplatesWorkspace() {
             {aiHtml && (
               <div className="mt-[16px] flex flex-col gap-[8px]">
                 {aiSlides.length > 1 && (
-                  <div className="flex items-center justify-between py-[8px] px-[10px] rounded-[10px] bg-[rgba(94,230,222,0.06)] border border-[rgba(94,230,222,0.18)]">
+                  <div className="flex items-center justify-between py-[8px] px-[10px] rounded-[10px] bg-[rgba(23,217,75,0.06)] border border-[rgba(23,217,75,0.18)]">
                     <button
                       onClick={() => setAiSlideIndex(i => Math.max(0, i - 1))}
                       disabled={aiSlideIndex === 0}
-                      className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(255,255,255,0.05)] text-[#5EE6DE] hover:bg-[rgba(255,255,255,0.1)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-[14px] font-bold"
+                      className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(255,255,255,0.05)] text-[#17D94B] hover:bg-[rgba(255,255,255,0.1)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-[14px] font-bold"
                     >‹</button>
                     <div className="flex items-center gap-[5px]">
                       {aiSlides.map((_, i) => (
                         <button
                           key={i}
                           onClick={() => setAiSlideIndex(i)}
-                          className={`transition-all rounded-full cursor-pointer ${i === aiSlideIndex ? "w-[18px] h-[6px] bg-[#5EE6DE]" : "w-[6px] h-[6px] bg-[rgba(94,230,222,0.3)] hover:bg-[rgba(94,230,222,0.5)]"}`}
+                          className={`transition-all rounded-full cursor-pointer ${i === aiSlideIndex ? "w-[18px] h-[6px] bg-[#17D94B]" : "w-[6px] h-[6px] bg-[rgba(23,217,75,0.3)] hover:bg-[rgba(23,217,75,0.5)]"}`}
                           title={`Slide ${i + 1}`}
                         />
                       ))}
@@ -1783,7 +1783,7 @@ export function TemplatesWorkspace() {
                     <button
                       onClick={() => setAiSlideIndex(i => Math.min(aiSlides.length - 1, i + 1))}
                       disabled={aiSlideIndex >= aiSlides.length - 1}
-                      className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(255,255,255,0.05)] text-[#5EE6DE] hover:bg-[rgba(255,255,255,0.1)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-[14px] font-bold"
+                      className="w-[26px] h-[26px] flex items-center justify-center rounded-[6px] bg-[rgba(255,255,255,0.05)] text-[#17D94B] hover:bg-[rgba(255,255,255,0.1)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer text-[14px] font-bold"
                     >›</button>
                   </div>
                 )}
@@ -1804,7 +1804,7 @@ export function TemplatesWorkspace() {
                       key={opt.id}
                       onClick={() => opt.id === "pdf" ? handleAIDownloadPdf() : handleAIDownloadImage(opt.id)}
                       disabled={!!aiExporting}
-                      className="flex items-center justify-center gap-[6px] py-[10px] rounded-[10px] text-[11.5px] font-bold bg-[rgba(0,178,169,0.1)] border border-[rgba(0,178,169,0.3)] text-[#5EE6DE] hover:bg-[rgba(0,178,169,0.18)] cursor-pointer transition-all disabled:opacity-50 disabled:cursor-wait"
+                      className="flex items-center justify-center gap-[6px] py-[10px] rounded-[10px] text-[11.5px] font-bold bg-[rgba(0,178,169,0.1)] border border-[rgba(0,178,169,0.3)] text-[#17D94B] hover:bg-[rgba(0,178,169,0.18)] cursor-pointer transition-all disabled:opacity-50 disabled:cursor-wait"
                     >
                       {aiExporting === opt.id ? (
                         <Loader2 className="w-[12px] h-[12px] animate-spin" />
@@ -2135,7 +2135,7 @@ export function TemplatesWorkspace() {
                   aspectRatio: aiAspectRatio,
                   boxShadow: "0 8px 50px rgba(0,0,0,0.4)",
                   background: "radial-gradient(120% 80% at 30% 20%, #142244 0%, #0B1426 60%, #060B18 100%)",
-                  border: "1px solid rgba(94,230,222,0.18)",
+                  border: "1px solid rgba(23,217,75,0.18)",
                 }}
               >
                 <motion.div
@@ -2146,7 +2146,7 @@ export function TemplatesWorkspace() {
                 />
                 <motion.div
                   className="absolute rounded-full pointer-events-none"
-                  style={{ width: "50%", aspectRatio: "1", right: "0%", top: "30%", background: "radial-gradient(closest-side, rgba(94,230,222,0.55), rgba(94,230,222,0) 70%)", filter: "blur(20px)" }}
+                  style={{ width: "50%", aspectRatio: "1", right: "0%", top: "30%", background: "radial-gradient(closest-side, rgba(23,217,75,0.55), rgba(23,217,75,0) 70%)", filter: "blur(20px)" }}
                   animate={{ x: ["0%", "-10%", "8%", "0%"], y: ["0%", "12%", "-8%", "0%"], scale: [1, 0.92, 1.08, 1] }}
                   transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
                 />
@@ -2160,7 +2160,7 @@ export function TemplatesWorkspace() {
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-[18px] z-[3] px-[24px]">
                   <div className="relative" style={{ width: "min(46%, 260px)", aspectRatio: "1" }}>
                     {[
-                      { size: 100, dur: 14, dir: 1, dots: 8, color: "#5EE6DE", op: 0.85 },
+                      { size: 100, dur: 14, dir: 1, dots: 8, color: "#17D94B", op: 0.85 },
                       { size: 78, dur: 10, dir: -1, dots: 6, color: "#2896FB", op: 0.9 },
                       { size: 56, dur: 7, dir: 1, dots: 5, color: "#FFC328", op: 0.95 },
                     ].map((ring, ri) => (
@@ -2200,13 +2200,13 @@ export function TemplatesWorkspace() {
                         width: "32%", height: "32%",
                         borderRadius: "50%",
                         background: "radial-gradient(closest-side, rgba(255,255,255,0.12), rgba(11,20,38,0.95))",
-                        border: "1px solid rgba(94,230,222,0.4)",
-                        boxShadow: "0 0 60px rgba(40,150,251,0.45), inset 0 0 30px rgba(94,230,222,0.18)",
+                        border: "1px solid rgba(23,217,75,0.4)",
+                        boxShadow: "0 0 60px rgba(40,150,251,0.45), inset 0 0 30px rgba(23,217,75,0.18)",
                       }}
                       animate={{ scale: [1, 1.06, 1] }}
                       transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
                     >
-                      <Sparkles className="w-[40%] h-[40%] text-[#5EE6DE]" />
+                      <Sparkles className="w-[40%] h-[40%] text-[#17D94B]" />
                     </motion.div>
                   </div>
                   <div className="flex flex-col items-center gap-[8px] pointer-events-none">
@@ -2226,19 +2226,19 @@ export function TemplatesWorkspace() {
                   </div>
                 </div>
 
-                <div className="absolute top-[14px] right-[14px] flex items-center gap-[8px] py-[7px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.4)] z-[10]">
+                <div className="absolute top-[14px] right-[14px] flex items-center gap-[8px] py-[7px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.55)] backdrop-blur-[10px] border border-[rgba(23,217,75,0.4)] z-[10]">
                   <span className="relative flex w-[8px] h-[8px]">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-[#5EE6DE] opacity-70 animate-ping" />
-                    <span className="relative inline-flex rounded-full w-[8px] h-[8px] bg-[#5EE6DE]" />
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-[#17D94B] opacity-70 animate-ping" />
+                    <span className="relative inline-flex rounded-full w-[8px] h-[8px] bg-[#17D94B]" />
                   </span>
-                  <span className="text-[11px] font-bold tracking-[0.14em] text-[#5EE6DE]">GENERATING</span>
+                  <span className="text-[11px] font-bold tracking-[0.14em] text-[#17D94B]">GENERATING</span>
                 </div>
 
                 <div className="absolute bottom-[14px] left-[14px] right-[14px] z-[10]">
                   <div className="relative h-[3px] w-full rounded-full overflow-hidden bg-[rgba(255,255,255,0.06)]">
                     <motion.div
                       className="absolute inset-y-0 left-0 rounded-full"
-                      style={{ background: "linear-gradient(90deg, #2896FB, #5EE6DE, #FFC328)", boxShadow: "0 0 10px rgba(94,230,222,0.6)" }}
+                      style={{ background: "linear-gradient(90deg, #2896FB, #17D94B, #FFC328)", boxShadow: "0 0 10px rgba(23,217,75,0.6)" }}
                       animate={{ width: `${Math.round(aiLoadingProgress * 100)}%` }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
                     />
@@ -2255,10 +2255,10 @@ export function TemplatesWorkspace() {
               aiGridView && aiSlides.length > 1 ? (
                 <div className="w-full max-w-[920px] mx-auto flex flex-col gap-[12px]">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold tracking-[0.14em] text-[#5EE6DE]">ALL SLIDES ・ {aiSlides.length}</span>
+                    <span className="text-[10px] font-bold tracking-[0.14em] text-[#17D94B]">ALL SLIDES ・ {aiSlides.length}</span>
                     <button
                       onClick={() => setAiGridView(false)}
-                      className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                      className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(23,217,75,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#17D94B] hover:bg-[rgba(23,217,75,0.15)] cursor-pointer"
                     >
                       SINGLE VIEW
                     </button>
@@ -2271,7 +2271,7 @@ export function TemplatesWorkspace() {
                       <button
                         key={i}
                         onClick={() => { setAiSlideIndex(i); setAiGridView(false); }}
-                        className={`relative w-full overflow-hidden rounded-[10px] cursor-pointer transition-all hover:scale-[1.01] ${i === aiSlideIndex ? "ring-2 ring-[#5EE6DE]" : "ring-1 ring-[rgba(255,255,255,0.08)]"}`}
+                        className={`relative w-full overflow-hidden rounded-[10px] cursor-pointer transition-all hover:scale-[1.01] ${i === aiSlideIndex ? "ring-2 ring-[#17D94B]" : "ring-1 ring-[rgba(255,255,255,0.08)]"}`}
                         style={{ aspectRatio: aiAspectRatio, boxShadow: "0 6px 30px rgba(0,0,0,0.35)" }}
                         title={`Open slide ${i + 1}`}
                       >
@@ -2282,7 +2282,7 @@ export function TemplatesWorkspace() {
                           className="w-full h-full block border-0 pointer-events-none"
                           style={{ background: "#0B1426" }}
                         />
-                        <div className="absolute top-[8px] left-[8px] py-[3px] px-[8px] rounded-[999px] bg-[rgba(0,0,0,0.7)] backdrop-blur-[8px] border border-[rgba(94,230,222,0.25)] text-[9px] font-bold tracking-[0.12em] text-[#5EE6DE]">
+                        <div className="absolute top-[8px] left-[8px] py-[3px] px-[8px] rounded-[999px] bg-[rgba(0,0,0,0.7)] backdrop-blur-[8px] border border-[rgba(23,217,75,0.25)] text-[9px] font-bold tracking-[0.12em] text-[#17D94B]">
                           {i + 1} / {aiSlides.length}
                         </div>
                       </button>
@@ -2297,7 +2297,7 @@ export function TemplatesWorkspace() {
                       <>
                         <button
                           onClick={() => setAiEditMode(true)}
-                          className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                          className="flex items-center gap-[6px] py-[6px] px-[12px] rounded-[999px] bg-[rgba(0,0,0,0.65)] backdrop-blur-[10px] border border-[rgba(23,217,75,0.35)] text-[11px] font-bold tracking-[0.1em] text-[#17D94B] hover:bg-[rgba(23,217,75,0.15)] cursor-pointer"
                           title="Click any text in the preview to edit it"
                         >
                           <Edit3 className="w-[12px] h-[12px]" /> EDIT
@@ -2344,13 +2344,13 @@ export function TemplatesWorkspace() {
                     <div className="flex items-center gap-[6px]">
                       <button
                         onClick={() => { setAiEditMode(false); setAiGridView(true); }}
-                        className="flex items-center gap-[5px] py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)] text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE] hover:bg-[rgba(94,230,222,0.15)] cursor-pointer"
+                        className="flex items-center gap-[5px] py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(23,217,75,0.3)] text-[10px] font-bold tracking-[0.12em] text-[#17D94B] hover:bg-[rgba(23,217,75,0.15)] cursor-pointer"
                         title="See all slides at once"
                       >
                         <LayoutGrid className="w-[11px] h-[11px]" /> ALL {aiSlides.length}
                       </button>
-                      <div className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(94,230,222,0.3)]">
-                        <span className="text-[10px] font-bold tracking-[0.12em] text-[#5EE6DE]">SLIDE {aiSlideIndex + 1} / {aiSlides.length}</span>
+                      <div className="py-[5px] px-[10px] rounded-[999px] bg-[rgba(0,0,0,0.6)] backdrop-blur-[10px] border border-[rgba(23,217,75,0.3)]">
+                        <span className="text-[10px] font-bold tracking-[0.12em] text-[#17D94B]">SLIDE {aiSlideIndex + 1} / {aiSlides.length}</span>
                       </div>
                     </div>
                   )}
@@ -2374,7 +2374,7 @@ export function TemplatesWorkspace() {
               <div className="flex flex-col items-center justify-center gap-[10px] text-center max-w-[420px] px-[20px]">
                 <div className="w-[56px] h-[56px] rounded-[16px] flex items-center justify-center"
                   style={{ background: "linear-gradient(135deg, rgba(0,178,169,0.18), rgba(40,150,251,0.14))", border: "1px solid rgba(0,178,169,0.3)" }}>
-                  <Sparkles className="w-[24px] h-[24px] text-[#5EE6DE]" />
+                  <Sparkles className="w-[24px] h-[24px] text-[#17D94B]" />
                 </div>
                 <div className="text-[16px] font-bold text-white">Claude Design</div>
                 <div className="text-[12.5px] text-[#64748B] leading-[1.5]">

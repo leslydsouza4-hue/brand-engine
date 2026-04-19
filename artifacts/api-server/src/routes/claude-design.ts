@@ -28,7 +28,7 @@ async function buildHumanPromptAndDescription(
 Rules:
 - The output is one paragraph, 60-120 words, no preamble, no markdown.
 - Always describe: who the person is (age, gender, role; ethnicity should reflect a diverse pool), wardrobe matched to the brand vibe, expression, framing (close-up / mid / full body), camera and lens (e.g. "shot on Canon R5, 50mm, f/1.8"), lighting (warm, editorial, golden hour, studio softbox, etc.), background that matches the slide's scene/brand colors, and the overall mood.
-- The brand context is HighLevel (modern SaaS, agency operators, founders): teal #5EE6DE, blue #2896FB, navy #0B1426, yellow #FFC328 accents. Wardrobe and palette should be tasteful and modern.
+- The brand context is HighLevel (modern SaaS, agency operators, founders): green #17D94B, blue #2896FB, navy #0B1426, yellow #FFC328 accents. Wardrobe and palette should be tasteful and modern.
 - The photo will be cut out and placed on a dark navy slide. STRONGLY PREFER one of these two background treatments (pick whichever fits the mood best):
   (A) A solid Deep Navy #0B1426 studio background OR a smooth dark gradient that matches the brand palette — so the subject blends seamlessly into the slide with no visible seam.
   (B) A clean, evenly lit subject against a plain neutral backdrop suitable for crisp background removal (clean edges around hair/shoulders, no busy environment, no harsh shadows on the floor or wall).
@@ -58,7 +58,7 @@ Write the image prompt now.`,
     }
   }
   if (!imagePrompt) {
-    imagePrompt = `Editorial photograph of a confident modern professional matching this brief: ${ctx.theme}. Shot on Canon R5, 50mm, f/1.8, soft natural light, neutral wardrobe with subtle teal or blue accents, calm modern background. Ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks.`;
+    imagePrompt = `Editorial photograph of a confident modern professional matching this brief: ${ctx.theme}. Shot on Canon R5, 50mm, f/1.8, soft natural light, neutral wardrobe with subtle green or blue accents, calm modern background. Ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks.`;
     description = description || "Confident modern professional matching the brand theme";
   }
   return { imagePrompt, description };
@@ -79,7 +79,7 @@ You MUST use ONLY the hex values below. You may NOT invent new colors, use gener
 - Primary Blue: #2896FB (capture flows, primary CTAs, hero glows, links)
 - Mid Blue: #0B6FD4 (gradient deep stop for Primary Blue)
 - Light Blue: #7CC8FF (accents, gradient stops)
-- Teal Bright: #5EE6DE (eyebrow text, active state, in-glow text)
+- Green Bright: #17D94B (eyebrow text, active state, in-glow text)
 - Green: #00B2A9 (success, "Close" stage, secondary accent)
 - Yellow: #FFC328 (attention accents, NEW badges, opening quote marks)
 - Deep Navy: #0B1426 (page background, dark text on light surfaces)
@@ -96,7 +96,7 @@ You MUST use ONLY the hex values below. You may NOT invent new colors, use gener
 - Primary headline on light backgrounds: #0F172A.
 - Subhead / body on dark: #94A3B8 or #E2E8F0.
 - Subhead / body on light: #475569.
-- Eyebrow / kicker / "NEW" / "LIVE" labels: #5EE6DE (teal) or #FFC328 (yellow) — pick whichever fits the energy. Never generic gold, lime, mint, etc.
+- Eyebrow / kicker / "NEW" / "LIVE" labels: #17D94B (green) or #FFC328 (yellow) — pick whichever fits the energy. Never generic gold, lime, mint, etc.
 - Accent or highlighted words inside a headline: #2896FB or #FFC328. Never inline a custom color.
 - CTA button text: #FFFFFF on the Primary Blue gradient, or #0B1426 on a yellow #FFC328 pill. Nothing else.
 - Numbers / stats / big metric digits: #2896FB or #FFC328.
@@ -105,7 +105,7 @@ You MUST use ONLY the hex values below. You may NOT invent new colors, use gener
 ## Typography Scale (proportional to canvas height H)
 - Hero headline: font-size ~ 0.13H, **font-weight 700 (Poppins Bold)** — clean editorial bold, NOT chunky. Letter-spacing -0.02em, line-height 1.0. Avoid the heavy "Black 900" look — keep it refined.
 - Subhead: font-size ~ 0.045H, font-weight 500, letter-spacing 0, line-height 1.3, color #94A3B8.
-- Eyebrow / kicker: font-size ~ 0.022H, font-weight 600, uppercase, letter-spacing 0.18em, color #5EE6DE or #FFC328.
+- Eyebrow / kicker: font-size ~ 0.022H, font-weight 600, uppercase, letter-spacing 0.18em, color #17D94B or #FFC328.
 - Body: font-size ~ 0.028H, font-weight 400, line-height 1.45.
 - CTA pill text: font-size ~ 0.032H, font-weight 700.
 - **Font loading is REQUIRED**: include this exact line at the top of <head> so Poppins renders correctly:
@@ -170,7 +170,7 @@ Style rules for the SVG figure:
 - Use a clean, geometric, slightly editorial style. Soft rounded shapes. No anatomy detail, no hyperrealism.
 - Color palette for the figure (HARD CONSTRAINT, palette only):
   - Body / silhouette base: gradient from #122036 → #1A2942 (or #0B1426 → #122036 for darker scenes).
-  - Rim light / highlight edge: stroke or thin overlay in #2896FB or #5EE6DE at ~0.6 opacity.
+  - Rim light / highlight edge: stroke or thin overlay in #2896FB or #17D94B at ~0.6 opacity.
   - Skin / face plane: a single flat shape filled with #E2E8F0 (no shading detail). Simple eye + smile suggested with 1-2 dark strokes in #0B1426.
   - Hair: flat #0B1426 or #122036.
   - Clothing accent: a single brand-color block (#2896FB, #00B2A9, or #FFC328) — pick whichever fits the energy.
@@ -185,7 +185,7 @@ When the user requests N slides, output N complete <!doctype html> documents, ea
 
 Carousel rules:
 - Slide 1 is the COVER: bold hook headline, big eyebrow, optional "Swipe →" hint at bottom-right, wordmark top-left.
-- Middle slides are CONTENT: each focuses on ONE idea (a stat, a step, a benefit, a quote). Number them subtly in the corner ("02 / 05") in #5EE6DE 0.022H uppercase.
+- Middle slides are CONTENT: each focuses on ONE idea (a stat, a step, a benefit, a quote). Number them subtly in the corner ("02 / 05") in #17D94B 0.022H uppercase.
 - Final slide is the CTA: clear call to action, big button, wordmark, optional handle/URL.
 - Visual cohesion across slides: same background scene, same color story, same wordmark position, same typography scale. Vary the focal element (orb position, accent shape) so they feel like a story, not duplicates.
 - Each slide is the EXACT same canvas dimensions specified.
@@ -316,7 +316,7 @@ The subject is the visual focal point. Place it in the VISUAL zone, never overla
 
   const slideRoles = (() => {
     if (slideCount === 2) return "- Slide 1: COVER (hook headline + eyebrow).\n- Slide 2: CTA (call to action + button + wordmark).";
-    return `- Slide 1: COVER (hook headline + eyebrow + "Swipe →" hint).\n- Slides 2 through ${slideCount - 1}: CONTENT (one idea each, with a small \"NN / ${String(slideCount).padStart(2, "0")}\" counter in #5EE6DE in a corner).\n- Slide ${slideCount}: CTA (call to action + button + wordmark).`;
+    return `- Slide 1: COVER (hook headline + eyebrow + "Swipe →" hint).\n- Slides 2 through ${slideCount - 1}: CONTENT (one idea each, with a small \"NN / ${String(slideCount).padStart(2, "0")}\" counter in #17D94B in a corner).\n- Slide ${slideCount}: CTA (call to action + button + wordmark).`;
   })();
   const slideBlock = slideCount > 1
     ? `\n# Carousel Output (CRITICAL)
@@ -390,7 +390,7 @@ const POLISH_SYSTEM = `You are a senior brand designer at HighLevel. The user gi
 Output rules:
 - Return ONLY the polished prompt as plain text. No preamble, no headings, no markdown, no explanation, no quotes.
 - 80-160 words, written as a confident creative direction (not a question).
-- Cover: headline (in quotes, 3-8 words, punchy), optional subline, visual focal point, composition, color usage from HighLevel palette (Primary Blue #2896FB, Light Blue #7CC8FF, Deep Navy #0B1426, Yellow #FFC328, Green #00B2A9, Teal #5EE6DE), accent treatments (orbs/chips/badges), and where the HighLevel wordmark sits.
+- Cover: headline (in quotes, 3-8 words, punchy), optional subline, visual focal point, composition, color usage from HighLevel palette (Primary Blue #2896FB, Light Blue #7CC8FF, Deep Navy #0B1426, Yellow #FFC328, Green #00B2A9, Green #17D94B), accent treatments (orbs/chips/badges), and where the HighLevel wordmark sits.
 - Match the energy of the user's idea — don't pad with corporate fluff.
 - Tailor density to the canvas size: tiny banners get a single-line hook + logo + CTA only.
 

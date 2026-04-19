@@ -415,6 +415,74 @@ Output rules:
 
 Pick the rules matching the user-provided format and lean into them. Do not list the format name in the output — just write the brief in that style.`;
 
+const REFINE_SYSTEM = `You are a senior brand designer at HighLevel making targeted edits to an existing marketing graphic. The user gives you the current HTML document and a single edit instruction. You return the FULL updated HTML document with the requested change applied.
+
+# Rules (NON-NEGOTIABLE)
+1. Return ONLY a complete HTML document starting with <!doctype html>. NO prose, NO markdown fences, NO commentary.
+2. Apply the user's edit LITERALLY. If they say "add a green checkmark icon next to the headline", add an inline SVG green checkmark next to the headline — do not redesign the rest of the slide.
+3. Preserve everything the user did NOT ask to change: same canvas dimensions, same wordmark, same background, same typography scale, same overall composition. Only mutate the elements the user named.
+4. Preserve any data-* attributes already present (especially data-ai-human="true" on photos — that attribute MUST stay so downstream tooling works).
+5. Preserve all <img> src URLs as-is. Do NOT swap a real image URL for a placeholder, do NOT remove an <img> tag unless the user explicitly asked to remove it.
+6. Do not introduce any external resources beyond what is already present plus the Poppins Google Fonts <link> if it's already there.
+7. HighLevel brand palette is the only allowed color set. If the user asks for "blue", use Primary Blue #2896FB. If they ask for "green", use #17D94B. If they ask for "yellow", use #FFC328. If they ask for a hex outside the palette, snap to the nearest palette color.
+8. Anti-overlap rules apply: any element you add must not overlap text or images. Reserve clear-space.
+9. If the user's instruction is ambiguous (e.g. "make it pop more"), make the smallest reasonable change consistent with HighLevel brand: tighter type, brighter accent, slight glow boost. Do not redesign.
+10. The output must render byte-for-byte as a valid standalone HTML document. <!doctype html> first line, <html>, <head>, <body>, closing tags. Inline <style> only.
+
+# HighLevel palette
+- Primary Blue: #2896FB · Mid Blue: #0B6FD4 · Light Blue: #7CC8FF
+- Green Bright: #17D94B · Green: #00B2A9
+- Yellow: #FFC328
+- Deep Navy: #0B1426 · Mid Navy: #122036 · Soft Navy: #1A2942
+- Off-white: #F8FAFC · Slate Light: #E2E8F0 · Slate Mid: #94A3B8
+- Charcoal: #0F172A · Charcoal Mid: #475569
+
+Output the full updated HTML now. Nothing else.`;
+
+router.post("/refine-design", async (req, res) => {
+  const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
+  const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
+  if (!baseUrl || !apiKey) return res.status(500).json({ error: "Anthropic integration is not configured" });
+
+  const html = typeof req.body?.html === "string" ? req.body.html : "";
+  const instruction = typeof req.body?.instruction === "string" ? req.body.instruction.trim() : "";
+  if (!html) return res.status(400).json({ error: "Current HTML is required" });
+  if (!instruction) return res.status(400).json({ error: "Edit instruction is required" });
+
+  const ALLOWED_MODELS = new Set(["claude-sonnet-4-6", "claude-opus-4-6", "claude-opus-4-7"]);
+  const requestedModel = typeof req.body?.model === "string" ? req.body.model : "claude-sonnet-4-6";
+  const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : "claude-sonnet-4-6";
+
+  try {
+    const client = new Anthropic({ baseURL: baseUrl, apiKey });
+    const message = await client.messages.create({
+      model,
+      max_tokens: 16000,
+      system: REFINE_SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: `Edit instruction: ${instruction}
+
+Current HTML document (apply the edit above and return the full updated document):
+
+${html}`,
+        },
+      ],
+    });
+    const block = message.content[0];
+    let text = (block && block.type === "text" ? block.text : "").trim();
+    text = text.replace(/^```(?:html)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+    if (!text || !/^<!doctype html/i.test(text)) {
+      return res.status(502).json({ error: "Claude returned an invalid HTML document" });
+    }
+    return res.json({ html: text });
+  } catch (err: any) {
+    console.error("[refine-design] error", err);
+    return res.status(500).json({ error: err?.message || "Failed to refine design" });
+  }
+});
+
 router.post("/polish-prompt", async (req, res) => {
   const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
   const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;

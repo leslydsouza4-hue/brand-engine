@@ -433,6 +433,10 @@ export function TemplatesWorkspace() {
   const [aiEditMode, setAiEditMode] = useState(false);
   const [aiGridView, setAiGridView] = useState(false);
   const [aiSavingEdits, setAiSavingEdits] = useState(false);
+  const [aiRefineInstruction, setAiRefineInstruction] = useState("");
+  const [aiRefining, setAiRefining] = useState(false);
+  const [aiRefineError, setAiRefineError] = useState<string | null>(null);
+  const [aiRefineHistory, setAiRefineHistory] = useState<string[]>([]);
   const [aiLoadingPhrase, setAiLoadingPhrase] = useState(0);
   const [aiLoadingProgress, setAiLoadingProgress] = useState(0);
   const [aiLoadingFact, setAiLoadingFact] = useState(0);
@@ -776,6 +780,32 @@ export function TemplatesWorkspace() {
     });
     return `${topic}\n\nPer-slide breakdown (use these as the spec for each slide; keep visual rhythm across the deck):\n${lines.join("\n")}`;
   })();
+
+  const handleRefineDesign = async () => {
+    const html = aiSlides[aiSlideIndex];
+    const instruction = aiRefineInstruction.trim();
+    if (!html || !instruction || aiRefining) return;
+    setAiRefining(true);
+    setAiRefineError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/refine-design`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ html, instruction, model: aiModel }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      if (!data.html) throw new Error("Empty response");
+      setAiRefineHistory(prev => [instruction, ...prev].slice(0, 6));
+      setAiSlides(prev => prev.map((s, i) => (i === aiSlideIndex ? data.html : s)));
+      setAiRefineInstruction("");
+    } catch (err: any) {
+      setAiRefineError(err?.message || "Refine failed");
+    } finally {
+      setAiRefining(false);
+    }
+  };
 
   const handlePolishPrompt = async () => {
     const idea = aiPrompt.trim();
@@ -2561,7 +2591,66 @@ export function TemplatesWorkspace() {
                     className="w-full h-full block border-0"
                     style={{ background: "#0B1426" }}
                   />
+                  {aiRefining && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-[rgba(11,20,38,0.7)] backdrop-blur-[6px] pointer-events-none">
+                      <div className="flex items-center gap-[10px] py-[10px] px-[18px] rounded-[999px] bg-[rgba(0,0,0,0.7)] border border-[rgba(23,217,75,0.4)]">
+                        <Loader2 className="w-[14px] h-[14px] text-[#17D94B] animate-spin" />
+                        <span className="text-[11px] font-bold tracking-[0.12em] text-[#17D94B]">REFINING…</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {!aiEditMode && (
+                  <div className="mt-[4px] p-[14px] rounded-[14px] bg-[rgba(0,0,0,0.4)] border border-[rgba(23,217,75,0.18)]">
+                    <div className="flex items-center justify-between mb-[8px]">
+                      <div className="flex items-center gap-[8px]">
+                        <Sparkles className="w-[12px] h-[12px] text-[#17D94B]" />
+                        <span className="text-[10.5px] font-bold uppercase tracking-[1.4px] text-[#17D94B]">Refine with AI</span>
+                      </div>
+                      <span className="text-[9.5px] text-[#64748B]">Tell Claude what to change</span>
+                    </div>
+                    <div className="flex gap-[8px]">
+                      <input
+                        type="text"
+                        value={aiRefineInstruction}
+                        onChange={(e) => setAiRefineInstruction(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRefineDesign(); } }}
+                        placeholder="e.g. add a green checkmark next to the headline · make the CTA blue · remove the subhead"
+                        disabled={aiRefining}
+                        className="flex-1 py-[10px] px-[14px] bg-[rgba(0,0,0,0.4)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(23,217,75,0.4)] placeholder:text-[#475569] disabled:opacity-60"
+                      />
+                      <button
+                        onClick={handleRefineDesign}
+                        disabled={!aiRefineInstruction.trim() || aiRefining}
+                        className="flex items-center gap-[6px] py-[10px] px-[16px] rounded-[10px] bg-[#17D94B] text-[#0B1426] text-[11.5px] font-bold tracking-[0.06em] hover:brightness-110 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all whitespace-nowrap"
+                      >
+                        {aiRefining ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Wand2 className="w-[12px] h-[12px]" />}
+                        {aiRefining ? "REFINING…" : "REFINE"}
+                      </button>
+                    </div>
+                    {aiRefineError && (
+                      <div className="mt-[8px] py-[6px] px-[10px] rounded-[8px] bg-[rgba(255,195,40,0.12)] border border-[rgba(255,195,40,0.3)] text-[10.5px] text-[#FFC328]">
+                        {aiRefineError}
+                      </div>
+                    )}
+                    {aiRefineHistory.length > 0 && (
+                      <div className="mt-[10px] flex flex-wrap items-center gap-[6px]">
+                        <span className="text-[9.5px] uppercase tracking-[1.2px] text-[#475569] mr-[2px]">Recent:</span>
+                        {aiRefineHistory.map((h, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setAiRefineInstruction(h)}
+                            className="py-[3px] px-[8px] rounded-full bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[9.5px] text-[#94A3B8] hover:bg-[rgba(23,217,75,0.1)] hover:text-[#17D94B] cursor-pointer max-w-[220px] truncate"
+                            title={h}
+                          >
+                            {h}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               )
             ) : (

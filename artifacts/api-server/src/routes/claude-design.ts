@@ -639,19 +639,58 @@ Output rules:
 
 When in doubt, REMOVE elements rather than cram. A clean micro-banner with logo + 4-word headline + CTA beats a cluttered one every time.`;
 
-const REFINE_SYSTEM = `You are a senior brand designer at HighLevel making targeted edits to an existing marketing graphic. The user gives you the current HTML document and a single edit instruction. You return the FULL updated HTML document with the requested change applied.
+const REFINE_SYSTEM = `You are a senior brand designer at HighLevel making targeted, surgical edits to an existing marketing graphic. The user gives you the current HTML document, a single edit instruction, the canvas brief, and recent edit history. You return the FULL updated HTML document with the requested change applied — and nothing else changed.
 
-# Rules (NON-NEGOTIABLE)
-1. Return ONLY a complete HTML document starting with <!doctype html>. NO prose, NO markdown fences, NO commentary.
-2. Apply the user's edit LITERALLY. If they say "add a green checkmark icon next to the headline", add an inline SVG green checkmark next to the headline — do not redesign the rest of the slide.
-3. Preserve everything the user did NOT ask to change: same canvas dimensions, same wordmark, same background, same typography scale, same overall composition. Only mutate the elements the user named.
-4. Preserve any data-* attributes already present (especially data-ai-human="true" on photos — that attribute MUST stay so downstream tooling works).
-5. Preserve all <img> src URLs as-is. Do NOT swap a real image URL for a placeholder, do NOT remove an <img> tag unless the user explicitly asked to remove it.
-6. Do not introduce any external resources beyond what is already present plus the Poppins Google Fonts <link> if it's already there.
-7. HighLevel brand palette is the only allowed color set. If the user asks for "blue", use Primary Blue #2896FB. If they ask for "green", use #17D94B. If they ask for "yellow", use #FFC328. If they ask for a hex outside the palette, snap to the nearest palette color.
-8. Anti-overlap rules apply: any element you add must not overlap text or images. Reserve clear-space.
-9. If the user's instruction is ambiguous (e.g. "make it pop more"), make the smallest reasonable change consistent with HighLevel brand: tighter type, brighter accent, slight glow boost. Do not redesign.
-10. The output must render byte-for-byte as a valid standalone HTML document. <!doctype html> first line, <html>, <head>, <body>, closing tags. Inline <style> only.
+# Internal process (think through these silently, then output the HTML)
+
+## STEP 1 — Parse intent
+Classify the instruction into one of these intent types (pick the BEST single fit):
+- **RECOLOR**: change the color of a named element ("make the CTA blue", "headline in green", "swap green for yellow")
+- **RETEXT**: change the words of a named element ("change headline to '...'", "rename CTA to 'Try Now'", "fix the typo in the subline")
+- **RESIZE**: change the size/scale of a named element ("make the logo bigger", "smaller headline", "shrink the orb")
+- **REPOSITION**: move a named element ("move CTA to bottom-right", "logo top-right", "center the headline")
+- **ADD**: introduce a new element ("add a checkmark next to the headline", "add an arrow to the CTA", "add a small badge above the headline")
+- **REMOVE**: delete a named element ("remove the orb", "no subline", "drop the eyebrow chip")
+- **SWAP**: replace one element with another of the same role ("swap the lightning icon for a star", "use a calendar icon instead", "different background gradient")
+- **RESTYLE**: change visual treatment without touching content ("rounder corners on the CTA", "thinner stroke on icons", "more padding around the headline")
+- **VIBE**: ambiguous overall feel edit ("make it pop", "more premium", "less busy", "calmer", "more energy")
+
+## STEP 2 — Locate target
+Identify the EXACT element(s) the instruction names. Use, in order of preference:
+1. Visible text content match (if the user names text, find that text in the DOM and target its parent)
+2. Semantic role (the element acting as headline = the largest text; CTA = the pill/button; logo = the <img> with HighLevel src; eyebrow = the small uppercase chip at the top; orb = a div with a radial-gradient or blur background; etc.)
+3. Position language ("top-right", "bottom") = elements with absolute positioning matching that corner, or the last/first child of the relevant flex/grid container
+4. If multiple candidates exist and the instruction is unambiguous, pick the most prominent one (largest, most central, brightest).
+If you genuinely cannot find the target, leave the document unchanged and add a single hidden HTML comment <!-- refine: target not found --> at the very end of <body>.
+
+## STEP 3 — Mutate (smallest reasonable change)
+- Apply the change to ONLY the located element(s) and their inline style/attributes.
+- Do NOT touch siblings, ancestors, or the document scaffold unless strictly required (e.g. RESIZE that requires reflow of one parent's gap).
+- For VIBE intents, pick ONE concrete tweak and apply it: bump the headline weight to 900, brighten the CTA glow, tighten the leading by 5%, swap a flat color block for a subtle gradient, raise contrast on the eyebrow chip. NEVER redesign.
+- For ADD intents, place the new element where the user named (e.g. "next to the headline" = inline-flex sibling with 12-16px gap; "above the headline" = a row directly above in the same column). Reserve clear-space so it does not overlap.
+- For ICON edits, you MUST use the approved icon library from the system rules — never freehand a <path d="...">. If the user names an icon not in the library, pick the closest approved one.
+
+## STEP 4 — Validate before output
+Walk through this checklist mentally. If any check fails, fix it before output:
+- [ ] Document still starts with <!doctype html> and is a complete standalone HTML doc
+- [ ] Root .canvas div still has the EXACT pixel width and height it had before (you must NEVER change canvas dimensions)
+- [ ] All <img> src URLs are byte-for-byte identical to before (no placeholders, no rewrites). Count of <img> tags is preserved unless the user explicitly asked to add/remove an image
+- [ ] All data-* attributes preserved exactly (especially data-ai-human="true")
+- [ ] All colors are members of the HighLevel palette (snap any stray hex to the nearest palette color)
+- [ ] No element overlaps another (no two text blocks share bounding boxes, no decorative orb covers text)
+- [ ] No new external resources (only the existing Google Fonts <link> if already present)
+- [ ] No filter / mix-blend-mode / mask / opacity<1 / backdrop-filter on the HighLevel logo or any of its ancestors
+- [ ] The change you made matches the user's instruction. If it doesn't, redo step 3.
+
+# Conflict resolution with edit history
+You will be given recentEdits — a list of the most recent prior instructions in reverse-chronological order. The current instruction TAKES PRIORITY over prior ones if they conflict (e.g. prior edit said "make CTA green", current says "make CTA blue" → CTA becomes blue). Otherwise, preserve the effect of prior edits — do not silently undo them.
+
+# Hard rules (NON-NEGOTIABLE)
+1. Return ONLY a complete HTML document starting with <!doctype html>. NO prose, NO markdown fences, NO commentary, NO explanation of what you changed.
+2. Apply the LITERAL request. "Add X" means X appears. "Remove X" means X is gone. "Make X red" means X is HighLevel's nearest red equivalent (#FFC328 yellow if no red exists in palette).
+3. Preserve canvas dimensions, all <img> src URLs, all data-* attrs, all approved-palette colors, and overall composition. Mutate only what the user named.
+4. Inline <style> only. No <script>. No external CSS. No external JS.
+5. Output the full updated HTML now. Nothing else.
 
 # HighLevel palette
 - Primary Blue: #2896FB · Mid Blue: #0B6FD4 · Light Blue: #7CC8FF
@@ -659,9 +698,7 @@ const REFINE_SYSTEM = `You are a senior brand designer at HighLevel making targe
 - Yellow: #FFC328
 - Deep Navy: #0B1426 · Mid Navy: #122036 · Soft Navy: #1A2942
 - Off-white: #F8FAFC · Slate Light: #E2E8F0 · Slate Mid: #94A3B8
-- Charcoal: #0F172A · Charcoal Mid: #475569
-
-Output the full updated HTML now. Nothing else.`;
+- Charcoal: #0F172A · Charcoal Mid: #475569`;
 
 router.post("/refine-design", async (req, res) => {
   const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
@@ -673,26 +710,70 @@ router.post("/refine-design", async (req, res) => {
   if (!html) return res.status(400).json({ error: "Current HTML is required" });
   if (!instruction) return res.status(400).json({ error: "Edit instruction is required" });
 
+  const aspect = typeof req.body?.aspect === "string" ? req.body.aspect : "";
+  const format = typeof req.body?.format === "string" ? req.body.format : "social";
+  const recentEdits: string[] = Array.isArray(req.body?.recentEdits)
+    ? req.body.recentEdits.filter((s: any) => typeof s === "string").slice(0, 5)
+    : [];
+  const slideIndex = Number.isFinite(Number(req.body?.slideIndex)) ? Math.max(0, Math.round(Number(req.body.slideIndex))) : 0;
+  const slideCount = Number.isFinite(Number(req.body?.slideCount)) ? Math.max(1, Math.round(Number(req.body.slideCount))) : 1;
+
+  // If aspect wasn't provided, try to read it off the .canvas div in the HTML.
+  let resolvedAspect = aspect;
+  if (!resolvedAspect) {
+    const wMatch = html.match(/\.canvas[^{]*\{[^}]*width\s*:\s*(\d+)\s*px/i);
+    const hMatch = html.match(/\.canvas[^{]*\{[^}]*height\s*:\s*(\d+)\s*px/i);
+    if (wMatch && hMatch) resolvedAspect = `${wMatch[1]}x${hMatch[1]}`;
+    else resolvedAspect = "1080x1080";
+  }
+  const refineBrief = buildCanvasBrief(resolvedAspect, format);
+
+  // Pre-inventory invariants the model MUST preserve.
+  const imgSrcs = Array.from(html.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)).map(m => m[1]);
+  const dataAttrs = Array.from(html.matchAll(/(data-[a-z0-9-]+)=/gi)).map(m => m[1]);
+  const uniqueDataAttrs = Array.from(new Set(dataAttrs));
+
+  const invariantBlock = `# Preservation invariants (MUST hold byte-for-byte)
+- Canvas dimensions: ${refineBrief.W}×${refineBrief.H}px (do not change root .canvas width/height)
+- Image src URLs to preserve EXACTLY (${imgSrcs.length} total): ${imgSrcs.length ? imgSrcs.map(s => s.length > 80 ? s.slice(0, 60) + "…[" + s.length + " chars]" : s).join(" | ") : "none"}
+- data-* attributes to preserve EXACTLY: ${uniqueDataAttrs.length ? uniqueDataAttrs.join(", ") : "none"}
+- The HighLevel logo <img> and ALL its ancestor elements: NO filter / mix-blend-mode / mask / opacity<1 / backdrop-filter`;
+
+  const historyBlock = recentEdits.length
+    ? `# Recent edit history (most recent first — preserve their effect unless the current instruction conflicts)
+${recentEdits.map((e, i) => `${i + 1}. ${e}`).join("\n")}`
+    : "";
+
+  const carouselBlock = slideCount > 1
+    ? `# Carousel context
+This is slide ${slideIndex + 1} of ${slideCount}. Apply the edit ONLY to this slide. Do not introduce slide numbering or markers that don't already exist here.`
+    : "";
+
   const ALLOWED_MODELS = new Set(["claude-sonnet-4-6", "claude-opus-4-6", "claude-opus-4-7"]);
   const requestedModel = typeof req.body?.model === "string" ? req.body.model : "claude-sonnet-4-6";
   const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : "claude-sonnet-4-6";
 
   try {
     const client = new Anthropic({ baseURL: baseUrl, apiKey });
+    const userContent = [
+      `Edit instruction: ${instruction}`,
+      "",
+      refineBrief.text,
+      "",
+      invariantBlock,
+      historyBlock,
+      carouselBlock,
+      "",
+      "Current HTML document (apply the edit above and return the full updated document — nothing else):",
+      "",
+      html,
+    ].filter(Boolean).join("\n");
+
     const message = await client.messages.create({
       model,
       max_tokens: 16000,
       system: REFINE_SYSTEM,
-      messages: [
-        {
-          role: "user",
-          content: `Edit instruction: ${instruction}
-
-Current HTML document (apply the edit above and return the full updated document):
-
-${html}`,
-        },
-      ],
+      messages: [{ role: "user", content: userContent }],
     });
     const block = message.content[0];
     let text = (block && block.type === "text" ? block.text : "").trim();

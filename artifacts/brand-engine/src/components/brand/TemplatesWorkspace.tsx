@@ -793,7 +793,16 @@ export function TemplatesWorkspace() {
       const res = await fetch(`${apiBase}api/refine-design`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html, instruction, model: aiModel }),
+        body: JSON.stringify({
+          html,
+          instruction,
+          model: aiModel,
+          aspect: aiAspect,
+          format: aiCategoryId,
+          recentEdits: aiRefineHistory.slice(0, 5),
+          slideIndex: aiSlideIndex,
+          slideCount: aiSlides.length,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);

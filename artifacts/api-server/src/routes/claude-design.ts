@@ -352,6 +352,23 @@ Carousel rules:
 
 When the user prompt mentions any HighLevel product surface (e.g. "workflow UI", "calling UI", "dialer", "inbox", "conversations", "pipeline", "kanban", "dashboard", "CRM screen", "GHL app", "automation builder", "calendar UI", "appointment UI", "opportunities", "snapshots", "sub-account dashboard", "agency dashboard"), you MUST render an inline HTML/CSS mockup that visually mimics the real HighLevel product UI to ~80% accuracy using ONLY divs, spans, inline SVG, and CSS. Never use external images for the UI itself. The mockup is the hero visual of the marketing graphic — frame it as a browser-style chrome (rounded corners, top bar with red/yellow/green dots, subtle drop-shadow), then reproduce the screen below.
 
+## ABSOLUTE HARD RULES (highest priority — violating any of these fails the design)
+1. **THE BODY OF THE SIMULATED APP IS NEVER BLANK.** Empty white space inside the browser frame is an automatic failure. After you draw the chrome (traffic lights, left rail, top header), you MUST fill the main content area with at least the minimum element count for the requested screen (see "Minimum content density" below). If you find yourself with an empty white rectangle inside the frame, STOP and add the missing UI elements before outputting.
+2. **Take BOTH screens when prompt asks for two surfaces.** If the prompt names two surfaces (e.g. "workflow + dialer"), the dialer card overlaps the workflow body — both visible at once.
+3. **Show the screen the user asked for, not just the rail.** Sidebar/header alone is not enough; the page-specific content (nodes / list / cards / chart) is the focal point.
+4. **Use placeholder text that LOOKS realistic — never lorem ipsum, never just "Title" or "Item 1".** Use specific HighLevel-style copy: "Send SMS", "Tag added: cold-lead", "Sara Patel · 415-555-0142", "Re-engage cold leads", "$12,400 · Due Mar 14", "Booked Calls: 47 (+12.4%)". Names, dates, dollar amounts, dispositions.
+
+## Minimum content density per screen (mental checklist before outputting)
+- **Workflow / Automation Builder**: ≥1 trigger node + ≥3 action nodes + ≥1 if/else branch + connecting lines, all visible inside the canvas. Each node has a real-sounding label and subtitle.
+- **Phone Dialer / Calling**: dialer card must show contact name, phone number, call timer ("00:42") OR "Ringing…", a 3×4 keypad (12 keys), and the bottom action bar with mute/keypad/hold/transfer + a red end-call button. Avatar circle visible.
+- **Conversations / Inbox**: conversation list with ≥4 contact rows (name, preview text, channel icon, timestamp) + an open thread with ≥3 chat bubbles (mix of inbound gray-left and outbound blue-right) + composer at bottom.
+- **Pipeline / Kanban**: ≥4 columns with stage names, totals, and counts + ≥6 opportunity cards distributed across columns. Each card shows contact name, dollar value, due date, owner avatar.
+- **Dashboard / Reporting**: ≥4 KPI tiles with numbers + deltas + ≥1 chart (line or bar or donut) with visible axis lines and data shape.
+- **Calendar**: ≥7 day columns or month grid with ≥5 colored appointment blocks at varied times.
+- **Sites / Funnel builder**: page-thumbnail grid with ≥4 page tiles + side panel showing element library.
+
+If the canvas is too small to fit ALL of the above, REDUCE counts proportionally but never go below 50% of the minimums, and never ship an empty body.
+
 ## Global app chrome (shared across all HighLevel screens)
 - App background: pure white #FFFFFF for the main canvas. The deep navy #0B1426 brand color is reserved for the OUTER marketing graphic background ONLY (the area around the browser frame). Inside the simulated app, treat it as a real SaaS UI on white.
 - Browser/window frame around the app: border-radius 14px, background #FFFFFF, border 1px solid #E5E9F0, box-shadow 0 30px 80px rgba(11,20,38,0.45). Top chrome bar (28-32px tall) with three traffic-light dots (#FF5F57, #FEBC2E, #28C840) on the left, optionally a faint URL pill in center.

@@ -894,25 +894,44 @@ export function TemplatesWorkspace() {
 
             {aiIncludeLogo && (
               <>
-                <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Logo Variant</div>
-                <div className="grid grid-cols-3 gap-[6px] mb-[14px] max-h-[210px] overflow-y-auto sidebar-scroll p-[2px]">
+                <div className="flex items-center justify-between mb-[6px]">
+                  <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Logo Variant</div>
+                  <div className="text-[10px] text-[#64748B] font-medium">{LOGO_VARIANTS.find(l => l.id === aiLogoId)?.name ?? ""}</div>
+                </div>
+                <div className="flex flex-col gap-[4px] mb-[14px] max-h-[260px] overflow-y-auto sidebar-scroll pr-[4px]">
                   {LOGO_VARIANTS.map(variant => {
                     const isActive = aiLogoId === variant.id;
-                    const isDarkBg = variant.recommendedOn === "light";
+                    const tileBg = variant.recommendedOn === "light" ? "#F8FAFC" : "#0B1426";
                     return (
                       <button
                         key={variant.id}
                         onClick={() => setAiLogoId(variant.id)}
-                        title={`${variant.name} — ${variant.description}`}
-                        className={`relative aspect-[4/3] rounded-[8px] border overflow-hidden cursor-pointer transition-all flex items-center justify-center ${
+                        title={variant.description}
+                        className={`group flex items-center gap-[10px] py-[6px] pl-[6px] pr-[10px] rounded-[8px] border cursor-pointer transition-all text-left ${
                           isActive
-                            ? "border-[rgba(0,178,169,0.5)] bg-[rgba(0,178,169,0.08)]"
-                            : "border-[rgba(255,255,255,0.06)] hover:border-[rgba(255,255,255,0.15)]"
+                            ? "border-[rgba(0,178,169,0.45)] bg-[rgba(0,178,169,0.07)]"
+                            : "border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.015)] hover:border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.03)]"
                         }`}
-                        style={{ background: isDarkBg ? "#F8FAFC" : (isActive ? "rgba(0,178,169,0.08)" : "rgba(255,255,255,0.02)") }}
                       >
-                        <img src={variant.file} alt={variant.name} className="max-w-[80%] max-h-[70%] object-contain" />
-                        {isActive && <div className="absolute inset-0 ring-1 ring-[#5EE6DE] ring-inset rounded-[8px]" />}
+                        <div
+                          className="flex-shrink-0 w-[44px] h-[32px] rounded-[5px] flex items-center justify-center overflow-hidden border border-[rgba(255,255,255,0.04)]"
+                          style={{ background: tileBg }}
+                        >
+                          <img src={variant.file} alt={variant.name} className="max-w-[80%] max-h-[78%] object-contain" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-[11.5px] font-semibold leading-[1.2] truncate ${isActive ? "text-[#5EE6DE]" : "text-[#E2E8F0]"}`}>
+                            {variant.name}
+                          </div>
+                          <div className="text-[9.5px] text-[#475569] uppercase tracking-[0.08em] mt-[2px]">
+                            {variant.recommendedOn === "any" ? "Universal" : `Best on ${variant.recommendedOn}`}
+                          </div>
+                        </div>
+                        {isActive && (
+                          <div className="flex-shrink-0 w-[14px] h-[14px] rounded-full bg-[#5EE6DE] flex items-center justify-center">
+                            <Check className="w-[9px] h-[9px] text-[#0B1426]" strokeWidth={3} />
+                          </div>
+                        )}
                       </button>
                     );
                   })}

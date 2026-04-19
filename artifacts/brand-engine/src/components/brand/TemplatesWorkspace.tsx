@@ -880,16 +880,6 @@ export function TemplatesWorkspace() {
                 <span className="text-[12px] font-semibold text-[#E2E8F0]">HighLevel logo</span>
                 <span className="ml-auto text-[10px] text-[#475569]">corner</span>
               </label>
-              <label className="flex items-center gap-[10px] py-[8px] px-[12px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px] cursor-pointer hover:bg-[rgba(255,255,255,0.04)]">
-                <input
-                  type="checkbox"
-                  checked={aiIncludeHighly}
-                  onChange={(e) => setAiIncludeHighly(e.target.checked)}
-                  className="w-[14px] h-[14px] accent-[#00B2A9]"
-                />
-                <span className="text-[12px] font-semibold text-[#E2E8F0]">Highly mascot</span>
-                <span className="ml-auto text-[10px] text-[#475569]">hero</span>
-              </label>
             </div>
 
             {aiIncludeLogo && (
@@ -939,31 +929,6 @@ export function TemplatesWorkspace() {
               </>
             )}
 
-            {aiIncludeHighly && (
-              <>
-                <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Highly Pose</div>
-                <div className="grid grid-cols-4 gap-[6px] mb-[14px] max-h-[180px] overflow-y-auto sidebar-scroll p-[2px]">
-                  {HIGHLY_POSES.map(pose => {
-                    const isActive = aiHighlyPoseId === pose.id;
-                    return (
-                      <button
-                        key={pose.id}
-                        onClick={() => setAiHighlyPoseId(pose.id)}
-                        title={pose.name}
-                        className={`relative aspect-square rounded-[8px] border overflow-hidden cursor-pointer transition-all ${
-                          isActive
-                            ? "border-[rgba(0,178,169,0.5)] bg-[rgba(0,178,169,0.08)]"
-                            : "border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.02)] hover:border-[rgba(255,255,255,0.15)]"
-                        }`}
-                      >
-                        <img src={pose.image} alt={pose.name} className="w-full h-full object-contain p-[3px]" />
-                        {isActive && <div className="absolute inset-0 ring-1 ring-[#5EE6DE] ring-inset rounded-[8px]" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
 
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Rough Idea (optional)</div>
             <textarea

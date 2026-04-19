@@ -780,16 +780,16 @@ export function TemplatesWorkspace() {
     setAiRemovingBg(true);
     setAiRemoveBgError(null);
     try {
-      const apiBase = import.meta.env.BASE_URL;
-      const res = await fetch(`${apiBase}api/remove-human-bg`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: src }),
+      const { default: removeBackground } = await import("@imgly/background-removal");
+      const blob = await removeBackground(src);
+      const transparentDataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.image) throw new Error(data.error || `Request failed (${res.status})`);
       // Replace the src in the matched tag, keep all other attrs (including data-ai-human).
-      const newTag = tag.replace(/\bsrc\s*=\s*["'][^"']+["']/i, `src="${data.image}"`);
+      const newTag = tag.replace(/\bsrc\s*=\s*["'][^"']+["']/i, `src="${transparentDataUrl}"`);
       let updated = html.replace(tag, newTag);
       // Inject a safety stylesheet so the photo's container shows the slide's brand
       // background instead of any decorative checker / grid pattern Claude may have

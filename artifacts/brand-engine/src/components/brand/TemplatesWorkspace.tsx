@@ -296,14 +296,10 @@ export function TemplatesWorkspace() {
   const [aiSceneId, setAiSceneId] = useState<string>(DESIGN_SCENES[0]?.id ?? "auto");
   const [aiPolishing, setAiPolishing] = useState(false);
   const [aiPolishError, setAiPolishError] = useState<string | null>(null);
-  const [aiHumanImage, setAiHumanImage] = useState<string>("");
-  const [aiHumanDescription, setAiHumanDescription] = useState<string>("");
-  const [aiHumanLoading, setAiHumanLoading] = useState(false);
-  const [aiHumanError, setAiHumanError] = useState<string | null>(null);
-  const [aiHumanInclude, setAiHumanInclude] = useState(false);
   const [aiCustomItemImage, setAiCustomItemImage] = useState<string>("");
   const [aiCustomItemDescription, setAiCustomItemDescription] = useState<string>("");
   const [aiCustomItemInclude, setAiCustomItemInclude] = useState(false);
+  const [aiCustomItemError, setAiCustomItemError] = useState<string | null>(null);
 
   const aiAspectRatio = (() => {
     const m = aiAspect.match(/^(\d+)\s*x\s*(\d+)$/i);
@@ -751,40 +747,11 @@ export function TemplatesWorkspace() {
     }
   }, [aiSavingEdits, aiSlideIndex]);
 
-  const handleGenerateHuman = async () => {
-    if (aiHumanLoading) return;
-    setAiHumanLoading(true);
-    setAiHumanError(null);
-    try {
-      const apiBase = import.meta.env.BASE_URL;
-      const slidePrompt = aiSlidePrompts.filter(Boolean).join(" \u2022 ");
-      const res = await fetch(`${apiBase}api/generate-human`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          theme: aiPrompt,
-          slidePrompt,
-          aspect: aiAspect,
-          sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      if (!data.image) throw new Error("No image returned");
-      setAiHumanImage(data.image);
-      setAiHumanDescription(data.description || "Featured person");
-      setAiHumanInclude(true);
-    } catch (err: any) {
-      setAiHumanError(err?.message || "Failed to generate human");
-    } finally {
-      setAiHumanLoading(false);
-    }
-  };
-
   const handleCustomItemUpload = (file: File | null | undefined) => {
     if (!file) return;
+    setAiCustomItemError(null);
     if (file.size > 6 * 1024 * 1024) {
-      setAiHumanError("Item image too large (max 6 MB).");
+      setAiCustomItemError("Item image too large (max 6 MB).");
       return;
     }
     const reader = new FileReader();
@@ -825,8 +792,6 @@ export function TemplatesWorkspace() {
           sceneName: DESIGN_SCENES.find(s => s.id === aiSceneId)?.name ?? "",
           sceneDescription: DESIGN_SCENES.find(s => s.id === aiSceneId)?.description ?? "",
           slideCount: aiSlideCount,
-          hasHuman: aiHumanInclude && !!aiHumanImage,
-          humanDescription: aiHumanDescription,
           hasItem: aiCustomItemInclude && !!aiCustomItemImage,
           itemDescription: aiCustomItemDescription,
         }),
@@ -837,12 +802,11 @@ export function TemplatesWorkspace() {
         ? data.slides
         : (data.html ? [data.html] : []);
       if (!slides.length) throw new Error("No HTML returned");
-      // Swap placeholder URLs back to data URLs (kept off the wire to save tokens).
-      const humanPh = "https://placeholder.brand-engine/ai-human.png";
+      // Swap custom-item placeholder back to its data URL (kept off the wire to save tokens).
+      // The human placeholder is swapped server-side because the image is generated there.
       const itemPh = "https://placeholder.brand-engine/custom-item.png";
       slides = slides.map(s => {
         let out = s;
-        if (aiHumanInclude && aiHumanImage) out = out.split(humanPh).join(aiHumanImage);
         if (aiCustomItemInclude && aiCustomItemImage) out = out.split(itemPh).join(aiCustomItemImage);
         return out;
       });
@@ -1485,54 +1449,10 @@ export function TemplatesWorkspace() {
               </>
             )}
 
-            {/* AI Human + Custom Item */}
+            {/* Custom Item upload (humans are auto-generated server-side from the prompt) */}
             <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Photo Assets</div>
+            <div className="text-[9.5px] text-[#5EE6DE] mb-[8px]">Mention a person in your prompt → a photo-real human is auto-generated with Nano Banana Pro.</div>
             <div className="flex flex-col gap-[8px] mb-[14px]">
-              {/* AI Human row */}
-              <div className="p-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px]">
-                <div className="flex items-center gap-[10px]">
-                  <input
-                    type="checkbox"
-                    checked={aiHumanInclude}
-                    onChange={(e) => setAiHumanInclude(e.target.checked)}
-                    disabled={!aiHumanImage}
-                    className="w-[14px] h-[14px] accent-[#00B2A9] disabled:opacity-30"
-                  />
-                  <div className="flex flex-col gap-[2px]">
-                    <span className="text-[12px] font-semibold text-[#E2E8F0]">AI Human Photo</span>
-                    <span className="text-[9.5px] text-[#64748B]">Nano Banana Pro · matches your theme</span>
-                  </div>
-                  <button
-                    onClick={handleGenerateHuman}
-                    disabled={aiHumanLoading || (!aiPrompt.trim() && aiSlidePrompts.every(p => !p.trim()))}
-                    className="ml-auto flex items-center gap-[5px] py-[5px] px-[10px] rounded-[6px] text-[10px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-40 bg-[rgba(40,150,251,0.1)] border-[rgba(40,150,251,0.3)] text-[#7CC8FF] hover:bg-[rgba(40,150,251,0.18)]"
-                  >
-                    {aiHumanLoading
-                      ? <><Loader2 className="w-[10px] h-[10px] animate-spin" /><span>Generating…</span></>
-                      : <><Sparkles className="w-[10px] h-[10px]" /><span>{aiHumanImage ? "Regenerate" : "Generate"}</span></>}
-                  </button>
-                </div>
-                {aiHumanImage && (
-                  <div className="mt-[10px] flex gap-[10px] items-start">
-                    <img src={aiHumanImage} alt="AI human" className="w-[64px] h-[64px] rounded-[8px] object-cover border border-[rgba(255,255,255,0.08)]" />
-                    <div className="flex-1 flex flex-col gap-[4px]">
-                      <textarea
-                        value={aiHumanDescription}
-                        onChange={(e) => setAiHumanDescription(e.target.value)}
-                        rows={2}
-                        placeholder="Subject description (used by Claude for layout)"
-                        className="w-full py-[6px] px-[8px] bg-[rgba(0,0,0,0.2)] border border-[rgba(255,255,255,0.06)] rounded-[6px] text-[10.5px] text-[#CBD5E1] outline-none focus:border-[rgba(40,150,251,0.3)] resize-y"
-                      />
-                      <button
-                        onClick={() => { setAiHumanImage(""); setAiHumanDescription(""); setAiHumanInclude(false); }}
-                        className="self-start text-[9.5px] text-[#64748B] hover:text-[#94A3B8] cursor-pointer"
-                      >Remove</button>
-                    </div>
-                  </div>
-                )}
-                {aiHumanError && <div className="mt-[8px] text-[10px] text-[#FFC328]">{aiHumanError}</div>}
-              </div>
-
               {/* Custom item row */}
               <div className="p-[10px] bg-[rgba(255,255,255,0.025)] border border-[rgba(255,255,255,0.06)] rounded-[10px]">
                 <div className="flex items-center gap-[10px]">

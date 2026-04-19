@@ -7,6 +7,60 @@ const router: IRouter = Router();
 const HUMAN_PLACEHOLDER = "https://placeholder.brand-engine/ai-human.png";
 const ITEM_PLACEHOLDER = "https://placeholder.brand-engine/custom-item.png";
 
+// Words that strongly suggest the design needs a real photo of a person.
+const HUMAN_KEYWORDS = /\b(human|person|people|man|woman|men|women|guy|girl|founder|founders|owner|owners|entrepreneur|entrepreneurs|ceo|coach|coaches|client|clients|customer|customers|portrait|headshot|face|smiling|model|professional|operator|operators|agency owner|agency owners|consultant|teacher|trainer|speaker|host|presenter|user|team member|employee|staff|developer|designer|marketer)\b/i;
+
+async function buildHumanPromptAndDescription(
+  baseUrl: string | undefined,
+  apiKey: string | undefined,
+  ctx: { theme: string; sceneName: string; aspect: string },
+): Promise<{ imagePrompt: string; description: string }> {
+  let imagePrompt = "";
+  let description = "";
+  if (baseUrl && apiKey) {
+    try {
+      const client = new Anthropic({ baseURL: baseUrl, apiKey });
+      const msg = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 500,
+        system: `You write image-generation prompts for a state-of-the-art photoreal model (Google Imagen / Nano Banana Pro). Given a marketing graphic's theme, you write a SINGLE prompt for a high-quality professional photograph of a HUMAN that fits the theme.
+
+Rules:
+- The output is one paragraph, 60-120 words, no preamble, no markdown.
+- Always describe: who the person is (age, gender, role; ethnicity should reflect a diverse pool), wardrobe matched to the brand vibe, expression, framing (close-up / mid / full body), camera and lens (e.g. "shot on Canon R5, 50mm, f/1.8"), lighting (warm, editorial, golden hour, studio softbox, etc.), background that matches the slide's scene/brand colors, and the overall mood.
+- The brand context is HighLevel (modern SaaS, agency operators, founders): teal #5EE6DE, blue #2896FB, navy #0B1426, yellow #FFC328 accents. Wardrobe and palette should be tasteful and modern.
+- The photo will be cut out and placed on a dark navy slide, so prefer subjects with clean separation from the background OR a complementary brand-color backdrop.
+- End with: "ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks".
+
+Then on a NEW LINE after the prompt, write:
+DESCRIPTION: <one short sentence (under 18 words) describing the subject for layout purposes>`,
+        messages: [
+          {
+            role: "user",
+            content: `Marketing graphic theme: ${ctx.theme || "(not specified)"}
+Scene direction: ${ctx.sceneName || "(none)"}
+Canvas aspect: ${ctx.aspect}
+
+Write the image prompt now.`,
+          },
+        ],
+      });
+      const block = msg.content[0];
+      const text = (block && block.type === "text" ? block.text : "").trim();
+      const descMatch = text.match(/DESCRIPTION:\s*(.+)$/im);
+      description = descMatch ? descMatch[1].trim() : "";
+      imagePrompt = text.replace(/DESCRIPTION:.*$/im, "").trim();
+    } catch (err) {
+      console.error("[generate-human] prompt-builder failed", err);
+    }
+  }
+  if (!imagePrompt) {
+    imagePrompt = `Editorial photograph of a confident modern professional matching this brief: ${ctx.theme}. Shot on Canon R5, 50mm, f/1.8, soft natural light, neutral wardrobe with subtle teal or blue accents, calm modern background. Ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks.`;
+    description = description || "Confident modern professional matching the brand theme";
+  }
+  return { imagePrompt, description };
+}
+
 const HIGHLEVEL_BRAND_SYSTEM = `You are a senior brand designer at HighLevel (also "GoHighLevel" / "GHL") shipping production-ready marketing graphics. You output a single, self-contained HTML document that renders a polished, perfectly aligned design for the user's prompt. The output should look like it came out of Figma from a top-tier in-house design team — never like a wireframe or a default Bootstrap page.
 
 # HighLevel Brand Guidelines
@@ -165,9 +219,7 @@ router.post("/claude-design", async (req, res) => {
   const sceneName = typeof req.body?.sceneName === "string" ? req.body.sceneName : "";
   const sceneDescription = typeof req.body?.sceneDescription === "string" ? req.body.sceneDescription : "";
   const subject = typeof req.body?.subject === "string" ? req.body.subject.trim() : "";
-  const humanDescription = typeof req.body?.humanDescription === "string" ? req.body.humanDescription.trim() : "";
   const itemDescription = typeof req.body?.itemDescription === "string" ? req.body.itemDescription.trim() : "";
-  const hasHuman = !!req.body?.hasHuman && humanDescription;
   const hasItem = !!req.body?.hasItem;
   const rawSlideCount = Number(req.body?.slideCount);
   const slideCount = Number.isFinite(rawSlideCount)
@@ -192,7 +244,26 @@ Variant description: ${logoDescription || "official HighLevel lockup"}.
 - Do NOT recolor or filter the logo. Use the variant exactly as provided.
 - Reserve a clear-space rectangle around it equal to ~half the logo height on every side. No text, orb, or other element may enter that rectangle.`);
   }
-  if (hasHuman) {
+  // Auto-detect: prompt mentions a human → generate one with Nano Banana Pro.
+  const wantsHuman = HUMAN_KEYWORDS.test(prompt);
+  let humanDataUrl = "";
+  let humanDescription = "";
+  if (wantsHuman) {
+    try {
+      const { imagePrompt, description } = await buildHumanPromptAndDescription(baseUrl, apiKey, {
+        theme: prompt,
+        sceneName,
+        aspect,
+      });
+      const result = await generateImage(imagePrompt, "gemini-3-pro-image-preview");
+      humanDataUrl = `data:${result.mimeType || "image/png"};base64,${result.b64_json}`;
+      humanDescription = description;
+    } catch (err) {
+      console.error("[claude-design] auto human gen failed", err);
+    }
+  }
+
+  if (humanDataUrl) {
     assetBlock.push(`AI-generated human photo (REQUIRED — embed as the hero portrait):
 <img src="${HUMAN_PLACEHOLDER}" alt="Featured person" />
 Subject description: ${humanDescription}
@@ -286,11 +357,18 @@ Output nothing else — no prose, no explanation, no markdown.`
       .map(s => s.trim())
       .filter(s => /<!doctype|<html/i.test(s));
 
-    if (slides.length === 0) {
-      return res.json({ html: cleaned, slides: [cleaned] });
-    }
+    const finalSlides = (slides.length === 0 ? [cleaned] : slides).map((s) => {
+      let out = s;
+      if (humanDataUrl) out = out.split(HUMAN_PLACEHOLDER).join(humanDataUrl);
+      return out;
+    });
 
-    return res.json({ html: slides[0], slides });
+    return res.json({
+      html: finalSlides[0],
+      slides: finalSlides,
+      humanGenerated: !!humanDataUrl,
+      humanDescription: humanDescription || undefined,
+    });
   } catch (err: any) {
     console.error("[claude-design] error", err);
     return res.status(500).json({ error: err?.message || "Failed to generate design" });
@@ -375,55 +453,12 @@ router.post("/generate-human", async (req, res) => {
     return res.status(400).json({ error: "theme or slidePrompt is required" });
   }
 
-  let imagePrompt = "";
-  let description = "";
-
-  // Step 1: ask Claude to write a tight image-gen prompt + a one-line subject description
-  if (baseUrl && apiKey) {
-    try {
-      const client = new Anthropic({ baseURL: baseUrl, apiKey });
-      const msg = await client.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 500,
-        system: `You write image-generation prompts for a state-of-the-art photoreal model (Google Imagen / Nano Banana Pro). Given a marketing graphic's theme and slide context, you write a SINGLE prompt for a high-quality professional photograph of a HUMAN that fits the theme.
-
-Rules:
-- The output is one paragraph, 60-120 words, no preamble, no markdown.
-- Always describe: who the person is (age, gender, role, ethnicity is optional and should reflect a diverse pool), wardrobe matched to the brand vibe, expression, framing (close-up / mid / full body), camera and lens (e.g. "shot on Canon R5, 50mm, f/1.8"), lighting (warm, editorial, golden hour, studio softbox, etc.), background that matches the slide's scene/brand colors, and the overall mood.
-- The brand context is HighLevel (modern SaaS, agency operators, founders): teal #5EE6DE, blue #2896FB, navy #0B1426, yellow #FFC328 accents. Wardrobe and palette should be tasteful and modern.
-- The photo will be cut out and placed on a dark navy slide, so prefer subjects with clean separation from the background OR a complementary brand-color backdrop.
-- End with: "ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks".
-
-Then on a NEW LINE after the prompt, write:
-DESCRIPTION: <one short sentence (under 18 words) describing the subject for layout purposes>`,
-        messages: [
-          {
-            role: "user",
-            content: `Marketing graphic theme: ${theme || "(not specified)"}
-Slide context: ${slidePrompt || "(not specified)"}
-Scene direction: ${sceneName || "(none)"}
-Canvas aspect: ${aspect}
-
-Write the image prompt now.`,
-          },
-        ],
-      });
-      const block = msg.content[0];
-      const text = (block && block.type === "text" ? block.text : "").trim();
-      const descMatch = text.match(/DESCRIPTION:\s*(.+)$/im);
-      description = descMatch ? descMatch[1].trim() : "";
-      imagePrompt = text.replace(/DESCRIPTION:.*$/im, "").trim();
-    } catch (err: any) {
-      console.error("[generate-human] prompt-builder failed", err);
-    }
-  }
-
-  if (!imagePrompt) {
-    imagePrompt = `Editorial photograph of a confident modern professional matching this brief: ${theme}. ${slidePrompt}. Shot on Canon R5, 50mm, f/1.8, soft natural light, neutral wardrobe with subtle teal or blue accents, calm modern background. Ultra high resolution, photorealistic, editorial quality, no logos, no text, no watermarks.`;
-    description = "Confident modern professional matching the brand theme";
-  }
-
   try {
+    const { imagePrompt, description } = await buildHumanPromptAndDescription(baseUrl, apiKey, {
+      theme: [theme, slidePrompt].filter(Boolean).join(" — "),
+      sceneName,
+      aspect,
+    });
     const result = await generateImage(imagePrompt, "gemini-3-pro-image-preview");
     const dataUrl = `data:${result.mimeType || "image/png"};base64,${result.b64_json}`;
     return res.json({ image: dataUrl, description, prompt: imagePrompt });

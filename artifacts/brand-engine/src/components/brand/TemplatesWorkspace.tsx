@@ -284,7 +284,6 @@ export function TemplatesWorkspace() {
   const [aiIncludeHighly, setAiIncludeHighly] = useState(false);
   const [aiHighlyPoseId, setAiHighlyPoseId] = useState<string>(HIGHLY_POSES[0]?.id ?? "");
   const [aiSceneId, setAiSceneId] = useState<string>(DESIGN_SCENES[0]?.id ?? "auto");
-  const [aiRoughIdea, setAiRoughIdea] = useState("");
   const [aiPolishing, setAiPolishing] = useState(false);
   const [aiPolishError, setAiPolishError] = useState<string | null>(null);
 
@@ -331,7 +330,7 @@ export function TemplatesWorkspace() {
   const aiHtmlScaled = aiHtml ? wrapWithFit(aiHtml, aiCanvasDims.w, aiCanvasDims.h) : null;
 
   const handlePolishPrompt = async () => {
-    const idea = aiRoughIdea.trim();
+    const idea = aiPrompt.trim();
     if (!idea || aiPolishing) return;
     setAiPolishing(true);
     setAiPolishError(null);
@@ -928,39 +927,33 @@ export function TemplatesWorkspace() {
             )}
 
 
-            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Rough Idea (optional)</div>
-            <textarea
-              value={aiRoughIdea}
-              onChange={(e) => setAiRoughIdea(e.target.value)}
-              placeholder="e.g. announce our new SMS automation feature"
-              rows={2}
-              className="w-full py-[10px] px-[12px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[10px] font-['Poppins'] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
-            />
-            <button
-              onClick={handlePolishPrompt}
-              disabled={!aiRoughIdea.trim() || aiPolishing}
-              className="mt-[6px] mb-[14px] w-full flex items-center justify-center gap-[6px] py-[9px] px-[12px] rounded-[10px] text-[11.5px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-50 bg-[rgba(255,195,40,0.08)] border-[rgba(255,195,40,0.3)] text-[#FFC328] hover:bg-[rgba(255,195,40,0.14)]"
-            >
-              {aiPolishing ? (
-                <><Loader2 className="w-[12px] h-[12px] animate-spin" /><span>Polishing…</span></>
-              ) : (
-                <><Sparkles className="w-[12px] h-[12px]" /><span>Polish into a designer prompt</span></>
-              )}
-            </button>
-            {aiPolishError && (
-              <div className="mb-[10px] py-[8px] px-[10px] rounded-[8px] text-[11px] text-[#FCA5A5] bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)]">
-                {aiPolishError}
-              </div>
-            )}
-
-            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Prompt</div>
+            <div className="flex items-center justify-between mb-[6px]">
+              <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Prompt</div>
+              <button
+                onClick={handlePolishPrompt}
+                disabled={!aiPrompt.trim() || aiPolishing}
+                title="Rewrite your prompt as a designer-grade brief"
+                className="flex items-center gap-[5px] py-[4px] px-[9px] rounded-[6px] text-[10px] font-bold border cursor-pointer transition-all disabled:cursor-not-allowed disabled:opacity-40 bg-[rgba(255,195,40,0.08)] border-[rgba(255,195,40,0.3)] text-[#FFC328] hover:bg-[rgba(255,195,40,0.14)]"
+              >
+                {aiPolishing ? (
+                  <><Loader2 className="w-[10px] h-[10px] animate-spin" /><span>Polishing…</span></>
+                ) : (
+                  <><Sparkles className="w-[10px] h-[10px]" /><span>Polish</span></>
+                )}
+              </button>
+            </div>
             <textarea
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
               placeholder="e.g. Launch graphic for our new AI Voice Agent — bold headline, glowing blue orb, capture-yellow accent badge"
-              rows={6}
+              rows={7}
               className="w-full py-[12px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[12.5px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] resize-y"
             />
+            {aiPolishError && (
+              <div className="mt-[8px] py-[8px] px-[10px] rounded-[8px] text-[11px] text-[#FCA5A5] bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)]">
+                {aiPolishError}
+              </div>
+            )}
 
             <button
               onClick={handleGenerateAI}

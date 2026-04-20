@@ -43,6 +43,7 @@ interface AssetRequest {
   cta?: string;
   visual?: string;
   human?: string;
+  supporting?: string;
   suggestedFormats: FormatKey[];
   raw: string;
 }
@@ -137,6 +138,7 @@ function parseAssetRequest(text: string): AssetRequest | null {
     cta: get("CTA"),
     visual: get("Visual direction"),
     human: get("Human in shot"),
+    supporting: get("Supporting graphics"),
     suggestedFormats,
     raw,
   };
@@ -146,20 +148,48 @@ function stripAssetRequest(text: string): string {
   return text.replace(/<asset_set_request>[\s\S]*?<\/asset_set_request>/gi, "").trim();
 }
 
+// Per-format composition guidance — tells the design model how to lay things out
+// for the specific aspect ratio so we never end up with half-empty canvases.
+const COMPOSITION_HINTS: Record<FormatKey, string> = {
+  square:
+    "SQUARE 1080×1080 — Use the full frame. Split layout: headline + CTA on the LEFT 55% (large bold type, accent color on hero word), supporting graphics + product UI on the RIGHT 45%. If a human is in shot, place them right side bleeding off the edge with the supporting product UI floating beside them. HighLevel wordmark top-left or bottom-left.",
+  portrait:
+    "PORTRAIT 1080×1920 — Vertical stack. Top third: eyebrow tag + HighLevel wordmark. Middle third: massive headline (taking ~60% of width, accent color on hero word) + subline. Bottom third: hero visual (human, product UI mockup, or both composed together) with the CTA pill button anchored bottom-center. Every band must contain content — no blank vertical gaps.",
+  horizontal:
+    "HORIZONTAL 1200×628 (Twitter/LinkedIn/Meta) — Wide cinematic split. LEFT 50%: headline (3 lines max, large), subline below, CTA pill button. RIGHT 50%: hero visual that fills the full height — a tall product mockup, an angled dashboard screenshot, or a person+product composition. HighLevel wordmark bottom-left. The right half must be visually loaded — never just gradient.",
+};
+
 function buildCraftPrompt(req: AssetRequest, format: FormatKey): string {
   const meta = FORMAT_META[format];
-  const lines: string[] = [`${meta.label} ${meta.ratio} format (${meta.aspect}).`];
-  if (req.concept) lines.push(req.concept);
-  if (req.headline) lines.push(`Headline: "${req.headline}".`);
-  if (req.subline && req.subline.toLowerCase() !== "none") lines.push(`Subline: "${req.subline}".`);
-  if (req.cta && req.cta.toLowerCase() !== "none") lines.push(`CTA: "${req.cta}".`);
-  if (req.visual) lines.push(req.visual);
+  const lines: string[] = [];
+  lines.push(`# Asset spec — ${meta.label} ${meta.ratio} (canvas ${meta.aspect})`);
+  lines.push("");
+  lines.push(`## Composition guidance for this aspect`);
+  lines.push(COMPOSITION_HINTS[format]);
+  lines.push("");
+  if (req.concept) { lines.push(`## Concept`); lines.push(req.concept); lines.push(""); }
+  lines.push(`## Copy (use EXACTLY as written, do not paraphrase)`);
+  if (req.headline) lines.push(`- Headline: "${req.headline}"`);
+  if (req.subline && req.subline.toLowerCase() !== "none") lines.push(`- Subline: "${req.subline}"`);
+  if (req.cta && req.cta.toLowerCase() !== "none") lines.push(`- CTA button label: "${req.cta}"`);
+  lines.push("");
+  if (req.visual) { lines.push(`## Visual direction`); lines.push(req.visual); lines.push(""); }
+  if (req.supporting) { lines.push(`## Supporting graphics (must fill the opposite side from the headline)`); lines.push(req.supporting); lines.push(""); }
   if (req.human && req.human.toLowerCase().startsWith("yes")) {
-    lines.push(req.human.replace(/^yes\s*[—-]?\s*/i, "Include a person: "));
-  } else {
-    lines.push("No human.");
+    lines.push(`## Human in shot`);
+    lines.push(req.human.replace(/^yes\s*[—-]?\s*/i, ""));
+    lines.push("");
   }
-  return lines.join(" ");
+  lines.push(`## Brand system (HARD requirements — apply every time)`);
+  lines.push(`- Colors: navy #0B1426 surfaces/text, blue #2896FB primary accent, green #17D94B success/CTA accent, yellow #FFC328 warning/highlight, white #FFFFFF base.`);
+  lines.push(`- Type: bold sans-serif (Inter Tight / Geist family). One hero word in accent color, the rest white or navy. Tight tracking on display sizes.`);
+  lines.push(`- Aesthetic: modern SaaS / Apple keynote calm. Generous whitespace inside content blocks but the canvas as a whole MUST be balanced — never half empty.`);
+  lines.push(`- Always include the HighLevel wordmark in a corner (top-left or bottom-left).`);
+  lines.push(`- The CTA must be a real pill-shaped button — blue #2896FB or green #17D94B background, white text, with a → arrow.`);
+  lines.push("");
+  lines.push(`## Final check before rendering`);
+  lines.push(`Look at the composition: is the canvas evenly weighted? If one side is empty, ADD content there per the supporting graphics field. Use the FULL canvas.`);
+  return lines.join("\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -496,43 +526,22 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
     setGenPanel((g) => ({ ...g, assets: initial }));
 
     const apiBase = import.meta.env.BASE_URL;
-    const wantsHuman = !!req.human && req.human.toLowerCase().startsWith("yes");
-    const humanPose = wantsHuman ? req.human!.replace(/^yes\s*[—-]?\s*/i, "").trim() : "";
     const results: GeneratedAsset[] = [];
     await Promise.all(targetFormats.map(async (format) => {
       setGenPanel((g) => ({ ...g, assets: g.assets.map((a) => a.format === format ? { ...a, status: "generating" } : a) }));
       let result: GeneratedAsset;
       try {
-        // Step 1 — Polish the rough concept into a fully detailed Craft Magic brief
-        // (composition, type hierarchy, color usage, focal element). This is the same
-        // step the dedicated Craft Magic tab runs and is what makes the output good.
-        const ideaText = buildCraftPrompt(req, format);
-        const polishRes = await fetch(`${apiBase}api/polish-prompt`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            idea: ideaText,
-            aspect: FORMAT_META[format].aspect,
-            format: "social",
-            slideCount: 1,
-            includeLogo: true,
-            logoDescription: "wordmark",
-            includeHighly: wantsHuman,
-            highlyPoseDescription: humanPose,
-          }),
-        });
-        let polishedPrompt = ideaText;
-        if (polishRes.ok) {
-          const pj = await polishRes.json().catch(() => ({}));
-          if (pj?.prompt && typeof pj.prompt === "string") polishedPrompt = pj.prompt;
-        }
-
-        // Step 2 — Generate the actual design with the polished, detailed prompt.
+        // We build a rich, format-aware designer brief client-side from Brand Brain's
+        // structured output and ship it straight to claude-design. We deliberately
+        // skip /polish-prompt — that endpoint is built for one-line user ideas and
+        // adds generic SaaS noise on top of an already-detailed concept, which was
+        // producing half-empty / unbalanced layouts.
+        const designPrompt = buildCraftPrompt(req, format);
         const res = await fetch(`${apiBase}api/claude-design`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: polishedPrompt,
+            prompt: designPrompt,
             aspect: FORMAT_META[format].aspect,
             model: "claude-sonnet-4-6",
             slideCount: 1,

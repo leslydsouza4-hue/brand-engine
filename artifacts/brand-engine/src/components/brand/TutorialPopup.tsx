@@ -236,99 +236,56 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
   );
 }
 
-/* ---------- Right-edge "Watch tour" tab ---------- */
+/* ---------- Circular Play button beside the FeatureRequestBubble ---------- */
 
 function RightEdgeTab({ onClick }: { onClick: () => void }) {
   const [hover, setHover] = useState(false);
   return (
     <motion.button
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      transition={{ duration: 0.3, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, scale: 0.6, y: 12 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.6, y: 12 }}
+      transition={{ duration: 0.3, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       aria-label="Watch tour"
+      title="Watch tour"
       style={{
         position: "fixed",
-        right: 0,
-        top: "50%",
-        transform: `translate(${hover ? "-4px" : "0"}, -50%)`,
+        right: 88,
+        bottom: 24,
         zIndex: 9998,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 10,
-        padding: "16px 8px",
-        borderTopLeftRadius: 14,
-        borderBottomLeftRadius: 14,
-        background:
-          "linear-gradient(180deg, rgba(11,20,38,0.96) 0%, rgba(15,26,46,0.96) 100%)",
-        backdropFilter: "blur(10px)",
-        border: "1px solid rgba(23,217,75,0.35)",
-        borderRight: "none",
-        color: "#F8FAFC",
-        fontFamily: "Inter, system-ui, sans-serif",
+        width: 52,
+        height: 52,
+        borderRadius: 999,
+        background: "linear-gradient(135deg, #17D94B 0%, #2896FB 100%)",
+        border: "none",
         cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#0B1426",
         boxShadow: hover
-          ? "-8px 0 30px -6px rgba(23,217,75,0.35), -2px 0 12px -4px rgba(0,0,0,0.5)"
-          : "-6px 0 20px -8px rgba(0,0,0,0.55)",
-        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+          ? "0 6px 32px rgba(23,217,75,0.55), 0 0 0 1px rgba(23,217,75,0.3)"
+          : "0 4px 24px rgba(23,217,75,0.4), 0 0 0 1px rgba(23,217,75,0.2)",
+        transform: hover ? "scale(1.05)" : "scale(1)",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease",
       }}
     >
-      {/* Brand accent stripe on the inner edge */}
-      <span
+      {/* pulsing halo */}
+      <motion.span
+        animate={{ scale: [1, 1.45, 1], opacity: [0.5, 0, 0.5] }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
         style={{
           position: "absolute",
-          left: 0,
-          top: 14,
-          bottom: 14,
-          width: 2,
-          borderRadius: 2,
-          background: "linear-gradient(180deg, #17D94B, #2896FB)",
+          inset: -2,
+          borderRadius: 999,
+          background: "radial-gradient(circle, rgba(23,217,75,0.55), transparent 70%)",
+          pointerEvents: "none",
         }}
       />
-      {/* Pulsing dot */}
-      <span style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 10, height: 10 }}>
-        <motion.span
-          animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
-          style={{
-            position: "absolute",
-            width: 10,
-            height: 10,
-            borderRadius: 999,
-            background: "#17D94B",
-          }}
-        />
-        <span
-          style={{
-            position: "relative",
-            width: 6,
-            height: 6,
-            borderRadius: 999,
-            background: "#17D94B",
-            boxShadow: "0 0 8px rgba(23,217,75,0.8)",
-          }}
-        />
-      </span>
-      {/* Vertical text */}
-      <span
-        style={{
-          writingMode: "vertical-rl",
-          transform: "rotate(180deg)",
-          fontSize: 11,
-          fontWeight: 800,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "#F8FAFC",
-          padding: "2px 0",
-        }}
-      >
-        Watch tour
-      </span>
-      <PlayCircle size={14} color="#17D94B" strokeWidth={2.5} />
+      <PlayCircle size={22} strokeWidth={2.5} fill="#0B1426" color="#0B1426" />
     </motion.button>
   );
 }

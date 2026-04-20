@@ -906,8 +906,18 @@ function BeatPickShaun() {
   );
 }
 
-/* Beat 2: drop a batch of backgrounds — 16:9 thumbnail tiles fly in */
+/* Beat 2: PLACE Shaun on a single background → completed thumbnail */
 function BeatBatchUpload() {
+  // re-trigger landing animation each loop
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 600); // shaun lands
+    const t2 = setTimeout(() => setStage(2), 1300); // headline appears
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
   return (
     <motion.div
       {...sceneAnim}
@@ -928,71 +938,159 @@ function BeatBatchUpload() {
           textTransform: "uppercase",
         }}
       >
-        Drop backgrounds · batch
+        Place on background
       </div>
       <div
         style={{
           flex: 1,
-          borderRadius: 12,
-          border: "1.5px dashed rgba(40,150,251,0.55)",
-          background: "rgba(40,150,251,0.06)",
-          position: "relative",
-          overflow: "hidden",
-          display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
-          gap: 6,
-          padding: 8,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        {SHAUN_BG_COLORS.map((bg, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: -28, scale: 0.85, rotate: -6 + i * 3 }}
-            animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-            transition={{
-              delay: 0.15 + i * 0.13,
-              duration: 0.45,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-          >
-            <ThumbCard bg={bg} showShaun={false} />
-          </motion.div>
-        ))}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.95, duration: 0.3 }}
+        {/* The 16:9 canvas */}
+        <div
           style={{
-            position: "absolute",
-            bottom: 6,
-            right: 8,
-            fontSize: 9,
-            fontWeight: 700,
-            color: "#2896FB",
-            background: "rgba(11,20,38,0.7)",
-            padding: "2px 6px",
-            borderRadius: 4,
-            letterSpacing: "0.04em",
-            border: "1px solid rgba(40,150,251,0.4)",
+            position: "relative",
+            width: "100%",
+            aspectRatio: "16 / 9",
+            borderRadius: 10,
+            overflow: "hidden",
+            background:
+              "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
+            border: "1.5px solid rgba(40,150,251,0.5)",
+            boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
           }}
         >
-          4 BACKGROUNDS
-        </motion.div>
+          {/* dotted texture */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage:
+                "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+              backgroundSize: "8px 8px",
+              opacity: 0.6,
+            }}
+          />
+          {/* Headline + subtext (left side) */}
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: stage >= 2 ? 1 : 0, x: stage >= 2 ? 0 : -10 }}
+            transition={{ duration: 0.35 }}
+            style={{
+              position: "absolute",
+              left: 10,
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: "55%",
+            }}
+          >
+            <div
+              style={{
+                background: "#2896FB",
+                color: "#0B1426",
+                fontSize: 7,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                padding: "2px 5px",
+                borderRadius: 3,
+                display: "inline-block",
+                marginBottom: 4,
+              }}
+            >
+              FEATURE UPDATE
+            </div>
+            <div
+              style={{
+                color: "#F8FAFC",
+                fontSize: 12,
+                fontWeight: 900,
+                lineHeight: 1.05,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              AI Voice Agent
+            </div>
+            <div
+              style={{
+                color: "rgba(248,250,252,0.65)",
+                fontSize: 7,
+                fontWeight: 500,
+                marginTop: 2,
+              }}
+            >
+              now in beta
+            </div>
+          </motion.div>
+
+          {/* Shaun lands from the right */}
+          <motion.img
+            src={SHAUN_THUMBS[1]}
+            alt=""
+            initial={{ opacity: 0, x: 80, y: 8 }}
+            animate={{
+              opacity: stage >= 1 ? 1 : 0,
+              x: stage >= 1 ? 0 : 80,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.55,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            style={{
+              position: "absolute",
+              right: -6,
+              bottom: 0,
+              height: "115%",
+              objectFit: "contain",
+              objectPosition: "bottom right",
+              filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))",
+            }}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+
+          {/* drop guides that fade out once placed */}
+          <motion.div
+            initial={{ opacity: 0.7 }}
+            animate={{ opacity: stage >= 1 ? 0 : 0.7 }}
+            transition={{ duration: 0.35 }}
+            style={{
+              position: "absolute",
+              right: 8,
+              bottom: 8,
+              top: 8,
+              width: "32%",
+              border: "1.5px dashed rgba(40,150,251,0.7)",
+              borderRadius: 6,
+              background: "rgba(40,150,251,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 8,
+              fontWeight: 700,
+              color: "rgba(40,150,251,0.9)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            DROP HERE
+          </motion.div>
+        </div>
       </div>
     </motion.div>
   );
 }
 
-/* Beat 3: render queue — vertical list with progress bars (no Shaun face spam) */
+/* Beat 3: ADD TO BATCH QUEUE — finished thumbs stack into a queue list one by one */
 function BeatComposeBatch() {
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    setProgress(0);
-    const id = setInterval(() => {
-      setProgress((p) => Math.min(100, p + 6));
-    }, 80);
-    return () => clearInterval(id);
-  }, []);
+  const QUEUE = [
+    { name: "AI_Voice_Agent", bg: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)" },
+    { name: "Workflow_Update", bg: "linear-gradient(135deg, #7CC2FB 0%, #2896FB 100%)" },
+    { name: "Q2_Roadmap", bg: "linear-gradient(135deg, #1268C2 0%, #0B1426 100%)" },
+    { name: "New_Integrations", bg: "linear-gradient(135deg, #2896FB 0%, #1268C2 100%)" },
+  ];
   return (
     <motion.div
       {...sceneAnim}
@@ -1016,14 +1114,19 @@ function BeatComposeBatch() {
           justifyContent: "space-between",
         }}
       >
-        <span>Rendering thumbnails</span>
-        <motion.span
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 1.2, repeat: Infinity }}
-          style={{ color: "#2896FB", letterSpacing: "0.05em" }}
+        <span>Batch queue</span>
+        <span
+          style={{
+            color: "#2896FB",
+            background: "rgba(40,150,251,0.12)",
+            padding: "1px 5px",
+            borderRadius: 3,
+            fontSize: 8,
+            letterSpacing: "0.05em",
+          }}
         >
-          {Math.min(100, Math.round(progress))}%
-        </motion.span>
+          +ADD MORE
+        </span>
       </div>
       <div
         style={{
@@ -1031,99 +1134,101 @@ function BeatComposeBatch() {
           display: "flex",
           flexDirection: "column",
           gap: 5,
-          justifyContent: "center",
         }}
       >
-        {SHAUN_BG_COLORS.map((bg, i) => {
-          const localProgress = Math.max(
-            0,
-            Math.min(100, (progress - i * 10) * 1.25),
-          );
-          const done = localProgress >= 100;
-          return (
+        {QUEUE.map((q, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: 30, scale: 0.9 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{
+              delay: 0.15 + i * 0.32,
+              duration: 0.45,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "4px 6px",
+              borderRadius: 6,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            {/* tiny 16:9 preview */}
             <div
-              key={i}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "4px 6px",
-                borderRadius: 6,
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.06)",
+                width: 32,
+                height: 18,
+                borderRadius: 3,
+                background: q.bg,
+                flexShrink: 0,
+                position: "relative",
+                overflow: "hidden",
               }}
             >
-              {/* tiny thumb preview */}
+              {/* tiny shaun silhouette in corner */}
               <div
                 style={{
-                  width: 28,
-                  height: 16,
-                  borderRadius: 3,
-                  background: bg,
-                  flexShrink: 0,
-                  position: "relative",
-                  overflow: "hidden",
+                  position: "absolute",
+                  right: 0,
+                  bottom: 0,
+                  width: "38%",
+                  height: "85%",
+                  background:
+                    "radial-gradient(ellipse at 50% 30%, rgba(11,20,38,0.85) 0 40%, transparent 60%), linear-gradient(180deg, transparent 30%, rgba(11,20,38,0.85) 35% 100%)",
+                  borderRadius: "50% 50% 0 0 / 60% 60% 0 0",
                 }}
               />
-              <div
-                style={{
-                  flex: 1,
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: "#F8FAFC",
-                  letterSpacing: "0.03em",
-                }}
-              >
-                Thumbnail_{String(i + 1).padStart(2, "0")}.png
-              </div>
-              <div
-                style={{
-                  width: 60,
-                  height: 3,
-                  background: "rgba(255,255,255,0.08)",
-                  borderRadius: 999,
-                  overflow: "hidden",
-                  position: "relative",
-                }}
-              >
-                <motion.div
-                  animate={{ width: `${localProgress}%` }}
-                  transition={{ duration: 0.15 }}
-                  style={{
-                    height: "100%",
-                    background: done ? "#17D94B" : "#2896FB",
-                    borderRadius: 999,
-                    boxShadow: done
-                      ? "0 0 6px rgba(23,217,75,0.7)"
-                      : "0 0 6px rgba(40,150,251,0.7)",
-                  }}
-                />
-              </div>
-              {done ? (
-                <Check size={11} color="#17D94B" strokeWidth={3.5} />
-              ) : (
-                <span
-                  style={{
-                    fontSize: 8,
-                    fontWeight: 700,
-                    color: "rgba(248,250,252,0.5)",
-                    width: 24,
-                    textAlign: "right",
-                  }}
-                >
-                  {Math.round(localProgress)}%
-                </span>
-              )}
             </div>
-          );
-        })}
+            <div
+              style={{
+                flex: 1,
+                fontSize: 9,
+                fontWeight: 700,
+                color: "#F8FAFC",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {q.name}
+              <span style={{ color: "rgba(248,250,252,0.4)" }}>.png</span>
+            </div>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{
+                delay: 0.45 + i * 0.32,
+                type: "spring",
+                stiffness: 500,
+                damping: 18,
+              }}
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: 999,
+                background: "rgba(23,217,75,0.18)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Check size={9} color="#17D94B" strokeWidth={3.5} />
+            </motion.div>
+          </motion.div>
+        ))}
       </div>
     </motion.div>
   );
 }
 
-/* Beat 4: export (stack of 16:9 thumbnails + download CTA) */
+/* Beat 4: DOWNLOAD ALL TYPES — multi-format selector + download all */
 function BeatExport() {
+  const FORMATS = [
+    { label: "1:1", sub: "1080×1080", icon: "■" },
+    { label: "16:9", sub: "1920×1080", icon: "▬" },
+    { label: "9:16", sub: "1080×1920", icon: "▮" },
+  ];
   return (
     <motion.div
       {...sceneAnim}
@@ -1132,42 +1237,78 @@ function BeatExport() {
         inset: 18,
         display: "flex",
         flexDirection: "column",
-        gap: 10,
+        gap: 8,
         justifyContent: "center",
       }}
     >
-      {/* fanned thumbnail stack */}
-      <div style={{ position: "relative", height: 78, display: "flex", justifyContent: "center" }}>
-        {SHAUN_BG_COLORS.map((bg, i) => {
-          const offset = i - (SHAUN_BG_COLORS.length - 1) / 2;
-          return (
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Download all formats
+      </div>
+
+      {/* format chips */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+        {FORMATS.map((f, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 8, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.1 + i * 0.1, duration: 0.3 }}
+            style={{
+              padding: "8px 6px",
+              borderRadius: 8,
+              background: "rgba(40,150,251,0.08)",
+              border: "1px solid rgba(40,150,251,0.45)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
+              position: "relative",
+            }}
+          >
+            <div style={{ color: "#2896FB", fontSize: 14, fontWeight: 800, lineHeight: 1 }}>
+              {f.icon}
+            </div>
+            <div style={{ color: "#F8FAFC", fontSize: 10, fontWeight: 800 }}>
+              {f.label}
+            </div>
+            <div style={{ color: "rgba(248,250,252,0.5)", fontSize: 7, fontWeight: 600 }}>
+              {f.sub}
+            </div>
             <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 14, x: 0, rotate: 0 }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                x: offset * 22,
-                rotate: offset * 5,
-              }}
-              transition={{ delay: 0.1 + i * 0.08, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.4 + i * 0.1, type: "spring", stiffness: 500, damping: 18 }}
               style={{
                 position: "absolute",
-                width: 110,
-                top: 0,
-                transformOrigin: "bottom center",
+                top: 4,
+                right: 4,
+                width: 12,
+                height: 12,
+                borderRadius: 999,
+                background: "#2896FB",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <ThumbCard bg={bg} label={`Thumb ${String(i + 1).padStart(2, "0")}`} />
+              <Check size={8} color="#0B1426" strokeWidth={3.5} />
             </motion.div>
-          );
-        })}
+          </motion.div>
+        ))}
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6, duration: 0.3 }}
+        transition={{ delay: 0.7, duration: 0.3 }}
         style={{
           background: "linear-gradient(135deg, #2896FB 0%, #1268C2 100%)",
           color: "#F8FAFC",
@@ -1185,7 +1326,7 @@ function BeatExport() {
         }}
       >
         <Download size={13} strokeWidth={2.6} />
-        EXPORT 4 PNGs
+        DOWNLOAD ALL
       </motion.div>
     </motion.div>
   );

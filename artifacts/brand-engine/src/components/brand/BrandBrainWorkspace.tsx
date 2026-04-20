@@ -259,14 +259,6 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
-  // Generation panel state
-  const [genPanel, setGenPanel] = useState<{
-    open: boolean;
-    request?: AssetRequest;
-    formats: FormatKey[];
-    assets: GeneratedAsset[];
-  }>({ open: false, formats: [], assets: [] });
-
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -335,7 +327,7 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
     setProjectMenuOpen(false);
     setError(null);
     setPendingAttachments([]);
-    setGenPanel({ open: false, formats: [], assets: [] });
+
   };
   const newProject = () => {
     const p = createProject("Untitled project");
@@ -345,7 +337,7 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
     setProjectMenuOpen(false);
     setError(null);
     setPendingAttachments([]);
-    setGenPanel({ open: false, formats: [], assets: [] });
+
   };
   const removeProject = (id: string) => {
     if (!confirm("Delete this project? This can't be undone.")) return;
@@ -510,89 +502,6 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
     try { await navigator.clipboard.writeText(text); setCopiedId(id); setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1400); } catch {}
   };
 
-  // ─── Asset set generation ─────────────────────────────────────────────────
-  const openGenPanel = (request: AssetRequest) => {
-    setGenPanel({ open: true, request, formats: [...request.suggestedFormats], assets: [] });
-  };
-  const toggleFormat = (f: FormatKey) => {
-    setGenPanel((g) => ({ ...g, formats: g.formats.includes(f) ? g.formats.filter((x) => x !== f) : [...g.formats, f] }));
-  };
-  const closeGenPanel = () => setGenPanel((g) => ({ ...g, open: false }));
-
-  const updateAsset = useCallback((format: FormatKey, patch: Partial<GeneratedAsset>) => {
-    setGenPanel((g) => ({ ...g, assets: g.assets.map((a) => (a.format === format ? { ...a, ...patch } : a)) }));
-    // Also persist to the message history so reloads remember the refined version.
-    setMessages((m) => {
-      const copy = [...m];
-      for (let i = copy.length - 1; i >= 0; i--) {
-        if (copy[i].role === "assistant" && copy[i].generatedAssets) {
-          copy[i] = {
-            ...copy[i],
-            generatedAssets: copy[i].generatedAssets!.map((a) => (a.format === format ? { ...a, ...patch } : a)),
-          };
-          break;
-        }
-      }
-      return copy;
-    });
-  }, []);
-
-  const generateSet = async () => {
-    const req = genPanel.request;
-    const targetFormats = genPanel.formats;
-    if (!req || targetFormats.length === 0) return;
-    const initial: GeneratedAsset[] = targetFormats.map((f) => ({ format: f, status: "queued" }));
-    setGenPanel((g) => ({ ...g, assets: initial }));
-
-    const apiBase = import.meta.env.BASE_URL;
-    const results: GeneratedAsset[] = [];
-    await Promise.all(targetFormats.map(async (format) => {
-      setGenPanel((g) => ({ ...g, assets: g.assets.map((a) => a.format === format ? { ...a, status: "generating" } : a) }));
-      let result: GeneratedAsset;
-      try {
-        // We build a rich, format-aware designer brief client-side from Brand Brain's
-        // structured output and ship it straight to claude-design. We deliberately
-        // skip /polish-prompt — that endpoint is built for one-line user ideas and
-        // adds generic SaaS noise on top of an already-detailed concept, which was
-        // producing half-empty / unbalanced layouts.
-        const designPrompt = buildCraftPrompt(req, format);
-        const res = await fetch(`${apiBase}api/claude-design`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: designPrompt,
-            aspect: FORMAT_META[format].aspect,
-            model: "claude-sonnet-4-6",
-            slideCount: 1,
-            hasItem: false,
-          }),
-        });
-        if (!res.ok) {
-          const j = await res.json().catch(() => ({}));
-          throw new Error(j.error || `Generation failed (${res.status})`);
-        }
-        const data = await res.json();
-        result = { format, status: "done", html: data.html };
-      } catch (e: any) {
-        result = { format, status: "error", error: e?.message || "Failed" };
-      }
-      results.push(result);
-      setGenPanel((g) => ({ ...g, assets: g.assets.map((a) => a.format === format ? result : a) }));
-    }));
-
-    // Persist generated assets to the latest assistant message in the project.
-    setMessages((m) => {
-      const copy = [...m];
-      for (let i = copy.length - 1; i >= 0; i--) {
-        if (copy[i].role === "assistant") {
-          copy[i] = { ...copy[i], generatedAssets: results };
-          break;
-        }
-      }
-      return copy;
-    });
-  };
-
   const isEmpty = messages.length === 0;
   const canSend = (input.trim().length > 0 || pendingAttachments.length > 0) && !loading;
   const activeProject = projects.find((p) => p.id === activeId);
@@ -728,10 +637,9 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
                             {req && (
                               <AssetRequestCard
                                 req={req}
-                                onOpenPanel={() => openGenPanel(req)}
+                                onSendToCraft={(format) => onSendToCraft(buildCraftPrompt(req, format))}
                                 onCopy={() => handleCopy(i, buildCraftPrompt(req, "square"))}
                                 copied={copiedId === i}
-                                hasGenerated={!!m.generatedAssets && m.generatedAssets.length > 0}
                               />
                             )}
                           </div>
@@ -795,19 +703,6 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
         </div>
       </div>
 
-      {/* Right: generation panel */}
-      {genPanel.open && (
-        <GenerationPanel
-          request={genPanel.request!}
-          formats={genPanel.formats}
-          assets={genPanel.assets}
-          onToggleFormat={toggleFormat}
-          onGenerate={generateSet}
-          onClose={closeGenPanel}
-          onSendToCraft={(prompt) => onSendToCraft(prompt)}
-        />
-      )}
-
       <style>{`
         @keyframes bbDot { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); } 40% { opacity: 1; transform: scale(1.1); } }
       `}</style>
@@ -818,7 +713,8 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
 // ─────────────────────────────────────────────────────────────────────────────
 // Asset request card
 
-function AssetRequestCard({ req, onOpenPanel, onCopy, copied, hasGenerated }: { req: AssetRequest; onOpenPanel: () => void; onCopy: () => void; copied: boolean; hasGenerated: boolean }) {
+function AssetRequestCard({ req, onSendToCraft, onCopy, copied }: { req: AssetRequest; onSendToCraft: (format: FormatKey) => void; onCopy: () => void; copied: boolean }) {
+  const primaryFormat: FormatKey = req.suggestedFormats[0] || "square";
   return (
     <div className="mt-[16px] rounded-[14px] border border-[rgba(168,85,247,0.25)] bg-gradient-to-br from-[rgba(168,85,247,0.08)] via-[rgba(40,150,251,0.06)] to-[rgba(0,178,169,0.05)] overflow-hidden">
       <div className="px-[16px] py-[12px] border-b border-white/[0.06] flex items-center gap-[10px]">
@@ -826,7 +722,7 @@ function AssetRequestCard({ req, onOpenPanel, onCopy, copied, hasGenerated }: { 
           <Wand2 className="w-[11px] h-[11px] text-white" />
         </div>
         <div className="text-[12.5px] font-semibold text-white">Asset Set Concept</div>
-        <div className="text-[10px] uppercase tracking-[1.2px] text-[#A855F7] font-semibold ml-auto">{hasGenerated ? "Generated" : "Ready"}</div>
+        <div className="text-[10px] uppercase tracking-[1.2px] text-[#A855F7] font-semibold ml-auto">Ready</div>
       </div>
       <div className="px-[16px] py-[14px] space-y-[8px] text-[12.5px]">
         {req.concept && <BriefRow label="Concept" value={req.concept} bold />}
@@ -842,287 +738,62 @@ function AssetRequestCard({ req, onOpenPanel, onCopy, copied, hasGenerated }: { 
               const meta = FORMAT_META[f];
               const Icon = meta.Icon;
               return (
-                <span key={f} className="inline-flex items-center gap-[6px] px-[9px] py-[4px] rounded-[8px] bg-white/[0.04] border border-white/[0.08] text-[11px] text-[#CBD5E1]">
+                <button
+                  key={f}
+                  onClick={() => onSendToCraft(f)}
+                  className="inline-flex items-center gap-[6px] px-[9px] py-[5px] rounded-[8px] bg-white/[0.04] hover:bg-white/[0.1] border border-white/[0.08] hover:border-[rgba(168,85,247,0.4)] text-[11px] text-[#CBD5E1] hover:text-white transition-all cursor-pointer"
+                  title={`Open ${meta.label} in Craft Magic`}
+                >
                   <Icon className="w-[10px] h-[10px] text-[#A855F7]" />
                   {meta.label} <span className="text-[#64748B]">{meta.ratio}</span>
-                </span>
+                </button>
               );
             })}
           </div>
         </div>
       </div>
       <div className="px-[16px] pb-[14px] flex items-center gap-[8px]">
-        <button onClick={onOpenPanel} className="flex-1 flex items-center justify-center gap-[8px] py-[10px] px-[14px] rounded-[10px] text-[12.5px] font-semibold bg-gradient-to-br from-[#A855F7] via-[#2896FB] to-[#00B2A9] text-white hover:brightness-110 cursor-pointer shadow-[0_6px_20px_rgba(168,85,247,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all">
+        <button
+          onClick={() => onSendToCraft(primaryFormat)}
+          className="flex-1 flex items-center justify-center gap-[8px] py-[10px] px-[14px] rounded-[10px] text-[12.5px] font-semibold bg-gradient-to-br from-[#A855F7] via-[#2896FB] to-[#00B2A9] text-white hover:brightness-110 cursor-pointer shadow-[0_6px_20px_rgba(168,85,247,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] transition-all"
+        >
           <Wand2 className="w-[13px] h-[13px]" />
-          {hasGenerated ? "Open generation panel" : "Pick formats & generate"}
+          Build this in Craft Magic
         </button>
         <button onClick={onCopy} className="px-[12px] py-[10px] rounded-[10px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-[#94A3B8] hover:text-white transition-all cursor-pointer" title="Copy prompt">
           {copied ? <Check className="w-[13px] h-[13px]" /> : <Copy className="w-[13px] h-[13px]" />}
         </button>
       </div>
+      <div className="px-[16px] pb-[12px] -mt-[4px] text-[10.5px] text-[#64748B]">
+        Click any format chip to open it directly, or use the primary button for {FORMAT_META[primaryFormat].label}.
+      </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Generation Panel (right-side drawer)
+// Brief row used in the asset request card
 
-function GenerationPanel({
-  request, formats, assets, onToggleFormat, onGenerate, onClose, onSendToCraft,
-}: {
-  request: AssetRequest;
-  formats: FormatKey[];
-  assets: GeneratedAsset[];
-  onToggleFormat: (f: FormatKey) => void;
-  onGenerate: () => void;
-  onClose: () => void;
-  onSendToCraft: (prompt: string) => void;
-}) {
-  const generating = assets.length > 0 && assets.some((a) => a.status === "generating" || a.status === "queued");
-  const allDone = assets.length > 0 && assets.every((a) => a.status === "done" || a.status === "error");
-
+function BriefRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div className="hidden md:flex w-[520px] lg:w-[600px] xl:w-[680px] shrink-0 flex-col h-full border-l border-white/[0.06] bg-[#0A1220] relative z-[3]">
-      {/* Header */}
-      <div className="shrink-0 px-[18px] py-[14px] border-b border-white/[0.06] flex items-center gap-[10px]">
-        <div className="w-[26px] h-[26px] rounded-[8px] flex items-center justify-center bg-gradient-to-br from-[#00B2A9] via-[#2896FB] to-[#A855F7] shadow-[0_4px_12px_rgba(40,150,251,0.35)]">
-          <Wand2 className="w-[13px] h-[13px] text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-semibold text-white truncate">Craft Magic — Asset Set</div>
-          <div className="text-[10.5px] text-[#64748B] truncate">{request.concept || request.headline || "Generate full set"}</div>
-        </div>
-        <button onClick={onClose} className="w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/[0.06] transition-all cursor-pointer">
-          <X className="w-[14px] h-[14px]" />
-        </button>
-      </div>
-
-      {/* Format picker */}
-      <div className="shrink-0 px-[18px] py-[16px] border-b border-white/[0.06] bg-[rgba(11,20,38,0.6)]">
-        <div className="text-[10.5px] uppercase tracking-[1.5px] text-[#64748B] font-semibold mb-[10px]">1. Pick formats</div>
-        <div className="grid grid-cols-3 gap-[8px]">
-          {(Object.keys(FORMAT_META) as FormatKey[]).map((f) => {
-            const meta = FORMAT_META[f];
-            const Icon = meta.Icon;
-            const active = formats.includes(f);
-            return (
-              <button
-                key={f}
-                onClick={() => onToggleFormat(f)}
-                disabled={generating}
-                className={`p-[10px] rounded-[10px] border transition-all text-left cursor-pointer ${
-                  active
-                    ? "bg-gradient-to-br from-[rgba(168,85,247,0.15)] to-[rgba(40,150,251,0.10)] border-[rgba(168,85,247,0.4)] shadow-[0_4px_14px_rgba(168,85,247,0.18)]"
-                    : "bg-white/[0.02] border-white/[0.06] hover:border-white/[0.12]"
-                } ${generating ? "opacity-60 cursor-not-allowed" : ""}`}
-              >
-                <div className="flex items-center justify-between mb-[6px]">
-                  <Icon className={`w-[14px] h-[14px] ${active ? "text-[#A855F7]" : "text-[#64748B]"}`} />
-                  {active && <Check className="w-[12px] h-[12px] text-[#A855F7]" />}
-                </div>
-                <div className="text-[12px] font-semibold text-white">{meta.label}</div>
-                <div className="text-[10.5px] text-[#64748B]">{meta.ratio}</div>
-              </button>
-            );
-          })}
-        </div>
-        <button
-          onClick={onGenerate}
-          disabled={formats.length === 0 || generating}
-          className={`mt-[12px] w-full flex items-center justify-center gap-[8px] py-[11px] px-[14px] rounded-[10px] text-[12.5px] font-semibold transition-all ${
-            formats.length > 0 && !generating
-              ? "bg-gradient-to-br from-[#A855F7] via-[#2896FB] to-[#00B2A9] text-white shadow-[0_6px_18px_rgba(168,85,247,0.35),inset_0_1px_0_rgba(255,255,255,0.2)] hover:brightness-110 cursor-pointer"
-              : "bg-white/[0.04] text-[#475569] cursor-not-allowed"
-          }`}
-        >
-          {generating ? <><Loader2 className="w-[13px] h-[13px] animate-spin" /> Generating {formats.length} {formats.length === 1 ? "asset" : "assets"}…</> : <><Wand2 className="w-[13px] h-[13px] " /> Generate {formats.length} {formats.length === 1 ? "asset" : "assets"}</>}
-        </button>
-      </div>
-
-      {/* Asset previews */}
-      <div className="flex-1 overflow-y-auto sidebar-scroll px-[18px] py-[16px]">
-        {assets.length === 0 ? (
-          <div className="text-center text-[12px] text-[#64748B] py-[40px]">
-            <Sparkles className="w-[24px] h-[24px] mx-auto mb-[10px] text-[#A855F7] opacity-50" />
-            Pick at least one format and hit Generate. They run in parallel.
-          </div>
-        ) : (
-          <div className="space-y-[16px]">
-            {assets.map((asset) => (
-              <AssetCard
-                key={asset.format}
-                asset={asset}
-                onSendToCraft={() => onSendToCraft(buildCraftPrompt(request, asset.format))}
-              />
-            ))}
-            {allDone && <div className="text-center text-[11px] text-[#64748B] pt-[8px]">Hand off to Craft Magic to refine — that's where the editing shines.</div>}
-          </div>
-        )}
-      </div>
+    <div className="flex gap-[10px]">
+      <div className="w-[64px] shrink-0 text-[10.5px] uppercase tracking-[1px] text-[#64748B] font-semibold pt-[2px]">{label}</div>
+      <div className={`flex-1 text-[#CBD5E1] leading-[1.5] ${bold ? "text-white font-semibold" : ""}`}>{value}</div>
     </div>
   );
 }
 
-function AssetCard({ asset, onSendToCraft }: { asset: GeneratedAsset; onSendToCraft: () => void }) {
-  const meta = FORMAT_META[asset.format];
-  const Icon = meta.Icon;
-  const containerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [iframeReady, setIframeReady] = useState(false);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [downloading, setDownloading] = useState(false);
+// ─────────────────────────────────────────────────────────────────────────────
+// Project / hydration helpers
 
-  // Track container width so we can scale the iframe correctly.
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) setContainerWidth(e.contentRect.width);
-    });
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
-
-  // Reset ready flag when the html changes
-  useEffect(() => { setIframeReady(false); }, [asset.html]);
-
-  const scale = containerWidth > 0 ? containerWidth / meta.w : 0;
-
-  const handleDownload = async () => {
-    const iframe = iframeRef.current;
-    if (!iframe || !iframe.contentDocument) return;
-    setDownloading(true);
-    try {
-      const doc = iframe.contentDocument;
-      // Find the design root — claude-design wraps everything in a .canvas div sized to the spec.
-      const target = (doc.querySelector(".canvas") as HTMLElement) || (doc.body as HTMLElement);
-      // Wait for fonts and images inside the iframe to fully load.
-      try { await (doc as any).fonts?.ready; } catch {}
-      const imgs = Array.from(target.querySelectorAll("img"));
-      await Promise.all(imgs.map((img) => img.complete ? Promise.resolve() : new Promise<void>((r) => { img.onload = () => r(); img.onerror = () => r(); })));
-
-      // Dynamic import keeps initial bundle slim.
-      const { toPng } = await import("html-to-image");
-      const w = target.offsetWidth || meta.w;
-      const h = target.offsetHeight || meta.h;
-      const dataUrl = await toPng(target, {
-        width: w,
-        height: h,
-        pixelRatio: 2,
-        cacheBust: true,
-        skipAutoScale: true,
-        backgroundColor: "#0B1426",
-      });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `brand-engine-${meta.label.toLowerCase()}-${meta.aspect}.png`;
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    } catch (e) {
-      console.error("PNG export failed", e);
-      alert("Couldn't generate PNG. Try opening in Craft Magic and exporting from there.");
-    } finally {
-      setDownloading(false);
-    }
+function hydrateMessage(m: StoredMessage): ChatMessage {
+  return {
+    role: m.role,
+    text: m.text,
+    attachments: m.attachments,
+    generatedAssets: m.generatedAssets?.map((a) => ({ format: a.format, status: a.html ? "done" : a.error ? "error" : "queued", html: a.html, error: a.error })),
   };
-
-  return (
-    <div className="rounded-[12px] border border-white/[0.08] bg-white/[0.02] overflow-hidden">
-      <div className="px-[12px] py-[8px] border-b border-white/[0.06] flex items-center gap-[8px]">
-        <Icon className="w-[12px] h-[12px] text-[#A855F7]" />
-        <div className="text-[11.5px] font-semibold text-white">{meta.label}</div>
-        <div className="text-[10px] text-[#64748B]">{meta.ratio}</div>
-        <div className="ml-auto text-[10px]">
-          {asset.status === "queued" && <span className="text-[#64748B]">Queued</span>}
-          {asset.status === "generating" && <span className="text-[#A855F7] flex items-center gap-[5px]"><Loader2 className="w-[10px] h-[10px] animate-spin" />Crafting…</span>}
-          {asset.status === "done" && <span className="text-[#17D94B]">Done · {meta.w}×{meta.h}</span>}
-          {asset.status === "error" && <span className="text-[#EF4444]">Error</span>}
-        </div>
-      </div>
-      <div className="p-[12px] bg-[#050810] flex items-center justify-center">
-        <div
-          ref={containerRef}
-          className="relative bg-[#0B1426] rounded-[6px] overflow-hidden w-full"
-          style={{ aspectRatio: `${meta.w}/${meta.h}` }}
-        >
-          {asset.status === "done" && asset.html && scale > 0 ? (
-            <>
-              {/* The iframe is rendered at the design's NATURAL size (e.g. 1080x1080) */}
-              {/* and CSS-transformed down to fit the container. This way the full design */}
-              {/* is visible at the proper aspect, and the underlying DOM still has the */}
-              {/* real pixels for export. */}
-              <iframe
-                ref={iframeRef}
-                srcDoc={asset.html}
-                title={`${meta.label} preview`}
-                sandbox="allow-same-origin"
-                onLoad={() => setIframeReady(true)}
-                className="absolute top-0 left-0 border-0 pointer-events-none bg-[#0B1426]"
-                style={{
-                  width: meta.w,
-                  height: meta.h,
-                  transform: `scale(${scale})`,
-                  transformOrigin: "top left",
-                  opacity: iframeReady ? 1 : 0,
-                  transition: "opacity 200ms",
-                }}
-              />
-              {!iframeReady && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Loader2 className="w-[20px] h-[20px] text-[#A855F7] animate-spin" />
-                </div>
-              )}
-              {/* Click-to-refine overlay — hands off to Craft Magic */}
-              <button
-                onClick={onSendToCraft}
-                title="Open in Craft Magic to refine"
-                className="absolute inset-0 z-[5] cursor-pointer group flex items-end justify-end p-[8px]"
-              >
-                <span className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px] bg-black/70 backdrop-blur-sm border border-white/15 text-[10.5px] text-white">
-                  <Wand2 className="w-[10px] h-[10px]" /> Refine in Craft Magic
-                </span>
-              </button>
-            </>
-          ) : asset.status === "error" ? (
-            <div className="absolute inset-0 flex items-center justify-center text-[11px] text-[#FCA5A5] p-[10px] text-center">
-              <div>
-                <AlertCircle className="w-[16px] h-[16px] mx-auto mb-[4px]" />
-                {asset.error || "Generation failed"}
-              </div>
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-[8px]">
-                <div className="w-[28px] h-[28px] rounded-full border-2 border-[#A855F7]/30 border-t-[#A855F7] animate-spin" />
-                <div className="text-[10.5px] text-[#64748B]">{asset.status === "generating" ? "Crafting…" : "Queued"}</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      {asset.status === "done" && (
-        <div className="px-[12px] pb-[12px] flex gap-[6px]">
-          <button
-            onClick={onSendToCraft}
-            className="flex-1 flex items-center justify-center gap-[6px] py-[7px] px-[10px] rounded-[8px] bg-gradient-to-br from-[rgba(168,85,247,0.18)] to-[rgba(40,150,251,0.14)] hover:from-[rgba(168,85,247,0.28)] hover:to-[rgba(40,150,251,0.22)] border border-[rgba(168,85,247,0.35)] text-white text-[11px] transition-all cursor-pointer"
-          >
-            <Wand2 className="w-[10px] h-[10px]" /> Refine in Craft Magic
-          </button>
-          <button
-            onClick={handleDownload}
-            disabled={downloading || !iframeReady}
-            className="px-[10px] py-[7px] rounded-[8px] bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08] text-[#94A3B8] hover:text-white transition-all cursor-pointer flex items-center gap-[5px] text-[11px]"
-            title="Download high-res PNG"
-          >
-            {downloading ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
-            PNG
-          </button>
-        </div>
-      )}
-    </div>
-  );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Attachment chip
 
 function AttachmentChip({ att, onRemove, dark }: { att: Attachment; onRemove?: () => void; dark?: boolean }) {
   const Icon = att.kind === "image" ? ImageIcon : att.kind === "pdf" ? FileType2 : att.kind === "gdoc" ? Globe : FileText;
@@ -1166,27 +837,6 @@ function AttachmentChip({ att, onRemove, dark }: { att: Attachment; onRemove?: (
       )}
     </div>
   );
-}
-
-function BriefRow({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
-  return (
-    <div className="flex gap-[10px]">
-      <div className="w-[64px] shrink-0 text-[10.5px] uppercase tracking-[1px] text-[#64748B] font-semibold pt-[2px]">{label}</div>
-      <div className={`flex-1 text-[#CBD5E1] leading-[1.5] ${bold ? "text-white font-semibold" : ""}`}>{value}</div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Project / hydration helpers
-
-function hydrateMessage(m: StoredMessage): ChatMessage {
-  return {
-    role: m.role,
-    text: m.text,
-    attachments: m.attachments,
-    generatedAssets: m.generatedAssets?.map((a) => ({ format: a.format, status: a.html ? "done" : a.error ? "error" : "queued", html: a.html, error: a.error })),
-  };
 }
 
 function timeAgo(ts: number): string {

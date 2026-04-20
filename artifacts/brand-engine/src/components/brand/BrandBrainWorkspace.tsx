@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   Sparkles, ArrowUp, Loader2, Copy, Check, Wand2, FileText, MessageSquare, Lightbulb,
   Paperclip, X, Image as ImageIcon, FileType2, Globe, AlertCircle, Plus, Trash2, FolderOpen,
-  Square, RectangleVertical, RectangleHorizontal, ChevronDown, Download,
+  Square, RectangleVertical, RectangleHorizontal, ChevronDown, Download, Maximize2, ArrowLeft,
 } from "lucide-react";
 import {
   listProjects, createProject, deleteProject, renameProject, updateProjectMessages,
@@ -266,6 +266,10 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
     formats: FormatKey[];
     assets: GeneratedAsset[];
   }>({ open: false, formats: [], assets: [] });
+
+  // When a design is "focused" we hide the chat and show a Replit-Agent-style split:
+  // big live preview on the left, refine chat column on the right.
+  const [focusedFormat, setFocusedFormat] = useState<FormatKey | null>(null);
 
   const taRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -605,6 +609,26 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
     if (e.dataTransfer?.files?.length) ingestFiles(e.dataTransfer.files);
   };
 
+  // ─── Focused design view ──────────────────────────────────────────────────
+  // When a single asset is focused, replace the whole workspace with the big
+  // preview + chat-style refine column (Replit-Agent-style split).
+  if (focusedFormat && genPanel.open && genPanel.request) {
+    const focusedAsset = genPanel.assets.find((a) => a.format === focusedFormat);
+    if (focusedAsset) {
+      return (
+        <DesignFocusView
+          request={genPanel.request}
+          assets={genPanel.assets}
+          focused={focusedAsset}
+          onSwitchFormat={(f) => setFocusedFormat(f)}
+          onUpdateAsset={updateAsset}
+          onClose={() => setFocusedFormat(null)}
+          onSendToCraft={(prompt) => onSendToCraft(prompt)}
+        />
+      );
+    }
+  }
+
   return (
     <div className="flex-1 flex h-full overflow-hidden relative">
       {/* Left: chat */}
@@ -806,6 +830,7 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
           onClose={closeGenPanel}
           onSendToCraft={(prompt) => onSendToCraft(prompt)}
           onUpdateAsset={updateAsset}
+          onFocusFormat={(f) => setFocusedFormat(f)}
         />
       )}
 
@@ -869,7 +894,7 @@ function AssetRequestCard({ req, onOpenPanel, onCopy, copied, hasGenerated }: { 
 // Generation Panel (right-side drawer)
 
 function GenerationPanel({
-  request, formats, assets, onToggleFormat, onGenerate, onClose, onSendToCraft, onUpdateAsset,
+  request, formats, assets, onToggleFormat, onGenerate, onClose, onSendToCraft, onUpdateAsset, onFocusFormat,
 }: {
   request: AssetRequest;
   formats: FormatKey[];
@@ -879,6 +904,7 @@ function GenerationPanel({
   onClose: () => void;
   onSendToCraft: (prompt: string) => void;
   onUpdateAsset: (format: FormatKey, patch: Partial<GeneratedAsset>) => void;
+  onFocusFormat: (f: FormatKey) => void;
 }) {
   const generating = assets.length > 0 && assets.some((a) => a.status === "generating" || a.status === "queued");
   const allDone = assets.length > 0 && assets.every((a) => a.status === "done" || a.status === "error");
@@ -957,9 +983,10 @@ function GenerationPanel({
                 request={request}
                 onSendToCraft={() => onSendToCraft(buildCraftPrompt(request, asset.format))}
                 onUpdate={(patch) => onUpdateAsset(asset.format, patch)}
+                onFocus={() => onFocusFormat(asset.format)}
               />
             ))}
-            {allDone && <div className="text-center text-[11px] text-[#64748B] pt-[8px]">All set. Use Edit to refine inline, or hand off to Craft Magic for the full editor.</div>}
+            {allDone && <div className="text-center text-[11px] text-[#64748B] pt-[8px]">Tap any preview to focus + refine in chat mode.</div>}
           </div>
         )}
       </div>
@@ -967,7 +994,7 @@ function GenerationPanel({
   );
 }
 
-function AssetCard({ asset, request, onSendToCraft, onUpdate }: { asset: GeneratedAsset; request: AssetRequest; onSendToCraft: () => void; onUpdate: (patch: Partial<GeneratedAsset>) => void }) {
+function AssetCard({ asset, request, onSendToCraft, onUpdate, onFocus }: { asset: GeneratedAsset; request: AssetRequest; onSendToCraft: () => void; onUpdate: (patch: Partial<GeneratedAsset>) => void; onFocus: () => void }) {
   const meta = FORMAT_META[asset.format];
   const Icon = meta.Icon;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1119,6 +1146,16 @@ function AssetCard({ asset, request, onSendToCraft, onUpdate }: { asset: Generat
                   <Loader2 className="w-[20px] h-[20px] text-[#A855F7] animate-spin" />
                 </div>
               )}
+              {/* Click-to-focus overlay */}
+              <button
+                onClick={onFocus}
+                title="Open in focused refine view"
+                className="absolute inset-0 z-[5] cursor-zoom-in group flex items-end justify-end p-[8px]"
+              >
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center gap-[5px] px-[8px] py-[4px] rounded-[6px] bg-black/70 backdrop-blur-sm border border-white/15 text-[10.5px] text-white">
+                  <Maximize2 className="w-[10px] h-[10px]" /> Focus & refine
+                </span>
+              </button>
             </>
           ) : asset.status === "error" ? (
             <div className="absolute inset-0 flex items-center justify-center text-[11px] text-[#FCA5A5] p-[10px] text-center">
@@ -1322,4 +1359,347 @@ function timeAgo(ts: number): string {
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
   return `${Math.floor(s / 86400)}d ago`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DesignFocusView — big live preview + chat-style refine column
+// Replaces the workspace when the user focuses a single asset.
+
+type RefineChatMsg =
+  | { id: number; role: "user"; text: string }
+  | { id: number; role: "assistant"; text: string; status: "working" | "done" | "error" };
+
+function DesignFocusView({
+  request, assets, focused, onSwitchFormat, onUpdateAsset, onClose, onSendToCraft,
+}: {
+  request: AssetRequest;
+  assets: GeneratedAsset[];
+  focused: GeneratedAsset;
+  onSwitchFormat: (f: FormatKey) => void;
+  onUpdateAsset: (format: FormatKey, patch: Partial<GeneratedAsset>) => void;
+  onClose: () => void;
+  onSendToCraft: (prompt: string) => void;
+}) {
+  const meta = FORMAT_META[focused.format];
+  const stageRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [stage, setStage] = useState({ w: 0, h: 0 });
+  const [iframeReady, setIframeReady] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState<RefineChatMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [refining, setRefining] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const idCounter = useRef(0);
+  const nextId = () => ++idCounter.current;
+
+  // Reset chat / iframe when switching focused asset
+  useEffect(() => {
+    setIframeReady(false);
+    setChatMsgs([]);
+    setInput("");
+  }, [focused.format]);
+
+  // Track stage size for fit-scaling
+  useEffect(() => {
+    if (!stageRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0]?.contentRect;
+      if (r) setStage({ w: r.width, h: r.height });
+    });
+    ro.observe(stageRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (chatScrollRef.current) chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+  }, [chatMsgs]);
+
+  // ESC to close
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const scale = stage.w && stage.h ? Math.min(stage.w / meta.w, stage.h / meta.h) : 0;
+  const renderedW = meta.w * scale;
+  const renderedH = meta.h * scale;
+
+  const sendRefine = async (instruction: string) => {
+    const text = instruction.trim();
+    if (!text || refining || !focused.html) return;
+    setRefining(true);
+    const userMsg: RefineChatMsg = { id: nextId(), role: "user", text };
+    const assistantId = nextId();
+    const workingMsg: RefineChatMsg = { id: assistantId, role: "assistant", text: "Refining your design…", status: "working" };
+    setChatMsgs((m) => [...m, userMsg, workingMsg]);
+    setInput("");
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/refine-design`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: focused.html,
+          instruction: text,
+          model: "claude-sonnet-4-6",
+          aspect: meta.aspect,
+          format: "social",
+          recentEdits: (focused.refineHistory || []).slice(0, 5),
+          slideIndex: 0,
+          slideCount: 1,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Refine failed (${res.status})`);
+      if (!data.html) throw new Error("Empty response");
+      onUpdateAsset(focused.format, {
+        html: data.html,
+        refineHistory: [text, ...(focused.refineHistory || [])].slice(0, 12),
+      });
+      setIframeReady(false); // wait for new iframe to load
+      setChatMsgs((m) => m.map((x) => x.id === assistantId ? { ...x, text: "Updated. Anything else?", status: "done" } : x));
+    } catch (e: any) {
+      setChatMsgs((m) => m.map((x) => x.id === assistantId ? { ...x, text: e?.message || "Refine failed", status: "error" } : x));
+    } finally {
+      setRefining(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (downloading || !focused.html || !iframeRef.current) return;
+    setDownloading(true);
+    try {
+      const { toPng } = await import("html-to-image");
+      const doc = iframeRef.current.contentDocument;
+      const node = doc?.querySelector(".canvas") as HTMLElement | null || doc?.body as HTMLElement;
+      if (!node) throw new Error("Could not access design");
+      // Wait for fonts/images
+      try { await (doc as any)?.fonts?.ready; } catch {}
+      const imgs = Array.from(doc?.images || []) as HTMLImageElement[];
+      await Promise.all(imgs.map((img) => img.complete ? Promise.resolve() : new Promise((r) => { img.onload = r; img.onerror = r; })));
+      const dataUrl = await toPng(node, { pixelRatio: 2, skipAutoScale: true, cacheBust: true, width: meta.w, height: meta.h });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `brand-engine-${focused.format}-${Date.now()}.png`;
+      a.click();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const QUICK_EDITS = [
+    "Make the headline ~30% bigger and tighter.",
+    "More whitespace — increase padding and gaps.",
+    "Bolder brand-blue accent on the hero word and CTA.",
+    "Add a HighLevel dashboard mockup on the empty side, angled 6°.",
+    "Simplify — fewer floating elements, more focus.",
+  ];
+
+  return (
+    <div className="flex-1 flex h-full overflow-hidden bg-[#020617]">
+      {/* LEFT: live preview stage */}
+      <div className="flex-1 flex flex-col min-w-0 border-r border-white/[0.06]">
+        {/* Top bar */}
+        <div className="flex items-center gap-[10px] px-[16px] py-[10px] border-b border-white/[0.06] bg-[rgba(11,20,38,0.6)] backdrop-blur-md">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-[5px] px-[10px] py-[6px] rounded-[7px] hover:bg-white/[0.06] text-[#94A3B8] hover:text-white text-[11.5px] transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-[12px] h-[12px]" /> Back to chat
+          </button>
+
+          {/* Format switcher */}
+          <div className="flex items-center gap-[4px] ml-[6px]">
+            {assets.filter((a) => a.status === "done" && a.html).map((a) => {
+              const m = FORMAT_META[a.format];
+              const I = m.Icon;
+              const active = a.format === focused.format;
+              return (
+                <button
+                  key={a.format}
+                  onClick={() => onSwitchFormat(a.format)}
+                  className={`flex items-center gap-[5px] px-[9px] py-[5px] rounded-[7px] text-[11px] transition-all cursor-pointer ${
+                    active
+                      ? "bg-gradient-to-br from-[rgba(168,85,247,0.2)] to-[rgba(40,150,251,0.14)] border border-[rgba(168,85,247,0.4)] text-white"
+                      : "bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-[#94A3B8] hover:text-white"
+                  }`}
+                >
+                  <I className="w-[10px] h-[10px]" /> {m.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="ml-auto flex items-center gap-[6px]">
+            <span className="text-[10.5px] text-[#64748B] mr-[4px]">{meta.w}×{meta.h}</span>
+            <button
+              onClick={() => onSendToCraft(buildCraftPrompt(request, focused.format))}
+              className="px-[10px] py-[6px] rounded-[7px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#CBD5E1] hover:text-white text-[11px] transition-all cursor-pointer"
+              title="Open in dedicated Craft Magic editor"
+            >
+              Open in Craft ↗
+            </button>
+            <button
+              onClick={handleDownload}
+              disabled={downloading || !iframeReady}
+              className="flex items-center gap-[5px] px-[10px] py-[6px] rounded-[7px] bg-gradient-to-br from-[#17D94B] to-[#00B2A9] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[11px] font-semibold shadow-[0_4px_12px_rgba(23,217,75,0.3)] hover:brightness-110 transition-all cursor-pointer"
+            >
+              {downloading ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
+              PNG
+            </button>
+          </div>
+        </div>
+
+        {/* Stage */}
+        <div ref={stageRef} className="flex-1 relative overflow-hidden p-[24px] flex items-center justify-center">
+          {/* Subtle dot background */}
+          <div
+            className="absolute inset-0 opacity-[0.4] pointer-events-none"
+            style={{
+              backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+              backgroundSize: "22px 22px",
+            }}
+          />
+          {scale > 0 && (
+            <div
+              className="relative bg-[#0B1426] rounded-[12px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.06)]"
+              style={{ width: renderedW, height: renderedH }}
+            >
+              {focused.html && (
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={focused.html}
+                  title={`${meta.label} focused preview`}
+                  sandbox="allow-same-origin"
+                  onLoad={() => setIframeReady(true)}
+                  className="absolute top-0 left-0 border-0 bg-[#0B1426]"
+                  style={{
+                    width: meta.w,
+                    height: meta.h,
+                    transform: `scale(${scale})`,
+                    transformOrigin: "top left",
+                    opacity: iframeReady ? 1 : 0,
+                    transition: "opacity 200ms",
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
+              {!iframeReady && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="w-[28px] h-[28px] text-[#A855F7] animate-spin" />
+                </div>
+              )}
+              {refining && (
+                <div className="absolute top-[12px] left-[12px] inline-flex items-center gap-[6px] px-[10px] py-[5px] rounded-[7px] bg-black/70 backdrop-blur-md border border-white/15 text-[11px] text-white">
+                  <Loader2 className="w-[11px] h-[11px] animate-spin text-[#17D94B]" /> Applying refine…
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* RIGHT: chat-style refine column */}
+      <div className="w-[400px] shrink-0 flex flex-col bg-[#050810]">
+        <div className="px-[16px] py-[12px] border-b border-white/[0.06] flex items-center gap-[8px]">
+          <div className="w-[28px] h-[28px] rounded-[8px] bg-gradient-to-br from-[#A855F7] to-[#2896FB] flex items-center justify-center">
+            <Wand2 className="w-[14px] h-[14px] text-white" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[12px] font-semibold text-white truncate">Refine with Brand Brain</div>
+            <div className="text-[10.5px] text-[#64748B] truncate">{request.headline || request.concept || request.raw.slice(0, 40)}</div>
+          </div>
+        </div>
+
+        <div ref={chatScrollRef} className="flex-1 overflow-y-auto px-[14px] py-[14px] space-y-[12px]">
+          {chatMsgs.length === 0 && (
+            <div className="text-[12px] text-[#64748B] leading-[1.6] space-y-[10px]">
+              <p>Tell me what to change. I'll edit the design in place — no need to leave this view.</p>
+              <p className="text-[#475569] text-[11px]">Examples:</p>
+              <ul className="space-y-[5px] text-[11.5px] text-[#94A3B8] pl-[2px]">
+                <li>• "Make the headline bigger and add a green CTA at the bottom"</li>
+                <li>• "Move the stat to the right side, make it the focal point"</li>
+                <li>• "Swap the dashboard mockup for an iPhone showing the app"</li>
+              </ul>
+            </div>
+          )}
+          {chatMsgs.map((m) => (
+            <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[92%] rounded-[10px] px-[11px] py-[8px] text-[12px] leading-[1.5] ${
+                  m.role === "user"
+                    ? "bg-gradient-to-br from-[#2896FB] to-[#1d7ad9] text-white"
+                    : m.status === "error"
+                      ? "bg-[rgba(252,165,165,0.08)] border border-[rgba(252,165,165,0.25)] text-[#FCA5A5]"
+                      : m.status === "working"
+                        ? "bg-white/[0.04] border border-white/[0.06] text-[#CBD5E1]"
+                        : "bg-white/[0.04] border border-white/[0.06] text-[#CBD5E1]"
+                }`}
+              >
+                {m.role === "assistant" && m.status === "working" ? (
+                  <span className="inline-flex items-center gap-[6px]">
+                    <Loader2 className="w-[11px] h-[11px] animate-spin text-[#A855F7]" /> {m.text}
+                  </span>
+                ) : m.role === "assistant" && m.status === "done" ? (
+                  <span className="inline-flex items-center gap-[6px]">
+                    <Check className="w-[11px] h-[11px] text-[#17D94B]" /> {m.text}
+                  </span>
+                ) : (
+                  m.text
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick edits + input */}
+        <div className="border-t border-white/[0.06] p-[12px] space-y-[8px]">
+          {chatMsgs.length === 0 && (
+            <div className="flex flex-wrap gap-[5px]">
+              {QUICK_EDITS.map((q, i) => (
+                <button
+                  key={i}
+                  onClick={() => sendRefine(q)}
+                  disabled={refining}
+                  className="px-[8px] py-[4px] rounded-[6px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[10.5px] text-[#94A3B8] hover:text-white transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {q.length > 36 ? q.slice(0, 34) + "…" : q}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="relative">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendRefine(input); } }}
+              placeholder={refining ? "Refining…" : "Describe the change…"}
+              rows={3}
+              disabled={refining}
+              className="w-full bg-[#0B1426] border border-white/[0.08] focus:border-[rgba(168,85,247,0.4)] rounded-[10px] px-[12px] py-[10px] pr-[44px] text-[12.5px] text-white placeholder:text-[#475569] outline-none resize-none transition-all disabled:opacity-60"
+            />
+            <button
+              onClick={() => sendRefine(input)}
+              disabled={!input.trim() || refining}
+              className={`absolute right-[8px] bottom-[8px] w-[30px] h-[30px] rounded-[8px] flex items-center justify-center transition-all ${
+                input.trim() && !refining
+                  ? "bg-gradient-to-br from-[#A855F7] to-[#2896FB] text-white shadow-[0_4px_12px_rgba(168,85,247,0.35)] hover:brightness-110 cursor-pointer"
+                  : "bg-white/[0.04] text-[#475569] cursor-not-allowed"
+              }`}
+            >
+              {refining ? <Loader2 className="w-[13px] h-[13px] animate-spin" /> : <ArrowUp className="w-[13px] h-[13px]" />}
+            </button>
+          </div>
+          <div className="text-[10px] text-[#475569] text-center">Enter to send · Shift+Enter for new line · Esc to exit</div>
+        </div>
+      </div>
+    </div>
+  );
 }

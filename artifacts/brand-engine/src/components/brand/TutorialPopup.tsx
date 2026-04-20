@@ -694,7 +694,7 @@ const SHAUN_BG_COLORS = [
 function ShaunScene() {
   const [beat, setBeat] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setBeat((b) => (b + 1) % 5), 2600);
+    const id = setInterval(() => setBeat((b) => (b + 1) % 4), 2600);
     return () => clearInterval(id);
   }, []);
 
@@ -704,8 +704,7 @@ function ShaunScene() {
         {beat === 0 && <BeatPickShaun key="pick" />}
         {beat === 1 && <BeatScreenshot key="screenshot" />}
         {beat === 2 && <BeatPlaceOnGraphic key="place" />}
-        {beat === 3 && <BeatNextSteps key="next" />}
-        {beat === 4 && <BeatExport key="export" />}
+        {beat === 3 && <BeatExport key="export" />}
       </AnimatePresence>
 
       <div
@@ -720,7 +719,7 @@ function ShaunScene() {
           zIndex: 5,
         }}
       >
-        {[0, 1, 2, 3, 4].map((i) => (
+        {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
             style={{
@@ -1308,17 +1307,8 @@ function _BeatBatchUploadLegacy() {
   );
 }
 
-/* Beat 3: PLACE the wireframe screenshot onto the branded HighLevel graphic */
+/* Beat 3: SKELETON — wireframe text + silhouette placeholders on the branded graphic */
 function BeatPlaceOnGraphic() {
-  const [stage, setStage] = useState(0);
-  useEffect(() => {
-    const t1 = setTimeout(() => setStage(1), 600); // SS lands
-    const t2 = setTimeout(() => setStage(2), 1200); // headline + check
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, []);
   return (
     <motion.div
       {...sceneAnim}
@@ -1339,8 +1329,27 @@ function BeatPlaceOnGraphic() {
           textTransform: "uppercase",
         }}
       >
-        Drop into the graphic
+        Build the layout
       </div>
+      <style>{`
+        @keyframes shaunSkeletonShimmer {
+          0% { background-position: -120% 0; }
+          100% { background-position: 220% 0; }
+        }
+        .skel-bar {
+          background: linear-gradient(
+            90deg,
+            rgba(248,250,252,0.10) 0%,
+            rgba(248,250,252,0.28) 45%,
+            rgba(40,150,251,0.55) 50%,
+            rgba(248,250,252,0.28) 55%,
+            rgba(248,250,252,0.10) 100%
+          );
+          background-size: 220% 100%;
+          animation: shaunSkeletonShimmer 1.6s ease-in-out infinite;
+          border-radius: 4px;
+        }
+      `}</style>
       <div
         style={{
           flex: 1,
@@ -1360,6 +1369,11 @@ function BeatPlaceOnGraphic() {
             background: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
             border: "1.5px solid rgba(40,150,251,0.5)",
             boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 16px",
+            gap: 12,
           }}
         >
           {/* dot texture */}
@@ -1370,146 +1384,87 @@ function BeatPlaceOnGraphic() {
               backgroundImage:
                 "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
               backgroundSize: "8px 8px",
-              opacity: 0.6,
+              opacity: 0.5,
             }}
           />
-          {/* Headline (top-left, drop shadow) */}
-          <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{
-              opacity: stage >= 2 ? 1 : 0,
-              y: stage >= 2 ? 0 : -6,
-            }}
-            transition={{ duration: 0.35 }}
-            style={{
-              position: "absolute",
-              left: 12,
-              top: 12,
-              width: "55%",
-            }}
-          >
-            <div
-              style={{
-                background: "#2896FB",
-                color: "#0B1426",
-                fontSize: 7,
-                fontWeight: 800,
-                letterSpacing: "0.08em",
-                padding: "2px 6px",
-                borderRadius: 3,
-                display: "inline-block",
-                marginBottom: 5,
-                boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
-              }}
-            >
-              FEATURE UPDATE
-            </div>
-            <div
-              style={{
-                color: "#F8FAFC",
-                fontSize: 14,
-                fontWeight: 900,
-                lineHeight: 1,
-                letterSpacing: "-0.015em",
-                textShadow: "0 2px 8px rgba(0,0,0,0.6)",
-              }}
-            >
-              AI Voice
-              <br />
-              Agent
-            </div>
-          </motion.div>
 
-          {/* The minimal wireframe screenshot lands on the right */}
-          <motion.div
-            initial={{ opacity: 0, x: 30, scale: 0.85, rotate: -4 }}
-            animate={{
-              opacity: stage >= 1 ? 1 : 0,
-              x: stage >= 1 ? 0 : 30,
-              scale: stage >= 1 ? 1 : 0.85,
-              rotate: stage >= 1 ? 0 : -4,
-            }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          {/* LEFT — text skeleton bars stacked */}
+          <div
             style={{
-              position: "absolute",
-              right: 10,
-              bottom: 10,
-              width: "38%",
-              aspectRatio: "16 / 9",
-              borderRadius: 5,
-              background: "rgba(11,20,38,0.92)",
-              border: "1.5px solid #2896FB",
-              boxShadow: "0 6px 18px rgba(0,0,0,0.5)",
+              position: "relative",
+              flex: 1,
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              flexDirection: "column",
+              gap: 6,
+              maxWidth: "55%",
             }}
           >
-            <div
-              style={{
-                width: 18,
-                height: 18,
-                borderRadius: 999,
-                border: "1px solid rgba(248,250,252,0.45)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Play
-                size={8}
-                color="rgba(248,250,252,0.7)"
-                fill="rgba(248,250,252,0.7)"
-                strokeWidth={0}
-                style={{ marginLeft: 1 }}
-              />
-            </div>
-            {/* tiny timeline */}
-            <div
-              style={{
-                position: "absolute",
-                left: 5,
-                right: 5,
-                bottom: 4,
-                height: 2,
-                background: "rgba(248,250,252,0.15)",
-                borderRadius: 999,
-              }}
-            >
-              <div
-                style={{
-                  width: "42%",
-                  height: "100%",
-                  background: "#2896FB",
-                  borderRadius: 999,
-                }}
-              />
-            </div>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+              className="skel-bar"
+              style={{ height: 6, width: "30%" }}
+            />
+            <motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.22, duration: 0.3 }}
+              className="skel-bar"
+              style={{ height: 14, width: "85%" }}
+            />
+            <motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.34, duration: 0.3 }}
+              className="skel-bar"
+              style={{ height: 14, width: "60%" }}
+            />
+            <motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.46, duration: 0.3 }}
+              className="skel-bar"
+              style={{ height: 5, width: "40%", marginTop: 3 }}
+            />
+          </div>
 
-          {/* check confirm */}
+          {/* RIGHT — Shaun silhouette skeleton (head + shoulders) */}
           <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{
-              opacity: stage >= 2 ? 1 : 0,
-              scale: stage >= 2 ? 1 : 0,
-            }}
-            transition={{ type: "spring", stiffness: 500, damping: 18 }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             style={{
-              position: "absolute",
-              right: 6,
-              bottom: 6,
-              width: 16,
-              height: 16,
-              borderRadius: 999,
-              background: "#17D94B",
+              position: "relative",
+              width: "28%",
+              aspectRatio: "3 / 4",
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 8px rgba(23,217,75,0.7)",
+              justifyContent: "flex-end",
+              gap: 4,
+              alignSelf: "flex-end",
+              paddingBottom: 0,
             }}
           >
-            <Check size={10} color="#0B1426" strokeWidth={3.5} />
+            {/* head */}
+            <div
+              className="skel-bar"
+              style={{
+                width: "55%",
+                aspectRatio: "1 / 1",
+                borderRadius: "50%",
+              }}
+            />
+            {/* shoulders/torso */}
+            <div
+              className="skel-bar"
+              style={{
+                width: "100%",
+                height: "55%",
+                borderRadius: "40% 40% 12px 12px / 60% 60% 12px 12px",
+              }}
+            />
           </motion.div>
         </div>
       </div>
@@ -1517,8 +1472,8 @@ function BeatPlaceOnGraphic() {
   );
 }
 
-/* Beat 4: WHAT TO DO NEXT — small text instruction card */
-function BeatNextSteps() {
+/* legacy — kept for reference, not rendered */
+function _BeatNextStepsLegacy() {
   const STEPS = [
     { n: "1", text: "Pick the Shaun pose that fits your message" },
     { n: "2", text: "Screenshot the moment from his video" },
@@ -1745,12 +1700,26 @@ function _BeatComposeBatchLegacy() {
 
 /* Beat 4: DOWNLOAD A ZIP — one click, whole batch packaged */
 function BeatExport() {
-  const FILES = [
-    "AI_Voice_Agent.png",
-    "Workflow_Update.png",
-    "Q2_Roadmap.png",
-    "New_Integrations.png",
+  // stages: 0 init → 1 thumbs added → 2 zipping (collapse into ZIP) → 3 download glow
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 200);  // batch list appears
+    const t2 = setTimeout(() => setStage(2), 1100); // collapse into zip
+    const t3 = setTimeout(() => setStage(3), 1750); // download pulse
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+
+  const THUMBS = [
+    "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
+    "linear-gradient(135deg, #7CC2FB 0%, #2896FB 100%)",
+    "linear-gradient(135deg, #1268C2 0%, #0B1426 100%)",
+    "linear-gradient(135deg, #2896FB 0%, #1268C2 100%)",
   ];
+
   return (
     <motion.div
       {...sceneAnim}
@@ -1760,7 +1729,6 @@ function BeatExport() {
         display: "flex",
         flexDirection: "column",
         gap: 8,
-        justifyContent: "center",
       }}
     >
       <div
@@ -1770,120 +1738,202 @@ function BeatExport() {
           letterSpacing: "0.12em",
           color: "rgba(248,250,252,0.55)",
           textTransform: "uppercase",
-        }}
-      >
-        Download · zip bundle
-      </div>
-
-      {/* ZIP card */}
-      <motion.div
-        initial={{ opacity: 0, y: 8, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        style={{
-          position: "relative",
-          background: "linear-gradient(135deg, rgba(40,150,251,0.18), rgba(11,20,38,0.6))",
-          border: "1.5px solid rgba(40,150,251,0.55)",
-          borderRadius: 10,
-          padding: "10px 12px",
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
+          justifyContent: "space-between",
         }}
       >
-        {/* zip folder icon */}
-        <div
+        <span>
+          {stage < 2 ? "Adding to batch" : stage < 3 ? "Zipping…" : "Ready"}
+        </span>
+        <span
           style={{
-            position: "relative",
-            width: 36,
-            height: 36,
-            borderRadius: 6,
-            background: "linear-gradient(135deg, #2896FB, #1268C2)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            boxShadow: "0 4px 10px rgba(40,150,251,0.5)",
+            color: "#2896FB",
+            fontSize: 8,
+            letterSpacing: "0.05em",
           }}
         >
-          <span
-            style={{
-              color: "#F8FAFC",
-              fontSize: 9,
-              fontWeight: 900,
-              letterSpacing: "0.08em",
-            }}
-          >
-            ZIP
-          </span>
-          {/* zipper teeth */}
-          <div
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: 3,
-              bottom: 3,
-              width: 1.5,
-              transform: "translateX(-50%)",
-              background:
-                "repeating-linear-gradient(180deg, rgba(11,20,38,0.6) 0 2px, transparent 2px 4px)",
-            }}
-          />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              color: "#F8FAFC",
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: "0.01em",
-            }}
-          >
-            shaun-thumbnails.zip
-          </div>
-          <div
-            style={{
-              color: "rgba(248,250,252,0.55)",
-              fontSize: 8,
-              fontWeight: 600,
-              marginTop: 2,
-            }}
-          >
-            4 thumbnails · 2.4 MB
-          </div>
-        </div>
-      </motion.div>
+          {stage < 2 ? "+4" : "1 file"}
+        </span>
+      </div>
 
-      {/* file list peek */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {FILES.map((name, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -6 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 + i * 0.07, duration: 0.25 }}
+      {/* main stage — batch list collapses into the ZIP card */}
+      <div
+        style={{
+          flex: 1,
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* ZIP target (centered, fades in once collapse starts) */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{
+            opacity: stage >= 2 ? 1 : 0,
+            scale: stage >= 2 ? 1 : 0.85,
+          }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            position: "relative",
+            background: "linear-gradient(135deg, rgba(40,150,251,0.18), rgba(11,20,38,0.6))",
+            border: "1.5px solid rgba(40,150,251,0.55)",
+            borderRadius: 10,
+            padding: "10px 12px",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            boxShadow:
+              stage >= 3
+                ? "0 0 24px rgba(40,150,251,0.6), 0 8px 22px rgba(40,150,251,0.35)"
+                : "0 8px 22px rgba(40,150,251,0.25)",
+            width: "85%",
+            transition: "box-shadow 0.3s",
+          }}
+        >
+          <div
             style={{
+              position: "relative",
+              width: 36,
+              height: 36,
+              borderRadius: 6,
+              background: "linear-gradient(135deg, #2896FB, #1268C2)",
               display: "flex",
               alignItems: "center",
-              gap: 6,
-              fontSize: 8,
-              color: "rgba(248,250,252,0.55)",
-              fontWeight: 600,
-              fontFamily: "ui-monospace, monospace",
-              paddingLeft: 4,
+              justifyContent: "center",
+              flexShrink: 0,
+              boxShadow: "0 4px 10px rgba(40,150,251,0.5)",
             }}
           >
-            <span style={{ color: "rgba(40,150,251,0.7)" }}>└</span>
-            {name}
+            <span
+              style={{
+                color: "#F8FAFC",
+                fontSize: 9,
+                fontWeight: 900,
+                letterSpacing: "0.08em",
+              }}
+            >
+              ZIP
+            </span>
+            <div
+              style={{
+                position: "absolute",
+                left: "50%",
+                top: 3,
+                bottom: 3,
+                width: 1.5,
+                transform: "translateX(-50%)",
+                background:
+                  "repeating-linear-gradient(180deg, rgba(11,20,38,0.6) 0 2px, transparent 2px 4px)",
+              }}
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                color: "#F8FAFC",
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: "0.01em",
+              }}
+            >
+              shaun-thumbnails.zip
+            </div>
+            <div
+              style={{
+                color: "rgba(248,250,252,0.55)",
+                fontSize: 8,
+                fontWeight: 600,
+                marginTop: 2,
+              }}
+            >
+              4 thumbnails · 2.4 MB
+            </div>
+          </div>
+          {/* check pop once ready */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: stage >= 3 ? 1 : 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 18 }}
+            style={{
+              width: 16,
+              height: 16,
+              borderRadius: 999,
+              background: "#17D94B",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 8px rgba(23,217,75,0.7)",
+              flexShrink: 0,
+            }}
+          >
+            <Check size={10} color="#0B1426" strokeWidth={3.5} />
           </motion.div>
-        ))}
+        </motion.div>
+
+        {/* Batch thumbnails — appear in a row, then fly into the ZIP */}
+        {THUMBS.map((bg, i) => {
+          const offsetX = (i - 1.5) * 38; // initial spread
+          const showInBatch = stage === 1;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: offsetX, y: 14, scale: 0.6 }}
+              animate={
+                stage === 0
+                  ? { opacity: 0, x: offsetX, y: 14, scale: 0.6 }
+                  : showInBatch
+                    ? { opacity: 1, x: offsetX, y: 0, scale: 1 }
+                    : // collapse into the zip (center)
+                      { opacity: 0, x: 0, y: 0, scale: 0.4 }
+              }
+              transition={{
+                delay: stage === 1 ? 0.05 + i * 0.08 : 0,
+                duration: 0.42,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              style={{
+                position: "absolute",
+                width: 34,
+                height: 20,
+                borderRadius: 4,
+                background: bg,
+                border: "1.5px solid rgba(40,150,251,0.7)",
+                boxShadow: "0 4px 10px rgba(0,0,0,0.4)",
+                overflow: "hidden",
+              }}
+            >
+              {/* tiny silhouette */}
+              <div
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  bottom: 0,
+                  width: "38%",
+                  height: "85%",
+                  background:
+                    "radial-gradient(ellipse at 50% 30%, rgba(11,20,38,0.85) 0 40%, transparent 60%), linear-gradient(180deg, transparent 30%, rgba(11,20,38,0.85) 35% 100%)",
+                  borderRadius: "50% 50% 0 0 / 60% 60% 0 0",
+                }}
+              />
+            </motion.div>
+          );
+        })}
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7, duration: 0.3 }}
+        animate={{
+          opacity: stage >= 3 ? 1 : 0.35,
+          y: 0,
+          scale: stage >= 3 ? [1, 1.04, 1] : 1,
+        }}
+        transition={{
+          duration: stage >= 3 ? 0.6 : 0.3,
+          repeat: stage >= 3 ? Infinity : 0,
+          repeatDelay: 0.4,
+        }}
         style={{
           background: "linear-gradient(135deg, #2896FB 0%, #1268C2 100%)",
           color: "#F8FAFC",

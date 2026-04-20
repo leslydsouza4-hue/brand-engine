@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, MousePointer2, Link2, Mail, Play, Check, Download } from "lucide-react";
+import { X, Sparkles, MousePointer2, Link2, Mail, Play, Check, Download, Camera, Image as ImageIcon } from "lucide-react";
 
 type TutorialConfig = {
   badge: string;
@@ -694,7 +694,7 @@ const SHAUN_BG_COLORS = [
 function ShaunScene() {
   const [beat, setBeat] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setBeat((b) => (b + 1) % 4), 2600);
+    const id = setInterval(() => setBeat((b) => (b + 1) % 5), 2600);
     return () => clearInterval(id);
   }, []);
 
@@ -702,9 +702,10 @@ function ShaunScene() {
     <div style={{ position: "absolute", inset: 0, padding: 18 }}>
       <AnimatePresence mode="wait">
         {beat === 0 && <BeatPickShaun key="pick" />}
-        {beat === 1 && <BeatBatchUpload key="batch" />}
-        {beat === 2 && <BeatComposeBatch key="compose" />}
-        {beat === 3 && <BeatExport key="export" />}
+        {beat === 1 && <BeatScreenshot key="screenshot" />}
+        {beat === 2 && <BeatPlaceOnGraphic key="place" />}
+        {beat === 3 && <BeatNextSteps key="next" />}
+        {beat === 4 && <BeatExport key="export" />}
       </AnimatePresence>
 
       <div
@@ -719,7 +720,7 @@ function ShaunScene() {
           zIndex: 5,
         }}
       >
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <div
             key={i}
             style={{
@@ -906,8 +907,226 @@ function BeatPickShaun() {
   );
 }
 
-/* Beat 2: PLACE Shaun on a single background → completed thumbnail */
-function BeatBatchUpload() {
+/* Beat 2: SCREENSHOT a Shaun video — minimal wireframe video player + capture flash */
+function BeatScreenshot() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 700); // selection box
+    const t2 = setTimeout(() => setStage(2), 1300); // flash
+    const t3 = setTimeout(() => setStage(3), 1700); // captured chip
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Screenshot Shaun's video
+      </div>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* minimal video player wireframe */}
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            aspectRatio: "16 / 9",
+            borderRadius: 8,
+            border: "1.5px solid rgba(248,250,252,0.18)",
+            background: "rgba(11,20,38,0.6)",
+            overflow: "hidden",
+          }}
+        >
+          {/* center play/Shaun outline placeholder */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 38,
+                height: 38,
+                borderRadius: 999,
+                border: "1.5px solid rgba(248,250,252,0.35)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Play
+                size={14}
+                color="rgba(248,250,252,0.7)"
+                fill="rgba(248,250,252,0.7)"
+                strokeWidth={0}
+                style={{ marginLeft: 2 }}
+              />
+            </div>
+          </div>
+
+          {/* timeline bar */}
+          <div
+            style={{
+              position: "absolute",
+              left: 8,
+              right: 8,
+              bottom: 8,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <div
+              style={{
+                flex: 1,
+                height: 3,
+                background: "rgba(248,250,252,0.12)",
+                borderRadius: 999,
+                position: "relative",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: "42%",
+                  background: "#2896FB",
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+            <span
+              style={{
+                fontSize: 7,
+                fontWeight: 700,
+                color: "rgba(248,250,252,0.45)",
+                fontFamily: "ui-monospace, monospace",
+              }}
+            >
+              0:14
+            </span>
+          </div>
+
+          {/* dashed selection marquee */}
+          <motion.div
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{
+              opacity: stage >= 1 ? 1 : 0,
+              scale: stage >= 1 ? 1 : 1.05,
+            }}
+            transition={{ duration: 0.3 }}
+            style={{
+              position: "absolute",
+              inset: 8,
+              border: "1.5px dashed #2896FB",
+              borderRadius: 4,
+              boxShadow: "0 0 0 1px rgba(40,150,251,0.15)",
+            }}
+          >
+            {/* corner ticks */}
+            {([
+              [0, 0],
+              [1, 0],
+              [0, 1],
+              [1, 1],
+            ] as const).map(([x, y], i) => (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  width: 6,
+                  height: 6,
+                  background: "#2896FB",
+                  borderRadius: 1,
+                  left: x ? "auto" : -3,
+                  right: x ? -3 : "auto",
+                  top: y ? "auto" : -3,
+                  bottom: y ? -3 : "auto",
+                }}
+              />
+            ))}
+          </motion.div>
+
+          {/* shutter flash */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: stage === 2 ? 0.85 : 0 }}
+            transition={{ duration: 0.18 }}
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "#F8FAFC",
+              pointerEvents: "none",
+            }}
+          />
+
+          {/* "captured" chip */}
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{
+              opacity: stage >= 3 ? 1 : 0,
+              y: stage >= 3 ? 0 : -6,
+            }}
+            transition={{ duration: 0.3 }}
+            style={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              background: "#2896FB",
+              color: "#0B1426",
+              fontSize: 8,
+              fontWeight: 800,
+              letterSpacing: "0.06em",
+              padding: "3px 6px",
+              borderRadius: 4,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              boxShadow: "0 4px 10px rgba(40,150,251,0.5)",
+            }}
+          >
+            <Camera size={9} strokeWidth={2.6} />
+            CAPTURED
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* (legacy beat — kept for reference, no longer rendered) */
+function _BeatBatchUploadLegacy() {
   // re-trigger landing animation each loop
   const [stage, setStage] = useState(0);
   useEffect(() => {
@@ -1089,8 +1308,304 @@ function BeatBatchUpload() {
   );
 }
 
-/* Beat 3: ADD TO BATCH QUEUE — finished thumbs stack into a queue list one by one */
-function BeatComposeBatch() {
+/* Beat 3: PLACE the wireframe screenshot onto the branded HighLevel graphic */
+function BeatPlaceOnGraphic() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 600); // SS lands
+    const t2 = setTimeout(() => setStage(2), 1200); // headline + check
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Drop into the graphic
+      </div>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {/* HighLevel branded canvas */}
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            aspectRatio: "16 / 9",
+            borderRadius: 10,
+            overflow: "hidden",
+            background: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
+            border: "1.5px solid rgba(40,150,251,0.5)",
+            boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
+          }}
+        >
+          {/* dot texture */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage:
+                "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+              backgroundSize: "8px 8px",
+              opacity: 0.6,
+            }}
+          />
+          {/* Headline (top-left, drop shadow) */}
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{
+              opacity: stage >= 2 ? 1 : 0,
+              y: stage >= 2 ? 0 : -6,
+            }}
+            transition={{ duration: 0.35 }}
+            style={{
+              position: "absolute",
+              left: 12,
+              top: 12,
+              width: "55%",
+            }}
+          >
+            <div
+              style={{
+                background: "#2896FB",
+                color: "#0B1426",
+                fontSize: 7,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                padding: "2px 6px",
+                borderRadius: 3,
+                display: "inline-block",
+                marginBottom: 5,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+              }}
+            >
+              FEATURE UPDATE
+            </div>
+            <div
+              style={{
+                color: "#F8FAFC",
+                fontSize: 14,
+                fontWeight: 900,
+                lineHeight: 1,
+                letterSpacing: "-0.015em",
+                textShadow: "0 2px 8px rgba(0,0,0,0.6)",
+              }}
+            >
+              AI Voice
+              <br />
+              Agent
+            </div>
+          </motion.div>
+
+          {/* The minimal wireframe screenshot lands on the right */}
+          <motion.div
+            initial={{ opacity: 0, x: 30, scale: 0.85, rotate: -4 }}
+            animate={{
+              opacity: stage >= 1 ? 1 : 0,
+              x: stage >= 1 ? 0 : 30,
+              scale: stage >= 1 ? 1 : 0.85,
+              rotate: stage >= 1 ? 0 : -4,
+            }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              position: "absolute",
+              right: 10,
+              bottom: 10,
+              width: "38%",
+              aspectRatio: "16 / 9",
+              borderRadius: 5,
+              background: "rgba(11,20,38,0.92)",
+              border: "1.5px solid #2896FB",
+              boxShadow: "0 6px 18px rgba(0,0,0,0.5)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 999,
+                border: "1px solid rgba(248,250,252,0.45)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Play
+                size={8}
+                color="rgba(248,250,252,0.7)"
+                fill="rgba(248,250,252,0.7)"
+                strokeWidth={0}
+                style={{ marginLeft: 1 }}
+              />
+            </div>
+            {/* tiny timeline */}
+            <div
+              style={{
+                position: "absolute",
+                left: 5,
+                right: 5,
+                bottom: 4,
+                height: 2,
+                background: "rgba(248,250,252,0.15)",
+                borderRadius: 999,
+              }}
+            >
+              <div
+                style={{
+                  width: "42%",
+                  height: "100%",
+                  background: "#2896FB",
+                  borderRadius: 999,
+                }}
+              />
+            </div>
+          </motion.div>
+
+          {/* check confirm */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{
+              opacity: stage >= 2 ? 1 : 0,
+              scale: stage >= 2 ? 1 : 0,
+            }}
+            transition={{ type: "spring", stiffness: 500, damping: 18 }}
+            style={{
+              position: "absolute",
+              right: 6,
+              bottom: 6,
+              width: 16,
+              height: 16,
+              borderRadius: 999,
+              background: "#17D94B",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 8px rgba(23,217,75,0.7)",
+            }}
+          >
+            <Check size={10} color="#0B1426" strokeWidth={3.5} />
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 4: WHAT TO DO NEXT — small text instruction card */
+function BeatNextSteps() {
+  const STEPS = [
+    { n: "1", text: "Pick the Shaun pose that fits your message" },
+    { n: "2", text: "Screenshot the moment from his video" },
+    { n: "3", text: "Drop it onto the HighLevel graphic" },
+    { n: "4", text: "Repeat for each thumbnail you need" },
+  ];
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        What to do next
+      </div>
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: 7,
+        }}
+      >
+        {STEPS.map((s, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 + i * 0.12, duration: 0.3 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <div
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 999,
+                background: "rgba(40,150,251,0.15)",
+                border: "1px solid rgba(40,150,251,0.5)",
+                color: "#2896FB",
+                fontSize: 9,
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {s.n}
+            </div>
+            <div
+              style={{
+                color: "#F8FAFC",
+                fontSize: 10,
+                fontWeight: 600,
+                lineHeight: 1.25,
+                letterSpacing: "0.005em",
+              }}
+            >
+              {s.text}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+/* (legacy beat — kept for reference, no longer rendered) */
+function _BeatComposeBatchLegacy() {
   const QUEUE = [
     { name: "AI_Voice_Agent", bg: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)" },
     { name: "Workflow_Update", bg: "linear-gradient(135deg, #7CC2FB 0%, #2896FB 100%)" },

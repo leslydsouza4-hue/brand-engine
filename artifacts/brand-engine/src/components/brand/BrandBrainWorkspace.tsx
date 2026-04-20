@@ -53,6 +53,7 @@ interface GeneratedAsset {
   status: "queued" | "generating" | "done" | "error";
   html?: string;
   error?: string;
+  refineHistory?: string[];
 }
 
 interface ChatMessage {
@@ -518,6 +519,24 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
   };
   const closeGenPanel = () => setGenPanel((g) => ({ ...g, open: false }));
 
+  const updateAsset = useCallback((format: FormatKey, patch: Partial<GeneratedAsset>) => {
+    setGenPanel((g) => ({ ...g, assets: g.assets.map((a) => (a.format === format ? { ...a, ...patch } : a)) }));
+    // Also persist to the message history so reloads remember the refined version.
+    setMessages((m) => {
+      const copy = [...m];
+      for (let i = copy.length - 1; i >= 0; i--) {
+        if (copy[i].role === "assistant" && copy[i].generatedAssets) {
+          copy[i] = {
+            ...copy[i],
+            generatedAssets: copy[i].generatedAssets!.map((a) => (a.format === format ? { ...a, ...patch } : a)),
+          };
+          break;
+        }
+      }
+      return copy;
+    });
+  }, []);
+
   const generateSet = async () => {
     const req = genPanel.request;
     const targetFormats = genPanel.formats;
@@ -786,6 +805,7 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
           onGenerate={generateSet}
           onClose={closeGenPanel}
           onSendToCraft={(prompt) => onSendToCraft(prompt)}
+          onUpdateAsset={updateAsset}
         />
       )}
 
@@ -849,7 +869,7 @@ function AssetRequestCard({ req, onOpenPanel, onCopy, copied, hasGenerated }: { 
 // Generation Panel (right-side drawer)
 
 function GenerationPanel({
-  request, formats, assets, onToggleFormat, onGenerate, onClose, onSendToCraft,
+  request, formats, assets, onToggleFormat, onGenerate, onClose, onSendToCraft, onUpdateAsset,
 }: {
   request: AssetRequest;
   formats: FormatKey[];
@@ -858,6 +878,7 @@ function GenerationPanel({
   onGenerate: () => void;
   onClose: () => void;
   onSendToCraft: (prompt: string) => void;
+  onUpdateAsset: (format: FormatKey, patch: Partial<GeneratedAsset>) => void;
 }) {
   const generating = assets.length > 0 && assets.some((a) => a.status === "generating" || a.status === "queued");
   const allDone = assets.length > 0 && assets.every((a) => a.status === "done" || a.status === "error");
@@ -929,8 +950,16 @@ function GenerationPanel({
           </div>
         ) : (
           <div className="space-y-[16px]">
-            {assets.map((asset) => <AssetCard key={asset.format} asset={asset} onSendToCraft={() => onSendToCraft(buildCraftPrompt(request, asset.format))} />)}
-            {allDone && <div className="text-center text-[11px] text-[#64748B] pt-[8px]">All set. Hand any one off to Craft Magic to refine, or generate again.</div>}
+            {assets.map((asset) => (
+              <AssetCard
+                key={asset.format}
+                asset={asset}
+                request={request}
+                onSendToCraft={() => onSendToCraft(buildCraftPrompt(request, asset.format))}
+                onUpdate={(patch) => onUpdateAsset(asset.format, patch)}
+              />
+            ))}
+            {allDone && <div className="text-center text-[11px] text-[#64748B] pt-[8px]">All set. Use Edit to refine inline, or hand off to Craft Magic for the full editor.</div>}
           </div>
         )}
       </div>
@@ -938,7 +967,7 @@ function GenerationPanel({
   );
 }
 
-function AssetCard({ asset, onSendToCraft }: { asset: GeneratedAsset; onSendToCraft: () => void }) {
+function AssetCard({ asset, request, onSendToCraft, onUpdate }: { asset: GeneratedAsset; request: AssetRequest; onSendToCraft: () => void; onUpdate: (patch: Partial<GeneratedAsset>) => void }) {
   const meta = FORMAT_META[asset.format];
   const Icon = meta.Icon;
   const containerRef = useRef<HTMLDivElement>(null);
@@ -946,6 +975,51 @@ function AssetCard({ asset, onSendToCraft }: { asset: GeneratedAsset; onSendToCr
   const [iframeReady, setIframeReady] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const [downloading, setDownloading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editText, setEditText] = useState("");
+  const [refining, setRefining] = useState(false);
+  const [refineError, setRefineError] = useState<string | null>(null);
+
+  const handleRefine = async () => {
+    const instruction = editText.trim();
+    if (!instruction || !asset.html || refining) return;
+    setRefining(true);
+    setRefineError(null);
+    try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/refine-design`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          html: asset.html,
+          instruction,
+          model: "claude-sonnet-4-6",
+          aspect: meta.aspect,
+          format: "social",
+          recentEdits: (asset.refineHistory || []).slice(0, 5),
+          slideIndex: 0,
+          slideCount: 1,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Refine failed (${res.status})`);
+      if (!data.html) throw new Error("Empty response");
+      onUpdate({ html: data.html, refineHistory: [instruction, ...(asset.refineHistory || [])].slice(0, 6) });
+      setEditText("");
+    } catch (e: any) {
+      setRefineError(e?.message || "Refine failed");
+    } finally {
+      setRefining(false);
+    }
+  };
+
+  const QUICK_EDITS: Array<{ label: string; instruction: string }> = [
+    { label: "Bigger headline", instruction: "Make the headline ~30% larger and tighter, keep everything else proportional." },
+    { label: "More whitespace", instruction: "Add more breathing room between elements — increase padding and gaps by 30%." },
+    { label: "Bolder accent", instruction: "Use a stronger brand-blue accent on the hero word and the CTA button." },
+    { label: "Add product UI", instruction: "Add a HighLevel dashboard mockup on the empty side — angled 6° with a soft shadow." },
+    { label: "Calm it down", instruction: "Simplify — reduce visual noise, fewer floating elements, focus on the headline and one hero visual." },
+  ];
 
   // Track container width so we can scale the iframe correctly.
   useEffect(() => {
@@ -1064,19 +1138,110 @@ function AssetCard({ asset, onSendToCraft }: { asset: GeneratedAsset; onSendToCr
         </div>
       </div>
       {asset.status === "done" && (
-        <div className="px-[12px] pb-[12px] flex gap-[6px]">
-          <button onClick={onSendToCraft} className="flex-1 flex items-center justify-center gap-[6px] py-[7px] px-[10px] rounded-[8px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[11px] text-[#CBD5E1] hover:text-white transition-all cursor-pointer">
-            <Wand2 className="w-[10px] h-[10px]" /> Refine in Craft Magic
-          </button>
-          <button
-            onClick={handleDownload}
-            disabled={downloading || !iframeReady}
-            className="px-[10px] py-[7px] rounded-[8px] bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08] text-[#94A3B8] hover:text-white transition-all cursor-pointer flex items-center gap-[5px] text-[11px]"
-            title="Download high-res PNG"
-          >
-            {downloading ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
-            PNG
-          </button>
+        <div className="px-[12px] pb-[12px] flex flex-col gap-[8px]">
+          <div className="flex gap-[6px]">
+            <button
+              onClick={() => setEditOpen((o) => !o)}
+              className={`flex-1 flex items-center justify-center gap-[6px] py-[7px] px-[10px] rounded-[8px] border text-[11px] transition-all cursor-pointer ${
+                editOpen
+                  ? "bg-gradient-to-br from-[rgba(168,85,247,0.18)] to-[rgba(40,150,251,0.12)] border-[rgba(168,85,247,0.4)] text-white"
+                  : "bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-[#CBD5E1] hover:text-white"
+              }`}
+            >
+              <Wand2 className="w-[10px] h-[10px]" /> {editOpen ? "Close edit" : "Edit"}
+            </button>
+            <button
+              onClick={onSendToCraft}
+              title="Open in dedicated Craft Magic editor"
+              className="px-[10px] py-[7px] rounded-[8px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#94A3B8] hover:text-white transition-all cursor-pointer text-[11px]"
+            >
+              Open ↗
+            </button>
+            <button
+              onClick={handleDownload}
+              disabled={downloading || !iframeReady}
+              className="px-[10px] py-[7px] rounded-[8px] bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08] text-[#94A3B8] hover:text-white transition-all cursor-pointer flex items-center gap-[5px] text-[11px]"
+              title="Download high-res PNG"
+            >
+              {downloading ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
+              PNG
+            </button>
+          </div>
+
+          {editOpen && (
+            <div className="rounded-[10px] border border-white/[0.08] bg-[#050810] p-[10px] flex flex-col gap-[8px]">
+              <div className="flex items-center gap-[6px]">
+                <Wand2 className="w-[10px] h-[10px] text-[#17D94B]" />
+                <span className="text-[10px] font-bold uppercase tracking-[1.4px] text-[#17D94B]">Refine with AI</span>
+                {asset.refineHistory && asset.refineHistory.length > 0 && (
+                  <span className="ml-auto text-[10px] text-[#64748B]">{asset.refineHistory.length} edit{asset.refineHistory.length === 1 ? "" : "s"}</span>
+                )}
+              </div>
+
+              {/* Quick edit chips */}
+              <div className="flex flex-wrap gap-[5px]">
+                {QUICK_EDITS.map((q) => (
+                  <button
+                    key={q.label}
+                    onClick={() => setEditText(q.instruction)}
+                    disabled={refining}
+                    className="px-[8px] py-[4px] rounded-[6px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[10.5px] text-[#94A3B8] hover:text-white transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {q.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative">
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleRefine(); } }}
+                  placeholder="Describe the change — e.g. 'move the headline to the right and add a green CTA at the bottom'…"
+                  rows={2}
+                  disabled={refining}
+                  className="w-full bg-[#0B1426] border border-white/[0.08] focus:border-[rgba(23,217,75,0.4)] rounded-[8px] px-[10px] py-[8px] pr-[40px] text-[11.5px] text-white placeholder:text-[#475569] outline-none resize-none transition-all disabled:opacity-60"
+                />
+                <button
+                  onClick={handleRefine}
+                  disabled={!editText.trim() || refining}
+                  className={`absolute right-[6px] bottom-[6px] w-[28px] h-[28px] rounded-[7px] flex items-center justify-center transition-all ${
+                    editText.trim() && !refining
+                      ? "bg-gradient-to-br from-[#17D94B] to-[#00B2A9] text-white shadow-[0_4px_12px_rgba(23,217,75,0.35)] hover:brightness-110 cursor-pointer"
+                      : "bg-white/[0.04] text-[#475569] cursor-not-allowed"
+                  }`}
+                >
+                  {refining ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <ArrowUp className="w-[12px] h-[12px]" />}
+                </button>
+              </div>
+
+              {refineError && (
+                <div className="text-[10.5px] text-[#FCA5A5] flex items-start gap-[5px]">
+                  <AlertCircle className="w-[10px] h-[10px] mt-[2px] shrink-0" />
+                  {refineError}
+                </div>
+              )}
+
+              {asset.refineHistory && asset.refineHistory.length > 0 && (
+                <div className="pt-[6px] border-t border-white/[0.05]">
+                  <div className="text-[9.5px] uppercase tracking-[1.2px] text-[#64748B] font-semibold mb-[5px]">Recent edits</div>
+                  <div className="flex flex-wrap gap-[4px]">
+                    {asset.refineHistory.slice(0, 4).map((h, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setEditText(h)}
+                        disabled={refining}
+                        className="px-[7px] py-[3px] rounded-[5px] bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-[10px] text-[#94A3B8] hover:text-white transition-all cursor-pointer truncate max-w-[180px] disabled:opacity-50"
+                        title={h}
+                      >
+                        {h}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

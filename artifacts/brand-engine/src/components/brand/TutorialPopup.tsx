@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, MousePointer2, Link2, Mail, Play, Check, Download, Camera, Image as ImageIcon } from "lucide-react";
+import { X, Sparkles, MousePointer2, Link2, Mail, Play, Check, Download, Camera, Image as ImageIcon, Info } from "lucide-react";
 
 type TutorialConfig = {
   badge: string;
@@ -289,8 +289,8 @@ function RightEdgeTab({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
-      aria-label="Watch tour"
-      title="Watch tour"
+      aria-label="How it works"
+      title="How it works"
       style={{
         position: "fixed",
         right: 88,
@@ -299,16 +299,16 @@ function RightEdgeTab({ onClick }: { onClick: () => void }) {
         width: 52,
         height: 52,
         borderRadius: 999,
-        background: "linear-gradient(135deg, #17D94B 0%, #2896FB 100%)",
+        background: "linear-gradient(135deg, #2896FB 0%, #1268C2 100%)",
         border: "none",
         cursor: "pointer",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "#0B1426",
+        color: "#F8FAFC",
         boxShadow: hover
-          ? "0 6px 32px rgba(23,217,75,0.55), 0 0 0 1px rgba(23,217,75,0.3)"
-          : "0 4px 24px rgba(23,217,75,0.4), 0 0 0 1px rgba(23,217,75,0.2)",
+          ? "0 6px 32px rgba(40,150,251,0.55), 0 0 0 1px rgba(40,150,251,0.3)"
+          : "0 4px 24px rgba(40,150,251,0.4), 0 0 0 1px rgba(40,150,251,0.2)",
         transform: hover ? "scale(1.05)" : "scale(1)",
         transition: "transform 0.2s ease, box-shadow 0.2s ease",
       }}
@@ -321,17 +321,16 @@ function RightEdgeTab({ onClick }: { onClick: () => void }) {
           position: "absolute",
           inset: -10,
           borderRadius: 999,
-          background: "radial-gradient(circle, rgba(23,217,75,0.55), transparent 65%)",
+          background: "radial-gradient(circle, rgba(40,150,251,0.55), transparent 65%)",
           pointerEvents: "none",
           zIndex: 0,
         }}
       />
-      <Play
-        size={20}
-        strokeWidth={2.5}
-        fill="#0B1426"
-        color="#0B1426"
-        style={{ position: "relative", zIndex: 2, marginLeft: 2 }}
+      <Info
+        size={24}
+        strokeWidth={2.6}
+        color="#F8FAFC"
+        style={{ position: "relative", zIndex: 2 }}
       />
     </motion.button>
   );

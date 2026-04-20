@@ -1332,22 +1332,69 @@ function BeatPlaceOnGraphic() {
         Build the layout
       </div>
       <style>{`
-        @keyframes shaunSkeletonShimmer {
-          0% { background-position: -120% 0; }
-          100% { background-position: 220% 0; }
+        @keyframes shaunSkelShimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -100% 0; }
+        }
+        @keyframes shaunSkelScan {
+          0% { transform: translateX(-30%); opacity: 0; }
+          12% { opacity: 1; }
+          88% { opacity: 1; }
+          100% { transform: translateX(110%); opacity: 0; }
+        }
+        @keyframes shaunSkelPulse {
+          0%, 100% { opacity: 0.55; }
+          50% { opacity: 1; }
         }
         .skel-bar {
+          position: relative;
+          background: rgba(248,250,252,0.10);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        .skel-bar::after {
+          content: "";
+          position: absolute;
+          inset: 0;
           background: linear-gradient(
-            90deg,
-            rgba(248,250,252,0.10) 0%,
-            rgba(248,250,252,0.28) 45%,
-            rgba(40,150,251,0.55) 50%,
-            rgba(248,250,252,0.28) 55%,
-            rgba(248,250,252,0.10) 100%
+            100deg,
+            transparent 20%,
+            rgba(248,250,252,0.18) 38%,
+            rgba(124,194,251,0.55) 50%,
+            rgba(248,250,252,0.18) 62%,
+            transparent 80%
           );
           background-size: 220% 100%;
-          animation: shaunSkeletonShimmer 1.6s ease-in-out infinite;
-          border-radius: 4px;
+          background-repeat: no-repeat;
+          animation: shaunSkelShimmer 1.8s ease-in-out infinite;
+        }
+        .skel-blob {
+          position: relative;
+          background: rgba(248,250,252,0.10);
+          overflow: hidden;
+        }
+        .skel-blob::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            100deg,
+            transparent 20%,
+            rgba(248,250,252,0.18) 38%,
+            rgba(124,194,251,0.55) 50%,
+            rgba(248,250,252,0.18) 62%,
+            transparent 80%
+          );
+          background-size: 220% 100%;
+          background-repeat: no-repeat;
+          animation: shaunSkelShimmer 1.8s ease-in-out infinite;
+        }
+        .skel-corner {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          border: 1.5px solid rgba(40,150,251,0.85);
+          animation: shaunSkelPulse 1.8s ease-in-out infinite;
         }
       `}</style>
       <div
@@ -1366,14 +1413,14 @@ function BeatPlaceOnGraphic() {
             aspectRatio: "16 / 9",
             borderRadius: 10,
             overflow: "hidden",
-            background: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
+            background:
+              "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
             border: "1.5px solid rgba(40,150,251,0.5)",
             boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 16px",
-            gap: 12,
+            alignItems: "stretch",
+            padding: "14px 14px",
+            gap: 10,
           }}
         >
           {/* dot texture */}
@@ -1384,87 +1431,176 @@ function BeatPlaceOnGraphic() {
               backgroundImage:
                 "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
               backgroundSize: "8px 8px",
-              opacity: 0.5,
+              opacity: 0.45,
+              pointerEvents: "none",
+            }}
+          />
+          {/* faint vertical guide line down the middle */}
+          <div
+            style={{
+              position: "absolute",
+              top: 6,
+              bottom: 6,
+              left: "60%",
+              width: 1,
+              background:
+                "repeating-linear-gradient(180deg, rgba(40,150,251,0.35) 0 3px, transparent 3px 6px)",
+              opacity: 0.6,
+              pointerEvents: "none",
+            }}
+          />
+          {/* corner registration marks */}
+          <div className="skel-corner" style={{ top: 5, left: 5, borderRight: "none", borderBottom: "none" }} />
+          <div className="skel-corner" style={{ top: 5, right: 5, borderLeft: "none", borderBottom: "none" }} />
+          <div className="skel-corner" style={{ bottom: 5, left: 5, borderRight: "none", borderTop: "none" }} />
+          <div className="skel-corner" style={{ bottom: 5, right: 5, borderLeft: "none", borderTop: "none" }} />
+
+          {/* sweeping scan line — premium "loading" feel */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: "20%",
+              background:
+                "linear-gradient(90deg, transparent 0%, rgba(124,194,251,0.18) 45%, rgba(40,150,251,0.45) 50%, rgba(124,194,251,0.18) 55%, transparent 100%)",
+              animation: "shaunSkelScan 2.6s ease-in-out infinite",
+              pointerEvents: "none",
+              mixBlendMode: "screen",
             }}
           />
 
-          {/* LEFT — text skeleton bars stacked */}
+          {/* LEFT — text skeleton stack */}
           <div
             style={{
               position: "relative",
               flex: 1,
               display: "flex",
               flexDirection: "column",
+              justifyContent: "center",
               gap: 6,
-              maxWidth: "55%",
+              maxWidth: "58%",
+              zIndex: 1,
             }}
           >
+            {/* logo + badge row */}
             <motion.div
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05, duration: 0.3 }}
+              style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}
+            >
+              <div
+                className="skel-blob"
+                style={{ width: 12, height: 12, borderRadius: 3 }}
+              />
+              <div
+                className="skel-bar"
+                style={{ height: 6, width: 38, borderRadius: 999 }}
+              />
+            </motion.div>
+            {/* headline bar 1 — grows in width */}
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: "92%", opacity: 1 }}
+              transition={{ delay: 0.18, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="skel-bar"
-              style={{ height: 6, width: "30%" }}
+              style={{ height: 14 }}
             />
+            {/* headline bar 2 — grows in width */}
             <motion.div
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.22, duration: 0.3 }}
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: "68%", opacity: 1 }}
+              transition={{ delay: 0.32, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="skel-bar"
-              style={{ height: 14, width: "85%" }}
+              style={{ height: 14 }}
             />
+            {/* subtext bar */}
             <motion.div
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.34, duration: 0.3 }}
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: "44%", opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
               className="skel-bar"
-              style={{ height: 14, width: "60%" }}
+              style={{ height: 5, marginTop: 4 }}
             />
+            {/* CTA button skeleton */}
             <motion.div
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.46, duration: 0.3 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.65, duration: 0.35 }}
               className="skel-bar"
-              style={{ height: 5, width: "40%", marginTop: 3 }}
+              style={{ height: 14, width: 56, borderRadius: 999, marginTop: 6 }}
             />
           </div>
 
-          {/* RIGHT — Shaun silhouette skeleton (head + shoulders) */}
+          {/* RIGHT — Shaun silhouette skeleton (proper figure proportions) */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
             style={{
               position: "relative",
-              width: "28%",
-              aspectRatio: "3 / 4",
+              width: "32%",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "flex-end",
-              gap: 4,
-              alignSelf: "flex-end",
-              paddingBottom: 0,
+              gap: 0,
+              zIndex: 1,
             }}
           >
             {/* head */}
             <div
-              className="skel-bar"
+              className="skel-blob"
               style={{
-                width: "55%",
+                width: "48%",
                 aspectRatio: "1 / 1",
                 borderRadius: "50%",
+                marginBottom: -3,
               }}
             />
-            {/* shoulders/torso */}
+            {/* neck */}
             <div
-              className="skel-bar"
+              className="skel-blob"
               style={{
+                width: "16%",
+                height: 6,
+                borderRadius: 2,
+              }}
+            />
+            {/* shoulders + torso (curved trapezoid via radius) */}
+            <div
+              style={{
+                position: "relative",
                 width: "100%",
                 height: "55%",
-                borderRadius: "40% 40% 12px 12px / 60% 60% 12px 12px",
+                marginTop: -2,
               }}
-            />
+            >
+              <div
+                className="skel-blob"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: "55% 55% 14px 14px / 90% 90% 14px 14px",
+                }}
+              />
+              {/* tiny "logo patch" on shirt for character */}
+              <div
+                className="skel-bar"
+                style={{
+                  position: "absolute",
+                  top: "38%",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  width: 14,
+                  height: 5,
+                  borderRadius: 2,
+                  opacity: 0.6,
+                }}
+              />
+            </div>
           </motion.div>
         </div>
       </div>

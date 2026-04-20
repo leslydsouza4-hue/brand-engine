@@ -354,32 +354,6 @@ function EmailScene() {
         {beat === 2 && <BeatEmail key="email" />}
         {beat === 3 && <BeatEdit key="edit" />}
       </AnimatePresence>
-
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          left: 0,
-          right: 0,
-          display: "flex",
-          justifyContent: "center",
-          gap: 5,
-          zIndex: 5,
-        }}
-      >
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: i === beat ? 16 : 5,
-              height: 5,
-              borderRadius: 999,
-              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
-              transition: "all 0.3s",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -737,32 +711,6 @@ function ShaunScene() {
         {beat === 2 && <BeatPlaceOnGraphic key="place" />}
         {beat === 3 && <BeatExport key="export" />}
       </AnimatePresence>
-
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          left: 0,
-          right: 0,
-          display: "flex",
-          justifyContent: "center",
-          gap: 5,
-          zIndex: 5,
-        }}
-      >
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: i === beat ? 16 : 5,
-              height: 5,
-              borderRadius: 999,
-              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
-              transition: "all 0.3s",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -2153,31 +2101,6 @@ function ArmyScene() {
           />
         )}
       </AnimatePresence>
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          left: 0,
-          right: 0,
-          display: "flex",
-          justifyContent: "center",
-          gap: 5,
-          zIndex: 5,
-        }}
-      >
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: i === beat ? 16 : 5,
-              height: 5,
-              borderRadius: 999,
-              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
-              transition: "all 0.3s",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -2674,31 +2597,6 @@ function DidYouKnowScene() {
           />
         )}
       </AnimatePresence>
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          left: 0,
-          right: 0,
-          display: "flex",
-          justifyContent: "center",
-          gap: 5,
-          zIndex: 5,
-        }}
-      >
-        {[0, 1, 2, 3].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: i === beat ? 16 : 5,
-              height: 5,
-              borderRadius: 999,
-              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
-              transition: "all 0.3s",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -3042,31 +2940,6 @@ function BizDevScene() {
         {beat === 3 && <BeatBizVariants key="variants" />}
         {beat === 4 && <BeatBizGrid key="grid" />}
       </AnimatePresence>
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          left: 0,
-          right: 0,
-          display: "flex",
-          justifyContent: "center",
-          gap: 5,
-          zIndex: 5,
-        }}
-      >
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: i === beat ? 16 : 5,
-              height: 5,
-              borderRadius: 999,
-              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
-              transition: "all 0.3s",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }
@@ -3806,31 +3679,6 @@ function SuperPromoScene() {
         {beat === 3 && <BeatSpVariants key="variants" />}
         {beat === 4 && <BeatSpGrid key="grid" />}
       </AnimatePresence>
-      <div
-        style={{
-          position: "absolute",
-          bottom: 10,
-          left: 0,
-          right: 0,
-          display: "flex",
-          justifyContent: "center",
-          gap: 5,
-          zIndex: 5,
-        }}
-      >
-        {[0, 1, 2, 3, 4].map((i) => (
-          <div
-            key={i}
-            style={{
-              width: i === beat ? 16 : 5,
-              height: 5,
-              borderRadius: 999,
-              background: i === beat ? "#FFD000" : "rgba(248,250,252,0.2)",
-              transition: "all 0.3s",
-            }}
-          />
-        ))}
-      </div>
     </div>
   );
 }

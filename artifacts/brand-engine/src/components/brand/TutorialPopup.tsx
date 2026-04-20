@@ -7,7 +7,7 @@ type TutorialConfig = {
   title: string;
   body: string;
   cta: string;
-  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev";
+  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev" | "superpromo";
 };
 
 const TUTORIALS: Record<string, TutorialConfig> = {
@@ -45,6 +45,13 @@ const TUTORIALS: Record<string, TutorialConfig> = {
     body: "Pick a size, fill in the details, drop a guest photo, and export every variant in one go.",
     cta: "Build a kit",
     scene: "bizdev",
+  },
+  "super-promo": {
+    badge: "NEW",
+    title: "Super Promo kits",
+    body: "Pick a size, type the event details, drop a guest photo, and export every promo variant at once.",
+    cta: "Build a promo",
+    scene: "superpromo",
   },
 };
 
@@ -193,6 +200,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
               {config.scene === "army" && <ArmyScene />}
               {config.scene === "didyouknow" && <DidYouKnowScene />}
               {config.scene === "bizdev" && <BizDevScene />}
+              {config.scene === "superpromo" && <SuperPromoScene />}
             </div>
 
             <div style={{ padding: "16px 18px 18px" }}>
@@ -3781,6 +3789,564 @@ function BeatBizGrid() {
 }
 
 /* ===================== END BIZDEV SCENE ===================== */
+
+/* ===================== SUPER PROMO SCENE ===================== */
+
+function SuperPromoScene() {
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setBeat((b) => (b + 1) % 5), 2600);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: 18 }}>
+      <AnimatePresence mode="wait">
+        {beat === 0 && <BeatSpSize key="size" />}
+        {beat === 1 && <BeatSpText key="text" />}
+        {beat === 2 && <BeatBizUpload key="upload" />}
+        {beat === 3 && <BeatSpVariants key="variants" />}
+        {beat === 4 && <BeatSpGrid key="grid" />}
+      </AnimatePresence>
+      <div
+        style={{
+          position: "absolute",
+          bottom: 10,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+          gap: 5,
+          zIndex: 5,
+        }}
+      >
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: i === beat ? 16 : 5,
+              height: 5,
+              borderRadius: 999,
+              background: i === beat ? "#FFD000" : "rgba(248,250,252,0.2)",
+              transition: "all 0.3s",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* SP Beat 1 — 4 size cards */
+function BeatSpSize() {
+  const [picked, setPicked] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setPicked(true), 700);
+    return () => clearTimeout(t);
+  }, []);
+  const SIZES = [
+    { key: "horizontal", label: "Horizontal", dim: "1920×1080", w: 64, h: 36 },
+    { key: "vertical", label: "Vertical", dim: "1080×1920", w: 26, h: 46 },
+    { key: "portrait", label: "Portrait", dim: "1080×1350", w: 36, h: 45 },
+    { key: "quicklinks", label: "Quick Links", dim: "1080×1080", w: 42, h: 42 },
+  ];
+  const SELECTED = 0;
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+      }}
+    >
+      {SIZES.map((s, i) => {
+        const selected = i === SELECTED && picked;
+        return (
+          <motion.div
+            key={s.key}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 + i * 0.07, duration: 0.3 }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: s.w,
+                height: s.h,
+                borderRadius: 4,
+                background: selected
+                  ? "linear-gradient(135deg, rgba(255,208,0,0.55), rgba(11,20,38,0.85))"
+                  : "rgba(255,255,255,0.06)",
+                border: selected
+                  ? "1.5px solid #FFD000"
+                  : "1.5px solid rgba(255,255,255,0.18)",
+                boxShadow: selected
+                  ? "0 0 0 4px rgba(255,208,0,0.18), 0 6px 18px rgba(255,208,0,0.3)"
+                  : "0 4px 10px rgba(0,0,0,0.25)",
+                transition: "all 0.3s",
+              }}
+            >
+              {selected && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                  style={{
+                    position: "absolute",
+                    top: -5,
+                    right: -5,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 999,
+                    background: "#FFD000",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "2px solid #0B1426",
+                  }}
+                >
+                  <Check size={7} color="#0B1426" strokeWidth={4} />
+                </motion.div>
+              )}
+            </div>
+            <div
+              style={{
+                fontSize: 8,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                color: selected ? "#FFD000" : "rgba(248,250,252,0.7)",
+                textTransform: "uppercase",
+                transition: "color 0.25s",
+              }}
+            >
+              {s.label}
+            </div>
+            <div
+              style={{
+                fontSize: 7,
+                color: "rgba(248,250,252,0.4)",
+                fontFamily: "ui-monospace, monospace",
+                marginTop: -2,
+              }}
+            >
+              {s.dim}
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+}
+
+/* SP Beat 2 — Headline / Date / CTA fields with FREE VIRTUAL EVENT eyebrow */
+function BeatSpText() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 350);
+    const t2 = setTimeout(() => setStage(2), 950);
+    const t3 = setTimeout(() => setStage(3), 1550);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+  const FIELDS = [
+    { label: "HEADLINE", text: "Build Your AI Funnel" },
+    { label: "DATE", text: "Mar 12 · 2 PM PT" },
+    { label: "CTA", text: "Save Your Seat →" },
+  ];
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        gap: 6,
+      }}
+    >
+      {/* yellow eyebrow chip */}
+      <motion.div
+        initial={{ opacity: 0, y: -4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          alignSelf: "flex-start",
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: "0.18em",
+          color: "#FFD000",
+          textTransform: "uppercase",
+          padding: "3px 7px",
+          borderRadius: 4,
+          background: "rgba(255,208,0,0.10)",
+          border: "1px solid rgba(255,208,0,0.4)",
+          marginBottom: 2,
+        }}
+      >
+        Free Virtual Event
+      </motion.div>
+      {FIELDS.map((f, i) => {
+        const filled = stage >= i + 1;
+        return (
+          <motion.div
+            key={f.label}
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.05 + i * 0.08, duration: 0.3 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "7px 10px",
+              borderRadius: 8,
+              background: PANEL_BG,
+              border: filled
+                ? "1px solid rgba(255,208,0,0.55)"
+                : PANEL_BORDER,
+              boxShadow: filled
+                ? "0 0 0 3px rgba(255,208,0,0.12)"
+                : "none",
+              transition: "border-color 0.3s, box-shadow 0.3s",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 8,
+                fontWeight: 800,
+                letterSpacing: "0.1em",
+                color: filled ? "#FFD000" : "rgba(248,250,252,0.4)",
+                width: 56,
+                flexShrink: 0,
+                textTransform: "uppercase",
+                transition: "color 0.3s",
+              }}
+            >
+              {f.label}
+            </div>
+            <div
+              style={{
+                flex: 1,
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#F8FAFC",
+                fontFamily: "ui-monospace, monospace",
+                minHeight: 14,
+              }}
+            >
+              {filled ? <Typewriter text={f.text} /> : (
+                <div
+                  style={{
+                    height: 5,
+                    width: "60%",
+                    background: "rgba(248,250,252,0.12)",
+                    borderRadius: 2,
+                  }}
+                />
+              )}
+            </div>
+            {filled && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 999,
+                  background: "#17D94B",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Check size={8} color="#0B1426" strokeWidth={4} />
+              </motion.div>
+            )}
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+}
+
+/* SP Beat 4 — 6 variant chips, sweep settles on Dates */
+function BeatSpVariants() {
+  const [selectedIdx, setSelectedIdx] = useState<number>(-1);
+  useEffect(() => {
+    const order = [0, 1, 2, 3, 4, 5, 0];
+    let i = 0;
+    setSelectedIdx(order[0]);
+    const id = setInterval(() => {
+      i++;
+      if (i >= order.length) {
+        clearInterval(id);
+        return;
+      }
+      setSelectedIdx(order[i]);
+    }, 340);
+    return () => clearInterval(id);
+  }, []);
+  const VARIANTS = ["Dates", "CTA", "No Date", "Day 1", "Day 2", "Replays"];
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Pick variants
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: 6,
+          width: "100%",
+        }}
+      >
+        {VARIANTS.map((v, i) => {
+          const active = i === selectedIdx;
+          return (
+            <motion.div
+              key={v}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 + i * 0.05, duration: 0.3 }}
+              style={{
+                padding: "6px 11px",
+                borderRadius: 999,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                background: active
+                  ? "linear-gradient(135deg, #FFD000, #C49B00)"
+                  : "rgba(255,255,255,0.06)",
+                color: active ? "#0B1426" : "rgba(248,250,252,0.7)",
+                border: active
+                  ? "1px solid rgba(255,232,128,0.6)"
+                  : "1px solid rgba(255,255,255,0.12)",
+                boxShadow: active
+                  ? "0 4px 12px rgba(255,208,0,0.5), 0 0 0 3px rgba(255,208,0,0.18)"
+                  : "none",
+                transition: "all 0.25s",
+              }}
+            >
+              {v}
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+/* SP Beat 5 — 6 thumbnails (3x2) + Download All */
+function BeatSpGrid() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 1100);
+    return () => clearTimeout(t1);
+  }, []);
+  const TILES = ["Dates", "CTA", "No Date", "Day 1", "Day 2", "Replays"];
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        gap: 6,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span>All variants</span>
+        <span style={{ color: "#FFD000", fontSize: 8 }}>6 ready</span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateRows: "repeat(2, 1fr)",
+          gap: 5,
+        }}
+      >
+        {TILES.map((label, i) => (
+          <motion.div
+            key={label}
+            initial={{ opacity: 0, y: 8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              delay: i * 0.07,
+              duration: 0.35,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            style={{
+              position: "relative",
+              aspectRatio: "16 / 9",
+              borderRadius: 5,
+              background:
+                "linear-gradient(135deg, rgba(40,150,251,0.45), rgba(11,20,38,0.9))",
+              border: "1px solid rgba(255,208,0,0.35)",
+              boxShadow: "0 3px 8px rgba(0,0,0,0.3)",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
+              padding: "0 0 3px 0",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage:
+                  "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                backgroundSize: "4px 4px",
+                opacity: 0.5,
+              }}
+            />
+            {/* tiny FREE VIRTUAL EVENT eyebrow */}
+            <div
+              style={{
+                position: "absolute",
+                left: "10%",
+                top: "18%",
+                fontSize: 4,
+                fontWeight: 800,
+                letterSpacing: "0.18em",
+                color: "#FFD000",
+                textTransform: "uppercase",
+              }}
+            >
+              FREE VIRTUAL EVENT
+            </div>
+            {/* mini headline bar */}
+            <div
+              style={{
+                position: "absolute",
+                left: "10%",
+                right: "10%",
+                top: "38%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <div
+                style={{
+                  height: 3,
+                  background: "rgba(248,250,252,0.85)",
+                  borderRadius: 1,
+                }}
+              />
+              <div
+                style={{
+                  height: 2,
+                  width: "65%",
+                  background: "rgba(248,250,252,0.45)",
+                  borderRadius: 1,
+                }}
+              />
+            </div>
+            <div
+              style={{
+                position: "relative",
+                zIndex: 2,
+                fontSize: 6,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                color: "#FFD000",
+                textTransform: "uppercase",
+                textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+              }}
+            >
+              {label}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{
+          opacity: stage >= 1 ? 1 : 0,
+          y: stage >= 1 ? 0 : 6,
+        }}
+        transition={{ duration: 0.3 }}
+        style={{ display: "flex", justifyContent: "center", marginTop: 2 }}
+      >
+        <motion.div
+          animate={{
+            boxShadow: [
+              "0 4px 14px rgba(255,208,0,0.45), 0 0 0 0 rgba(255,208,0,0.5)",
+              "0 4px 14px rgba(255,208,0,0.45), 0 0 0 8px rgba(255,208,0,0)",
+            ],
+          }}
+          transition={{ duration: 1.4, repeat: Infinity }}
+          style={{
+            background: "linear-gradient(135deg, #FFD000, #C49B00)",
+            color: "#0B1426",
+            padding: "6px 14px",
+            borderRadius: 6,
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: "0.06em",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Download size={11} strokeWidth={2.6} />
+          DOWNLOAD ALL
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ===================== END SUPER PROMO SCENE ===================== */
 
 function Typewriter({ text }: { text: string }) {
   const [n, setN] = useState(0);

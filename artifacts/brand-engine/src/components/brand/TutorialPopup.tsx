@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, MousePointer2, Link2, Mail, Play } from "lucide-react";
+import { X, Sparkles, MousePointer2, Link2, Mail, Play, Check, Download, Image as ImageIcon } from "lucide-react";
 
 type TutorialConfig = {
   badge: string;
   title: string;
   body: string;
   cta: string;
-  scene: "email";
+  scene: "email" | "shaun";
 };
 
 const TUTORIALS: Record<string, TutorialConfig> = {
@@ -17,6 +17,13 @@ const TUTORIALS: Record<string, TutorialConfig> = {
     body: "Drop a Google Doc link, get a fully designed branded email. Tweak any text or color in one click.",
     cta: "Try it now",
     scene: "email",
+  },
+  "shaun-thumbnails": {
+    badge: "NEW",
+    title: "Batch thumbnails with Shaun",
+    body: "Pick a Shaun pose, drop in your backgrounds, and export the whole batch as ready-to-post thumbnails.",
+    cta: "Start a batch",
+    scene: "shaun",
   },
 };
 
@@ -161,6 +168,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
               </button>
 
               {config.scene === "email" && <EmailScene />}
+              {config.scene === "shaun" && <ShaunScene />}
             </div>
 
             <div style={{ padding: "16px 18px 18px" }}>
@@ -667,6 +675,500 @@ function BeatEdit() {
     </motion.div>
   );
 }
+
+/* ===================== SHAUN SCENE ===================== */
+
+const SHAUN_THUMBS = [
+  "ShaunClark_03057_StudioSura-Photoroom.png",
+  "ShaunClark_03096_StudioSura-Photoroom.png",
+  "ShaunClark_03141_StudioSura-Photoroom.png",
+  "ShaunClark_03182_StudioSura-Photoroom.png",
+].map((f) => `${import.meta.env.BASE_URL}assets/shaun/${f}`);
+
+const SHAUN_BG_COLORS = [
+  "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
+  "linear-gradient(135deg, #7CC2FB 0%, #2896FB 100%)",
+  "linear-gradient(135deg, #FFC328 0%, #FB923C 100%)",
+  "linear-gradient(135deg, #17D94B 0%, #0E8E33 100%)",
+];
+
+function ShaunScene() {
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setBeat((b) => (b + 1) % 4), 2600);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: 18 }}>
+      <AnimatePresence mode="wait">
+        {beat === 0 && <BeatPickShaun key="pick" />}
+        {beat === 1 && <BeatBatchUpload key="batch" />}
+        {beat === 2 && <BeatComposeBatch key="compose" />}
+        {beat === 3 && <BeatExport key="export" />}
+      </AnimatePresence>
+
+      <div
+        style={{
+          position: "absolute",
+          bottom: 10,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+          gap: 5,
+          zIndex: 5,
+        }}
+      >
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: i === beat ? 16 : 5,
+              height: 5,
+              borderRadius: 999,
+              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
+              transition: "all 0.3s",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Beat 1: choose Shaun (4 avatars, one selected) */
+function BeatPickShaun() {
+  const [selected, setSelected] = useState(-1);
+  useEffect(() => {
+    const t = setTimeout(() => setSelected(1), 600);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Choose Shaun
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 6,
+          flex: 1,
+        }}
+      >
+        {SHAUN_THUMBS.map((src, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 + i * 0.06, duration: 0.3 }}
+            style={{
+              position: "relative",
+              borderRadius: 8,
+              overflow: "hidden",
+              background: "linear-gradient(135deg, rgba(40,150,251,0.25), rgba(11,20,38,0.6))",
+              border:
+                selected === i
+                  ? "1.5px solid #2896FB"
+                  : "1px solid rgba(255,255,255,0.08)",
+              boxShadow:
+                selected === i ? "0 0 0 3px rgba(40,150,251,0.25)" : "none",
+              transition: "all 0.25s",
+            }}
+          >
+            <img
+              src={src}
+              alt=""
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center top",
+                opacity: 0.95,
+              }}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+            {selected === i && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 18 }}
+                style={{
+                  position: "absolute",
+                  top: 4,
+                  right: 4,
+                  width: 14,
+                  height: 14,
+                  borderRadius: 999,
+                  background: "#2896FB",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 2px 8px rgba(40,150,251,0.6)",
+                }}
+              >
+                <Check size={9} color="#0B1426" strokeWidth={3.5} />
+              </motion.div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 2: drop a batch of backgrounds */
+function BeatBatchUpload() {
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Add backgrounds · batch
+      </div>
+      <div
+        style={{
+          flex: 1,
+          borderRadius: 12,
+          border: "1.5px dashed rgba(40,150,251,0.55)",
+          background: "rgba(40,150,251,0.06)",
+          position: "relative",
+          overflow: "hidden",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {SHAUN_BG_COLORS.map((bg, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: -36, x: -20 + i * 14, rotate: -8 + i * 4, scale: 0.7 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              x: -42 + i * 28,
+              rotate: -8 + i * 4,
+              scale: 1,
+            }}
+            transition={{
+              delay: 0.15 + i * 0.12,
+              duration: 0.45,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            style={{
+              position: "absolute",
+              width: 44,
+              height: 44,
+              borderRadius: 8,
+              background: bg,
+              border: "1.5px solid rgba(255,255,255,0.15)",
+              boxShadow: "0 6px 16px rgba(0,0,0,0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "rgba(255,255,255,0.7)",
+            }}
+          >
+            <ImageIcon size={14} strokeWidth={2.2} />
+          </motion.div>
+        ))}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1, duration: 0.3 }}
+          style={{
+            position: "absolute",
+            bottom: 6,
+            right: 8,
+            fontSize: 9,
+            fontWeight: 700,
+            color: "#2896FB",
+            background: "rgba(40,150,251,0.12)",
+            padding: "2px 6px",
+            borderRadius: 4,
+            letterSpacing: "0.04em",
+          }}
+        >
+          4 ITEMS QUEUED
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 3: compose batch (Shaun stamped on each bg) */
+function BeatComposeBatch() {
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    setProgress(0);
+    const id = setInterval(() => {
+      setProgress((p) => Math.min(100, p + 7));
+    }, 90);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Composing · Shaun + backgrounds
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 6,
+          flex: 1,
+        }}
+      >
+        {SHAUN_BG_COLORS.map((bg, i) => {
+          const localProgress = Math.max(
+            0,
+            Math.min(100, (progress - i * 12) * 1.2),
+          );
+          const done = localProgress >= 100;
+          return (
+            <div
+              key={i}
+              style={{
+                position: "relative",
+                borderRadius: 8,
+                overflow: "hidden",
+                background: bg,
+                border: "1px solid rgba(255,255,255,0.1)",
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "center",
+              }}
+            >
+              <motion.img
+                src={SHAUN_THUMBS[i]}
+                alt=""
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: done ? 1 : 0.35, y: done ? 0 : 6 }}
+                transition={{ duration: 0.3 }}
+                style={{
+                  width: "85%",
+                  height: "85%",
+                  objectFit: "contain",
+                  objectPosition: "bottom center",
+                  filter: done ? "none" : "blur(1px)",
+                }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+              {/* progress sweep */}
+              {!done && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    bottom: 0,
+                    height: 2,
+                    width: `${localProgress}%`,
+                    background: "#2896FB",
+                    boxShadow: "0 0 8px #2896FB",
+                  }}
+                />
+              )}
+              {done && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 999,
+                    background: "#2896FB",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 2px 8px rgba(40,150,251,0.6)",
+                  }}
+                >
+                  <Check size={9} color="#0B1426" strokeWidth={3.5} />
+                </motion.div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 4: export (download bundle) */
+function BeatExport() {
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          background: PANEL_BG,
+          backdropFilter: "blur(8px)",
+          borderRadius: 12,
+          border: "1.5px solid rgba(40,150,251,0.6)",
+          boxShadow: "0 0 0 4px rgba(40,150,251,0.12)",
+          padding: "14px 14px 12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
+        {/* stacked thumbs preview */}
+        <div style={{ position: "relative", height: 56 }}>
+          {SHAUN_BG_COLORS.map((bg, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.06, duration: 0.3 }}
+              style={{
+                position: "absolute",
+                left: i * 26,
+                top: 0,
+                width: 56,
+                height: 56,
+                borderRadius: 8,
+                background: bg,
+                border: "2px solid #0B1426",
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "center",
+                overflow: "hidden",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+              }}
+            >
+              <img
+                src={SHAUN_THUMBS[i]}
+                alt=""
+                style={{
+                  width: "85%",
+                  height: "85%",
+                  objectFit: "contain",
+                  objectPosition: "bottom center",
+                }}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            </motion.div>
+          ))}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, type: "spring", stiffness: 380, damping: 20 }}
+            style={{
+              position: "absolute",
+              right: 4,
+              top: 14,
+              padding: "3px 7px",
+              fontSize: 9,
+              fontWeight: 800,
+              color: "#0B1426",
+              background: "#2896FB",
+              borderRadius: 4,
+              letterSpacing: "0.05em",
+            }}
+          >
+            ×4 PNG
+          </motion.div>
+        </div>
+
+        <motion.button
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.3 }}
+          style={{
+            background: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
+            color: "#F8FAFC",
+            border: "none",
+            padding: "9px 12px",
+            borderRadius: 8,
+            fontSize: 11,
+            fontWeight: 800,
+            letterSpacing: "0.04em",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
+            cursor: "default",
+            boxShadow: "0 6px 18px rgba(40,150,251,0.45)",
+          }}
+        >
+          <Download size={13} strokeWidth={2.6} />
+          EXPORT BATCH
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ===================== END SHAUN SCENE ===================== */
 
 function Typewriter({ text }: { text: string }) {
   const [n, setN] = useState(0);

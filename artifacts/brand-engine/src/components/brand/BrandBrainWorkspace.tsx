@@ -18,6 +18,8 @@ interface Attachment {
   previewUrl?: string;
   // For text/gdoc: the extracted text
   text?: string;
+  // For gdoc: also-extracted embedded images
+  docImages?: Array<{ mediaType: string; data: string }>;
   // Loading/error state (used when a Google Doc is being fetched)
   loading?: boolean;
   error?: string;
@@ -288,7 +290,12 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
   const removeAttachment = (id: string) => setPendingAttachments((p) => p.filter((a) => a.id !== id));
 
   // ─────── Google Doc fetching ───────
-  const fetchGoogleDoc = async (url: string): Promise<{ text: string; error?: string }> => {
+  interface DocFetchResult {
+    text: string;
+    images: Array<{ mediaType: string; data: string }>;
+    error?: string;
+  }
+  const fetchGoogleDoc = async (url: string): Promise<DocFetchResult> => {
     try {
       const apiBase = import.meta.env.BASE_URL;
       const res = await fetch(`${apiBase}api/import-doc`, {
@@ -297,10 +304,10 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
         body: JSON.stringify({ url }),
       });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) return { text: "", error: j.error || `Doc fetch failed (${res.status})` };
-      return { text: j.text || "" };
+      if (!res.ok) return { text: "", images: [], error: j.error || `Doc fetch failed (${res.status})` };
+      return { text: j.text || "", images: Array.isArray(j.images) ? j.images : [] };
     } catch (e: any) {
-      return { text: "", error: e?.message || "Network error" };
+      return { text: "", images: [], error: e?.message || "Network error" };
     }
   };
 
@@ -334,6 +341,7 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
         ...att,
         loading: false,
         text: fetched[i].text,
+        docImages: fetched[i].images,
         error: fetched[i].error,
         size: fetched[i].text.length,
       }));
@@ -388,14 +396,21 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
               if (att.error) {
                 blocks.push({ type: "text", text: `⚠️ Google Doc fetch failed: ${att.error}` });
               } else if (att.text) {
-                blocks.push({ type: "text", text: `📄 Google Doc contents:\n\n---\n${att.text}\n---` });
+                const imgNote = att.docImages && att.docImages.length > 0
+                  ? ` (${att.docImages.length} embedded image${att.docImages.length === 1 ? "" : "s"} attached below)`
+                  : "";
+                blocks.push({ type: "text", text: `📄 Google Doc contents${imgNote}:\n\n---\n${att.text}\n---` });
               }
             }
           }
-          // Inject images
+          // Inject images (uploaded + extracted from Google Docs)
           for (const att of msg.attachments || []) {
             if (att.kind === "image" && att.base64 && att.mediaType) {
               blocks.push({ type: "image", mediaType: att.mediaType, data: att.base64 });
+            } else if (att.kind === "gdoc" && att.docImages) {
+              for (const img of att.docImages) {
+                blocks.push({ type: "image", mediaType: img.mediaType, data: img.data });
+              }
             }
           }
           // Inject PDFs
@@ -701,7 +716,7 @@ function AttachmentChip({ att, onRemove, dark }: { att: Attachment; onRemove?: (
     : att.error
     ? att.error
     : att.kind === "gdoc"
-    ? `${(att.size || 0).toLocaleString()} chars`
+    ? `${(att.size || 0).toLocaleString()} chars${att.docImages && att.docImages.length > 0 ? ` · ${att.docImages.length} image${att.docImages.length === 1 ? "" : "s"}` : ""}`
     : fmtBytes(att.size);
 
   if (att.kind === "image" && att.previewUrl) {

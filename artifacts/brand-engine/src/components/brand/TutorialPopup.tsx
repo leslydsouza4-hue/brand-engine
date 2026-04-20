@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, MousePointer2, Link2, Mail, PlayCircle } from "lucide-react";
+import { X, Sparkles, MousePointer2, Link2, Mail, Play } from "lucide-react";
 
 type TutorialConfig = {
   badge: string;
@@ -273,19 +273,26 @@ function RightEdgeTab({ onClick }: { onClick: () => void }) {
         transition: "transform 0.2s ease, box-shadow 0.2s ease",
       }}
     >
-      {/* pulsing halo */}
+      {/* pulsing halo BEHIND the button */}
       <motion.span
-        animate={{ scale: [1, 1.45, 1], opacity: [0.5, 0, 0.5] }}
+        animate={{ scale: [1, 1.6, 1], opacity: [0.55, 0, 0.55] }}
         transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
         style={{
           position: "absolute",
-          inset: -2,
+          inset: -10,
           borderRadius: 999,
-          background: "radial-gradient(circle, rgba(23,217,75,0.55), transparent 70%)",
+          background: "radial-gradient(circle, rgba(23,217,75,0.55), transparent 65%)",
           pointerEvents: "none",
+          zIndex: 0,
         }}
       />
-      <PlayCircle size={22} strokeWidth={2.5} fill="#0B1426" color="#0B1426" />
+      <Play
+        size={20}
+        strokeWidth={2.5}
+        fill="#0B1426"
+        color="#0B1426"
+        style={{ position: "relative", zIndex: 2, marginLeft: 2 }}
+      />
     </motion.button>
   );
 }
@@ -410,22 +417,22 @@ function BeatGenerate() {
       <div
         style={{
           position: "relative",
-          width: 80,
-          height: 80,
+          width: 52,
+          height: 52,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
         <motion.div
-          animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+          animate={{ scale: [1, 1.5, 1], opacity: [0.55, 0, 0.55] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut" }}
           style={{
             position: "absolute",
-            inset: 0,
+            inset: -6,
             borderRadius: 999,
             background:
-              "radial-gradient(circle, rgba(23,217,75,0.55), transparent 70%)",
+              "radial-gradient(circle, rgba(40,150,251,0.6), transparent 65%)",
           }}
         />
         <motion.div
@@ -433,29 +440,29 @@ function BeatGenerate() {
           transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
           style={{
             position: "absolute",
-            inset: 6,
+            inset: 0,
             borderRadius: 999,
             background:
-              "conic-gradient(from 0deg, #17D94B, #2896FB, #FFC328, #17D94B)",
-            mask: "radial-gradient(circle, transparent 60%, black 62%)",
-            WebkitMask: "radial-gradient(circle, transparent 60%, black 62%)",
+              "conic-gradient(from 0deg, rgba(40,150,251,0.95), rgba(40,150,251,0.2), rgba(40,150,251,0.95))",
+            mask: "radial-gradient(circle, transparent 64%, black 66%)",
+            WebkitMask: "radial-gradient(circle, transparent 64%, black 66%)",
           }}
         />
         <motion.div
-          animate={{ scale: [1, 1.15, 1] }}
+          animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 1.2, repeat: Infinity }}
           style={{
-            width: 36,
-            height: 36,
+            width: 26,
+            height: 26,
             borderRadius: 999,
-            background: "linear-gradient(135deg, #17D94B, #2896FB)",
+            background: "linear-gradient(135deg, #2896FB, #0B1426)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 4px 18px rgba(23,217,75,0.55)",
+            boxShadow: "0 2px 12px rgba(40,150,251,0.55)",
           }}
         >
-          <Sparkles size={18} color="#0B1426" strokeWidth={2.5} fill="#0B1426" />
+          <Sparkles size={13} color="#F8FAFC" strokeWidth={2.5} fill="#F8FAFC" />
         </motion.div>
       </div>
     </motion.div>

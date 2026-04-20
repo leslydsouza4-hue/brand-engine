@@ -1,10 +1,92 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Sparkles, ArrowUp, Loader2, Copy, Check, Wand2, FileText, MessageSquare, Lightbulb } from "lucide-react";
+import { Sparkles, ArrowUp, Loader2, Copy, Check, Wand2, FileText, MessageSquare, Lightbulb, Paperclip, X, Image as ImageIcon, FileType2, Globe, AlertCircle } from "lucide-react";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+
+type AttachmentKind = "image" | "pdf" | "text" | "gdoc";
+
+interface Attachment {
+  id: string;
+  kind: AttachmentKind;
+  name: string;
+  size?: number; // bytes
+  // For image/pdf: base64 (no data: prefix)
+  base64?: string;
+  mediaType?: string;
+  // For image preview
+  previewUrl?: string;
+  // For text/gdoc: the extracted text
+  text?: string;
+  // Loading/error state (used when a Google Doc is being fetched)
+  loading?: boolean;
+  error?: string;
+}
+
+type ContentBlock =
+  | { type: "text"; text: string }
+  | { type: "image"; mediaType: string; data: string }
+  | { type: "document"; mediaType: string; data: string; name?: string };
 
 interface ChatMessage {
   role: "user" | "assistant";
-  content: string;
+  // For display we keep the rich shape; for the wire we send normalized blocks (or string).
+  text: string; // human-typed text
+  attachments?: Attachment[]; // rendered as chips, also folded into wire content
+  // assistant messages are plain text only
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_PDF_BYTES = 20 * 1024 * 1024; // 20MB
+const MAX_TEXT_BYTES = 2 * 1024 * 1024; // 2MB
+const TEXT_EXT = /\.(txt|md|markdown|json|csv|tsv|html?|xml|yaml|yml|log|js|ts|jsx|tsx|css|sql|py)$/i;
+const IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"];
+const GDOC_RE = /https?:\/\/(?:docs|drive)\.google\.com\/(?:document\/d|file\/d|open\?id=)\/?([a-zA-Z0-9_-]{20,})/gi;
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+function fmtBytes(b?: number) {
+  if (!b && b !== 0) return "";
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const result = r.result as string;
+      const idx = result.indexOf(",");
+      resolve(idx >= 0 ? result.slice(idx + 1) : result);
+    };
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+function fileToText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || ""));
+    r.onerror = reject;
+    r.readAsText(file);
+  });
+}
+
+function findGoogleDocUrls(text: string): string[] {
+  const urls = new Set<string>();
+  let m: RegExpExecArray | null;
+  GDOC_RE.lastIndex = 0;
+  while ((m = GDOC_RE.exec(text)) !== null) urls.add(m[0]);
+  return [...urls];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Design brief parsing (unchanged from before)
 
 interface ParsedBrief {
   format?: string;
@@ -55,6 +137,9 @@ function stripBriefForDisplay(text: string): string {
   return text.replace(/<design_brief>[\s\S]*?<\/design_brief>/gi, "").trim();
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Markdown rendering
+
 function renderInline(text: string): React.ReactNode[] {
   const out: React.ReactNode[] = [];
   let i = 0;
@@ -94,21 +179,30 @@ function renderMarkdown(text: string): React.ReactNode {
   });
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Suggestions for empty state
+
 const SUGGESTIONS = [
   { icon: Lightbulb, label: "Brainstorm", prompt: "Brainstorm 5 punchy headline options for a webinar called 'AI Funnels for Agency Owners'. Audience is solo agency operators doing $10–50k/mo." },
   { icon: Wand2, label: "Design a graphic", prompt: "I need a square Instagram graphic announcing our Q2 product launch — it's a new AI workflow builder. Make it feel like a calm, confident reveal, not a hype post." },
-  { icon: FileText, label: "Ingest brand", prompt: "Here are my brand notes — read them and summarize my visual style, voice, and what makes us different in 4 bullets:\n\n[paste your Google Doc content here]" },
+  { icon: FileText, label: "Ingest brand", prompt: "Here are my brand notes — read them and summarize my visual style, voice, and what makes us different in 4 bullets." },
   { icon: MessageSquare, label: "Critique copy", prompt: "Critique this headline and rewrite it 3 ways: 'The Future Of Marketing Is Here — Don't Get Left Behind.'" },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
 
 export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt: string) => void }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sentBriefIds, setSentBriefIds] = useState<Set<number>>(new Set());
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -121,36 +215,220 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
     const ta = taRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    ta.style.height = Math.min(ta.scrollHeight, 220) + "px";
+    ta.style.height = Math.min(ta.scrollHeight, 240) + "px";
   }, [input]);
 
-  const send = useCallback(async (override?: string) => {
-    const text = (override ?? input).trim();
-    if (!text || loading) return;
+  // ─────── File ingestion ───────
+  const ingestFiles = useCallback(async (files: FileList | File[]) => {
     setError(null);
-    const next: ChatMessage[] = [...messages, { role: "user", content: text }];
-    setMessages(next);
-    setInput("");
-    setLoading(true);
+    const list = Array.from(files);
+    for (const file of list) {
+      const id = uid();
+      try {
+        if (IMAGE_TYPES.includes(file.type)) {
+          if (file.size > MAX_IMAGE_BYTES) {
+            setError(`${file.name} is over 5MB`);
+            continue;
+          }
+          const base64 = await fileToBase64(file);
+          setPendingAttachments((p) => [...p, {
+            id, kind: "image", name: file.name, size: file.size,
+            base64, mediaType: file.type,
+            previewUrl: `data:${file.type};base64,${base64}`,
+          }]);
+        } else if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+          if (file.size > MAX_PDF_BYTES) {
+            setError(`${file.name} is over 20MB`);
+            continue;
+          }
+          const base64 = await fileToBase64(file);
+          setPendingAttachments((p) => [...p, {
+            id, kind: "pdf", name: file.name, size: file.size,
+            base64, mediaType: "application/pdf",
+          }]);
+        } else if (file.type.startsWith("text/") || TEXT_EXT.test(file.name) || file.type === "application/json") {
+          if (file.size > MAX_TEXT_BYTES) {
+            setError(`${file.name} is over 2MB`);
+            continue;
+          }
+          const text = await fileToText(file);
+          setPendingAttachments((p) => [...p, {
+            id, kind: "text", name: file.name, size: file.size, text,
+          }]);
+        } else {
+          setError(`${file.name}: unsupported type (${file.type || "unknown"})`);
+        }
+      } catch (e: any) {
+        setError(`Failed to read ${file.name}: ${e?.message || "unknown error"}`);
+      }
+    }
+  }, []);
+
+  const handleFilePick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) ingestFiles(e.target.files);
+    e.target.value = "";
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    const files: File[] = [];
+    for (const item of Array.from(items)) {
+      if (item.kind === "file") {
+        const f = item.getAsFile();
+        if (f) files.push(f);
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault();
+      ingestFiles(files);
+    }
+  };
+
+  const removeAttachment = (id: string) => setPendingAttachments((p) => p.filter((a) => a.id !== id));
+
+  // ─────── Google Doc fetching ───────
+  const fetchGoogleDoc = async (url: string): Promise<{ text: string; error?: string }> => {
     try {
+      const apiBase = import.meta.env.BASE_URL;
+      const res = await fetch(`${apiBase}api/import-doc`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) return { text: "", error: j.error || `Doc fetch failed (${res.status})` };
+      return { text: j.text || "" };
+    } catch (e: any) {
+      return { text: "", error: e?.message || "Network error" };
+    }
+  };
+
+  // ─────── Send ───────
+  const send = useCallback(async (override?: string) => {
+    const userText = (override ?? input).trim();
+    if (!userText && pendingAttachments.length === 0) return;
+    if (loading) return;
+    setError(null);
+
+    // Detect Google Doc URLs and fetch them in parallel.
+    const docUrls = findGoogleDocUrls(userText);
+    let docAttachments: Attachment[] = [];
+    if (docUrls.length > 0) {
+      // Show fetching chips immediately.
+      docAttachments = docUrls.map((u) => ({
+        id: uid(), kind: "gdoc" as const, name: "Google Doc", text: "", loading: true,
+      }));
+      // Optimistically push the user message with the loading chips so the user sees progress.
+      const optimisticMsg: ChatMessage = {
+        role: "user",
+        text: userText,
+        attachments: [...pendingAttachments, ...docAttachments],
+      };
+      setMessages((m) => [...m, optimisticMsg]);
+      setInput("");
+      setLoading(true);
+
+      const fetched = await Promise.all(docUrls.map(fetchGoogleDoc));
+      docAttachments = docAttachments.map((att, i) => ({
+        ...att,
+        loading: false,
+        text: fetched[i].text,
+        error: fetched[i].error,
+        size: fetched[i].text.length,
+      }));
+      // Patch the last message with resolved doc attachments.
+      setMessages((m) => {
+        const copy = [...m];
+        const last = copy[copy.length - 1];
+        if (last?.role === "user") {
+          copy[copy.length - 1] = {
+            ...last,
+            attachments: [...pendingAttachments, ...docAttachments],
+          };
+        }
+        return copy;
+      });
+    } else {
+      const userMsg: ChatMessage = {
+        role: "user",
+        text: userText,
+        attachments: pendingAttachments.length > 0 ? [...pendingAttachments] : undefined,
+      };
+      setMessages((m) => [...m, userMsg]);
+      setInput("");
+      setLoading(true);
+    }
+
+    setPendingAttachments([]);
+
+    // Build wire payload from full message history.
+    try {
+      const wireMessages = (() => {
+        // Take the messages we just set, but since setState is async, build from a snapshot:
+        const all = [...messages];
+        // Re-insert the new user message we just optimistically added:
+        const newUser: ChatMessage = {
+          role: "user",
+          text: userText,
+          attachments: [...pendingAttachments, ...docAttachments],
+        };
+        all.push(newUser);
+        return all.map((msg) => {
+          if (msg.role === "assistant") {
+            return { role: "assistant", content: msg.text };
+          }
+          // user message → blocks
+          const blocks: ContentBlock[] = [];
+          // Inject text content from text/gdoc attachments first
+          for (const att of msg.attachments || []) {
+            if (att.kind === "text" && att.text) {
+              blocks.push({ type: "text", text: `📎 Attached file: ${att.name}\n\n---\n${att.text}\n---` });
+            } else if (att.kind === "gdoc") {
+              if (att.error) {
+                blocks.push({ type: "text", text: `⚠️ Google Doc fetch failed: ${att.error}` });
+              } else if (att.text) {
+                blocks.push({ type: "text", text: `📄 Google Doc contents:\n\n---\n${att.text}\n---` });
+              }
+            }
+          }
+          // Inject images
+          for (const att of msg.attachments || []) {
+            if (att.kind === "image" && att.base64 && att.mediaType) {
+              blocks.push({ type: "image", mediaType: att.mediaType, data: att.base64 });
+            }
+          }
+          // Inject PDFs
+          for (const att of msg.attachments || []) {
+            if (att.kind === "pdf" && att.base64 && att.mediaType) {
+              blocks.push({ type: "document", mediaType: att.mediaType, data: att.base64, name: att.name });
+            }
+          }
+          // Append the typed text last
+          if (msg.text) blocks.push({ type: "text", text: msg.text });
+          if (blocks.length === 0) blocks.push({ type: "text", text: "(no text)" });
+          return { role: "user", content: blocks };
+        });
+      })();
+
       const apiBase = import.meta.env.BASE_URL;
       const res = await fetch(`${apiBase}api/brand-brain`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: next }),
+        body: JSON.stringify({ messages: wireMessages }),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j.error || `Request failed (${res.status})`);
       }
       const data = await res.json();
-      setMessages((m) => [...m, { role: "assistant", content: data.text || "(no response)" }]);
+      setMessages((m) => [...m, { role: "assistant", text: data.text || "(no response)" }]);
     } catch (e: any) {
       setError(e?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages]);
+  }, [input, loading, messages, pendingAttachments]);
 
   const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -168,28 +446,62 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
   };
 
   const isEmpty = messages.length === 0;
+  const canSend = (input.trim().length > 0 || pendingAttachments.length > 0) && !loading;
+
+  // ─────── Drag and drop on the whole pane ───────
+  const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setDragOver(true); };
+  const onDragLeave = (e: React.DragEvent) => { e.preventDefault(); setDragOver(false); };
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer?.files?.length) ingestFiles(e.dataTransfer.files);
+  };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+    <div
+      className="flex-1 flex flex-col h-full overflow-hidden relative"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       {/* Soft purple aurora */}
       <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(168,85,247,0.10),transparent_70%)] blur-3xl" />
         <div className="absolute bottom-[-300px] right-[-100px] w-[700px] h-[500px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(40,150,251,0.08),transparent_70%)] blur-3xl" />
       </div>
 
+      {/* Drop overlay */}
+      {dragOver && (
+        <div className="absolute inset-0 z-50 pointer-events-none flex items-center justify-center bg-[rgba(11,20,38,0.85)] backdrop-blur-sm">
+          <div className="px-[28px] py-[22px] rounded-[18px] border-2 border-dashed border-[#A855F7] bg-[rgba(168,85,247,0.12)] text-[#E9D5FF] text-[15px] font-semibold flex items-center gap-[12px]">
+            <Paperclip className="w-[18px] h-[18px]" />
+            Drop images, PDFs, or text files
+          </div>
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        hidden
+        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,application/pdf,text/*,.md,.markdown,.json,.csv,.tsv,.html,.htm,.xml,.yaml,.yml,.log,.js,.ts,.jsx,.tsx,.css,.sql,.py"
+        onChange={handleFilePick}
+      />
+
       {/* Scroll area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto sidebar-scroll relative">
         <div className="max-w-[760px] mx-auto px-[24px] md:px-[32px] py-[28px]">
           {isEmpty ? (
-            <div className="min-h-[calc(100vh-260px)] flex flex-col items-center justify-center text-center">
+            <div className="min-h-[calc(100vh-300px)] flex flex-col items-center justify-center text-center">
               <div className="w-[64px] h-[64px] rounded-[20px] flex items-center justify-center mb-[20px] bg-gradient-to-br from-[#A855F7] via-[#2896FB] to-[#00B2A9] shadow-[0_12px_40px_rgba(168,85,247,0.35),inset_0_1px_0_rgba(255,255,255,0.25)]">
                 <Sparkles className="w-[28px] h-[28px] text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]" />
               </div>
               <h1 className="text-[34px] md:text-[40px] font-bold tracking-[-1px] bg-gradient-to-r from-white via-[#E2E8F0] to-white bg-clip-text text-transparent">
                 Brand Brain
               </h1>
-              <p className="text-[15px] text-[#94A3B8] mt-[10px] max-w-[480px]">
-                Ask anything. Paste your brand notes. Craft a design and ship it to Craft Magic with one click.
+              <p className="text-[15px] text-[#94A3B8] mt-[10px] max-w-[500px]">
+                Ask anything. Drop files, paste Google Docs, share images. Craft a design and ship it to Craft Magic with one click.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px] mt-[36px] w-full max-w-[600px]">
@@ -214,13 +526,22 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
           ) : (
             <div className="space-y-[28px] pb-[40px]">
               {messages.map((m, i) => {
-                const brief = m.role === "assistant" ? parseDesignBrief(m.content) : null;
-                const display = brief ? stripBriefForDisplay(m.content) : m.content;
+                const brief = m.role === "assistant" ? parseDesignBrief(m.text) : null;
+                const display = brief ? stripBriefForDisplay(m.text) : m.text;
                 return (
                   <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                     {m.role === "user" ? (
-                      <div className="max-w-[85%] px-[16px] py-[12px] rounded-[18px] rounded-br-[6px] bg-gradient-to-br from-[rgba(40,150,251,0.18)] to-[rgba(168,85,247,0.14)] border border-[rgba(40,150,251,0.25)] text-[14px] text-white whitespace-pre-wrap leading-[1.55]">
-                        {m.content}
+                      <div className="max-w-[85%] flex flex-col items-end gap-[8px]">
+                        {m.attachments && m.attachments.length > 0 && (
+                          <div className="flex flex-wrap gap-[8px] justify-end">
+                            {m.attachments.map((att) => <AttachmentChip key={att.id} att={att} dark />)}
+                          </div>
+                        )}
+                        {m.text && (
+                          <div className="px-[16px] py-[12px] rounded-[18px] rounded-br-[6px] bg-gradient-to-br from-[rgba(40,150,251,0.18)] to-[rgba(168,85,247,0.14)] border border-[rgba(40,150,251,0.25)] text-[14px] text-white whitespace-pre-wrap leading-[1.55]">
+                            {m.text}
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="max-w-[100%] flex gap-[12px] w-full">
@@ -301,8 +622,9 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
                 </div>
               )}
               {error && (
-                <div className="rounded-[10px] border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.08)] px-[14px] py-[10px] text-[12.5px] text-[#FCA5A5]">
-                  {error}
+                <div className="rounded-[10px] border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.08)] px-[14px] py-[10px] text-[12.5px] text-[#FCA5A5] flex items-start gap-[8px]">
+                  <AlertCircle className="w-[14px] h-[14px] mt-[1px] shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
             </div>
@@ -313,25 +635,42 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
       {/* Composer */}
       <div className="shrink-0 relative z-[1] px-[20px] md:px-[32px] pb-[24px] pt-[12px]">
         <div className="max-w-[760px] mx-auto">
+          {/* Pending attachment chips */}
+          {pendingAttachments.length > 0 && (
+            <div className="mb-[10px] flex flex-wrap gap-[8px]">
+              {pendingAttachments.map((att) => (
+                <AttachmentChip key={att.id} att={att} onRemove={() => removeAttachment(att.id)} />
+              ))}
+            </div>
+          )}
+
           <div className="relative rounded-[20px] bg-[#0B1426]/80 backdrop-blur-xl border border-white/[0.08] shadow-[0_12px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.06)] focus-within:border-[rgba(168,85,247,0.35)] focus-within:shadow-[0_12px_40px_rgba(168,85,247,0.18),inset_0_1px_0_rgba(255,255,255,0.08)] transition-all duration-200">
             <textarea
               ref={taRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Ask anything, paste your brand notes, or describe a design…"
+              onPaste={handlePaste}
+              placeholder="Ask anything, paste a Google Doc link, or drop files…"
               rows={1}
-              className="w-full bg-transparent resize-none px-[18px] pt-[16px] pb-[8px] text-[14.5px] text-white placeholder:text-[#475569] outline-none leading-[1.5] max-h-[220px]"
+              className="w-full bg-transparent resize-none px-[18px] pt-[16px] pb-[8px] text-[14.5px] text-white placeholder:text-[#475569] outline-none leading-[1.5] max-h-[240px]"
             />
-            <div className="flex items-center justify-between px-[14px] pb-[12px] pt-[2px]">
-              <div className="text-[10.5px] text-[#475569] tracking-[0.3px]">
-                <span className="hidden sm:inline">Shift + Enter for newline · </span>Powered by Claude Opus
+            <div className="flex items-center justify-between px-[10px] pb-[10px] pt-[2px] gap-[8px]">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.12] text-[#94A3B8] hover:text-white transition-all cursor-pointer"
+                title="Attach files"
+              >
+                <Paperclip className="w-[15px] h-[15px]" />
+              </button>
+              <div className="flex-1 text-[10.5px] text-[#475569] tracking-[0.3px] truncate">
+                <span className="hidden sm:inline">Shift + Enter for newline · Drag, paste, or attach files · </span>Powered by Claude Opus
               </div>
               <button
                 onClick={() => send()}
-                disabled={!input.trim() || loading}
+                disabled={!canSend}
                 className={`w-[34px] h-[34px] rounded-[10px] flex items-center justify-center transition-all duration-200 ${
-                  input.trim() && !loading
+                  canSend
                     ? "bg-gradient-to-br from-[#A855F7] via-[#2896FB] to-[#00B2A9] text-white shadow-[0_6px_18px_rgba(168,85,247,0.4),inset_0_1px_0_rgba(255,255,255,0.25)] hover:brightness-110 cursor-pointer"
                     : "bg-white/[0.04] text-[#475569] cursor-not-allowed"
                 }`}
@@ -347,6 +686,63 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
       <style>{`
         @keyframes bbDot { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.85); } 40% { opacity: 1; transform: scale(1.1); } }
       `}</style>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Attachment chip
+
+function AttachmentChip({ att, onRemove, dark }: { att: Attachment; onRemove?: () => void; dark?: boolean }) {
+  const Icon = att.kind === "image" ? ImageIcon : att.kind === "pdf" ? FileType2 : att.kind === "gdoc" ? Globe : FileText;
+  const iconColor = att.kind === "image" ? "text-[#2896FB]" : att.kind === "pdf" ? "text-[#EF4444]" : att.kind === "gdoc" ? "text-[#4285F4]" : "text-[#A855F7]";
+  const subtitle = att.loading
+    ? "Fetching…"
+    : att.error
+    ? att.error
+    : att.kind === "gdoc"
+    ? `${(att.size || 0).toLocaleString()} chars`
+    : fmtBytes(att.size);
+
+  if (att.kind === "image" && att.previewUrl) {
+    return (
+      <div className={`relative group rounded-[10px] overflow-hidden border ${dark ? "border-white/[0.10]" : "border-white/[0.08]"} bg-black/30`}>
+        <img src={att.previewUrl} alt={att.name} className="w-[64px] h-[64px] object-cover" />
+        {onRemove && (
+          <button
+            onClick={onRemove}
+            className="absolute top-[3px] right-[3px] w-[18px] h-[18px] rounded-full bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          >
+            <X className="w-[10px] h-[10px]" />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex items-center gap-[10px] pl-[10px] pr-[8px] py-[8px] rounded-[10px] max-w-[280px] ${
+      att.error
+        ? "bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.25)]"
+        : dark
+        ? "bg-white/[0.04] border border-white/[0.08]"
+        : "bg-white/[0.04] border border-white/[0.08]"
+    }`}>
+      <div className={`w-[26px] h-[26px] rounded-[7px] flex items-center justify-center shrink-0 bg-white/[0.04] ${att.error ? "text-[#EF4444]" : iconColor}`}>
+        {att.loading ? <Loader2 className="w-[13px] h-[13px] animate-spin" /> : att.error ? <AlertCircle className="w-[13px] h-[13px]" /> : <Icon className="w-[13px] h-[13px]" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[12px] font-semibold text-white truncate">{att.name}</div>
+        <div className={`text-[10.5px] truncate ${att.error ? "text-[#FCA5A5]" : "text-[#64748B]"}`}>{subtitle}</div>
+      </div>
+      {onRemove && (
+        <button
+          onClick={onRemove}
+          className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center text-[#64748B] hover:text-white hover:bg-white/[0.06] transition-all cursor-pointer shrink-0"
+        >
+          <X className="w-[12px] h-[12px]" />
+        </button>
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { DidYouKnowWorkspace } from "@/components/brand/DidYouKnowWorkspace";
 import { FeatureRequestBubble } from "@/components/brand/FeatureRequestBubble";
 import { FeatureRequestsWorkspace } from "@/components/brand/FeatureRequestsWorkspace";
 import { EmailTemplatesWorkspace } from "@/components/brand/EmailTemplatesWorkspace";
+import { TutorialPopup } from "@/components/brand/TutorialPopup";
 
 export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => {
@@ -65,6 +66,7 @@ export default function BrandEngine() {
         {currentMode === "feature-requests" && <FeatureRequestsWorkspace />}
       </div>
       <FeatureRequestBubble />
+      <TutorialPopup currentMode={currentMode} />
     </div>
   );
 }

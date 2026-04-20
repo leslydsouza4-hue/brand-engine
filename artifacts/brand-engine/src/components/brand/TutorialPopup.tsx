@@ -7,7 +7,7 @@ type TutorialConfig = {
   title: string;
   body: string;
   cta: string;
-  scene: "email" | "shaun" | "army" | "didyouknow";
+  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev";
 };
 
 const TUTORIALS: Record<string, TutorialConfig> = {
@@ -38,6 +38,13 @@ const TUTORIALS: Record<string, TutorialConfig> = {
     body: "Pick a person, choose a layout, type your fact, and batch-export branded Did You Know thumbnails.",
     cta: "Start a batch",
     scene: "didyouknow",
+  },
+  "bizdev-templates": {
+    badge: "NEW",
+    title: "Virtual Workshop kits",
+    body: "Pick a size, fill in the details, drop a guest photo, and export every variant in one go.",
+    cta: "Build a kit",
+    scene: "bizdev",
   },
 };
 
@@ -185,6 +192,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
               {config.scene === "shaun" && <ShaunScene />}
               {config.scene === "army" && <ArmyScene />}
               {config.scene === "didyouknow" && <DidYouKnowScene />}
+              {config.scene === "bizdev" && <BizDevScene />}
             </div>
 
             <div style={{ padding: "16px 18px 18px" }}>
@@ -3009,6 +3017,770 @@ function BeatDykHeadline() {
 }
 
 /* ===================== END DID YOU KNOW SCENE ===================== */
+
+/* ===================== BIZDEV / VIRTUAL WORKSHOP SCENE ===================== */
+
+function BizDevScene() {
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setBeat((b) => (b + 1) % 5), 2600);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: 18 }}>
+      <AnimatePresence mode="wait">
+        {beat === 0 && <BeatBizSize key="size" />}
+        {beat === 1 && <BeatBizText key="text" />}
+        {beat === 2 && <BeatBizUpload key="upload" />}
+        {beat === 3 && <BeatBizVariants key="variants" />}
+        {beat === 4 && <BeatBizGrid key="grid" />}
+      </AnimatePresence>
+      <div
+        style={{
+          position: "absolute",
+          bottom: 10,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+          gap: 5,
+          zIndex: 5,
+        }}
+      >
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: i === beat ? 16 : 5,
+              height: 5,
+              borderRadius: 999,
+              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
+              transition: "all 0.3s",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Beat 1 — SIZE selector (3 size cards, accurate aspect ratios) */
+function BeatBizSize() {
+  const [picked, setPicked] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setPicked(true), 700);
+    return () => clearTimeout(t);
+  }, []);
+  const SIZES = [
+    { key: "horizontal", label: "Horizontal", dim: "1920×1080", w: 80, h: 45 },
+    { key: "square", label: "Square", dim: "1080×1080", w: 50, h: 50 },
+    { key: "portrait", label: "Portrait", dim: "1080×1350", w: 40, h: 50 },
+  ];
+  const SELECTED = 0;
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 12,
+      }}
+    >
+      {SIZES.map((s, i) => {
+        const selected = i === SELECTED && picked;
+        return (
+          <motion.div
+            key={s.key}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 + i * 0.08, duration: 0.3 }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 5,
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: s.w,
+                height: s.h,
+                borderRadius: 4,
+                background: selected
+                  ? "linear-gradient(135deg, rgba(40,150,251,0.55), rgba(11,20,38,0.85))"
+                  : "rgba(255,255,255,0.06)",
+                border: selected
+                  ? "1.5px solid #2896FB"
+                  : "1.5px solid rgba(255,255,255,0.18)",
+                boxShadow: selected
+                  ? "0 0 0 4px rgba(40,150,251,0.18), 0 6px 18px rgba(40,150,251,0.3)"
+                  : "0 4px 10px rgba(0,0,0,0.25)",
+                transition: "all 0.3s",
+              }}
+            >
+              {selected && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                  style={{
+                    position: "absolute",
+                    top: -5,
+                    right: -5,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 999,
+                    background: "#2896FB",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "2px solid #0B1426",
+                  }}
+                >
+                  <Check size={7} color="#0B1426" strokeWidth={4} />
+                </motion.div>
+              )}
+            </div>
+            <div
+              style={{
+                fontSize: 8,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                color: selected ? "#2896FB" : "rgba(248,250,252,0.7)",
+                textTransform: "uppercase",
+                transition: "color 0.25s",
+              }}
+            >
+              {s.label}
+            </div>
+            <div
+              style={{
+                fontSize: 7,
+                color: "rgba(248,250,252,0.4)",
+                fontFamily: "ui-monospace, monospace",
+                marginTop: -2,
+              }}
+            >
+              {s.dim}
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+}
+
+/* Beat 2 — Text fields filling in: HEADLINE / GUEST / CTA (skeleton) */
+function BeatBizText() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 350);
+    const t2 = setTimeout(() => setStage(2), 950);
+    const t3 = setTimeout(() => setStage(3), 1550);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+  const FIELDS = [
+    { label: "HEADLINE", text: "AI Voice Agents Live" },
+    { label: "GUEST", text: "Robin Alex" },
+    { label: "CTA", text: "Save Your Seat →" },
+  ];
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        gap: 8,
+      }}
+    >
+      {FIELDS.map((f, i) => {
+        const filled = stage >= i + 1;
+        return (
+          <motion.div
+            key={f.label}
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.05 + i * 0.08, duration: 0.3 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 10px",
+              borderRadius: 8,
+              background: PANEL_BG,
+              border: filled
+                ? "1px solid rgba(40,150,251,0.55)"
+                : PANEL_BORDER,
+              boxShadow: filled
+                ? "0 0 0 3px rgba(40,150,251,0.12)"
+                : "none",
+              transition: "border-color 0.3s, box-shadow 0.3s",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 8,
+                fontWeight: 800,
+                letterSpacing: "0.1em",
+                color: filled ? "#2896FB" : "rgba(248,250,252,0.4)",
+                width: 56,
+                flexShrink: 0,
+                textTransform: "uppercase",
+                transition: "color 0.3s",
+              }}
+            >
+              {f.label}
+            </div>
+            <div
+              style={{
+                flex: 1,
+                fontSize: 11,
+                fontWeight: 600,
+                color: "#F8FAFC",
+                fontFamily: "ui-monospace, monospace",
+                minHeight: 14,
+              }}
+            >
+              {filled ? <Typewriter text={f.text} /> : (
+                <div
+                  style={{
+                    height: 5,
+                    width: "60%",
+                    background: "rgba(248,250,252,0.12)",
+                    borderRadius: 2,
+                  }}
+                />
+              )}
+            </div>
+            {filled && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                style={{
+                  width: 14,
+                  height: 14,
+                  borderRadius: 999,
+                  background: "#17D94B",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Check size={8} color="#0B1426" strokeWidth={4} />
+              </motion.div>
+            )}
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+}
+
+/* Beat 3 — Guest image upload (drop zone → progress → done) */
+function BeatBizUpload() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 350);
+    const t2 = setTimeout(() => setStage(2), 1700);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "16 / 9",
+          borderRadius: 10,
+          border: stage >= 2
+            ? "1.5px solid rgba(23,217,75,0.6)"
+            : "1.5px dashed rgba(40,150,251,0.65)",
+          background: stage >= 2
+            ? "rgba(23,217,75,0.06)"
+            : "rgba(40,150,251,0.06)",
+          boxShadow: stage >= 2
+            ? "0 0 0 4px rgba(23,217,75,0.12)"
+            : "0 0 0 4px rgba(40,150,251,0.10)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          position: "relative",
+          transition: "all 0.35s",
+          overflow: "hidden",
+        }}
+      >
+        {/* Stage 0: idle drop zone */}
+        {stage === 0 && (
+          <>
+            <UploadCloudFallback />
+            <div
+              style={{
+                fontSize: 9,
+                fontWeight: 700,
+                color: "rgba(248,250,252,0.65)",
+                letterSpacing: "0.04em",
+              }}
+            >
+              Drop guest photo here
+            </div>
+          </>
+        )}
+
+        {/* Stage 1: uploading — file card with progress bar */}
+        {stage === 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            style={{
+              width: "75%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 5,
+                  background: "linear-gradient(135deg, #2896FB, #1268C2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  boxShadow: "0 4px 8px rgba(40,150,251,0.4)",
+                }}
+              >
+                <ImageIcon size={14} color="#F8FAFC" strokeWidth={2.4} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    color: "#F8FAFC",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: "ui-monospace, monospace",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  robin-alex.jpg
+                </div>
+                <div
+                  style={{
+                    color: "rgba(248,250,252,0.45)",
+                    fontSize: 8,
+                    marginTop: 1,
+                  }}
+                >
+                  1.4 MB
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                height: 4,
+                background: "rgba(255,255,255,0.08)",
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+                style={{
+                  height: "100%",
+                  background: "linear-gradient(90deg, #2896FB, #7CC2FB)",
+                  boxShadow: "0 0 8px rgba(40,150,251,0.5)",
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {/* Stage 2: success — guest card preview */}
+        {stage === 2 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 380, damping: 22 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                background:
+                  "radial-gradient(circle at 35% 30%, rgba(248,250,252,0.85), rgba(124,194,251,0.4) 70%)",
+                border: "2px solid rgba(23,217,75,0.7)",
+                boxShadow: "0 0 0 4px rgba(23,217,75,0.18), 0 6px 14px rgba(0,0,0,0.4)",
+                position: "relative",
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 500, damping: 16, delay: 0.15 }}
+                style={{
+                  position: "absolute",
+                  bottom: -3,
+                  right: -3,
+                  width: 18,
+                  height: 18,
+                  borderRadius: 999,
+                  background: "#17D94B",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid #0B1426",
+                }}
+              >
+                <Check size={9} color="#0B1426" strokeWidth={4} />
+              </motion.div>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div
+                style={{
+                  fontSize: 7,
+                  fontWeight: 800,
+                  color: "#00B2A9",
+                  letterSpacing: "0.12em",
+                }}
+              >
+                GUEST:
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: "#F8FAFC",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                ROBIN ALEX
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* tiny upload icon stand-in */
+function UploadCloudFallback() {
+  return (
+    <motion.div
+      animate={{ y: [0, -3, 0] }}
+      transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: "50%",
+        background: "rgba(40,150,251,0.18)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <ImageIcon size={16} color="#2896FB" strokeWidth={2.4} />
+    </motion.div>
+  );
+}
+
+/* Beat 4 — Variant chips (Dates, CTA, Replays, Day 1, Day 2), one selected */
+function BeatBizVariants() {
+  const [selectedIdx, setSelectedIdx] = useState<number>(-1);
+  useEffect(() => {
+    // sweep through the chips landing on CTA (index 1)
+    const order = [0, 1, 2, 3, 4, 1];
+    let i = 0;
+    setSelectedIdx(order[0]);
+    const id = setInterval(() => {
+      i++;
+      if (i >= order.length) {
+        clearInterval(id);
+        return;
+      }
+      setSelectedIdx(order[i]);
+    }, 380);
+    return () => clearInterval(id);
+  }, []);
+  const VARIANTS = ["Dates", "CTA", "Replays", "Day 1", "Day 2"];
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Pick variants
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          gap: 6,
+          width: "100%",
+        }}
+      >
+        {VARIANTS.map((v, i) => {
+          const active = i === selectedIdx;
+          return (
+            <motion.div
+              key={v}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 + i * 0.06, duration: 0.3 }}
+              style={{
+                padding: "6px 11px",
+                borderRadius: 999,
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                background: active
+                  ? "linear-gradient(135deg, #2896FB, #1268C2)"
+                  : "rgba(255,255,255,0.06)",
+                color: active ? "#F8FAFC" : "rgba(248,250,252,0.7)",
+                border: active
+                  ? "1px solid rgba(124,194,251,0.6)"
+                  : "1px solid rgba(255,255,255,0.12)",
+                boxShadow: active
+                  ? "0 4px 12px rgba(40,150,251,0.5), 0 0 0 3px rgba(40,150,251,0.18)"
+                  : "none",
+                transition: "all 0.25s",
+              }}
+            >
+              {v}
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 5 — Grid of all variants + Download All button */
+function BeatBizGrid() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 1100);
+    return () => clearTimeout(t1);
+  }, []);
+  const TILES = ["Dates", "CTA", "Replays", "Day 1", "Day 2"];
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <span>All variants</span>
+        <span style={{ color: "#2896FB", fontSize: 8 }}>5 ready</span>
+      </div>
+      {/* grid */}
+      <div
+        style={{
+          flex: 1,
+          display: "grid",
+          gridTemplateColumns: "repeat(5, 1fr)",
+          gap: 5,
+        }}
+      >
+        {TILES.map((label, i) => (
+          <motion.div
+            key={label}
+            initial={{ opacity: 0, y: 8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{
+              delay: i * 0.08,
+              duration: 0.35,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            style={{
+              position: "relative",
+              aspectRatio: "16 / 9",
+              borderRadius: 5,
+              background:
+                "linear-gradient(135deg, rgba(40,150,251,0.45), rgba(11,20,38,0.85))",
+              border: "1px solid rgba(40,150,251,0.4)",
+              boxShadow: "0 3px 8px rgba(0,0,0,0.3)",
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
+              padding: "0 0 3px 0",
+            }}
+          >
+            {/* dot texture */}
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                backgroundImage:
+                  "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                backgroundSize: "4px 4px",
+                opacity: 0.5,
+              }}
+            />
+            {/* mini headline bar */}
+            <div
+              style={{
+                position: "absolute",
+                left: "10%",
+                right: "10%",
+                top: "30%",
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <div
+                style={{
+                  height: 3,
+                  background: "rgba(248,250,252,0.85)",
+                  borderRadius: 1,
+                }}
+              />
+              <div
+                style={{
+                  height: 2,
+                  width: "65%",
+                  background: "rgba(248,250,252,0.45)",
+                  borderRadius: 1,
+                }}
+              />
+            </div>
+            <div
+              style={{
+                position: "relative",
+                zIndex: 2,
+                fontSize: 6,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                color: "#FFC328",
+                textTransform: "uppercase",
+                textShadow: "0 1px 2px rgba(0,0,0,0.6)",
+              }}
+            >
+              {label}
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      {/* Download All button */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{
+          opacity: stage >= 1 ? 1 : 0,
+          y: stage >= 1 ? 0 : 6,
+        }}
+        transition={{ duration: 0.3 }}
+        style={{ display: "flex", justifyContent: "center", marginTop: 2 }}
+      >
+        <motion.div
+          animate={{
+            boxShadow: [
+              "0 4px 14px rgba(40,150,251,0.45), 0 0 0 0 rgba(40,150,251,0.5)",
+              "0 4px 14px rgba(40,150,251,0.45), 0 0 0 8px rgba(40,150,251,0)",
+            ],
+          }}
+          transition={{ duration: 1.4, repeat: Infinity }}
+          style={{
+            background: "linear-gradient(135deg, #2896FB, #1268C2)",
+            color: "#F8FAFC",
+            padding: "6px 14px",
+            borderRadius: 6,
+            fontSize: 10,
+            fontWeight: 800,
+            letterSpacing: "0.06em",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <Download size={11} strokeWidth={2.6} />
+          DOWNLOAD ALL
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ===================== END BIZDEV SCENE ===================== */
 
 function Typewriter({ text }: { text: string }) {
   const [n, setN] = useState(0);

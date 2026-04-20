@@ -2226,14 +2226,22 @@ function BeatArmyPick() {
   );
 }
 
-/* Beat 2 — Layout selector (3 wireframe presets, one selected) */
+/* Beat 2 — Layout selector (3 mini thumbnail previews, one selected) */
 function BeatArmyLayout() {
   const [picked, setPicked] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setPicked(true), 700);
     return () => clearTimeout(t);
   }, []);
-  const LAYOUTS = ["classic", "left", "right"] as const;
+  // Matches ContentArmyWorkspace LAYOUT_PRESETS:
+  // classic: person right, text bottom-centered
+  // left: person left, text on right
+  // right: person right, text on left
+  const LAYOUTS: Array<{ key: string; label: string }> = [
+    { key: "classic", label: "Classic" },
+    { key: "left", label: "Left" },
+    { key: "right", label: "Right" },
+  ];
   const SELECTED = 1;
   return (
     <motion.div
@@ -2258,7 +2266,7 @@ function BeatArmyLayout() {
           const selected = i === SELECTED && picked;
           return (
             <motion.div
-              key={l}
+              key={l.key}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 + i * 0.08, duration: 0.3 }}
@@ -2266,47 +2274,162 @@ function BeatArmyLayout() {
                 position: "relative",
                 aspectRatio: "16 / 10",
                 borderRadius: 8,
-                background: PANEL_BG,
-                backdropFilter: "blur(8px)",
+                overflow: "hidden",
+                background:
+                  "linear-gradient(135deg, rgba(40,150,251,0.45) 0%, rgba(11,20,38,0.85) 100%)",
                 border: selected
                   ? "1.5px solid #2896FB"
-                  : PANEL_BORDER,
+                  : "1px solid rgba(255,255,255,0.12)",
                 boxShadow: selected
                   ? "0 0 0 4px rgba(40,150,251,0.18), 0 8px 22px rgba(40,150,251,0.25)"
                   : "0 4px 12px rgba(0,0,0,0.25)",
-                padding: 8,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                alignItems:
-                  l === "classic"
-                    ? "center"
-                    : l === "left"
-                      ? "flex-start"
-                      : "flex-end",
-                gap: 3,
                 transition: "border-color 0.25s, box-shadow 0.25s",
               }}
             >
+              {/* dot texture */}
               <div
                 style={{
-                  width: l === "classic" ? "70%" : "75%",
-                  height: 4,
-                  background: selected
-                    ? "rgba(40,150,251,0.85)"
-                    : "rgba(248,250,252,0.45)",
-                  borderRadius: 2,
-                  transition: "background 0.25s",
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                  backgroundSize: "5px 5px",
+                  opacity: 0.5,
                 }}
               />
+
+              {/* PERSON puck */}
               <div
                 style={{
-                  width: l === "classic" ? "45%" : "50%",
-                  height: 3,
-                  background: "rgba(248,250,252,0.22)",
-                  borderRadius: 2,
+                  position: "absolute",
+                  width: "32%",
+                  aspectRatio: "1 / 1",
+                  borderRadius: "50%",
+                  background:
+                    "radial-gradient(circle at 35% 30%, rgba(248,250,252,0.55), rgba(248,250,252,0.18) 70%)",
+                  ...(l.key === "classic"
+                    ? { right: "8%", top: "50%", transform: "translateY(-50%)" }
+                    : l.key === "left"
+                      ? { left: "8%", top: "50%", transform: "translateY(-50%)" }
+                      : { right: "8%", top: "50%", transform: "translateY(-50%)" }),
                 }}
               />
+
+              {/* TEXT bars */}
+              {l.key === "classic" ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    right: 0,
+                    bottom: "12%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 3,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "60%",
+                      height: 4,
+                      background: "rgba(248,250,252,0.85)",
+                      borderRadius: 2,
+                    }}
+                  />
+                  <div
+                    style={{
+                      width: "40%",
+                      height: 2.5,
+                      background: "rgba(248,250,252,0.45)",
+                      borderRadius: 2,
+                    }}
+                  />
+                </div>
+              ) : (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "48%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: 3,
+                    ...(l.key === "left"
+                      ? { right: "6%" }
+                      : { left: "6%" }),
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "100%",
+                      height: 4,
+                      background: "rgba(248,250,252,0.85)",
+                      borderRadius: 2,
+                    }}
+                  />
+                  <div
+                    style={{
+                      width: "75%",
+                      height: 2.5,
+                      background: "rgba(248,250,252,0.45)",
+                      borderRadius: 2,
+                    }}
+                  />
+                  <div
+                    style={{
+                      width: "55%",
+                      height: 2.5,
+                      background: "rgba(248,250,252,0.45)",
+                      borderRadius: 2,
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* label */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 4,
+                  left: 6,
+                  fontSize: 7,
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  color: selected ? "#2896FB" : "rgba(248,250,252,0.7)",
+                  textTransform: "uppercase",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                  transition: "color 0.25s",
+                }}
+              >
+                {l.label}
+              </div>
+
+              {/* selected check */}
+              {selected && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 999,
+                    background: "#2896FB",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 8px rgba(40,150,251,0.8)",
+                  }}
+                >
+                  <Check size={8} color="#0B1426" strokeWidth={4} />
+                </motion.div>
+              )}
             </motion.div>
           );
         })}

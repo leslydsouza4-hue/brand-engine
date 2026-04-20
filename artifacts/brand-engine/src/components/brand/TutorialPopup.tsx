@@ -225,48 +225,111 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
         )}
       </AnimatePresence>
 
-      {/* Re-open trigger */}
+      {/* Re-open trigger — vertical right-edge tab */}
       <AnimatePresence>
-        {!open && (
-          <motion.button
-            initial={{ opacity: 0, y: 12, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.9 }}
-            transition={{ duration: 0.25, delay: 0.4 }}
-            onClick={() => {
-              try {
-                localStorage.removeItem(STORAGE_PREFIX + currentMode);
-              } catch {}
-              setOpen(true);
-            }}
-            style={{
-              position: "fixed",
-              right: 24,
-              bottom: 92,
-              zIndex: 9998,
-              display: "flex",
-              alignItems: "center",
-              gap: 7,
-              padding: "9px 14px 9px 11px",
-              borderRadius: 999,
-              background: "rgba(11,20,38,0.9)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(23,217,75,0.35)",
-              color: "#F8FAFC",
-              fontSize: 12,
-              fontWeight: 700,
-              fontFamily: "Inter, system-ui, sans-serif",
-              cursor: "pointer",
-              boxShadow:
-                "0 10px 30px -8px rgba(0,0,0,0.55), 0 0 0 1px rgba(23,217,75,0.08)",
-            }}
-          >
-            <PlayCircle size={15} color="#17D94B" strokeWidth={2.5} />
-            Watch tour
-          </motion.button>
-        )}
+        {!open && <RightEdgeTab onClick={() => {
+          try { localStorage.removeItem(STORAGE_PREFIX + currentMode); } catch {}
+          setOpen(true);
+        }} />}
       </AnimatePresence>
     </>
+  );
+}
+
+/* ---------- Right-edge "Watch tour" tab ---------- */
+
+function RightEdgeTab({ onClick }: { onClick: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <motion.button
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.3, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      aria-label="Watch tour"
+      style={{
+        position: "fixed",
+        right: 0,
+        top: "50%",
+        transform: `translate(${hover ? "-4px" : "0"}, -50%)`,
+        zIndex: 9998,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 10,
+        padding: "16px 8px",
+        borderTopLeftRadius: 14,
+        borderBottomLeftRadius: 14,
+        background:
+          "linear-gradient(180deg, rgba(11,20,38,0.96) 0%, rgba(15,26,46,0.96) 100%)",
+        backdropFilter: "blur(10px)",
+        border: "1px solid rgba(23,217,75,0.35)",
+        borderRight: "none",
+        color: "#F8FAFC",
+        fontFamily: "Inter, system-ui, sans-serif",
+        cursor: "pointer",
+        boxShadow: hover
+          ? "-8px 0 30px -6px rgba(23,217,75,0.35), -2px 0 12px -4px rgba(0,0,0,0.5)"
+          : "-6px 0 20px -8px rgba(0,0,0,0.55)",
+        transition: "transform 0.25s ease, box-shadow 0.25s ease",
+      }}
+    >
+      {/* Brand accent stripe on the inner edge */}
+      <span
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 14,
+          bottom: 14,
+          width: 2,
+          borderRadius: 2,
+          background: "linear-gradient(180deg, #17D94B, #2896FB)",
+        }}
+      />
+      {/* Pulsing dot */}
+      <span style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 10, height: 10 }}>
+        <motion.span
+          animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut" }}
+          style={{
+            position: "absolute",
+            width: 10,
+            height: 10,
+            borderRadius: 999,
+            background: "#17D94B",
+          }}
+        />
+        <span
+          style={{
+            position: "relative",
+            width: 6,
+            height: 6,
+            borderRadius: 999,
+            background: "#17D94B",
+            boxShadow: "0 0 8px rgba(23,217,75,0.8)",
+          }}
+        />
+      </span>
+      {/* Vertical text */}
+      <span
+        style={{
+          writingMode: "vertical-rl",
+          transform: "rotate(180deg)",
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: "#F8FAFC",
+          padding: "2px 0",
+        }}
+      >
+        Watch tour
+      </span>
+      <PlayCircle size={14} color="#17D94B" strokeWidth={2.5} />
+    </motion.button>
   );
 }
 

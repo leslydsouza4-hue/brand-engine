@@ -118,7 +118,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
                   width: "70%",
                   height: "70%",
                   background:
-                    "radial-gradient(circle, rgba(23,217,75,0.18), transparent 60%)",
+                    "radial-gradient(circle, rgba(40,150,251,0.22), transparent 60%)",
                   filter: "blur(20px)",
                   pointerEvents: "none",
                 }}
@@ -131,7 +131,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
                   width: "60%",
                   height: "60%",
                   background:
-                    "radial-gradient(circle, rgba(40,150,251,0.16), transparent 60%)",
+                    "radial-gradient(circle, rgba(40,150,251,0.18), transparent 60%)",
                   filter: "blur(20px)",
                   pointerEvents: "none",
                 }}
@@ -335,7 +335,7 @@ function EmailScene() {
               width: i === beat ? 16 : 5,
               height: 5,
               borderRadius: 999,
-              background: i === beat ? "#17D94B" : "rgba(248,250,252,0.2)",
+              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
               transition: "all 0.3s",
             }}
           />
@@ -381,8 +381,8 @@ function BeatPaste() {
           display: "flex",
           alignItems: "center",
           gap: 10,
-          border: "1.5px solid rgba(23,217,75,0.55)",
-          boxShadow: "0 0 0 4px rgba(23,217,75,0.10)",
+          border: "1.5px solid rgba(40,150,251,0.6)",
+          boxShadow: "0 0 0 4px rgba(40,150,251,0.12)",
         }}
       >
         <Link2 size={16} color="#2896FB" strokeWidth={2.5} />
@@ -499,18 +499,18 @@ function BeatEmail() {
           style={{
             transformOrigin: "top",
             height: 38,
-            background: "linear-gradient(135deg, #17D94B 0%, #2896FB 100%)",
+            background: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
             position: "relative",
             display: "flex",
             alignItems: "center",
             padding: "0 12px",
           }}
         >
-          <Mail size={14} color="#0B1426" strokeWidth={2.5} />
+          <Mail size={14} color="#F8FAFC" strokeWidth={2.5} />
           <div
             style={{
               marginLeft: 6,
-              color: "#0B1426",
+              color: "#F8FAFC",
               fontSize: 9,
               fontWeight: 800,
               letterSpacing: "0.05em",
@@ -542,13 +542,13 @@ function BeatEmail() {
             style={{
               marginTop: 8,
               padding: "5px 10px",
-              background: "#17D94B",
-              color: "#0B1426",
+              background: "#2896FB",
+              color: "#F8FAFC",
               fontSize: 9,
               fontWeight: 800,
               borderRadius: 6,
               display: "inline-block",
-              boxShadow: "0 4px 12px rgba(23,217,75,0.35)",
+              boxShadow: "0 4px 12px rgba(40,150,251,0.45)",
             }}
           >
             CLAIM OFFER →
@@ -561,7 +561,7 @@ function BeatEmail() {
 
 function BeatEdit() {
   const [colorIdx, setColorIdx] = useState(0);
-  const colors = ["#17D94B", "#2896FB", "#FFC328"];
+  const colors = ["#2896FB", "#7CC2FB", "#FFC328"];
 
   useEffect(() => {
     const id = setInterval(() => setColorIdx((c) => (c + 1) % 3), 700);
@@ -639,7 +639,7 @@ function BeatEdit() {
           style={{
             marginLeft: 6,
             padding: "5px 10px",
-            color: "#0B1426",
+            color: colorIdx === 2 ? "#0B1426" : "#F8FAFC",
             fontSize: 9,
             fontWeight: 800,
             borderRadius: 6,

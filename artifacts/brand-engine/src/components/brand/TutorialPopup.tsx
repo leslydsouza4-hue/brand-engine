@@ -4939,3 +4939,32 @@ function BeatCraftGenerate() {
   );
 }
 
+
+function Typewriter({ text }: { text: string }) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    setN(0);
+    const id = setInterval(() => {
+      setN((c) => {
+        if (c >= text.length) {
+          clearInterval(id);
+          return c;
+        }
+        return c + 1;
+      });
+    }, 55);
+    return () => clearInterval(id);
+  }, [text]);
+  return (
+    <span>
+      {text.slice(0, n)}
+      <motion.span
+        animate={{ opacity: [1, 0, 1] }}
+        transition={{ duration: 0.8, repeat: Infinity }}
+        style={{ display: "inline-block", marginLeft: 1 }}
+      >
+        |
+      </motion.span>
+    </span>
+  );
+}

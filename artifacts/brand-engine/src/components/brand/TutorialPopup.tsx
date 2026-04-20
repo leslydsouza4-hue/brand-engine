@@ -1843,7 +1843,10 @@ function _BeatComposeBatchLegacy() {
 }
 
 /* Beat 4: DOWNLOAD A ZIP — one click, whole batch packaged */
-function BeatExport() {
+function BeatExport({
+  zipName = "shaun-thumbnails.zip",
+  subtitle = "4 thumbnails · 2.4 MB",
+}: { zipName?: string; subtitle?: string } = {}) {
   // stages: 0 init → 1 thumbs added → 2 zipping (collapse into ZIP) → 3 download glow
   const [stage, setStage] = useState(0);
   useEffect(() => {
@@ -1982,7 +1985,7 @@ function BeatExport() {
                 letterSpacing: "0.01em",
               }}
             >
-              shaun-thumbnails.zip
+              {zipName}
             </div>
             <div
               style={{
@@ -1992,7 +1995,7 @@ function BeatExport() {
                 marginTop: 2,
               }}
             >
-              4 thumbnails · 2.4 MB
+              {subtitle}
             </div>
           </div>
           {/* check pop once ready */}
@@ -2104,28 +2107,28 @@ function BeatExport() {
 /* ===================== END SHAUN SCENE ===================== */
 
 /* ===================== CONTENT ARMY SCENE ===================== */
-
-const ARMY_MEMBERS = [
-  { initial: "B", color: "#2896FB", name: "Ben" },
-  { initial: "S", color: "#7CC2FB", name: "Starr" },
-  { initial: "A", color: "#1268C2", name: "Andrew" },
-  { initial: "T", color: "#FB923C", name: "Tina" },
-  { initial: "U", color: "#17D94B", name: "Usma" },
-];
+const ARMY_INITIALS = ["BS", "AG", "TD", "UM"];
 
 function ArmyScene() {
   const [beat, setBeat] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setBeat((b) => (b + 1) % 4), 2800);
+    const id = setInterval(() => setBeat((b) => (b + 1) % 5), 2400);
     return () => clearInterval(id);
   }, []);
   return (
     <div style={{ position: "absolute", inset: 0, padding: 18 }}>
       <AnimatePresence mode="wait">
         {beat === 0 && <BeatArmyPick key="pick" />}
-        {beat === 1 && <BeatArmyLayoutDoc key="layout" />}
-        {beat === 2 && <BeatArmyCompose key="compose" />}
-        {beat === 3 && <BeatExport key="export" />}
+        {beat === 1 && <BeatArmyLayout key="layout" />}
+        {beat === 2 && <BeatArmyDoc key="doc" />}
+        {beat === 3 && <BeatArmyHeadline key="headline" />}
+        {beat === 4 && (
+          <BeatExport
+            key="export"
+            zipName="content-army-thumbnails.zip"
+            subtitle="4 thumbnails · 2.4 MB"
+          />
+        )}
       </AnimatePresence>
       <div
         style={{
@@ -2139,7 +2142,7 @@ function ArmyScene() {
           zIndex: 5,
         }}
       >
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2, 3, 4].map((i) => (
           <div
             key={i}
             style={{
@@ -2156,20 +2159,14 @@ function ArmyScene() {
   );
 }
 
-/* Beat 1: PICK PERSON → POSE (two-stage selection) */
+/* Beat 1 — 4 sleek initial boxes, one selected */
 function BeatArmyPick() {
-  const [stage, setStage] = useState(0);
+  const [picked, setPicked] = useState(false);
   useEffect(() => {
-    const t1 = setTimeout(() => setStage(1), 700); // person picked
-    const t2 = setTimeout(() => setStage(2), 1300); // poses appear
-    const t3 = setTimeout(() => setStage(3), 2000); // pose picked
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    const t = setTimeout(() => setPicked(true), 700);
+    return () => clearTimeout(t);
   }, []);
-  const SELECTED = 3; // Tina
+  const SELECTED = 2;
   return (
     <motion.div
       {...sceneAnim}
@@ -2177,465 +2174,198 @@ function BeatArmyPick() {
         position: "absolute",
         inset: 18,
         display: "flex",
-        flexDirection: "column",
-        gap: 10,
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <div
         style={{
-          fontSize: 9,
-          fontWeight: 800,
-          letterSpacing: "0.12em",
-          color: "rgba(248,250,252,0.55)",
-          textTransform: "uppercase",
-        }}
-      >
-        Pick your team member
-      </div>
-
-      {/* avatar row */}
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 6 }}>
-        {ARMY_MEMBERS.map((m, i) => {
-          const selected = i === SELECTED && stage >= 1;
-          return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 + i * 0.06, duration: 0.3 }}
-              style={{
-                position: "relative",
-                width: 38,
-                height: 38,
-                borderRadius: "50%",
-                background: `linear-gradient(135deg, ${m.color}, rgba(11,20,38,0.85))`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#F8FAFC",
-                fontSize: 14,
-                fontWeight: 800,
-                border: selected
-                  ? "2px solid #2896FB"
-                  : "2px solid rgba(255,255,255,0.08)",
-                boxShadow: selected
-                  ? "0 0 14px rgba(40,150,251,0.7)"
-                  : "none",
-                transition: "border-color 0.25s, box-shadow 0.25s",
-              }}
-            >
-              {m.initial}
-              {selected && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
-                  style={{
-                    position: "absolute",
-                    top: -2,
-                    right: -2,
-                    width: 14,
-                    height: 14,
-                    borderRadius: 999,
-                    background: "#2896FB",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    border: "2px solid #0B1426",
-                  }}
-                >
-                  <Check size={7} color="#0B1426" strokeWidth={4} />
-                </motion.div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
-
-      {/* divider label */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: stage >= 2 ? 1 : 0 }}
-        transition={{ duration: 0.25 }}
-        style={{
-          fontSize: 8,
-          fontWeight: 800,
-          letterSpacing: "0.12em",
-          color: "rgba(40,150,251,0.85)",
-          textTransform: "uppercase",
-          marginTop: 2,
-        }}
-      >
-        Tina · pick a pose
-      </motion.div>
-
-      {/* pose tiles */}
-      <div
-        style={{
-          flex: 1,
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 5,
-          marginTop: -2,
+          gap: 10,
+          width: "100%",
         }}
       >
-        {[0, 1, 2, 3].map((i) => {
-          const selectedPose = i === 1 && stage >= 3;
+        {ARMY_INITIALS.map((label, i) => {
+          const selected = i === SELECTED && picked;
           return (
             <motion.div
               key={i}
-              initial={{ opacity: 0, y: 10, scale: 0.9 }}
-              animate={{
-                opacity: stage >= 2 ? 1 : 0,
-                y: stage >= 2 ? 0 : 10,
-                scale: stage >= 2 ? 1 : 0.9,
-              }}
-              transition={{
-                delay: stage >= 2 ? i * 0.07 : 0,
-                duration: 0.35,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              style={{
-                position: "relative",
-                aspectRatio: "3 / 4",
-                borderRadius: 6,
-                background:
-                  "linear-gradient(160deg, rgba(40,150,251,0.18), rgba(11,20,38,0.65))",
-                border: selectedPose
-                  ? "2px solid #2896FB"
-                  : "1.5px solid rgba(255,255,255,0.1)",
-                boxShadow: selectedPose
-                  ? "0 0 14px rgba(40,150,251,0.6)"
-                  : "none",
-                overflow: "hidden",
-                display: "flex",
-                alignItems: "flex-end",
-                justifyContent: "center",
-                transition: "border-color 0.25s, box-shadow 0.25s",
-              }}
-            >
-              {/* silhouette */}
-              <div
-                style={{
-                  width: "75%",
-                  height: "85%",
-                  position: "relative",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "flex-end",
-                }}
-              >
-                <div
-                  style={{
-                    width: "55%",
-                    aspectRatio: "1 / 1",
-                    borderRadius: "50%",
-                    background: "rgba(248,250,252,0.18)",
-                    marginBottom: -2,
-                  }}
-                />
-                <div
-                  style={{
-                    width: "100%",
-                    height: "55%",
-                    background: "rgba(248,250,252,0.18)",
-                    borderRadius: "50% 50% 4px 4px / 60% 60% 4px 4px",
-                  }}
-                />
-              </div>
-              {selectedPose && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
-                  style={{
-                    position: "absolute",
-                    top: 3,
-                    right: 3,
-                    width: 12,
-                    height: 12,
-                    borderRadius: 999,
-                    background: "#2896FB",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 0 6px rgba(40,150,251,0.8)",
-                  }}
-                >
-                  <Check size={7} color="#0B1426" strokeWidth={4} />
-                </motion.div>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
-
-/* Beat 2: LAYOUT preset + Support Doc URL fetch */
-function BeatArmyLayoutDoc() {
-  const [stage, setStage] = useState(0);
-  useEffect(() => {
-    const t1 = setTimeout(() => setStage(1), 600); // layout selected
-    const t2 = setTimeout(() => setStage(2), 1300); // url typed
-    const t3 = setTimeout(() => setStage(3), 1900); // fetch success
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, []);
-
-  // 3 layout previews — Classic (centered), Left (text-left), Right (text-right)
-  const LAYOUTS: Array<{ key: string; label: string }> = [
-    { key: "classic", label: "Classic" },
-    { key: "left", label: "Left" },
-    { key: "right", label: "Right" },
-  ];
-
-  return (
-    <motion.div
-      {...sceneAnim}
-      style={{
-        position: "absolute",
-        inset: 18,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-      }}
-    >
-      <div
-        style={{
-          fontSize: 9,
-          fontWeight: 800,
-          letterSpacing: "0.12em",
-          color: "rgba(248,250,252,0.55)",
-          textTransform: "uppercase",
-        }}
-      >
-        Layout · Support Doc
-      </div>
-
-      {/* layout presets */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
-        {LAYOUTS.map((l, i) => {
-          const selected = i === 1 && stage >= 1; // Left selected
-          return (
-            <motion.div
-              key={l.key}
-              initial={{ opacity: 0, y: 6 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 + i * 0.07, duration: 0.3 }}
               style={{
                 position: "relative",
-                aspectRatio: "16 / 9",
-                borderRadius: 6,
-                background: "rgba(40,150,251,0.08)",
+                aspectRatio: "1 / 1",
+                borderRadius: 10,
+                background: PANEL_BG,
+                backdropFilter: "blur(8px)",
                 border: selected
                   ? "1.5px solid #2896FB"
-                  : "1px solid rgba(255,255,255,0.1)",
-                boxShadow: selected ? "0 0 10px rgba(40,150,251,0.5)" : "none",
-                padding: 4,
+                  : PANEL_BORDER,
+                boxShadow: selected
+                  ? "0 0 0 4px rgba(40,150,251,0.18), 0 8px 22px rgba(40,150,251,0.25)"
+                  : "0 4px 12px rgba(0,0,0,0.25)",
                 display: "flex",
                 alignItems: "center",
-                justifyContent:
-                  l.key === "left"
-                    ? "space-between"
-                    : l.key === "right"
-                      ? "space-between"
-                      : "center",
-                gap: 3,
-                flexDirection: l.key === "right" ? "row-reverse" : "row",
-                transition: "border-color 0.25s, box-shadow 0.25s",
+                justifyContent: "center",
+                color: selected ? "#F8FAFC" : "rgba(248,250,252,0.7)",
+                fontSize: 16,
+                fontWeight: 800,
+                letterSpacing: "0.04em",
+                fontFamily: "ui-monospace, monospace",
+                transition: "border-color 0.25s, box-shadow 0.25s, color 0.25s",
               }}
             >
-              {/* text bars */}
-              <div
-                style={{
-                  flex: l.key === "classic" ? "0 0 auto" : 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2,
-                  alignItems: l.key === "classic" ? "center" : "flex-start",
-                }}
-              >
-                <div
-                  style={{
-                    width: l.key === "classic" ? 28 : "85%",
-                    height: 3,
-                    background: "rgba(248,250,252,0.55)",
-                    borderRadius: 1,
-                  }}
-                />
-                <div
-                  style={{
-                    width: l.key === "classic" ? 18 : "55%",
-                    height: 2,
-                    background: "rgba(248,250,252,0.3)",
-                    borderRadius: 1,
-                  }}
-                />
-              </div>
-              {/* silhouette mini */}
-              {l.key !== "classic" && (
-                <div
-                  style={{
-                    width: 12,
-                    height: 16,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "flex-end",
-                    gap: 0,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: "50%",
-                      background: "rgba(248,250,252,0.5)",
-                      marginBottom: -1,
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: 12,
-                      height: 8,
-                      background: "rgba(248,250,252,0.5)",
-                      borderRadius: "50% 50% 2px 2px / 60% 60% 2px 2px",
-                    }}
-                  />
-                </div>
-              )}
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 2,
-                  left: 4,
-                  fontSize: 7,
-                  fontWeight: 700,
-                  color: selected ? "#2896FB" : "rgba(248,250,252,0.45)",
-                  letterSpacing: "0.04em",
-                }}
-              >
-                {l.label}
-              </div>
+              {label}
             </motion.div>
           );
         })}
       </div>
-
-      {/* Support Doc input */}
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.35 }}
-        style={{
-          marginTop: 4,
-          display: "flex",
-          gap: 5,
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            flex: 1,
-            height: 26,
-            borderRadius: 6,
-            background: "rgba(11,20,38,0.6)",
-            border: "1px solid rgba(40,150,251,0.4)",
-            display: "flex",
-            alignItems: "center",
-            padding: "0 8px",
-            gap: 5,
-            overflow: "hidden",
-          }}
-        >
-          <Link2 size={11} color="#2896FB" strokeWidth={2.6} />
-          <span
-            style={{
-              fontSize: 9,
-              color: "rgba(248,250,252,0.85)",
-              fontFamily: "ui-monospace, monospace",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {stage >= 2 ? <Typewriter text="docs.gohighlevel.com/voice-agent" /> : ""}
-          </span>
-        </div>
-        <motion.div
-          animate={{
-            background:
-              stage >= 3
-                ? "linear-gradient(135deg, #17D94B, #0E8E33)"
-                : "linear-gradient(135deg, #2896FB, #1268C2)",
-          }}
-          transition={{ duration: 0.3 }}
-          style={{
-            height: 26,
-            padding: "0 9px",
-            borderRadius: 6,
-            color: "#F8FAFC",
-            fontSize: 9,
-            fontWeight: 800,
-            letterSpacing: "0.06em",
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            boxShadow: "0 4px 10px rgba(40,150,251,0.4)",
-          }}
-        >
-          {stage >= 3 ? (
-            <>
-              <Check size={10} strokeWidth={3} />
-              FETCHED
-            </>
-          ) : (
-            "FETCH"
-          )}
-        </motion.div>
-      </motion.div>
-
-      {/* success pill — title + images count */}
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{
-          opacity: stage >= 3 ? 1 : 0,
-          y: stage >= 3 ? 0 : 6,
-        }}
-        transition={{ duration: 0.3 }}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "5px 8px",
-          borderRadius: 6,
-          background: "rgba(23,217,75,0.1)",
-          border: "1px solid rgba(23,217,75,0.4)",
-          fontSize: 9,
-          fontWeight: 700,
-          color: "#17D94B",
-          letterSpacing: "0.02em",
-        }}
-      >
-        <ImageIcon size={10} strokeWidth={2.4} />
-        Title & 4 images loaded
-      </motion.div>
     </motion.div>
   );
 }
 
-/* Beat 3: SCREENSHOT skeleton + headline typewriter on the branded canvas */
-function BeatArmyCompose() {
+/* Beat 2 — Layout selector (3 wireframe presets, one selected) */
+function BeatArmyLayout() {
+  const [picked, setPicked] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setPicked(true), 700);
+    return () => clearTimeout(t);
+  }, []);
+  const LAYOUTS = ["classic", "left", "right"] as const;
+  const SELECTED = 1;
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 10,
+          width: "100%",
+        }}
+      >
+        {LAYOUTS.map((l, i) => {
+          const selected = i === SELECTED && picked;
+          return (
+            <motion.div
+              key={l}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 + i * 0.08, duration: 0.3 }}
+              style={{
+                position: "relative",
+                aspectRatio: "16 / 10",
+                borderRadius: 8,
+                background: PANEL_BG,
+                backdropFilter: "blur(8px)",
+                border: selected
+                  ? "1.5px solid #2896FB"
+                  : PANEL_BORDER,
+                boxShadow: selected
+                  ? "0 0 0 4px rgba(40,150,251,0.18), 0 8px 22px rgba(40,150,251,0.25)"
+                  : "0 4px 12px rgba(0,0,0,0.25)",
+                padding: 8,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+                alignItems:
+                  l === "classic"
+                    ? "center"
+                    : l === "left"
+                      ? "flex-start"
+                      : "flex-end",
+                gap: 3,
+                transition: "border-color 0.25s, box-shadow 0.25s",
+              }}
+            >
+              <div
+                style={{
+                  width: l === "classic" ? "70%" : "75%",
+                  height: 4,
+                  background: selected
+                    ? "rgba(40,150,251,0.85)"
+                    : "rgba(248,250,252,0.45)",
+                  borderRadius: 2,
+                  transition: "background 0.25s",
+                }}
+              />
+              <div
+                style={{
+                  width: l === "classic" ? "45%" : "50%",
+                  height: 3,
+                  background: "rgba(248,250,252,0.22)",
+                  borderRadius: 2,
+                }}
+              />
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 3 — Support Doc URL paste (sleek single input, like Email) */
+function BeatArmyDoc() {
+  const url = "docs.gohighlevel.com/voice-agent";
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          background: PANEL_BG,
+          backdropFilter: "blur(8px)",
+          borderRadius: 12,
+          padding: "12px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          border: "1.5px solid rgba(40,150,251,0.6)",
+          boxShadow: "0 0 0 4px rgba(40,150,251,0.12)",
+        }}
+      >
+        <Link2 size={16} color="#2896FB" strokeWidth={2.5} />
+        <div
+          style={{
+            flex: 1,
+            fontSize: 12,
+            color: "#F8FAFC",
+            fontWeight: 600,
+            fontFamily: "ui-monospace, monospace",
+          }}
+        >
+          <Typewriter text={url} />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 4 — Headline appearing as skeleton, centered bottom on the branded thumbnail */
+function BeatArmyHeadline() {
   const [stage, setStage] = useState(0);
   useEffect(() => {
-    const t1 = setTimeout(() => setStage(1), 500); // ss skeleton lands
-    const t2 = setTimeout(() => setStage(2), 1100); // headline starts typing
+    const t1 = setTimeout(() => setStage(1), 500);
+    const t2 = setTimeout(() => setStage(2), 1100);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
@@ -2648,191 +2378,124 @@ function BeatArmyCompose() {
         position: "absolute",
         inset: 18,
         display: "flex",
-        flexDirection: "column",
-        gap: 8,
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <style>{`
-        @keyframes armyShimmer {
+        @keyframes armyShimmer2 {
           0% { background-position: 200% 0; }
           100% { background-position: -100% 0; }
         }
-        .army-skel {
+        .army-skel2 {
           position: relative;
-          background: rgba(248,250,252,0.10);
+          background: rgba(248,250,252,0.18);
           overflow: hidden;
         }
-        .army-skel::after {
+        .army-skel2::after {
           content: "";
           position: absolute;
           inset: 0;
           background: linear-gradient(
             100deg,
             transparent 20%,
-            rgba(248,250,252,0.18) 38%,
-            rgba(124,194,251,0.55) 50%,
-            rgba(248,250,252,0.18) 62%,
+            rgba(248,250,252,0.25) 38%,
+            rgba(124,194,251,0.6) 50%,
+            rgba(248,250,252,0.25) 62%,
             transparent 80%
           );
           background-size: 220% 100%;
           background-repeat: no-repeat;
-          animation: armyShimmer 1.6s ease-in-out infinite;
-        }
-        @keyframes armyCaret {
-          0%, 50% { opacity: 1; }
-          51%, 100% { opacity: 0; }
+          animation: armyShimmer2 1.5s ease-in-out infinite;
         }
       `}</style>
       <div
         style={{
-          fontSize: 9,
-          fontWeight: 800,
-          letterSpacing: "0.12em",
-          color: "rgba(248,250,252,0.55)",
-          textTransform: "uppercase",
+          position: "relative",
+          width: "100%",
+          aspectRatio: "16 / 9",
+          borderRadius: 10,
+          overflow: "hidden",
+          background: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
+          border: "1.5px solid rgba(40,150,251,0.5)",
+          boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
         }}
       >
-        Drop screenshot · type headline
-      </div>
-      <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
-        {/* HighLevel branded canvas */}
+        {/* dot texture */}
         <div
           style={{
-            position: "relative",
-            width: "100%",
-            aspectRatio: "16 / 9",
-            borderRadius: 10,
-            overflow: "hidden",
-            background:
-              "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
-            border: "1.5px solid rgba(40,150,251,0.5)",
-            boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
-            display: "flex",
-            alignItems: "center",
-            padding: "10px 12px",
-            gap: 10,
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+            backgroundSize: "8px 8px",
+            opacity: 0.5,
+          }}
+        />
+        {/* HighLevel mark — top-left */}
+        <div
+          style={{
+            position: "absolute",
+            top: 8,
+            left: 10,
+            color: "#F8FAFC",
+            fontSize: 8,
+            fontWeight: 800,
+            letterSpacing: "0.12em",
+            opacity: 0.85,
           }}
         >
-          {/* dot texture */}
+          HIGHLEVEL
+        </div>
+
+        {/* headline skeleton — centered bottom */}
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{
+            opacity: stage >= 1 ? 1 : 0,
+            y: stage >= 1 ? 0 : 6,
+          }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 16,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 5,
+            padding: "0 16px",
+          }}
+        >
           <div
+            className="army-skel2"
             style={{
-              position: "absolute",
-              inset: 0,
-              backgroundImage:
-                "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
-              backgroundSize: "8px 8px",
-              opacity: 0.5,
-              pointerEvents: "none",
+              height: 10,
+              width: "70%",
+              borderRadius: 3,
             }}
           />
-
-          {/* LEFT — typing headline */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              flexDirection: "column",
-              gap: 5,
-              maxWidth: "58%",
-              zIndex: 1,
-            }}
-          >
-            <div
-              style={{
-                background: "#2896FB",
-                color: "#0B1426",
-                fontSize: 7,
-                fontWeight: 800,
-                letterSpacing: "0.08em",
-                padding: "2px 5px",
-                borderRadius: 3,
-                display: "inline-block",
-                alignSelf: "flex-start",
-                marginBottom: 2,
-                boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
-              }}
-            >
-              FEATURE UPDATE
-            </div>
-            {/* headline typewriter */}
-            <div
-              style={{
-                color: "#F8FAFC",
-                fontSize: 13,
-                fontWeight: 900,
-                lineHeight: 1.05,
-                letterSpacing: "-0.015em",
-                textShadow: "0 2px 8px rgba(0,0,0,0.6)",
-                minHeight: 14,
-              }}
-            >
-              {stage >= 2 ? <Typewriter text="AI Voice Agent" /> : ""}
-              {stage >= 2 && (
-                <span
-                  style={{
-                    display: "inline-block",
-                    width: 1.5,
-                    height: 11,
-                    background: "#2896FB",
-                    marginLeft: 1,
-                    verticalAlign: "middle",
-                    animation: "armyCaret 0.9s linear infinite",
-                  }}
-                />
-              )}
-            </div>
-            {/* subtext skeleton */}
-            <div
-              className="army-skel"
-              style={{
-                height: 5,
-                width: "55%",
-                borderRadius: 3,
-                marginTop: 3,
-              }}
-            />
-          </div>
-
-          {/* RIGHT — screenshot skeleton card (image placeholder) */}
           <motion.div
-            initial={{ opacity: 0, x: 24, scale: 0.9 }}
+            className="army-skel2"
+            initial={{ opacity: 0, y: 4 }}
             animate={{
-              opacity: stage >= 1 ? 1 : 0,
-              x: stage >= 1 ? 0 : 24,
-              scale: stage >= 1 ? 1 : 0.9,
+              opacity: stage >= 2 ? 1 : 0,
+              y: stage >= 2 ? 0 : 4,
             }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.35 }}
             style={{
-              position: "relative",
-              width: "36%",
-              aspectRatio: "4 / 3",
-              borderRadius: 6,
-              border: "1.5px solid rgba(40,150,251,0.6)",
-              background: "rgba(11,20,38,0.5)",
-              boxShadow: "0 6px 16px rgba(0,0,0,0.45)",
-              overflow: "hidden",
-              zIndex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              height: 6,
+              width: "45%",
+              borderRadius: 3,
             }}
-          >
-            <div
-              className="army-skel"
-              style={{ position: "absolute", inset: 4, borderRadius: 4 }}
-            />
-            <ImageIcon
-              size={18}
-              color="rgba(248,250,252,0.6)"
-              strokeWidth={1.8}
-              style={{ position: "relative", zIndex: 2 }}
-            />
-          </motion.div>
-        </div>
+          />
+        </motion.div>
       </div>
     </motion.div>
   );
 }
+
 
 /* ===================== END CONTENT ARMY SCENE ===================== */
 

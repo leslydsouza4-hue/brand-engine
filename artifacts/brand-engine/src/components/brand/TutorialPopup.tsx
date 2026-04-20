@@ -4469,15 +4469,16 @@ function BeatZoomDetails() {
 function CraftScene() {
   const [beat, setBeat] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setBeat((b) => (b + 1) % 3), 2800);
-    return () => clearInterval(id);
-  }, []);
+    const durations = [2600, 2400, 4200];
+    const id = setTimeout(() => setBeat((b) => (b + 1) % 3), durations[beat]);
+    return () => clearTimeout(id);
+  }, [beat]);
   return (
     <div style={{ position: "absolute", inset: 0, padding: 18 }}>
       <AnimatePresence mode="wait">
         {beat === 0 && <BeatCraftPrompt key="prompt" />}
-        {beat === 1 && <BeatCraftGenerating key="gen" />}
-        {beat === 2 && <BeatCraftResult key="result" />}
+        {beat === 1 && <BeatCraftLayout key="layout" />}
+        {beat === 2 && <BeatCraftGenerate key="gen" />}
       </AnimatePresence>
     </div>
   );
@@ -4560,8 +4561,144 @@ function BeatCraftPrompt() {
   );
 }
 
-/* Beat 2 — AI generating with sparkles + shimmer canvas */
-function BeatCraftGenerating() {
+/* Beat 2 — Pick a layout (4 cards with accurate aspect ratios) */
+function BeatCraftLayout() {
+  const [picked, setPicked] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setPicked(true), 700);
+    return () => clearTimeout(t);
+  }, []);
+  const LAYOUTS = [
+    { key: "square", label: "Square", dim: "1080×1080", w: 44, h: 44 },
+    { key: "portrait", label: "Portrait", dim: "1080×1350", w: 36, h: 45 },
+    { key: "story", label: "Story", dim: "1080×1920", w: 26, h: 46 },
+    { key: "landscape", label: "Landscape", dim: "1200×628", w: 60, h: 31 },
+  ];
+  const SELECTED = 0;
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        gap: 10,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Pick a layout
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 12,
+        }}
+      >
+        {LAYOUTS.map((l, i) => {
+          const selected = i === SELECTED && picked;
+          return (
+            <motion.div
+              key={l.key}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 + i * 0.07, duration: 0.28 }}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  width: l.w,
+                  height: l.h,
+                  borderRadius: 4,
+                  background: selected
+                    ? "linear-gradient(135deg, rgba(40,150,251,0.55), rgba(11,20,38,0.85))"
+                    : "rgba(255,255,255,0.06)",
+                  border: selected
+                    ? "1.5px solid #2896FB"
+                    : "1.5px solid rgba(255,255,255,0.18)",
+                  boxShadow: selected
+                    ? "0 0 0 4px rgba(40,150,251,0.18), 0 6px 18px rgba(40,150,251,0.3)"
+                    : "0 4px 10px rgba(0,0,0,0.25)",
+                  transition: "all 0.3s",
+                }}
+              >
+                {selected && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                    style={{
+                      position: "absolute",
+                      top: -5,
+                      right: -5,
+                      width: 14,
+                      height: 14,
+                      borderRadius: 999,
+                      background: "#2896FB",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "2px solid #0B1426",
+                    }}
+                  >
+                    <Check size={7} color="#0B1426" strokeWidth={4} />
+                  </motion.div>
+                )}
+              </div>
+              <div
+                style={{
+                  fontSize: 8,
+                  fontWeight: 800,
+                  letterSpacing: "0.06em",
+                  color: selected ? "#2896FB" : "rgba(248,250,252,0.7)",
+                  textTransform: "uppercase",
+                  transition: "color 0.25s",
+                }}
+              >
+                {l.label}
+              </div>
+              <div
+                style={{
+                  fontSize: 7,
+                  color: "rgba(248,250,252,0.4)",
+                  fontFamily: "ui-monospace, monospace",
+                  marginTop: -2,
+                }}
+              >
+                {l.dim}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 3 — Generate: shimmer canvas with sparkle wand → design materializes */
+function BeatCraftGenerate() {
+  const [stage, setStage] = useState(0); // 0 = generating, 1 = revealed
+  useEffect(() => {
+    const t = setTimeout(() => setStage(1), 1800);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <motion.div
       {...sceneAnim}
@@ -4575,139 +4712,9 @@ function BeatCraftGenerating() {
     >
       <div
         style={{
-          width: "100%",
-          aspectRatio: "16 / 9",
-          borderRadius: 10,
-          position: "relative",
-          background:
-            "linear-gradient(135deg, rgba(40,150,251,0.45), rgba(11,20,38,0.9))",
-          border: "1.5px solid rgba(40,150,251,0.5)",
-          boxShadow: "0 0 0 4px rgba(40,150,251,0.18), 0 8px 24px rgba(0,0,0,0.4)",
-          overflow: "hidden",
-        }}
-      >
-        {/* animated shimmer sweep */}
-        <motion.div
-          animate={{ x: ["-100%", "100%"] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%)",
-            zIndex: 2,
-          }}
-        />
-        {/* dot texture */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            backgroundImage:
-              "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
-            backgroundSize: "5px 5px",
-            opacity: 0.5,
-          }}
-        />
-        {/* skeleton bars */}
-        <div
-          style={{
-            position: "absolute",
-            left: "10%",
-            right: "10%",
-            top: "30%",
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
-          <div style={{ height: 8, background: "rgba(248,250,252,0.18)", borderRadius: 2 }} />
-          <div style={{ height: 6, width: "70%", background: "rgba(248,250,252,0.12)", borderRadius: 2 }} />
-          <div style={{ height: 6, width: "50%", background: "rgba(248,250,252,0.1)", borderRadius: 2 }} />
-        </div>
-        {/* center magic wand badge */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 3,
-          }}
-        >
-          <motion.div
-            animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 1] }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #2896FB, #1268C2)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 0 0 6px rgba(40,150,251,0.2), 0 6px 18px rgba(40,150,251,0.55)",
-            }}
-          >
-            <Sparkles size={18} color="#F8FAFC" strokeWidth={2.6} />
-          </motion.div>
-        </div>
-        {/* floating sparkle particles */}
-        {[
-          { x: "18%", y: "22%", d: 0 },
-          { x: "82%", y: "30%", d: 0.4 },
-          { x: "75%", y: "75%", d: 0.8 },
-          { x: "22%", y: "78%", d: 0.2 },
-        ].map((p, i) => (
-          <motion.div
-            key={i}
-            animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
-            transition={{ duration: 1.4, repeat: Infinity, delay: p.d, ease: "easeOut" }}
-            style={{
-              position: "absolute",
-              left: p.x,
-              top: p.y,
-              width: 8,
-              height: 8,
-              zIndex: 4,
-            }}
-          >
-            <Sparkles size={8} color="#FFC328" strokeWidth={3} />
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-/* Beat 3 — Generated design + download */
-function BeatCraftResult() {
-  const [stage, setStage] = useState(0);
-  useEffect(() => {
-    const t1 = setTimeout(() => setStage(1), 1100);
-    return () => clearTimeout(t1);
-  }, []);
-  return (
-    <motion.div
-      {...sceneAnim}
-      style={{
-        position: "absolute",
-        inset: 18,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        style={{
           width: "78%",
-          aspectRatio: "16 / 9",
+          aspectRatio: "1 / 1",
+          maxHeight: "100%",
           borderRadius: 10,
           position: "relative",
           background:
@@ -4717,7 +4724,7 @@ function BeatCraftResult() {
           overflow: "hidden",
         }}
       >
-        {/* dot texture */}
+        {/* dot texture (always on) */}
         <div
           style={{
             position: "absolute",
@@ -4728,156 +4735,207 @@ function BeatCraftResult() {
             opacity: 0.55,
           }}
         />
-        {/* yellow eyebrow */}
-        <div
-          style={{
-            position: "absolute",
-            top: "18%",
-            left: "8%",
-            fontSize: 5,
-            fontWeight: 800,
-            letterSpacing: "0.18em",
-            color: "#FFC328",
-            textTransform: "uppercase",
-          }}
-        >
-          FREE WEBINAR
-        </div>
-        {/* headline */}
-        <div
-          style={{
-            position: "absolute",
-            top: "30%",
-            left: "8%",
-            right: "8%",
-            fontSize: 13,
-            fontWeight: 800,
-            color: "#F8FAFC",
-            lineHeight: 1.1,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          <Typewriter text="Build Your AI Funnel" />
-        </div>
-        {/* subline */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "22%",
-            left: "8%",
-            right: "8%",
-            fontSize: 8,
-            fontWeight: 500,
-            color: "rgba(248,250,252,0.7)",
-          }}
-        >
-          Live · Mar 12 · 2 PM PT
-        </div>
-        {/* CTA pill */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: "8%",
-            left: "8%",
-            padding: "4px 9px",
-            borderRadius: 4,
-            background: "#FFC328",
-            color: "#0B1426",
-            fontSize: 7,
-            fontWeight: 800,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Save Your Seat →
-        </div>
-        {/* sparkle pop top-right */}
-        <motion.div
-          initial={{ scale: 0, rotate: -45 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.25 }}
-          style={{
-            position: "absolute",
-            top: 6,
-            right: 6,
-            width: 18,
-            height: 18,
-            borderRadius: 999,
-            background: "#17D94B",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 0 0 4px rgba(23,217,75,0.2)",
-          }}
-        >
-          <Check size={9} color="#0B1426" strokeWidth={4} />
-        </motion.div>
-      </motion.div>
-      {/* download */}
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{
-          opacity: stage >= 1 ? 1 : 0,
-          y: stage >= 1 ? 0 : 6,
-        }}
-        transition={{ duration: 0.3 }}
-      >
-        <motion.div
-          animate={{
-            boxShadow: [
-              "0 4px 14px rgba(40,150,251,0.45), 0 0 0 0 rgba(40,150,251,0.5)",
-              "0 4px 14px rgba(40,150,251,0.45), 0 0 0 8px rgba(40,150,251,0)",
-            ],
-          }}
-          transition={{ duration: 1.4, repeat: Infinity }}
-          style={{
-            background: "linear-gradient(135deg, #2896FB, #1268C2)",
-            color: "#F8FAFC",
-            padding: "5px 12px",
-            borderRadius: 6,
-            fontSize: 9,
-            fontWeight: 800,
-            letterSpacing: "0.06em",
-            display: "flex",
-            alignItems: "center",
-            gap: 5,
-          }}
-        >
-          <Download size={10} strokeWidth={2.6} />
-          DOWNLOAD
-        </motion.div>
-      </motion.div>
+
+        {/* GENERATING STATE */}
+        <AnimatePresence>
+          {stage === 0 && (
+            <motion.div
+              key="generating"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0, scale: 1.08, filter: "blur(6px)" }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              style={{ position: "absolute", inset: 0 }}
+            >
+              {/* sweeping shimmer */}
+              <motion.div
+                animate={{ x: ["-100%", "100%"] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%)",
+                  zIndex: 2,
+                }}
+              />
+              {/* skeleton bars */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: "12%",
+                  right: "12%",
+                  top: "32%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                <div style={{ height: 8, background: "rgba(248,250,252,0.18)", borderRadius: 2 }} />
+                <div style={{ height: 6, width: "70%", background: "rgba(248,250,252,0.12)", borderRadius: 2 }} />
+                <div style={{ height: 6, width: "50%", background: "rgba(248,250,252,0.1)", borderRadius: 2 }} />
+              </div>
+              {/* center magic wand */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 3,
+                }}
+              >
+                <motion.div
+                  animate={{ rotate: [0, 12, -12, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #2896FB, #1268C2)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 0 6px rgba(40,150,251,0.22), 0 6px 18px rgba(40,150,251,0.55)",
+                  }}
+                >
+                  <Sparkles size={20} color="#F8FAFC" strokeWidth={2.6} />
+                </motion.div>
+              </div>
+              {/* orbiting sparkle particles */}
+              {[
+                { x: "18%", y: "22%", d: 0 },
+                { x: "82%", y: "30%", d: 0.4 },
+                { x: "75%", y: "75%", d: 0.8 },
+                { x: "22%", y: "78%", d: 0.2 },
+              ].map((p, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ scale: [0, 1, 0], opacity: [0, 1, 0], rotate: [0, 90] }}
+                  transition={{ duration: 1.4, repeat: Infinity, delay: p.d, ease: "easeOut" }}
+                  style={{
+                    position: "absolute",
+                    left: p.x,
+                    top: p.y,
+                    zIndex: 4,
+                  }}
+                >
+                  <Sparkles size={10} color="#FFC328" strokeWidth={3} />
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* REVEALED DESIGN */}
+        {stage === 1 && (
+          <motion.div
+            key="revealed"
+            initial={{ opacity: 0, scale: 0.94, filter: "blur(8px)" }}
+            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            style={{ position: "absolute", inset: 0 }}
+          >
+            {/* yellow eyebrow */}
+            <motion.div
+              initial={{ opacity: 0, y: -3 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.3 }}
+              style={{
+                position: "absolute",
+                top: "16%",
+                left: "10%",
+                fontSize: 6,
+                fontWeight: 800,
+                letterSpacing: "0.18em",
+                color: "#FFC328",
+                textTransform: "uppercase",
+              }}
+            >
+              FREE WEBINAR
+            </motion.div>
+            {/* headline */}
+            <motion.div
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25, duration: 0.35 }}
+              style={{
+                position: "absolute",
+                top: "26%",
+                left: "10%",
+                right: "10%",
+                fontSize: 16,
+                fontWeight: 800,
+                color: "#F8FAFC",
+                lineHeight: 1.08,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Build Your<br />AI Funnel
+            </motion.div>
+            {/* subline */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45, duration: 0.3 }}
+              style={{
+                position: "absolute",
+                bottom: "26%",
+                left: "10%",
+                right: "10%",
+                fontSize: 8,
+                fontWeight: 500,
+                color: "rgba(248,250,252,0.7)",
+              }}
+            >
+              Live · Mar 12 · 2 PM PT
+            </motion.div>
+            {/* CTA pill */}
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.3 }}
+              style={{
+                position: "absolute",
+                bottom: "10%",
+                left: "10%",
+                padding: "5px 10px",
+                borderRadius: 5,
+                background: "#FFC328",
+                color: "#0B1426",
+                fontSize: 8,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              Save Your Seat →
+            </motion.div>
+            {/* check pop */}
+            <motion.div
+              initial={{ scale: 0, rotate: -45 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.3 }}
+              style={{
+                position: "absolute",
+                top: 6,
+                right: 6,
+                width: 18,
+                height: 18,
+                borderRadius: 999,
+                background: "#17D94B",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: "0 0 0 4px rgba(23,217,75,0.2)",
+              }}
+            >
+              <Check size={9} color="#0B1426" strokeWidth={4} />
+            </motion.div>
+          </motion.div>
+        )}
+      </div>
     </motion.div>
   );
 }
 
-/* ===================== END CRAFT MAGIC SCENE ===================== */
-
-function Typewriter({ text }: { text: string }) {
-  const [n, setN] = useState(0);
-  useEffect(() => {
-    setN(0);
-    const id = setInterval(() => {
-      setN((c) => {
-        if (c >= text.length) {
-          clearInterval(id);
-          return c;
-        }
-        return c + 1;
-      });
-    }, 55);
-    return () => clearInterval(id);
-  }, [text]);
-  return (
-    <span>
-      {text.slice(0, n)}
-      <motion.span
-        animate={{ opacity: [1, 0, 1] }}
-        transition={{ duration: 0.8, repeat: Infinity }}
-        style={{ display: "inline-block", marginLeft: 1 }}
-      >
-        |
-      </motion.span>
-    </span>
-  );
-}

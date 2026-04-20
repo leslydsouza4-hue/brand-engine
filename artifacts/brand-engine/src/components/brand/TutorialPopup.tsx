@@ -973,17 +973,72 @@ function BeatBatchUpload() {
               opacity: 0.6,
             }}
           />
-          {/* Headline + subtext (left side) */}
+          {/* Shaun lands from the right — smaller, anchored right-bottom corner */}
+          <motion.img
+            src={SHAUN_THUMBS[1]}
+            alt=""
+            initial={{ opacity: 0, x: 60, y: 6 }}
+            animate={{
+              opacity: stage >= 1 ? 1 : 0,
+              x: stage >= 1 ? 0 : 60,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.55,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            style={{
+              position: "absolute",
+              right: 4,
+              bottom: 0,
+              height: "88%",
+              width: "30%",
+              objectFit: "contain",
+              objectPosition: "bottom right",
+              filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.5))",
+            }}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+
+          {/* drop guide that fades once Shaun lands */}
           <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: stage >= 2 ? 1 : 0, x: stage >= 2 ? 0 : -10 }}
+            initial={{ opacity: 0.65 }}
+            animate={{ opacity: stage >= 1 ? 0 : 0.65 }}
             transition={{ duration: 0.35 }}
             style={{
               position: "absolute",
-              left: 10,
-              top: "50%",
-              transform: "translateY(-50%)",
-              width: "55%",
+              right: 8,
+              bottom: 8,
+              top: 8,
+              width: "30%",
+              border: "1.5px dashed rgba(40,150,251,0.7)",
+              borderRadius: 6,
+              background: "rgba(40,150,251,0.08)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 8,
+              fontWeight: 700,
+              color: "rgba(40,150,251,0.95)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            DROP HERE
+          </motion.div>
+
+          {/* Headline block — top-left, above & away from Shaun, with drop shadow */}
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: stage >= 2 ? 1 : 0, y: stage >= 2 ? 0 : -6 }}
+            transition={{ duration: 0.35 }}
+            style={{
+              position: "absolute",
+              left: 12,
+              top: 12,
+              width: "62%",
+              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.55))",
             }}
           >
             <div
@@ -993,10 +1048,11 @@ function BeatBatchUpload() {
                 fontSize: 7,
                 fontWeight: 800,
                 letterSpacing: "0.08em",
-                padding: "2px 5px",
+                padding: "2px 6px",
                 borderRadius: 3,
                 display: "inline-block",
-                marginBottom: 4,
+                marginBottom: 5,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
               }}
             >
               FEATURE UPDATE
@@ -1004,78 +1060,28 @@ function BeatBatchUpload() {
             <div
               style={{
                 color: "#F8FAFC",
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: 900,
-                lineHeight: 1.05,
-                letterSpacing: "-0.01em",
+                lineHeight: 1,
+                letterSpacing: "-0.015em",
+                textShadow: "0 2px 8px rgba(0,0,0,0.6)",
               }}
             >
-              AI Voice Agent
+              AI Voice
+              <br />
+              Agent
             </div>
             <div
               style={{
-                color: "rgba(248,250,252,0.65)",
-                fontSize: 7,
-                fontWeight: 500,
-                marginTop: 2,
+                color: "rgba(248,250,252,0.85)",
+                fontSize: 8,
+                fontWeight: 600,
+                marginTop: 3,
+                textShadow: "0 1px 4px rgba(0,0,0,0.6)",
               }}
             >
               now in beta
             </div>
-          </motion.div>
-
-          {/* Shaun lands from the right */}
-          <motion.img
-            src={SHAUN_THUMBS[1]}
-            alt=""
-            initial={{ opacity: 0, x: 80, y: 8 }}
-            animate={{
-              opacity: stage >= 1 ? 1 : 0,
-              x: stage >= 1 ? 0 : 80,
-              y: 0,
-            }}
-            transition={{
-              duration: 0.55,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            style={{
-              position: "absolute",
-              right: -6,
-              bottom: 0,
-              height: "115%",
-              objectFit: "contain",
-              objectPosition: "bottom right",
-              filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.4))",
-            }}
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
-          />
-
-          {/* drop guides that fade out once placed */}
-          <motion.div
-            initial={{ opacity: 0.7 }}
-            animate={{ opacity: stage >= 1 ? 0 : 0.7 }}
-            transition={{ duration: 0.35 }}
-            style={{
-              position: "absolute",
-              right: 8,
-              bottom: 8,
-              top: 8,
-              width: "32%",
-              border: "1.5px dashed rgba(40,150,251,0.7)",
-              borderRadius: 6,
-              background: "rgba(40,150,251,0.08)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 8,
-              fontWeight: 700,
-              color: "rgba(40,150,251,0.9)",
-              letterSpacing: "0.06em",
-            }}
-          >
-            DROP HERE
           </motion.div>
         </div>
       </div>
@@ -1222,12 +1228,13 @@ function BeatComposeBatch() {
   );
 }
 
-/* Beat 4: DOWNLOAD ALL TYPES — multi-format selector + download all */
+/* Beat 4: DOWNLOAD A ZIP — one click, whole batch packaged */
 function BeatExport() {
-  const FORMATS = [
-    { label: "1:1", sub: "1080×1080", icon: "■" },
-    { label: "16:9", sub: "1920×1080", icon: "▬" },
-    { label: "9:16", sub: "1080×1920", icon: "▮" },
+  const FILES = [
+    "AI_Voice_Agent.png",
+    "Workflow_Update.png",
+    "Q2_Roadmap.png",
+    "New_Integrations.png",
   ];
   return (
     <motion.div
@@ -1250,57 +1257,110 @@ function BeatExport() {
           textTransform: "uppercase",
         }}
       >
-        Download all formats
+        Download · zip bundle
       </div>
 
-      {/* format chips */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
-        {FORMATS.map((f, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, y: 8, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.1 + i * 0.1, duration: 0.3 }}
+      {/* ZIP card */}
+      <motion.div
+        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        style={{
+          position: "relative",
+          background: "linear-gradient(135deg, rgba(40,150,251,0.18), rgba(11,20,38,0.6))",
+          border: "1.5px solid rgba(40,150,251,0.55)",
+          borderRadius: 10,
+          padding: "10px 12px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
+        }}
+      >
+        {/* zip folder icon */}
+        <div
+          style={{
+            position: "relative",
+            width: 36,
+            height: 36,
+            borderRadius: 6,
+            background: "linear-gradient(135deg, #2896FB, #1268C2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            boxShadow: "0 4px 10px rgba(40,150,251,0.5)",
+          }}
+        >
+          <span
             style={{
-              padding: "8px 6px",
-              borderRadius: 8,
-              background: "rgba(40,150,251,0.08)",
-              border: "1px solid rgba(40,150,251,0.45)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-              position: "relative",
+              color: "#F8FAFC",
+              fontSize: 9,
+              fontWeight: 900,
+              letterSpacing: "0.08em",
             }}
           >
-            <div style={{ color: "#2896FB", fontSize: 14, fontWeight: 800, lineHeight: 1 }}>
-              {f.icon}
-            </div>
-            <div style={{ color: "#F8FAFC", fontSize: 10, fontWeight: 800 }}>
-              {f.label}
-            </div>
-            <div style={{ color: "rgba(248,250,252,0.5)", fontSize: 7, fontWeight: 600 }}>
-              {f.sub}
-            </div>
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.4 + i * 0.1, type: "spring", stiffness: 500, damping: 18 }}
-              style={{
-                position: "absolute",
-                top: 4,
-                right: 4,
-                width: 12,
-                height: 12,
-                borderRadius: 999,
-                background: "#2896FB",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Check size={8} color="#0B1426" strokeWidth={3.5} />
-            </motion.div>
+            ZIP
+          </span>
+          {/* zipper teeth */}
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: 3,
+              bottom: 3,
+              width: 1.5,
+              transform: "translateX(-50%)",
+              background:
+                "repeating-linear-gradient(180deg, rgba(11,20,38,0.6) 0 2px, transparent 2px 4px)",
+            }}
+          />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              color: "#F8FAFC",
+              fontSize: 11,
+              fontWeight: 800,
+              letterSpacing: "0.01em",
+            }}
+          >
+            shaun-thumbnails.zip
+          </div>
+          <div
+            style={{
+              color: "rgba(248,250,252,0.55)",
+              fontSize: 8,
+              fontWeight: 600,
+              marginTop: 2,
+            }}
+          >
+            4 thumbnails · 2.4 MB
+          </div>
+        </div>
+      </motion.div>
+
+      {/* file list peek */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {FILES.map((name, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 + i * 0.07, duration: 0.25 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 8,
+              color: "rgba(248,250,252,0.55)",
+              fontWeight: 600,
+              fontFamily: "ui-monospace, monospace",
+              paddingLeft: 4,
+            }}
+          >
+            <span style={{ color: "rgba(40,150,251,0.7)" }}>└</span>
+            {name}
           </motion.div>
         ))}
       </div>
@@ -1326,7 +1386,7 @@ function BeatExport() {
         }}
       >
         <Download size={13} strokeWidth={2.6} />
-        DOWNLOAD ALL
+        DOWNLOAD ZIP
       </motion.div>
     </motion.div>
   );

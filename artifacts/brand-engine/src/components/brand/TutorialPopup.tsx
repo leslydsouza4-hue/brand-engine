@@ -7,7 +7,7 @@ type TutorialConfig = {
   title: string;
   body: string;
   cta: string;
-  scene: "email" | "shaun" | "army";
+  scene: "email" | "shaun" | "army" | "didyouknow";
 };
 
 const TUTORIALS: Record<string, TutorialConfig> = {
@@ -31,6 +31,13 @@ const TUTORIALS: Record<string, TutorialConfig> = {
     body: "Pick your team member, choose a layout, paste a doc, and batch-export branded thumbnails in seconds.",
     cta: "Build a batch",
     scene: "army",
+  },
+  "did-you-know": {
+    badge: "NEW",
+    title: "Did You Know thumbnails",
+    body: "Pick a person, choose a layout, type your fact, and batch-export branded Did You Know thumbnails.",
+    cta: "Start a batch",
+    scene: "didyouknow",
   },
 };
 
@@ -177,6 +184,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
               {config.scene === "email" && <EmailScene />}
               {config.scene === "shaun" && <ShaunScene />}
               {config.scene === "army" && <ArmyScene />}
+              {config.scene === "didyouknow" && <DidYouKnowScene />}
             </div>
 
             <div style={{ padding: "16px 18px 18px" }}>
@@ -2159,14 +2167,17 @@ function ArmyScene() {
   );
 }
 
-/* Beat 1 — 4 sleek initial boxes, one selected */
-function BeatArmyPick() {
+/* Beat 1 — sleek initial boxes, one selected */
+function BeatArmyPick({
+  initials = ARMY_INITIALS,
+  selectedIdx = 2,
+}: { initials?: string[]; selectedIdx?: number } = {}) {
   const [picked, setPicked] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setPicked(true), 700);
     return () => clearTimeout(t);
   }, []);
-  const SELECTED = 2;
+  const SELECTED = selectedIdx;
   return (
     <motion.div
       {...sceneAnim}
@@ -2181,12 +2192,12 @@ function BeatArmyPick() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: `repeat(${initials.length}, 1fr)`,
           gap: 10,
           width: "100%",
         }}
       >
-        {ARMY_INITIALS.map((label, i) => {
+        {initials.map((label, i) => {
           const selected = i === SELECTED && picked;
           return (
             <motion.div
@@ -2621,6 +2632,383 @@ function BeatArmyHeadline() {
 
 
 /* ===================== END CONTENT ARMY SCENE ===================== */
+
+/* ===================== DID YOU KNOW SCENE ===================== */
+
+const DYK_INITIALS = ["AG", "BS", "UM"];
+
+function DidYouKnowScene() {
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setBeat((b) => (b + 1) % 4), 2400);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: 18 }}>
+      <AnimatePresence mode="wait">
+        {beat === 0 && (
+          <BeatArmyPick key="pick" initials={DYK_INITIALS} selectedIdx={0} />
+        )}
+        {beat === 1 && <BeatDykLayout key="layout" />}
+        {beat === 2 && <BeatDykHeadline key="headline" />}
+        {beat === 3 && (
+          <BeatExport
+            key="export"
+            zipName="did-you-know.zip"
+            subtitle="4 thumbnails · 2.1 MB"
+          />
+        )}
+      </AnimatePresence>
+      <div
+        style={{
+          position: "absolute",
+          bottom: 10,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "center",
+          gap: 5,
+          zIndex: 5,
+        }}
+      >
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: i === beat ? 16 : 5,
+              height: 5,
+              borderRadius: 999,
+              background: i === beat ? "#2896FB" : "rgba(248,250,252,0.2)",
+              transition: "all 0.3s",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* DYK Beat 2 — Layout selector (only 2 options: text-left, text-right) */
+function BeatDykLayout() {
+  const [picked, setPicked] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setPicked(true), 700);
+    return () => clearTimeout(t);
+  }, []);
+  const LAYOUTS: Array<{ key: "text-left" | "text-right"; label: string }> = [
+    { key: "text-left", label: "Text Left" },
+    { key: "text-right", label: "Text Right" },
+  ];
+  const SELECTED = 0;
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          gap: 12,
+          width: "100%",
+        }}
+      >
+        {LAYOUTS.map((l, i) => {
+          const selected = i === SELECTED && picked;
+          const personOnRight = l.key === "text-left";
+          return (
+            <motion.div
+              key={l.key}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 + i * 0.08, duration: 0.3 }}
+              style={{
+                position: "relative",
+                aspectRatio: "16 / 10",
+                borderRadius: 8,
+                overflow: "hidden",
+                background:
+                  "linear-gradient(135deg, rgba(40,150,251,0.45) 0%, rgba(11,20,38,0.85) 100%)",
+                border: selected
+                  ? "1.5px solid #2896FB"
+                  : "1px solid rgba(255,255,255,0.12)",
+                boxShadow: selected
+                  ? "0 0 0 4px rgba(40,150,251,0.18), 0 8px 22px rgba(40,150,251,0.25)"
+                  : "0 4px 12px rgba(0,0,0,0.25)",
+                transition: "border-color 0.25s, box-shadow 0.25s",
+              }}
+            >
+              {/* dot texture */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
+                  backgroundSize: "5px 5px",
+                  opacity: 0.5,
+                }}
+              />
+
+              {/* PERSON puck */}
+              <div
+                style={{
+                  position: "absolute",
+                  width: "32%",
+                  aspectRatio: "1 / 1",
+                  borderRadius: "50%",
+                  background:
+                    "radial-gradient(circle at 35% 30%, rgba(248,250,252,0.55), rgba(248,250,252,0.18) 70%)",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  ...(personOnRight ? { right: "8%" } : { left: "8%" }),
+                }}
+              />
+
+              {/* TEXT bars on opposite side */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "48%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: 3,
+                  ...(personOnRight ? { left: "6%" } : { right: "6%" }),
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    height: 4,
+                    background: "rgba(248,250,252,0.85)",
+                    borderRadius: 2,
+                  }}
+                />
+                <div
+                  style={{
+                    width: "75%",
+                    height: 2.5,
+                    background: "rgba(248,250,252,0.45)",
+                    borderRadius: 2,
+                  }}
+                />
+                <div
+                  style={{
+                    width: "55%",
+                    height: 2.5,
+                    background: "rgba(248,250,252,0.45)",
+                    borderRadius: 2,
+                  }}
+                />
+              </div>
+
+              {/* label */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 4,
+                  left: 6,
+                  fontSize: 7,
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                  color: selected ? "#2896FB" : "rgba(248,250,252,0.7)",
+                  textTransform: "uppercase",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                  transition: "color 0.25s",
+                }}
+              >
+                {l.label}
+              </div>
+
+              {selected && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    width: 14,
+                    height: 14,
+                    borderRadius: 999,
+                    background: "#2896FB",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 8px rgba(40,150,251,0.8)",
+                  }}
+                >
+                  <Check size={8} color="#0B1426" strokeWidth={4} />
+                </motion.div>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+/* DYK Beat 3 — Left-aligned headline + subtext skeleton on branded canvas */
+function BeatDykHeadline() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 400);
+    const t2 = setTimeout(() => setStage(2), 1000);
+    const t3 = setTimeout(() => setStage(3), 1500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <style>{`
+        @keyframes dykShimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -100% 0; }
+        }
+        .dyk-skel {
+          position: relative;
+          background: rgba(248,250,252,0.18);
+          overflow: hidden;
+        }
+        .dyk-skel::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            100deg,
+            transparent 20%,
+            rgba(248,250,252,0.25) 38%,
+            rgba(124,194,251,0.6) 50%,
+            rgba(248,250,252,0.25) 62%,
+            transparent 80%
+          );
+          background-size: 220% 100%;
+          background-repeat: no-repeat;
+          animation: dykShimmer 1.5s ease-in-out infinite;
+        }
+      `}</style>
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          aspectRatio: "16 / 9",
+          borderRadius: 10,
+          overflow: "hidden",
+          background: "linear-gradient(135deg, #2896FB 0%, #0B1426 100%)",
+          border: "1.5px solid rgba(40,150,251,0.5)",
+          boxShadow: "0 8px 22px rgba(40,150,251,0.25)",
+        }}
+      >
+        {/* dot texture */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+            backgroundSize: "8px 8px",
+            opacity: 0.5,
+          }}
+        />
+        {/* DID YOU KNOW chip — top-left */}
+        <div
+          style={{
+            position: "absolute",
+            top: 10,
+            left: 12,
+            background: "#FFC328",
+            color: "#0B1426",
+            fontSize: 7,
+            fontWeight: 800,
+            letterSpacing: "0.12em",
+            padding: "2px 6px",
+            borderRadius: 3,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+          }}
+        >
+          DID YOU KNOW?
+        </div>
+
+        {/* left-aligned skeleton stack */}
+        <div
+          style={{
+            position: "absolute",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: "62%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 6,
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{
+              opacity: stage >= 1 ? 1 : 0,
+              x: stage >= 1 ? 0 : -8,
+            }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="dyk-skel"
+            style={{ height: 11, width: "100%", borderRadius: 3 }}
+          />
+          <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{
+              opacity: stage >= 2 ? 1 : 0,
+              x: stage >= 2 ? 0 : -8,
+            }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="dyk-skel"
+            style={{ height: 11, width: "75%", borderRadius: 3 }}
+          />
+          <motion.div
+            initial={{ opacity: 0, x: -8 }}
+            animate={{
+              opacity: stage >= 3 ? 1 : 0,
+              x: stage >= 3 ? 0 : -8,
+            }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="dyk-skel"
+            style={{
+              height: 6,
+              width: "55%",
+              borderRadius: 3,
+              marginTop: 2,
+              opacity: 0.7,
+            }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ===================== END DID YOU KNOW SCENE ===================== */
 
 function Typewriter({ text }: { text: string }) {
   const [n, setN] = useState(0);

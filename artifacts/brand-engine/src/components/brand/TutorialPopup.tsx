@@ -7,7 +7,7 @@ type TutorialConfig = {
   title: string;
   body: string;
   cta: string;
-  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev" | "superpromo" | "zoom";
+  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev" | "superpromo" | "zoom" | "craft";
 };
 
 const TUTORIALS: Record<string, TutorialConfig> = {
@@ -59,6 +59,13 @@ const TUTORIALS: Record<string, TutorialConfig> = {
     body: "Pick a branded background, drop in your name and title, and download a ready-to-use Zoom virtual background.",
     cta: "Make my background",
     scene: "zoom",
+  },
+  templates: {
+    badge: "NEW",
+    title: "Craft Magic",
+    body: "Type what you need, watch the AI compose a fully branded design, then tweak and export.",
+    cta: "Try Craft Magic",
+    scene: "craft",
   },
 };
 
@@ -209,6 +216,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
               {config.scene === "bizdev" && <BizDevScene />}
               {config.scene === "superpromo" && <SuperPromoScene />}
               {config.scene === "zoom" && <ZoomScene />}
+              {config.scene === "craft" && <CraftScene />}
             </div>
 
             <div style={{ padding: "16px 18px 18px" }}>
@@ -4455,6 +4463,395 @@ function BeatZoomDetails() {
 }
 
 /* ===================== END ZOOM SCENE ===================== */
+
+/* ===================== CRAFT MAGIC SCENE ===================== */
+
+function CraftScene() {
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setBeat((b) => (b + 1) % 3), 2800);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: 18 }}>
+      <AnimatePresence mode="wait">
+        {beat === 0 && <BeatCraftPrompt key="prompt" />}
+        {beat === 1 && <BeatCraftGenerating key="gen" />}
+        {beat === 2 && <BeatCraftResult key="result" />}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* Beat 1 — Prompt input typing */
+function BeatCraftPrompt() {
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        gap: 10,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 8,
+          fontWeight: 800,
+          letterSpacing: "0.12em",
+          color: "rgba(248,250,252,0.55)",
+          textTransform: "uppercase",
+        }}
+      >
+        Describe your design
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "10px 12px",
+          borderRadius: 10,
+          background: PANEL_BG,
+          border: "1px solid rgba(40,150,251,0.55)",
+          boxShadow: "0 0 0 4px rgba(40,150,251,0.14)",
+        }}
+      >
+        <Sparkles size={14} color="#2896FB" strokeWidth={2.6} />
+        <div
+          style={{
+            flex: 1,
+            fontSize: 12,
+            fontWeight: 600,
+            color: "#F8FAFC",
+            fontFamily: "ui-monospace, monospace",
+            minHeight: 14,
+          }}
+        >
+          <Typewriter text="Webinar invite for AI Funnel" />
+        </div>
+      </div>
+      {/* mini starter prompt chips below */}
+      <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+        {["Promo", "Webinar", "Launch", "Tip"].map((c, i) => (
+          <motion.div
+            key={c}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 + i * 0.06, duration: 0.25 }}
+            style={{
+              padding: "4px 9px",
+              borderRadius: 999,
+              fontSize: 9,
+              fontWeight: 700,
+              color: "rgba(248,250,252,0.65)",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            {c}
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 2 — AI generating with sparkles + shimmer canvas */
+function BeatCraftGenerating() {
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "16 / 9",
+          borderRadius: 10,
+          position: "relative",
+          background:
+            "linear-gradient(135deg, rgba(40,150,251,0.45), rgba(11,20,38,0.9))",
+          border: "1.5px solid rgba(40,150,251,0.5)",
+          boxShadow: "0 0 0 4px rgba(40,150,251,0.18), 0 8px 24px rgba(0,0,0,0.4)",
+          overflow: "hidden",
+        }}
+      >
+        {/* animated shimmer sweep */}
+        <motion.div
+          animate={{ x: ["-100%", "100%"] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%)",
+            zIndex: 2,
+          }}
+        />
+        {/* dot texture */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
+            backgroundSize: "5px 5px",
+            opacity: 0.5,
+          }}
+        />
+        {/* skeleton bars */}
+        <div
+          style={{
+            position: "absolute",
+            left: "10%",
+            right: "10%",
+            top: "30%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <div style={{ height: 8, background: "rgba(248,250,252,0.18)", borderRadius: 2 }} />
+          <div style={{ height: 6, width: "70%", background: "rgba(248,250,252,0.12)", borderRadius: 2 }} />
+          <div style={{ height: 6, width: "50%", background: "rgba(248,250,252,0.1)", borderRadius: 2 }} />
+        </div>
+        {/* center magic wand badge */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3,
+          }}
+        >
+          <motion.div
+            animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.08, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #2896FB, #1268C2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 0 0 6px rgba(40,150,251,0.2), 0 6px 18px rgba(40,150,251,0.55)",
+            }}
+          >
+            <Sparkles size={18} color="#F8FAFC" strokeWidth={2.6} />
+          </motion.div>
+        </div>
+        {/* floating sparkle particles */}
+        {[
+          { x: "18%", y: "22%", d: 0 },
+          { x: "82%", y: "30%", d: 0.4 },
+          { x: "75%", y: "75%", d: 0.8 },
+          { x: "22%", y: "78%", d: 0.2 },
+        ].map((p, i) => (
+          <motion.div
+            key={i}
+            animate={{ scale: [0, 1, 0], opacity: [0, 1, 0] }}
+            transition={{ duration: 1.4, repeat: Infinity, delay: p.d, ease: "easeOut" }}
+            style={{
+              position: "absolute",
+              left: p.x,
+              top: p.y,
+              width: 8,
+              height: 8,
+              zIndex: 4,
+            }}
+          >
+            <Sparkles size={8} color="#FFC328" strokeWidth={3} />
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 3 — Generated design + download */
+function BeatCraftResult() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 1100);
+    return () => clearTimeout(t1);
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        style={{
+          width: "78%",
+          aspectRatio: "16 / 9",
+          borderRadius: 10,
+          position: "relative",
+          background:
+            "linear-gradient(135deg, rgba(40,150,251,0.55), rgba(11,20,38,0.92))",
+          border: "1.5px solid rgba(40,150,251,0.6)",
+          boxShadow: "0 0 0 4px rgba(40,150,251,0.2), 0 10px 26px rgba(0,0,0,0.5)",
+          overflow: "hidden",
+        }}
+      >
+        {/* dot texture */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px)",
+            backgroundSize: "5px 5px",
+            opacity: 0.55,
+          }}
+        />
+        {/* yellow eyebrow */}
+        <div
+          style={{
+            position: "absolute",
+            top: "18%",
+            left: "8%",
+            fontSize: 5,
+            fontWeight: 800,
+            letterSpacing: "0.18em",
+            color: "#FFC328",
+            textTransform: "uppercase",
+          }}
+        >
+          FREE WEBINAR
+        </div>
+        {/* headline */}
+        <div
+          style={{
+            position: "absolute",
+            top: "30%",
+            left: "8%",
+            right: "8%",
+            fontSize: 13,
+            fontWeight: 800,
+            color: "#F8FAFC",
+            lineHeight: 1.1,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          <Typewriter text="Build Your AI Funnel" />
+        </div>
+        {/* subline */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "22%",
+            left: "8%",
+            right: "8%",
+            fontSize: 8,
+            fontWeight: 500,
+            color: "rgba(248,250,252,0.7)",
+          }}
+        >
+          Live · Mar 12 · 2 PM PT
+        </div>
+        {/* CTA pill */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "8%",
+            left: "8%",
+            padding: "4px 9px",
+            borderRadius: 4,
+            background: "#FFC328",
+            color: "#0B1426",
+            fontSize: 7,
+            fontWeight: 800,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          Save Your Seat →
+        </div>
+        {/* sparkle pop top-right */}
+        <motion.div
+          initial={{ scale: 0, rotate: -45 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.25 }}
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            width: 18,
+            height: 18,
+            borderRadius: 999,
+            background: "#17D94B",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 0 0 4px rgba(23,217,75,0.2)",
+          }}
+        >
+          <Check size={9} color="#0B1426" strokeWidth={4} />
+        </motion.div>
+      </motion.div>
+      {/* download */}
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{
+          opacity: stage >= 1 ? 1 : 0,
+          y: stage >= 1 ? 0 : 6,
+        }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.div
+          animate={{
+            boxShadow: [
+              "0 4px 14px rgba(40,150,251,0.45), 0 0 0 0 rgba(40,150,251,0.5)",
+              "0 4px 14px rgba(40,150,251,0.45), 0 0 0 8px rgba(40,150,251,0)",
+            ],
+          }}
+          transition={{ duration: 1.4, repeat: Infinity }}
+          style={{
+            background: "linear-gradient(135deg, #2896FB, #1268C2)",
+            color: "#F8FAFC",
+            padding: "5px 12px",
+            borderRadius: 6,
+            fontSize: 9,
+            fontWeight: 800,
+            letterSpacing: "0.06em",
+            display: "flex",
+            alignItems: "center",
+            gap: 5,
+          }}
+        >
+          <Download size={10} strokeWidth={2.6} />
+          DOWNLOAD
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ===================== END CRAFT MAGIC SCENE ===================== */
 
 function Typewriter({ text }: { text: string }) {
   const [n, setN] = useState(0);

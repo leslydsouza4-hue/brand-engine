@@ -75,7 +75,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
             style={{
               position: "fixed",
               right: 24,
-              bottom: 24,
+              bottom: 92,
               zIndex: 9999,
               width: 360,
               borderRadius: 18,
@@ -242,7 +242,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
             style={{
               position: "fixed",
               right: 24,
-              bottom: 24,
+              bottom: 92,
               zIndex: 9998,
               display: "flex",
               alignItems: "center",

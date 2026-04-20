@@ -6,6 +6,7 @@ import convertCmykRouter from "./convert-cmyk";
 import featureRequestRouter from "./feature-request";
 import importDocRouter from "./import-doc";
 import claudeDesignRouter from "./claude-design";
+import brandBrainRouter from "./brand-brain";
 const router: IRouter = Router();
 
 router.use(healthRouter);
@@ -15,5 +16,6 @@ router.use(convertCmykRouter);
 router.use(featureRequestRouter);
 router.use(importDocRouter);
 router.use(claudeDesignRouter);
+router.use(brandBrainRouter);
 
 export default router;

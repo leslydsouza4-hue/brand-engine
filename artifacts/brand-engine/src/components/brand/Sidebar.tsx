@@ -15,7 +15,8 @@ import {
   Award,
   Clock,
   MessageSquarePlus,
-  Mail
+  Mail,
+  Brain
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -68,7 +69,27 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         <div className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
         <div className="px-[12px] mb-[10px] relative">
           <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Create</div>
-          
+
+          <button
+            onClick={() => handleSetMode('brand-brain')}
+            className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[11px] rounded-[12px] cursor-pointer border-none overflow-hidden transition-all duration-300 mb-[6px] ${
+              currentMode === 'brand-brain'
+                ? 'bg-gradient-to-br from-[rgba(168,85,247,0.22)] via-[rgba(40,150,251,0.16)] to-[rgba(0,178,169,0.16)] shadow-[0_8px_28px_rgba(168,85,247,0.25),inset_0_1px_0_rgba(255,255,255,0.12),inset_0_0_0_1px_rgba(168,85,247,0.35)]'
+                : 'bg-gradient-to-br from-[rgba(168,85,247,0.10)] via-[rgba(40,150,251,0.07)] to-[rgba(0,178,169,0.07)] hover:from-[rgba(168,85,247,0.16)] hover:via-[rgba(40,150,251,0.12)] hover:to-[rgba(0,178,169,0.12)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(168,85,247,0.18)] hover:shadow-[0_6px_20px_rgba(168,85,247,0.18),inset_0_1px_0_rgba(255,255,255,0.08),inset_0_0_0_1px_rgba(168,85,247,0.28)]'
+            }`}
+          >
+            <span aria-hidden className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(110deg,transparent_30%,rgba(255,255,255,0.08)_50%,transparent_70%)] bg-[length:200%_100%] animate-[shimmer_2.4s_linear_infinite]" />
+            {currentMode === 'brand-brain' && (
+              <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[22px] bg-gradient-to-b from-[#A855F7] via-[#2896FB] to-[#00B2A9] rounded-r-[4px] shadow-[0_0_16px_rgba(168,85,247,0.45)]" />
+            )}
+            <span className="relative w-[26px] h-[26px] rounded-[8px] flex items-center justify-center bg-gradient-to-br from-[#A855F7] via-[#2896FB] to-[#00B2A9] shadow-[0_4px_14px_rgba(168,85,247,0.45),inset_0_1px_0_rgba(255,255,255,0.25)] shrink-0">
+              <Brain className="w-[13px] h-[13px] text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.6)]" />
+            </span>
+            <span className="relative flex-1 text-left text-[13px] font-semibold tracking-[-0.1px] bg-gradient-to-r from-white via-[#E2E8F0] to-white bg-clip-text text-transparent">
+              Brand Brain
+            </span>
+          </button>
+
           <button
             onClick={() => handleSetMode('templates')}
             className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[11px] rounded-[12px] cursor-pointer border-none overflow-hidden transition-all duration-300 ${

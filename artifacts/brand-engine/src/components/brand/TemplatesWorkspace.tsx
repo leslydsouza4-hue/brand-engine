@@ -352,7 +352,7 @@ Deep navy gradient background with a soft green glow orb behind the center card.
   },
 ];
 
-export function TemplatesWorkspace() {
+export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?: string | null; onConsumeSeed?: () => void } = {}) {
   const { isExporting, handleExport } = useExport();
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0]);
   const [activeSize, setActiveSize] = useState(CATEGORIES[0].sizes[0]);
@@ -423,6 +423,20 @@ export function TemplatesWorkspace() {
 
   const [aiMode, setAiMode] = useState(true);
   const [aiPrompt, setAiPrompt] = useState("");
+  // Receive a prompt handed off from Brand Brain (or anywhere upstream).
+  useEffect(() => {
+    if (seedPrompt && seedPrompt.trim()) {
+      setAiPrompt(seedPrompt);
+      onConsumeSeed?.();
+      // Scroll the prompt textarea into view so the user sees the handoff.
+      requestAnimationFrame(() => {
+        const ta = document.querySelector<HTMLTextAreaElement>('textarea[data-craft-prompt]');
+        ta?.focus();
+        ta?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedPrompt]);
   // Auto-enable HL brand-asset toggles when the prompt mentions them, so the user
   // sees visual confirmation that the real asset will be used (not a Claude approximation).
   useEffect(() => {
@@ -1992,6 +2006,7 @@ export function TemplatesWorkspace() {
               {aiSlideCount > 1 ? "Overall Theme" : "Prompt"}
             </div>
             <textarea
+              data-craft-prompt
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
               placeholder={aiSlideCount > 1

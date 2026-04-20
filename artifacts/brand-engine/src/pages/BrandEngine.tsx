@@ -15,19 +15,16 @@ import { DidYouKnowWorkspace } from "@/components/brand/DidYouKnowWorkspace";
 import { FeatureRequestBubble } from "@/components/brand/FeatureRequestBubble";
 import { FeatureRequestsWorkspace } from "@/components/brand/FeatureRequestsWorkspace";
 import { EmailTemplatesWorkspace } from "@/components/brand/EmailTemplatesWorkspace";
+import { BrandBrainWorkspace } from "@/components/brand/BrandBrainWorkspace";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
 
 export default function BrandEngine() {
-  const [currentMode, _setCurrentMode] = useState(() => {
-    const hash = window.location.hash.replace("#", "");
-    const valid = ["templates", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
-    return valid.includes(hash) ? hash : "templates";
-  });
-  const VALID_MODES = ["templates", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
+  const VALID_MODES = ["brand-brain", "templates", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
   };
+  const [currentMode, _setCurrentMode] = useState(() => parseHash());
   const setCurrentMode = (mode: string) => {
     _setCurrentMode(mode);
     window.location.hash = mode === "templates" ? "" : mode;
@@ -38,6 +35,12 @@ export default function BrandEngine() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [craftSeedPrompt, setCraftSeedPrompt] = useState<string | null>(null);
+
+  const sendToCraft = (prompt: string) => {
+    setCraftSeedPrompt(prompt);
+    setCurrentMode("templates");
+  };
 
   return (
     <div className="flex h-screen w-screen relative bg-[#060B16] brand-app-bg">
@@ -49,8 +52,9 @@ export default function BrandEngine() {
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">
         <Toolbar onMenuToggle={() => setSidebarOpen(true)} />
-        
-        {currentMode === "templates" && <TemplatesWorkspace />}
+
+        {currentMode === "brand-brain" && <BrandBrainWorkspace onSendToCraft={sendToCraft} />}
+        {currentMode === "templates" && <TemplatesWorkspace seedPrompt={craftSeedPrompt} onConsumeSeed={() => setCraftSeedPrompt(null)} />}
         {currentMode === "shaun-thumbnails" && <ShaunWorkspace />}
         {currentMode === "content-army" && <ContentArmyWorkspace />}
         {currentMode === "did-you-know" && <DidYouKnowWorkspace />}

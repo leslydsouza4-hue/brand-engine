@@ -23,7 +23,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Route**: `/`
 - **Description**: HighLevel-branded creative tool for generating marketing assets
 - **Workspaces**:
-  - **Templates**: Category-based template picker (Social/Ads/Presentation) with live preview
+  - **Brand Brain**: Claude Opus 4.7-powered chat assistant. Users paste brand notes / Google Doc content, ask anything, and request designs. When the assistant produces a `<design_brief>` block, the UI renders a "Send to Craft Magic" button that hands the prompt off to the Craft Magic workspace (auto-switches tab + pre-fills prompt).
+  - **Templates (Craft Magic)**: Category-based template picker (Social/Ads/Presentation) with live preview. Accepts `seedPrompt` prop to receive prompts handed off from Brand Brain.
   - **Shaun Thumbnails**: YouTube thumbnail creator with Shaun Clark poses, positioning, headline/subtext
   - **Zoom Backgrounds**: Virtual background generator with AI background removal, 8 gradient styles, photo upload
   - **Biz Dev Templates (Virtual Workshop)**: Campaign pack generator — input headline, date, guest name, CTA, person photo (auto bg removal); generates 6 fixed template variants (QL 1080×1080, Portrait 1080×1350, Horizontal CTA/Dates/Day1/Day2 1920×1080); gallery output with individual + bulk download

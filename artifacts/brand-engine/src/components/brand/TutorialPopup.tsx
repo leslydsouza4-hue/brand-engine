@@ -3633,6 +3633,7 @@ function BeatBizGrid() {
         inset: 18,
         display: "flex",
         flexDirection: "column",
+        justifyContent: "center",
         gap: 8,
       }}
     >
@@ -3654,7 +3655,6 @@ function BeatBizGrid() {
       {/* grid */}
       <div
         style={{
-          flex: 1,
           display: "grid",
           gridTemplateColumns: "repeat(5, 1fr)",
           gap: 5,

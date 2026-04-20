@@ -7,7 +7,7 @@ type TutorialConfig = {
   title: string;
   body: string;
   cta: string;
-  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev" | "superpromo";
+  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev" | "superpromo" | "zoom";
 };
 
 const TUTORIALS: Record<string, TutorialConfig> = {
@@ -52,6 +52,13 @@ const TUTORIALS: Record<string, TutorialConfig> = {
     body: "Pick a size, type the event details, drop a guest photo, and export every promo variant at once.",
     cta: "Build a promo",
     scene: "superpromo",
+  },
+  "zoom-backgrounds": {
+    badge: "NEW",
+    title: "Zoom backgrounds",
+    body: "Pick a branded background, drop in your name and title, and download a ready-to-use Zoom virtual background.",
+    cta: "Make my background",
+    scene: "zoom",
   },
 };
 
@@ -201,6 +208,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
               {config.scene === "didyouknow" && <DidYouKnowScene />}
               {config.scene === "bizdev" && <BizDevScene />}
               {config.scene === "superpromo" && <SuperPromoScene />}
+              {config.scene === "zoom" && <ZoomScene />}
             </div>
 
             <div style={{ padding: "16px 18px 18px" }}>
@@ -4194,6 +4202,259 @@ function BeatSpGrid() {
 }
 
 /* ===================== END SUPER PROMO SCENE ===================== */
+
+/* ===================== ZOOM BACKGROUND SCENE ===================== */
+
+function ZoomScene() {
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setBeat((b) => (b + 1) % 2), 2800);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: 18 }}>
+      <AnimatePresence mode="wait">
+        {beat === 0 && <BeatZoomBg key="bg" />}
+        {beat === 1 && <BeatZoomDetails key="details" />}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* Beat 1 — 3 background thumbnail cards, selection lands on middle one */
+function BeatZoomBg() {
+  const [picked, setPicked] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setPicked(true), 700);
+    return () => clearTimeout(t);
+  }, []);
+  const BGS = [
+    { key: "small", label: "Small Planet", bg: "radial-gradient(circle at 78% 78%, rgba(40,150,251,0.55), transparent 22%), linear-gradient(135deg, #0B1426, #1E2A44)" },
+    { key: "centered", label: "Centered", bg: "radial-gradient(circle at 50% 50%, rgba(40,150,251,0.65), transparent 32%), linear-gradient(135deg, #0B1426, #1E2A44)" },
+    { key: "bottom-right", label: "Bottom Right", bg: "radial-gradient(circle at 80% 75%, rgba(40,150,251,0.7), transparent 35%), linear-gradient(135deg, #0B1426, #1E2A44)" },
+  ];
+  const SELECTED = 1;
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 10,
+      }}
+    >
+      {BGS.map((b, i) => {
+        const selected = i === SELECTED && picked;
+        return (
+          <motion.div
+            key={b.key}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 + i * 0.08, duration: 0.3 }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 5,
+              flex: 1,
+            }}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: "100%",
+                aspectRatio: "16 / 9",
+                borderRadius: 8,
+                background: b.bg,
+                border: selected
+                  ? "1.5px solid #00B2A9"
+                  : "1.5px solid rgba(255,255,255,0.1)",
+                boxShadow: selected
+                  ? "0 0 0 4px rgba(0,178,169,0.22), 0 6px 18px rgba(0,178,169,0.3)"
+                  : "0 4px 10px rgba(0,0,0,0.3)",
+                overflow: "hidden",
+                transition: "all 0.3s",
+              }}
+            >
+              {/* dot texture overlay */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  backgroundImage:
+                    "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+                  backgroundSize: "5px 5px",
+                  opacity: 0.6,
+                }}
+              />
+              {selected && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                  style={{
+                    position: "absolute",
+                    top: 4,
+                    right: 4,
+                    width: 16,
+                    height: 16,
+                    borderRadius: 999,
+                    background: "#00B2A9",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    border: "2px solid #0B1426",
+                  }}
+                >
+                  <Check size={8} color="#F8FAFC" strokeWidth={4} />
+                </motion.div>
+              )}
+            </div>
+            <div
+              style={{
+                fontSize: 8,
+                fontWeight: 800,
+                letterSpacing: "0.06em",
+                color: selected ? "#20EDF1" : "rgba(248,250,252,0.65)",
+                textTransform: "uppercase",
+                transition: "color 0.25s",
+              }}
+            >
+              {b.label}
+            </div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
+  );
+}
+
+/* Beat 2 — Live preview with name + designation typing in over the chosen bg */
+function BeatZoomDetails() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 400);
+    const t2 = setTimeout(() => setStage(2), 1500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "16 / 9",
+          borderRadius: 10,
+          background:
+            "radial-gradient(circle at 50% 50%, rgba(40,150,251,0.65), transparent 32%), linear-gradient(135deg, #0B1426, #1E2A44)",
+          border: "1.5px solid rgba(0,178,169,0.45)",
+          boxShadow:
+            "0 0 0 4px rgba(0,178,169,0.15), 0 8px 24px rgba(0,0,0,0.5)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* dot texture */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)",
+            backgroundSize: "6px 6px",
+            opacity: 0.6,
+          }}
+        />
+        {/* name + designation block, top-left like the real workspace */}
+        <div
+          style={{
+            position: "absolute",
+            top: "22%",
+            left: "5%",
+            right: "5%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 5,
+          }}
+        >
+          {/* Name */}
+          {stage >= 1 ? (
+            <motion.div
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{
+                fontFamily: "Poppins, ui-sans-serif, system-ui",
+                fontWeight: 800,
+                fontSize: 22,
+                lineHeight: 1.05,
+                color: "#20EDF1",
+                textTransform: "uppercase",
+                letterSpacing: "-0.5px",
+                textShadow: "0 2px 12px rgba(0,0,0,0.5)",
+                minHeight: 22,
+              }}
+            >
+              <Typewriter text="ROBIN ALEX" />
+            </motion.div>
+          ) : (
+            <div
+              style={{
+                height: 14,
+                width: "55%",
+                background: "rgba(32,237,241,0.18)",
+                borderRadius: 3,
+              }}
+            />
+          )}
+          {/* Designation */}
+          {stage >= 2 ? (
+            <motion.div
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{
+                fontFamily: "Poppins, ui-sans-serif, system-ui",
+                fontWeight: 500,
+                fontSize: 11,
+                color: "rgba(255,255,255,0.78)",
+                letterSpacing: "0.3px",
+                minHeight: 13,
+              }}
+            >
+              <Typewriter text="Founder & CEO" />
+            </motion.div>
+          ) : (
+            <div
+              style={{
+                height: 6,
+                width: "38%",
+                background: "rgba(248,250,252,0.14)",
+                borderRadius: 2,
+              }}
+            />
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ===================== END ZOOM SCENE ===================== */
 
 function Typewriter({ text }: { text: string }) {
   const [n, setN] = useState(0);

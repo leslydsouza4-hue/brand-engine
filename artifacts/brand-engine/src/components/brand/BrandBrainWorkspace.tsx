@@ -932,10 +932,63 @@ function GenerationPanel({
 function AssetCard({ asset, onSendToCraft }: { asset: GeneratedAsset; onSendToCraft: () => void }) {
   const meta = FORMAT_META[asset.format];
   const Icon = meta.Icon;
-  // Iframe scales the design to fit the card width
-  const cardWidth = 280; // px (will responsively grow with container, this is a baseline)
-  const scale = cardWidth / meta.w;
-  const cardHeight = meta.h * scale;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeReady, setIframeReady] = useState(false);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [downloading, setDownloading] = useState(false);
+
+  // Track container width so we can scale the iframe correctly.
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const e of entries) setContainerWidth(e.contentRect.width);
+    });
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  // Reset ready flag when the html changes
+  useEffect(() => { setIframeReady(false); }, [asset.html]);
+
+  const scale = containerWidth > 0 ? containerWidth / meta.w : 0;
+
+  const handleDownload = async () => {
+    const iframe = iframeRef.current;
+    if (!iframe || !iframe.contentDocument) return;
+    setDownloading(true);
+    try {
+      const doc = iframe.contentDocument;
+      // Find the design root — claude-design wraps everything in a .canvas div sized to the spec.
+      const target = (doc.querySelector(".canvas") as HTMLElement) || (doc.body as HTMLElement);
+      // Wait for fonts and images inside the iframe to fully load.
+      try { await (doc as any).fonts?.ready; } catch {}
+      const imgs = Array.from(target.querySelectorAll("img"));
+      await Promise.all(imgs.map((img) => img.complete ? Promise.resolve() : new Promise<void>((r) => { img.onload = () => r(); img.onerror = () => r(); })));
+
+      // Dynamic import keeps initial bundle slim.
+      const { toPng } = await import("html-to-image");
+      const w = target.offsetWidth || meta.w;
+      const h = target.offsetHeight || meta.h;
+      const dataUrl = await toPng(target, {
+        width: w,
+        height: h,
+        pixelRatio: 2,
+        cacheBust: true,
+        skipAutoScale: true,
+        backgroundColor: "#0B1426",
+      });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `brand-engine-${meta.label.toLowerCase()}-${meta.aspect}.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    } catch (e) {
+      console.error("PNG export failed", e);
+      alert("Couldn't generate PNG. Try opening in Craft Magic and exporting from there.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="rounded-[12px] border border-white/[0.08] bg-white/[0.02] overflow-hidden">
@@ -946,20 +999,44 @@ function AssetCard({ asset, onSendToCraft }: { asset: GeneratedAsset; onSendToCr
         <div className="ml-auto text-[10px]">
           {asset.status === "queued" && <span className="text-[#64748B]">Queued</span>}
           {asset.status === "generating" && <span className="text-[#A855F7] flex items-center gap-[5px]"><Loader2 className="w-[10px] h-[10px] animate-spin" />Crafting…</span>}
-          {asset.status === "done" && <span className="text-[#17D94B]">Done</span>}
+          {asset.status === "done" && <span className="text-[#17D94B]">Done · {meta.w}×{meta.h}</span>}
           {asset.status === "error" && <span className="text-[#EF4444]">Error</span>}
         </div>
       </div>
       <div className="p-[12px] bg-[#050810] flex items-center justify-center">
-        <div className="relative bg-[#0B1426] rounded-[6px] overflow-hidden" style={{ width: "100%", aspectRatio: `${meta.w}/${meta.h}` }}>
-          {asset.status === "done" && asset.html ? (
-            <iframe
-              srcDoc={asset.html}
-              title={`${meta.label} preview`}
-              sandbox="allow-same-origin"
-              className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-              style={{ transform: `scale(${1})`, transformOrigin: "top left" }}
-            />
+        <div
+          ref={containerRef}
+          className="relative bg-[#0B1426] rounded-[6px] overflow-hidden w-full"
+          style={{ aspectRatio: `${meta.w}/${meta.h}` }}
+        >
+          {asset.status === "done" && asset.html && scale > 0 ? (
+            <>
+              {/* The iframe is rendered at the design's NATURAL size (e.g. 1080x1080) */}
+              {/* and CSS-transformed down to fit the container. This way the full design */}
+              {/* is visible at the proper aspect, and the underlying DOM still has the */}
+              {/* real pixels for export. */}
+              <iframe
+                ref={iframeRef}
+                srcDoc={asset.html}
+                title={`${meta.label} preview`}
+                sandbox="allow-same-origin"
+                onLoad={() => setIframeReady(true)}
+                className="absolute top-0 left-0 border-0 pointer-events-none bg-[#0B1426]"
+                style={{
+                  width: meta.w,
+                  height: meta.h,
+                  transform: `scale(${scale})`,
+                  transformOrigin: "top left",
+                  opacity: iframeReady ? 1 : 0,
+                  transition: "opacity 200ms",
+                }}
+              />
+              {!iframeReady && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="w-[20px] h-[20px] text-[#A855F7] animate-spin" />
+                </div>
+              )}
+            </>
           ) : asset.status === "error" ? (
             <div className="absolute inset-0 flex items-center justify-center text-[11px] text-[#FCA5A5] p-[10px] text-center">
               <div>
@@ -983,24 +1060,18 @@ function AssetCard({ asset, onSendToCraft }: { asset: GeneratedAsset; onSendToCr
             <Wand2 className="w-[10px] h-[10px]" /> Refine in Craft Magic
           </button>
           <button
-            onClick={() => downloadHtmlAsImage(asset.html!, `${meta.label.toLowerCase()}-${meta.aspect}.html`)}
-            className="px-[10px] py-[7px] rounded-[8px] bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#94A3B8] hover:text-white transition-all cursor-pointer"
-            title="Download HTML"
+            onClick={handleDownload}
+            disabled={downloading || !iframeReady}
+            className="px-[10px] py-[7px] rounded-[8px] bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed border border-white/[0.08] text-[#94A3B8] hover:text-white transition-all cursor-pointer flex items-center gap-[5px] text-[11px]"
+            title="Download high-res PNG"
           >
-            <Download className="w-[11px] h-[11px]" />
+            {downloading ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
+            PNG
           </button>
         </div>
       )}
     </div>
   );
-}
-
-function downloadHtmlAsImage(html: string, filename: string) {
-  const blob = new Blob([html], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

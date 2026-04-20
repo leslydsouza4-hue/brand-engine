@@ -496,16 +496,43 @@ export function BrandBrainWorkspace({ onSendToCraft }: { onSendToCraft: (prompt:
     setGenPanel((g) => ({ ...g, assets: initial }));
 
     const apiBase = import.meta.env.BASE_URL;
+    const wantsHuman = !!req.human && req.human.toLowerCase().startsWith("yes");
+    const humanPose = wantsHuman ? req.human!.replace(/^yes\s*[—-]?\s*/i, "").trim() : "";
     const results: GeneratedAsset[] = [];
     await Promise.all(targetFormats.map(async (format) => {
       setGenPanel((g) => ({ ...g, assets: g.assets.map((a) => a.format === format ? { ...a, status: "generating" } : a) }));
       let result: GeneratedAsset;
       try {
+        // Step 1 — Polish the rough concept into a fully detailed Craft Magic brief
+        // (composition, type hierarchy, color usage, focal element). This is the same
+        // step the dedicated Craft Magic tab runs and is what makes the output good.
+        const ideaText = buildCraftPrompt(req, format);
+        const polishRes = await fetch(`${apiBase}api/polish-prompt`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idea: ideaText,
+            aspect: FORMAT_META[format].aspect,
+            format: "social",
+            slideCount: 1,
+            includeLogo: true,
+            logoDescription: "wordmark",
+            includeHighly: wantsHuman,
+            highlyPoseDescription: humanPose,
+          }),
+        });
+        let polishedPrompt = ideaText;
+        if (polishRes.ok) {
+          const pj = await polishRes.json().catch(() => ({}));
+          if (pj?.prompt && typeof pj.prompt === "string") polishedPrompt = pj.prompt;
+        }
+
+        // Step 2 — Generate the actual design with the polished, detailed prompt.
         const res = await fetch(`${apiBase}api/claude-design`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt: buildCraftPrompt(req, format),
+            prompt: polishedPrompt,
             aspect: FORMAT_META[format].aspect,
             model: "claude-sonnet-4-6",
             slideCount: 1,

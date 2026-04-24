@@ -459,49 +459,75 @@ export function GrowthFlywheelWorkspace() {
               </p>
             </div>
 
-            {/* Slide grid:
-                row 1+2 — [LEFT cards] [FLYWHEEL] [RIGHT cards]
-                row 3   — Reactivate spans full width */}
+            {/* Slide layout:
+                Top zone — 2 rows × 2 cards with the flywheel floating
+                centered above. Bottom row — Reactivate wide card. */}
             <div
               style={{
                 flex: 1,
                 minHeight: 0,
-                display: "grid",
-                gridTemplateColumns:
-                  "minmax(0, 480px) minmax(0, 600px) minmax(0, 480px)",
-                gridTemplateRows:
-                  "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.66fr)",
-                gridTemplateAreas: `
-                  "capture flywheel close"
-                  "nurture flywheel evangelize"
-                  "react   react    react"
-                `,
+                display: "flex",
+                flexDirection: "column",
                 gap: "14px",
-                alignItems: "stretch",
-                justifyItems: "stretch",
-                justifyContent: "center",
               }}
             >
-              <div style={{ gridArea: "capture" }} className="min-h-0 flex">
-                <InfoCard stage={getStage("capture")} />
-              </div>
-              <div style={{ gridArea: "nurture" }} className="min-h-0 flex">
-                <InfoCard stage={getStage("nurture")} />
-              </div>
+              {/* Top zone: rows 1+2 + flywheel overlay */}
               <div
-                style={{ gridArea: "flywheel" }}
-                ref={wheelRef}
-                className="min-h-0 flex items-center justify-center"
+                style={{
+                  position: "relative",
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                }}
               >
-                <Flywheel theme={theme} />
+                {/* Row 1 */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "14px",
+                    flex: 1,
+                    minHeight: 0,
+                  }}
+                >
+                  <InfoCard stage={getStage("capture")} align="left" />
+                  <InfoCard stage={getStage("close")} align="right" />
+                </div>
+
+                {/* Row 2 */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "14px",
+                    flex: 1,
+                    minHeight: 0,
+                  }}
+                >
+                  <InfoCard stage={getStage("nurture")} align="left" />
+                  <InfoCard stage={getStage("evangelize")} align="right" />
+                </div>
+
+                {/* Flywheel — absolutely centered over rows 1+2 */}
+                <div
+                  ref={wheelRef}
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    pointerEvents: "none",
+                    zIndex: 10,
+                  }}
+                >
+                  <Flywheel theme={theme} />
+                </div>
               </div>
-              <div style={{ gridArea: "close" }} className="min-h-0 flex">
-                <InfoCard stage={getStage("close")} />
-              </div>
-              <div style={{ gridArea: "evangelize" }} className="min-h-0 flex">
-                <InfoCard stage={getStage("evangelize")} />
-              </div>
-              <div style={{ gridArea: "react" }} className="min-h-0 flex">
+
+              {/* Row 3 — Reactivate wide */}
+              <div style={{ flexShrink: 0 }}>
                 <InfoCard stage={getStage("reactivate")} wide />
               </div>
             </div>
@@ -920,9 +946,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
 function InfoCard({
   stage,
   wide,
+  align = "full",
 }: {
   stage: Stage;
   wide?: boolean;
+  align?: "left" | "right" | "full";
 }) {
   const t = STAGE_THEME[stage.id];
 
@@ -934,22 +962,39 @@ function InfoCard({
       ]
     : [stage.items];
 
+  // Align modes:
+  //  "full"  → content fills entire card width (default + wide row)
+  //  "left"  → content sits on left half of card (right half left clear for flywheel overlay)
+  //  "right" → content sits on right half of card (left half left clear for flywheel overlay)
+  const isAligned = align === "left" || align === "right";
+  const contentBoxStyle: React.CSSProperties = isAligned
+    ? {
+        maxWidth: "55%",
+        marginLeft: align === "right" ? "auto" : 0,
+        marginRight: align === "left" ? "auto" : 0,
+      }
+    : {};
+  const glowCorner = align === "left" ? "0% 0%" : "100% 0%";
+
   return (
     <div
-      className="relative rounded-[12px] w-full overflow-hidden"
+      className="relative rounded-[12px] w-full h-full overflow-hidden"
       style={{
         background: "var(--card-bg)",
         boxShadow: `0 1px 2px var(--card-shadow-inner), 0 12px 26px -12px rgba(${t.rgb}, 0.26)`,
       }}
     >
-      {/* Soft tinted radial glow in upper-right corner */}
+      {/* Soft tinted radial glow */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(circle at 100% 0%, rgba(${t.rgb}, 0.12) 0%, transparent 55%)`,
+          background: `radial-gradient(circle at ${glowCorner}, rgba(${t.rgb}, 0.14) 0%, transparent 55%)`,
         }}
       />
+
+      {/* Inner content box — constrained when aligned */}
+      <div className="relative" style={contentBoxStyle}>
 
       {/* Header row */}
       <div className="relative pl-[18px] pr-[16px] pt-[13px] pb-[8px] flex items-start gap-[11px]">
@@ -1050,6 +1095,9 @@ function InfoCard({
           ))}
         </div>
       </div>
+
+      </div>
+      {/* /Inner content box */}
     </div>
   );
 }

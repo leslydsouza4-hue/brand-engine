@@ -852,9 +852,9 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </foreignObject>
             <text
               x={CENTER}
-              y={CENTER + 5}
+              y={CENTER + 12}
               textAnchor="middle"
-              fontSize={17}
+              fontSize={18}
               fontWeight={800}
               fill={
                 theme === "dark"
@@ -867,20 +867,6 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               }}
             >
               REACTIVATE
-            </text>
-            <text
-              x={CENTER}
-              y={CENTER + 22}
-              textAnchor="middle"
-              fontSize={10}
-              fontWeight={700}
-              fill={theme === "dark" ? "#94A3B8" : "#475569"}
-              style={{
-                letterSpacing: "2.4px",
-                fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              }}
-            >
-              STAGE 05 · THE LOOP
             </text>
           </g>
         </g>
@@ -1029,21 +1015,11 @@ function InfoCard({
           />
         </div>
 
-        {/* Title block */}
-        <div className="flex-1 min-w-0 pt-[2px]">
-          <div className="flex items-center gap-[7px] mb-[4px]">
-            <span
-              className="inline-flex items-center px-[9px] py-[3px] rounded-[6px] text-[12px] font-bold uppercase tracking-[1.3px]"
-              style={{
-                color: t.color,
-                background: `rgba(${t.rgb}, 0.14)`,
-              }}
-            >
-              {t.badge}
-            </span>
-          </div>
+        {/* Title block — stage chip + watermark removed; the title now
+            stands alone next to the icon for a cleaner header. */}
+        <div className="flex-1 min-w-0 pt-[6px]">
           <div
-            className="text-[24px] font-bold tracking-[-0.4px] leading-[1.15]"
+            className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               color: "var(--card-text)",
@@ -1051,20 +1027,6 @@ function InfoCard({
           >
             {stage.title}
           </div>
-        </div>
-
-        {/* Big watermark number */}
-        <div
-          aria-hidden
-          className="font-black leading-none select-none pointer-events-none -mt-[2px]"
-          style={{
-            fontSize: "52px",
-            color: `rgba(${t.rgb}, 0.18)`,
-            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            letterSpacing: "-2.5px",
-          }}
-        >
-          {t.stageNum}
         </div>
       </div>
 

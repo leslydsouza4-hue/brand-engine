@@ -358,8 +358,13 @@ function Flywheel({
   const CENTER = SIZE / 2;
   const OUTER_R = 240;       // thick donut outer
   const INNER_R = 140;       // thick donut inner
-  const TEXT_R = (OUTER_R + INNER_R) / 2 + 18; // bias toward outer
-  const ICON_R = (OUTER_R + INNER_R) / 2 - 22; // bias toward inner
+  // Text on a path renders glyphs ABOVE the baseline. For top-half segments
+  // (CW arc), "above" = outward from center; for bottom-half (CCW arc),
+  // "above" = inward toward center. We pick radii so both end up in the same
+  // visual band hugging the outer edge: ~207–233.
+  const TEXT_R_TOP = 207;    // baseline for top segments (Capture, Evangelize)
+  const TEXT_R_BOT = 233;    // baseline for bottom segments (Nurture, Close)
+  const ICON_R = 175;        // icon-circle centers (inner half of the donut)
   const CENTER_R = INNER_R - 10;
   const BOUNDARY_R = OUTER_R; // chevron circles sit on the outer edge
 
@@ -393,16 +398,18 @@ function Flywheel({
   // Curved arc path for textPath. CW for top half (text reads upright),
   // CCW for bottom half (so text doesn't appear upside-down).
   const textArcPath = (a1: number, a2: number, ccw: boolean) => {
-    const start = polar(ccw ? a2 : a1, TEXT_R);
-    const end   = polar(ccw ? a1 : a2, TEXT_R);
+    const r = ccw ? TEXT_R_BOT : TEXT_R_TOP;
+    const start = polar(ccw ? a2 : a1, r);
+    const end   = polar(ccw ? a1 : a2, r);
     const large = (a2 - a1) > 180 ? 1 : 0;
-    return `M ${start.x} ${start.y} A ${TEXT_R} ${TEXT_R} 0 ${large} ${ccw ? 0 : 1} ${end.x} ${end.y}`;
+    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} ${ccw ? 0 : 1} ${end.x} ${end.y}`;
   };
 
-  // Per-stage path config
+  // Per-stage path config — segments meet flush at boundaries; the
+  // boundary cutout mask is what visually separates them.
   const segmentMeta = outerOrder.map((id, i) => {
-    const a1 = startAngle + i * sweep + 2.5; // tiny gap between segments
-    const a2 = startAngle + (i + 1) * sweep - 2.5;
+    const a1 = startAngle + i * sweep;
+    const a2 = startAngle + (i + 1) * sweep;
     const mid = (a1 + a2) / 2;
     // Use CCW path on segments whose midpoint sits in the lower half (y > 0)
     // i.e. midpoint angle in [0, 180) — these are nurture (mid 45) and close (mid 135).
@@ -523,10 +530,10 @@ function Flywheel({
           {segmentMeta.map(({ id }) => (
             <text
               key={`label-${id}`}
-              fontSize={36}
+              fontSize={26}
               fontWeight={800}
               fill="white"
-              letterSpacing="2.5"
+              letterSpacing="1.6"
               style={{ pointerEvents: "none", textTransform: "uppercase", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))" }}
             >
               <textPath href={`#textpath-${id}`} startOffset="50%" textAnchor="middle">
@@ -548,8 +555,8 @@ function Flywheel({
                   opacity={0.95}
                   style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.18))" }}
                 />
-                <foreignObject x={pos.x - 14} y={pos.y - 14} width={28} height={28}>
-                  <div style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", color: t.color }}>
+                <foreignObject x={pos.x - 13} y={pos.y - 13} width={26} height={26}>
+                  <div style={{ width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", color: t.color }}>
                     <Icon style={{ width: 18, height: 18 }} strokeWidth={2.4} />
                   </div>
                 </foreignObject>
@@ -571,9 +578,9 @@ function Flywheel({
                 fill="white"
                 style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.2))" }}
               />
-              <foreignObject x={pos.x - 11} y={pos.y - 11} width={22} height={22}>
-                <div style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", color: nextTheme.color }}>
-                  <Chevron style={{ width: 16, height: 16 }} strokeWidth={3} />
+              <foreignObject x={pos.x - 12} y={pos.y - 12} width={24} height={24}>
+                <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: nextTheme.color }}>
+                  <Chevron style={{ width: 18, height: 18 }} strokeWidth={2.75} />
                 </div>
               </foreignObject>
             </g>

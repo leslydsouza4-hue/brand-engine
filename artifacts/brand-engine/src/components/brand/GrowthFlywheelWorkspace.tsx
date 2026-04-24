@@ -1,16 +1,15 @@
 import { useState } from "react";
 import {
-  Filter,
-  MessagesSquare,
-  DollarSign,
-  Trophy,
-  RefreshCw,
   Sparkles,
   ChevronRight,
   ChevronDown,
   ChevronLeft,
   ChevronUp,
 } from "lucide-react";
+
+const BASE = import.meta.env.BASE_URL;
+const hlIcon = (name: string) =>
+  `${BASE}assets/icons/Icon=${name}, Glass=Medium, Color=None (Glass).png`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & data
@@ -24,45 +23,48 @@ interface Stage {
   items: string[];
 }
 
+// Official HighLevel brand palette: Capture Yellow, Nurture Blue, Close Green,
+// Reactivate Navy. Evangelize uses an HL-friendly warm coral/orange accent
+// (HL only ships 3 named bundle colors, so this complements without colliding).
 const STAGE_THEME: Record<StageId, {
   color: string;
   rgb: string;
-  Icon: typeof Filter;
+  iconPath: string;
   stageNum: string;
   badge: string;
 }> = {
   capture: {
-    color: "#16C65B",
-    rgb: "22,198,91",
-    Icon: Filter,
+    color: "#FFCD2D",          // HL Capture Yellow
+    rgb: "255,205,45",
+    iconPath: hlIcon("Capture"),
     stageNum: "01",
     badge: "STAGE 01",
   },
   nurture: {
-    color: "#FF6B1A",
-    rgb: "255,107,26",
-    Icon: MessagesSquare,
+    color: "#2EA3F0",          // HL Nurture Blue
+    rgb: "46,163,240",
+    iconPath: hlIcon("Nurture"),
     stageNum: "02",
     badge: "STAGE 02",
   },
   close: {
-    color: "#2F80ED",
-    rgb: "47,128,237",
-    Icon: DollarSign,
+    color: "#17D94B",          // HL Close Green
+    rgb: "23,217,75",
+    iconPath: hlIcon("Close"),
     stageNum: "03",
     badge: "STAGE 03",
   },
   evangelize: {
-    color: "#FFB800",
-    rgb: "255,184,0",
-    Icon: Trophy,
+    color: "#F97316",          // HL-styled celebration coral
+    rgb: "249,115,22",
+    iconPath: hlIcon("Evangelize"),
     stageNum: "04",
     badge: "STAGE 04",
   },
   reactivate: {
-    color: "#173B8F",
-    rgb: "23,59,143",
-    Icon: RefreshCw,
+    color: "#1B2A66",          // HL Navy
+    rgb: "27,42,102",
+    iconPath: hlIcon("Reactivate"),
     stageNum: "05",
     badge: "STAGE 05 · THE LOOP",
   },
@@ -541,47 +543,25 @@ function Flywheel({
           );
         })}
 
-        {/* Stage icon badges inside each segment */}
+        {/* Stage icon badges inside each segment — official HL glass icons */}
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
-          const Icon = t.Icon;
           const pos = polar(mid, ICON_R);
+          const ICON_SIZE = 50;
           return (
-            <g key={`icon-${id}`} pointerEvents="none">
-              <circle
-                cx={pos.x}
-                cy={pos.y}
-                r={19}
-                fill="white"
-                style={{ filter: "drop-shadow(0 2px 6px rgba(15,23,42,0.18))" }}
+            <g
+              key={`icon-${id}`}
+              pointerEvents="none"
+              style={{ filter: "drop-shadow(0 4px 8px rgba(15,23,42,0.25))" }}
+            >
+              <image
+                href={t.iconPath}
+                x={pos.x - ICON_SIZE / 2}
+                y={pos.y - ICON_SIZE / 2}
+                width={ICON_SIZE}
+                height={ICON_SIZE}
+                preserveAspectRatio="xMidYMid meet"
               />
-              <circle
-                cx={pos.x}
-                cy={pos.y}
-                r={19}
-                fill="none"
-                stroke={`rgba(${t.rgb}, 0.18)`}
-                strokeWidth={1}
-              />
-              <foreignObject
-                x={pos.x - 12}
-                y={pos.y - 12}
-                width={24}
-                height={24}
-              >
-                <div
-                  style={{
-                    width: 24,
-                    height: 24,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: t.color,
-                  }}
-                >
-                  <Icon style={{ width: 16, height: 16 }} strokeWidth={2.4} />
-                </div>
-              </foreignObject>
             </g>
           );
         })}
@@ -608,25 +588,15 @@ function Flywheel({
             pointerEvents="none"
           />
           <g pointerEvents="none">
-            <foreignObject
-              x={CENTER - 16}
-              y={CENTER - 36}
-              width={32}
-              height={32}
-            >
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: STAGE_THEME.reactivate.color,
-                }}
-              >
-                <RefreshCw style={{ width: 26, height: 26 }} strokeWidth={2.4} />
-              </div>
-            </foreignObject>
+            <image
+              href={STAGE_THEME.reactivate.iconPath}
+              x={CENTER - 32}
+              y={CENTER - 56}
+              width={64}
+              height={64}
+              preserveAspectRatio="xMidYMid meet"
+              style={{ filter: "drop-shadow(0 3px 6px rgba(15,23,42,0.2))" }}
+            />
             <text
               x={CENTER}
               y={CENTER + 10}
@@ -677,7 +647,6 @@ function InfoCard({
   wide?: boolean;
 }) {
   const t = STAGE_THEME[stage.id];
-  const Icon = t.Icon;
 
   // Split items into 2 columns when wide (Reactivate)
   const cols = wide
@@ -707,15 +676,12 @@ function InfoCard({
 
       {/* Header */}
       <div className="px-[18px] pt-[16px] pb-[10px] flex items-start gap-[12px]">
-        <div
-          className="w-[36px] h-[36px] rounded-[8px] flex items-center justify-center shrink-0"
-          style={{
-            background: `linear-gradient(135deg, ${t.color}, ${t.color}d9)`,
-            boxShadow: `0 3px 10px rgba(${t.rgb}, 0.3)`,
-          }}
-        >
-          <Icon className="w-[18px] h-[18px] text-white" strokeWidth={2.4} />
-        </div>
+        <img
+          src={t.iconPath}
+          alt=""
+          className="w-[40px] h-[40px] shrink-0 select-none"
+          style={{ filter: `drop-shadow(0 3px 8px rgba(${t.rgb}, 0.35))` }}
+        />
         <div className="flex-1 min-w-0">
           <div
             className="text-[10px] font-bold uppercase tracking-[1.6px] mb-[2px]"

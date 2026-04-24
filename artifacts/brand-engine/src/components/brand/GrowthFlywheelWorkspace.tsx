@@ -180,16 +180,51 @@ type EditTarget = StageId | "hero" | null;
 const SLIDE_W = 1920;
 const SLIDE_H = 1080;
 
+type SlideTheme = "light" | "dark";
+type ExportScope = "slide" | "wheel";
+
+const THEME_VARS: Record<SlideTheme, Record<string, string>> = {
+  light: {
+    "--slide-bg":
+      "radial-gradient(ellipse 90% 70% at 50% 35%, #EFF6FF 0%, #DBEAFE 45%, #BFDBFE 80%, #93C5FD 100%)",
+    "--slide-text": "#0F172A",
+    "--slide-text-muted": "#475569",
+    "--card-bg": "#FFFFFF",
+    "--card-text": "#0F172A",
+    "--card-text-muted": "#475569",
+    "--card-bullet-text": "#1E293B",
+    "--card-shadow-inner": "rgba(15,23,42,0.04)",
+    "--hub-sub-text": "#475569",
+  },
+  dark: {
+    "--slide-bg":
+      "radial-gradient(ellipse 90% 70% at 50% 30%, #1E293B 0%, #0F172A 55%, #020617 100%)",
+    "--slide-text": "#F8FAFC",
+    "--slide-text-muted": "#CBD5E1",
+    "--card-bg": "#1E293B",
+    "--card-text": "#F8FAFC",
+    "--card-text-muted": "#94A3B8",
+    "--card-bullet-text": "#E2E8F0",
+    "--card-shadow-inner": "rgba(0,0,0,0.4)",
+    "--hub-sub-text": "#94A3B8",
+  },
+};
+
 export function GrowthFlywheelWorkspace() {
   const [stages, setStages] = useState<Stage[]>(INITIAL_STAGES);
   const [hero, setHero] = useState<HeroContent>(INITIAL_HERO);
   const [openSection, setOpenSection] = useState<EditTarget>("hero");
   const [exportFormat, setExportFormat] = useState<"pdf" | "png">("pdf");
+  const [exportScope, setExportScope] = useState<ExportScope>("slide");
+  const [theme, setTheme] = useState<SlideTheme>("light");
   const [isExporting, setIsExporting] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+
+  const themeVars = THEME_VARS[theme] as React.CSSProperties;
 
   const getStage = (id: StageId): Stage =>
     stages.find((s) => s.id === id) as Stage;
@@ -223,35 +258,50 @@ export function GrowthFlywheelWorkspace() {
   }, []);
 
   const handleExport = useCallback(async () => {
-    if (!previewRef.current) return;
+    const isWheel = exportScope === "wheel";
+    const sourceEl = isWheel ? wheelRef.current : previewRef.current;
+    if (!sourceEl) return;
     setIsExporting(true);
     try {
-      const el = previewRef.current;
-      const w = SLIDE_W;
-      const h = SLIDE_H;
+      // Wheel-only export: snapshot the wheel container at its natural size
+      // (square ≈ flywheel size), then ship as a square 9"×9" CMYK PDF/PNG.
+      // Slide export: full 1920×1080 → 13.333"×7.5" landscape.
+      const rect = sourceEl.getBoundingClientRect();
+      const w = isWheel ? Math.round(rect.width) : SLIDE_W;
+      const h = isWheel ? Math.round(rect.height) : SLIDE_H;
       const DPI = 200;
-      // Landscape 16:9 widescreen page (PowerPoint standard 13.333" x 7.5")
-      const pageW = 13.333;
+      const pageW = isWheel ? 9 : 13.333;
       const pageH = (h / w) * pageW;
       const pxW = pageW * DPI;
       const pixelRatio = pxW / w;
-      const dataUrl = await toPng(el, {
+      const dataUrl = await toPng(sourceEl, {
         width: w,
         height: h,
         pixelRatio,
         cacheBust: true,
         skipAutoScale: true,
-        style: {
-          transform: "none",
-          borderRadius: "0",
-        },
+        backgroundColor: isWheel
+          ? "transparent"
+          : undefined,
+        style: isWheel
+          ? {}
+          : {
+              transform: "none",
+              borderRadius: "0",
+            },
       });
-      const safeName = (hero.title || "Growth_Flywheel")
+      const baseName = isWheel
+        ? "Growth_Flywheel_Wheel"
+        : hero.title || "Growth_Flywheel";
+      const safeName = baseName
         .replace(/[^a-zA-Z0-9\s\-_]/g, "")
         .replace(/\s+/g, "_");
       const d = new Date();
       const dp = `${d.getMonth() + 1}_${d.getDate()}_${String(d.getFullYear()).slice(-2)}`;
-      const fname = `${safeName}_${dp}`;
+      const fname = `${safeName}_${theme}_${dp}`;
+      const sourceLabel = isWheel
+        ? "Growth Flywheel (Wheel)"
+        : "Growth Flywheel";
       if (exportFormat === "pdf") {
         const resp = await fetch(`${BASE}api/convert-cmyk`, {
           method: "POST",
@@ -281,7 +331,7 @@ export function GrowthFlywheelWorkspace() {
         createThumbnail(dataUrl).then((t) =>
           addExport({
             name: `${fname}.pdf`,
-            source: "Growth Flywheel",
+            source: sourceLabel,
             format: "pdf",
             thumbnail: t,
             dimensions: `${pageW}×${pageH.toFixed(1)}in (CMYK)`,
@@ -297,7 +347,7 @@ export function GrowthFlywheelWorkspace() {
         createThumbnail(dataUrl).then((t) =>
           addExport({
             name: `${fname}.png`,
-            source: "Growth Flywheel",
+            source: sourceLabel,
             format: "png",
             thumbnail: t,
             dimensions: `${Math.round(pxW)}×${Math.round(h * pixelRatio)}`,
@@ -309,7 +359,7 @@ export function GrowthFlywheelWorkspace() {
     } finally {
       setIsExporting(false);
     }
-  }, [hero.title, exportFormat]);
+  }, [hero.title, exportFormat, exportScope, theme]);
 
   const toggleSection = (target: EditTarget) =>
     setOpenSection((prev) => (prev === target ? null : target));
@@ -327,6 +377,10 @@ export function GrowthFlywheelWorkspace() {
         onReset={resetAll}
         exportFormat={exportFormat}
         onExportFormatChange={setExportFormat}
+        exportScope={exportScope}
+        onExportScopeChange={setExportScope}
+        theme={theme}
+        onThemeChange={setTheme}
         onExport={handleExport}
         isExporting={isExporting}
       />
@@ -354,39 +408,43 @@ export function GrowthFlywheelWorkspace() {
               left: 0,
               transform: `scale(${scale})`,
               transformOrigin: "top left",
-              background:
-                "radial-gradient(ellipse 90% 70% at 50% 35%, #EFF6FF 0%, #DBEAFE 45%, #BFDBFE 80%, #93C5FD 100%)",
+              background: "var(--slide-bg)",
               boxShadow:
                 "0 25px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04)",
               borderRadius: "12px",
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              padding: "36px 72px 32px",
+              padding: "26px 72px 24px",
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              ...themeVars,
             }}
           >
             {/* Hero */}
-            <div className="text-center" style={{ marginBottom: "20px" }}>
+            <div className="text-center" style={{ marginBottom: "12px" }}>
               <img
-                src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=Dark.png`}
+                src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=${theme === "dark" ? "Light" : "Dark"}.png`}
                 alt="HighLevel"
                 style={{
-                  height: 56,
+                  height: 44,
                   width: "auto",
                   display: "inline-block",
-                  marginBottom: 18,
+                  marginBottom: 10,
                 }}
               />
               <h1
-                className="text-[44px] font-bold tracking-[-0.8px] leading-[1.1] text-[#0F172A] mb-[12px]"
+                className="text-[38px] font-bold tracking-[-0.8px] leading-[1.1] mb-[8px]"
                 style={{
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                  color: "var(--slide-text)",
                 }}
               >
                 {hero.title}
               </h1>
-              <p className="text-[18px] text-[#475569] max-w-[1180px] mx-auto leading-[1.5]">
+              <p
+                className="text-[16px] max-w-[1180px] mx-auto leading-[1.5]"
+                style={{ color: "var(--slide-text-muted)" }}
+              >
                 {hero.subtitle}
               </p>
             </div>
@@ -410,8 +468,10 @@ export function GrowthFlywheelWorkspace() {
               </div>
 
               {/* CENTER column */}
-              <div className="flex flex-col items-center">
-                <Flywheel />
+              <div className="flex flex-col items-center min-h-0">
+                <div ref={wheelRef} className="flex items-center justify-center">
+                  <Flywheel theme={theme} />
+                </div>
                 <div className="w-full mt-auto">
                   <InfoCard stage={getStage("reactivate")} wide />
                 </div>
@@ -434,13 +494,13 @@ export function GrowthFlywheelWorkspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
-function Flywheel() {
-  const SIZE = 600;
+function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
+  const SIZE = 540;
   const CENTER = SIZE / 2;
-  const OUTER_R = 225;
-  const INNER_R = 117;
-  const ICON_R = 170;
-  const CENTER_R = 107;
+  const OUTER_R = 203;
+  const INNER_R = 105;
+  const ICON_R = 153;
+  const CENTER_R = 96;
   const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
   // Cutout / badge radius — sized so the white arrow badge clips flush into
   // the puzzle notch, with short flat radial edges of segment color above
@@ -654,7 +714,7 @@ function Flywheel() {
             donut's curve. Top segments use a left-to-right CW arc; bottom
             segments use a reversed (CCW) arc so the letters stay upright. */}
         {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 184;
+          const R_TEXT = 165;
           const inset = 6;
           const isTop = Math.sin((mid * Math.PI) / 180) < 0;
           const start = isTop
@@ -674,11 +734,11 @@ function Flywheel() {
                 stroke="none"
               />
               <text
-                fontSize={19}
+                fontSize={17}
                 fontWeight={900}
                 fill="white"
                 style={{
-                  letterSpacing: "1.3px",
+                  letterSpacing: "1.2px",
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
@@ -699,10 +759,10 @@ function Flywheel() {
         <g>
           <g pointerEvents="none">
             <foreignObject
-              x={CENTER - 18}
-              y={CENTER - 46}
-              width={36}
-              height={36}
+              x={CENTER - 16}
+              y={CENTER - 42}
+              width={32}
+              height={32}
             >
               <div
                 style={{
@@ -715,9 +775,12 @@ function Flywheel() {
               >
                 <div
                   style={{
-                    width: 32,
-                    height: 32,
-                    backgroundColor: STAGE_THEME.reactivate.color,
+                    width: 28,
+                    height: 28,
+                    backgroundColor:
+                      theme === "dark"
+                        ? "#93C5FD"
+                        : STAGE_THEME.reactivate.color,
                     WebkitMaskImage: `url(${STAGE_THEME.reactivate.iconSrc})`,
                     maskImage: `url(${STAGE_THEME.reactivate.iconSrc})`,
                     WebkitMaskSize: "contain",
@@ -732,13 +795,17 @@ function Flywheel() {
             </foreignObject>
             <text
               x={CENTER}
-              y={CENTER + 5}
+              y={CENTER + 4}
               textAnchor="middle"
-              fontSize={17}
+              fontSize={15}
               fontWeight={800}
-              fill={STAGE_THEME.reactivate.color}
+              fill={
+                theme === "dark"
+                  ? "#93C5FD"
+                  : STAGE_THEME.reactivate.color
+              }
               style={{
-                letterSpacing: "1.6px",
+                letterSpacing: "1.4px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }}
             >
@@ -746,11 +813,11 @@ function Flywheel() {
             </text>
             <text
               x={CENTER}
-              y={CENTER + 22}
+              y={CENTER + 20}
               textAnchor="middle"
-              fontSize={9.5}
+              fontSize={8.5}
               fontWeight={700}
-              fill="#475569"
+              fill={theme === "dark" ? "#94A3B8" : "#475569"}
               style={{
                 letterSpacing: "2px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
@@ -767,8 +834,8 @@ function Flywheel() {
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
           const pos = polar(mid, INNER_R);
-          const BG_R = 30;
-          const ICON_PX = 30;
+          const BG_R = 27;
+          const ICON_PX = 27;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same
@@ -848,9 +915,10 @@ function InfoCard({
 
   return (
     <div
-      className="relative rounded-[16px] w-full bg-white overflow-hidden"
+      className="relative rounded-[14px] w-full overflow-hidden"
       style={{
-        boxShadow: `0 1px 2px rgba(15,23,42,0.04), 0 18px 40px -16px rgba(${t.rgb}, 0.28)`,
+        background: "var(--card-bg)",
+        boxShadow: `0 1px 2px var(--card-shadow-inner), 0 14px 32px -14px rgba(${t.rgb}, 0.28)`,
       }}
     >
       {/* Soft tinted radial glow in upper-right corner */}
@@ -858,15 +926,15 @@ function InfoCard({
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(circle at 100% 0%, rgba(${t.rgb}, 0.10) 0%, transparent 55%)`,
+          background: `radial-gradient(circle at 100% 0%, rgba(${t.rgb}, 0.12) 0%, transparent 55%)`,
         }}
       />
 
       {/* Header row */}
-      <div className="relative pl-[28px] pr-[26px] pt-[22px] pb-[16px] flex items-start gap-[16px]">
+      <div className="relative pl-[22px] pr-[20px] pt-[16px] pb-[10px] flex items-start gap-[14px]">
         {/* Icon chip */}
         <div
-          className="w-[60px] h-[60px] shrink-0 rounded-[15px] flex items-center justify-center"
+          className="w-[50px] h-[50px] shrink-0 rounded-[13px] flex items-center justify-center"
           style={{
             background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.80) 100%)`,
             boxShadow: `0 8px 18px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
@@ -876,27 +944,28 @@ function InfoCard({
             src={t.iconSrc}
             alt=""
             aria-hidden
-            style={{ width: 34, height: 34, filter: "brightness(0) invert(1)" }}
+            style={{ width: 28, height: 28, filter: "brightness(0) invert(1)" }}
           />
         </div>
 
         {/* Title block */}
         <div className="flex-1 min-w-0 pt-[2px]">
-          <div className="flex items-center gap-[7px] mb-[6px]">
+          <div className="flex items-center gap-[7px] mb-[4px]">
             <span
-              className="inline-flex items-center px-[10px] py-[3px] rounded-[6px] text-[13px] font-bold uppercase tracking-[1.6px]"
+              className="inline-flex items-center px-[9px] py-[2px] rounded-[6px] text-[11px] font-bold uppercase tracking-[1.4px]"
               style={{
                 color: t.color,
-                background: `rgba(${t.rgb}, 0.12)`,
+                background: `rgba(${t.rgb}, 0.14)`,
               }}
             >
               {t.badge}
             </span>
           </div>
           <div
-            className="text-[28px] font-bold tracking-[-0.4px] text-[#0F172A] leading-[1.15]"
+            className="text-[24px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              color: "var(--card-text)",
             }}
           >
             {stage.title}
@@ -908,10 +977,10 @@ function InfoCard({
           aria-hidden
           className="font-black leading-none select-none pointer-events-none -mt-[2px]"
           style={{
-            fontSize: "62px",
+            fontSize: "52px",
             color: `rgba(${t.rgb}, 0.18)`,
             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            letterSpacing: "-3px",
+            letterSpacing: "-2.5px",
           }}
         >
           {t.stageNum}
@@ -919,36 +988,40 @@ function InfoCard({
       </div>
 
       {/* Tagline */}
-      <div className="pl-[28px] pr-[26px] pb-[16px]">
-        <p className="text-[18px] text-[#475569] leading-[1.5]">
+      <div className="pl-[22px] pr-[20px] pb-[12px]">
+        <p
+          className="text-[15px] leading-[1.45]"
+          style={{ color: "var(--card-text-muted)" }}
+        >
           {stage.tagline}
         </p>
       </div>
 
       {/* Hairline divider */}
-      <div className="pl-[28px] pr-[26px]">
+      <div className="pl-[22px] pr-[20px]">
         <div
           className="h-px w-full"
-          style={{ background: `rgba(${t.rgb}, 0.14)` }}
+          style={{ background: `rgba(${t.rgb}, 0.18)` }}
         />
       </div>
 
       {/* Bullet list */}
-      <div className="pl-[28px] pr-[26px] pt-[14px] pb-[20px]">
+      <div className="pl-[22px] pr-[20px] pt-[10px] pb-[14px]">
         <div
           className={
             wide
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[26px] gap-y-[10px]"
-              : "flex flex-col gap-[10px]"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[22px] gap-y-[6px]"
+              : "flex flex-col gap-[6px]"
           }
         >
           {cols.flat().map((item, idx) => (
             <div
               key={`${stage.id}-${idx}`}
-              className="flex items-start gap-[12px] text-[17px] text-[#1E293B] leading-[1.4]"
+              className="flex items-start gap-[10px] text-[14px] leading-[1.4]"
+              style={{ color: "var(--card-bullet-text)" }}
             >
               <div
-                className="w-[7px] h-[7px] rounded-full mt-[9px] shrink-0"
+                className="w-[6px] h-[6px] rounded-full mt-[7px] shrink-0"
                 style={{ background: t.color }}
               />
               <span>{item}</span>
@@ -1130,6 +1203,10 @@ function LeftSidebar({
   onReset,
   exportFormat,
   onExportFormatChange,
+  exportScope,
+  onExportScopeChange,
+  theme,
+  onThemeChange,
   onExport,
   isExporting,
 }: {
@@ -1142,6 +1219,10 @@ function LeftSidebar({
   onReset: () => void;
   exportFormat: "pdf" | "png";
   onExportFormatChange: (f: "pdf" | "png") => void;
+  exportScope: ExportScope;
+  onExportScopeChange: (s: ExportScope) => void;
+  theme: SlideTheme;
+  onThemeChange: (t: SlideTheme) => void;
   onExport: () => void;
   isExporting: boolean;
 }) {
@@ -1211,6 +1292,58 @@ function LeftSidebar({
 
       {/* BOTTOM — fixed */}
       <div className="p-[18px] pt-[14px] border-t border-white/5 bg-[rgba(0,0,0,0.25)] flex flex-col gap-[10px]">
+        {/* Theme toggle */}
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[6px]">
+            Slide Theme
+          </div>
+          <div className="flex gap-[4px]">
+            {(["light", "dark"] as const).map((th) => (
+              <button
+                key={th}
+                type="button"
+                onClick={() => onThemeChange(th)}
+                className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-bold border cursor-pointer transition-all uppercase ${
+                  theme === th
+                    ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
+                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
+                }`}
+              >
+                {th}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Export scope toggle */}
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[6px]">
+            Export Scope
+          </div>
+          <div className="flex gap-[4px]">
+            {(
+              [
+                { id: "slide", label: "Full Slide" },
+                { id: "wheel", label: "Wheel Only" },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onExportScopeChange(opt.id)}
+                className={`flex-1 py-[7px] rounded-[8px] text-[10.5px] font-bold border cursor-pointer transition-all uppercase tracking-[0.4px] ${
+                  exportScope === opt.id
+                    ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
+                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Format toggle */}
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[6px]">
             Export Format
@@ -1232,6 +1365,7 @@ function LeftSidebar({
             ))}
           </div>
         </div>
+
         <button
           type="button"
           onClick={onExport}
@@ -1243,7 +1377,9 @@ function LeftSidebar({
           ) : (
             <Download className="w-[16px] h-[16px]" />
           )}
-          {isExporting ? "Exporting…" : `Download ${exportFormat.toUpperCase()}`}
+          {isExporting
+            ? "Exporting…"
+            : `Download ${exportScope === "wheel" ? "Wheel" : "Slide"} ${exportFormat.toUpperCase()}`}
         </button>
       </div>
     </div>

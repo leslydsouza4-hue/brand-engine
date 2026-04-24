@@ -392,9 +392,9 @@ export function GrowthFlywheelWorkspace() {
             <div
               className="grid items-start"
               style={{
-                gap: "20px",
+                gap: "12px",
                 gridTemplateColumns:
-                  "minmax(0, 1fr) minmax(0, 580px) minmax(0, 1fr)",
+                  "minmax(0, 1fr) minmax(0, 540px) minmax(0, 1fr)",
                 flex: 1,
                 minHeight: 0,
               }}
@@ -844,8 +844,7 @@ function InfoCard({
     <div
       className="relative rounded-[16px] w-full bg-white overflow-hidden"
       style={{
-        border: `1px solid rgba(${t.rgb}, 0.18)`,
-        boxShadow: `0 1px 2px rgba(15,23,42,0.04), 0 18px 40px -16px rgba(${t.rgb}, 0.28), 0 0 0 1px rgba(15,23,42,0.02)`,
+        boxShadow: `0 1px 2px rgba(15,23,42,0.04), 0 18px 40px -16px rgba(${t.rgb}, 0.28)`,
       }}
     >
       {/* Vertical left accent bar */}

@@ -393,17 +393,18 @@ export function GrowthFlywheelWorkspace() {
 
             {/* 3-column infographic grid */}
             <div
-              className="grid items-start"
+              className="grid"
               style={{
                 gap: "20px",
                 gridTemplateColumns:
                   "minmax(0, 1fr) minmax(0, 760px) minmax(0, 1fr)",
                 flex: 1,
                 minHeight: 0,
+                alignItems: "stretch",
               }}
             >
               {/* LEFT column */}
-              <div className="flex flex-col gap-[28px]">
+              <div className="flex flex-col justify-between">
                 <InfoCard stage={getStage("evangelize")} />
                 <InfoCard stage={getStage("close")} />
               </div>
@@ -411,13 +412,13 @@ export function GrowthFlywheelWorkspace() {
               {/* CENTER column */}
               <div className="flex flex-col items-center">
                 <Flywheel />
-                <div className="w-full -mt-[28px]">
+                <div className="w-full mt-auto">
                   <InfoCard stage={getStage("reactivate")} wide />
                 </div>
               </div>
 
               {/* RIGHT column */}
-              <div className="flex flex-col gap-[28px]">
+              <div className="flex flex-col justify-between">
                 <InfoCard stage={getStage("capture")} />
                 <InfoCard stage={getStage("nurture")} />
               </div>

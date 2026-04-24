@@ -468,7 +468,7 @@ export function GrowthFlywheelWorkspace() {
                 minHeight: 0,
                 display: "grid",
                 gridTemplateColumns:
-                  "minmax(0, 1fr) minmax(0, 600px) minmax(0, 1fr)",
+                  "minmax(0, 480px) minmax(0, 600px) minmax(0, 480px)",
                 gridTemplateRows:
                   "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.66fr)",
                 gridTemplateAreas: `
@@ -476,9 +476,10 @@ export function GrowthFlywheelWorkspace() {
                   "nurture flywheel evangelize"
                   "react   react    react"
                 `,
-                gap: "18px",
+                gap: "14px",
                 alignItems: "stretch",
                 justifyItems: "stretch",
+                justifyContent: "center",
               }}
             >
               <div style={{ gridArea: "capture" }} className="min-h-0 flex">
@@ -935,10 +936,10 @@ function InfoCard({
 
   return (
     <div
-      className="relative rounded-[14px] w-full overflow-hidden"
+      className="relative rounded-[12px] w-full overflow-hidden"
       style={{
         background: "var(--card-bg)",
-        boxShadow: `0 1px 2px var(--card-shadow-inner), 0 14px 32px -14px rgba(${t.rgb}, 0.28)`,
+        boxShadow: `0 1px 2px var(--card-shadow-inner), 0 12px 26px -12px rgba(${t.rgb}, 0.26)`,
       }}
     >
       {/* Soft tinted radial glow in upper-right corner */}
@@ -951,28 +952,28 @@ function InfoCard({
       />
 
       {/* Header row */}
-      <div className="relative pl-[22px] pr-[20px] pt-[16px] pb-[10px] flex items-start gap-[14px]">
+      <div className="relative pl-[18px] pr-[16px] pt-[13px] pb-[8px] flex items-start gap-[11px]">
         {/* Icon chip */}
         <div
-          className="w-[50px] h-[50px] shrink-0 rounded-[13px] flex items-center justify-center"
+          className="w-[40px] h-[40px] shrink-0 rounded-[11px] flex items-center justify-center"
           style={{
             background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.80) 100%)`,
-            boxShadow: `0 8px 18px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
+            boxShadow: `0 7px 14px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
           }}
         >
           <img
             src={t.iconSrc}
             alt=""
             aria-hidden
-            style={{ width: 28, height: 28, filter: "brightness(0) invert(1)" }}
+            style={{ width: 22, height: 22, filter: "brightness(0) invert(1)" }}
           />
         </div>
 
         {/* Title block */}
-        <div className="flex-1 min-w-0 pt-[2px]">
-          <div className="flex items-center gap-[7px] mb-[4px]">
+        <div className="flex-1 min-w-0 pt-[1px]">
+          <div className="flex items-center gap-[6px] mb-[3px]">
             <span
-              className="inline-flex items-center px-[9px] py-[2px] rounded-[6px] text-[11px] font-bold uppercase tracking-[1.4px]"
+              className="inline-flex items-center px-[7px] py-[2px] rounded-[5px] text-[10px] font-bold uppercase tracking-[1.1px]"
               style={{
                 color: t.color,
                 background: `rgba(${t.rgb}, 0.14)`,
@@ -982,7 +983,7 @@ function InfoCard({
             </span>
           </div>
           <div
-            className="text-[24px] font-bold tracking-[-0.4px] leading-[1.15]"
+            className="text-[20px] font-bold tracking-[-0.3px] leading-[1.15]"
             style={{
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               color: "var(--card-text)",
@@ -997,10 +998,10 @@ function InfoCard({
           aria-hidden
           className="font-black leading-none select-none pointer-events-none -mt-[2px]"
           style={{
-            fontSize: "52px",
+            fontSize: "42px",
             color: `rgba(${t.rgb}, 0.18)`,
             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            letterSpacing: "-2.5px",
+            letterSpacing: "-2px",
           }}
         >
           {t.stageNum}
@@ -1008,9 +1009,9 @@ function InfoCard({
       </div>
 
       {/* Tagline */}
-      <div className="pl-[22px] pr-[20px] pb-[12px]">
+      <div className="pl-[18px] pr-[16px] pb-[10px]">
         <p
-          className="text-[15px] leading-[1.45]"
+          className="text-[13px] leading-[1.4]"
           style={{ color: "var(--card-text-muted)" }}
         >
           {stage.tagline}
@@ -1018,7 +1019,7 @@ function InfoCard({
       </div>
 
       {/* Hairline divider */}
-      <div className="pl-[22px] pr-[20px]">
+      <div className="pl-[18px] pr-[16px]">
         <div
           className="h-px w-full"
           style={{ background: `rgba(${t.rgb}, 0.18)` }}
@@ -1026,22 +1027,22 @@ function InfoCard({
       </div>
 
       {/* Bullet list */}
-      <div className="pl-[22px] pr-[20px] pt-[10px] pb-[14px]">
+      <div className="pl-[18px] pr-[16px] pt-[8px] pb-[12px]">
         <div
           className={
             wide
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[22px] gap-y-[6px]"
-              : "flex flex-col gap-[6px]"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[18px] gap-y-[5px]"
+              : "flex flex-col gap-[5px]"
           }
         >
           {cols.flat().map((item, idx) => (
             <div
               key={`${stage.id}-${idx}`}
-              className="flex items-start gap-[10px] text-[14px] leading-[1.4]"
+              className="flex items-start gap-[8px] text-[12px] leading-[1.4]"
               style={{ color: "var(--card-bullet-text)" }}
             >
               <div
-                className="w-[6px] h-[6px] rounded-full mt-[7px] shrink-0"
+                className="w-[5px] h-[5px] rounded-full mt-[6px] shrink-0"
                 style={{ background: t.color }}
               />
               <span>{item}</span>

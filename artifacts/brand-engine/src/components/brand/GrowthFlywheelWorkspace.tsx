@@ -178,8 +178,8 @@ type EditTarget = StageId | "hero" | null;
 // ─────────────────────────────────────────────────────────────────────────────
 // Main workspace — fixed-size slide with left sidebar editor + export
 
-const SLIDE_W = 1280;
-const SLIDE_H = 960;
+const SLIDE_W = 1920;
+const SLIDE_H = 1080;
 
 export function GrowthFlywheelWorkspace() {
   const [stages, setStages] = useState<Stage[]>(INITIAL_STAGES);
@@ -231,8 +231,8 @@ export function GrowthFlywheelWorkspace() {
       const w = SLIDE_W;
       const h = SLIDE_H;
       const DPI = 200;
-      // Landscape page at 11x8.5
-      const pageW = 11;
+      // Landscape 16:9 widescreen page (PowerPoint standard 13.333" x 7.5")
+      const pageW = 13.333;
       const pageH = (h / w) * pageW;
       const pxW = pageW * DPI;
       const pixelRatio = pxW / w;
@@ -363,27 +363,27 @@ export function GrowthFlywheelWorkspace() {
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              padding: "32px 36px 28px",
+              padding: "36px 72px 32px",
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
             }}
           >
             {/* Hero */}
             <div className="text-center" style={{ marginBottom: "20px" }}>
-              <div className="inline-flex items-center gap-[8px] px-[14px] py-[6px] rounded-full bg-white border border-[#E2E8F0] mb-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                <Sparkles className="w-[12px] h-[12px] text-[#F59E0B]" />
-                <span className="text-[10.5px] font-bold uppercase tracking-[2px] text-[#475569]">
+              <div className="inline-flex items-center gap-[10px] px-[18px] py-[7px] rounded-full bg-white border border-[#E2E8F0] mb-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <Sparkles className="w-[15px] h-[15px] text-[#F59E0B]" />
+                <span className="text-[13px] font-bold uppercase tracking-[2.5px] text-[#475569]">
                   {hero.eyebrow}
                 </span>
               </div>
               <h1
-                className="text-[34px] font-bold tracking-[-0.6px] leading-[1.1] text-[#0F172A] mb-[10px]"
+                className="text-[44px] font-bold tracking-[-0.8px] leading-[1.1] text-[#0F172A] mb-[12px]"
                 style={{
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
                 {hero.title}
               </h1>
-              <p className="text-[14px] text-[#475569] max-w-[860px] mx-auto leading-[1.55]">
+              <p className="text-[18px] text-[#475569] max-w-[1180px] mx-auto leading-[1.5]">
                 {hero.subtitle}
               </p>
             </div>
@@ -392,15 +392,15 @@ export function GrowthFlywheelWorkspace() {
             <div
               className="grid items-start"
               style={{
-                gap: "12px",
+                gap: "20px",
                 gridTemplateColumns:
-                  "minmax(0, 1fr) minmax(0, 540px) minmax(0, 1fr)",
+                  "minmax(0, 1fr) minmax(0, 760px) minmax(0, 1fr)",
                 flex: 1,
                 minHeight: 0,
               }}
             >
               {/* LEFT column */}
-              <div className="flex flex-col gap-[18px]">
+              <div className="flex flex-col gap-[28px]">
                 <InfoCard stage={getStage("evangelize")} />
                 <InfoCard stage={getStage("close")} />
               </div>
@@ -408,13 +408,13 @@ export function GrowthFlywheelWorkspace() {
               {/* CENTER column */}
               <div className="flex flex-col items-center">
                 <Flywheel />
-                <div className="w-full -mt-[18px]">
+                <div className="w-full -mt-[28px]">
                   <InfoCard stage={getStage("reactivate")} wide />
                 </div>
               </div>
 
               {/* RIGHT column */}
-              <div className="flex flex-col gap-[18px]">
+              <div className="flex flex-col gap-[28px]">
                 <InfoCard stage={getStage("capture")} />
                 <InfoCard stage={getStage("nurture")} />
               </div>
@@ -431,12 +431,12 @@ export function GrowthFlywheelWorkspace() {
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
 function Flywheel() {
-  const SIZE = 520;
+  const SIZE = 600;
   const CENTER = SIZE / 2;
-  const OUTER_R = 195;
-  const INNER_R = 102;
-  const ICON_R = 148;
-  const CENTER_R = 93;
+  const OUTER_R = 225;
+  const INNER_R = 117;
+  const ICON_R = 170;
+  const CENTER_R = 107;
   const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
   // Cutout / badge radius — sized so the white arrow badge clips flush into
   // the puzzle notch, with short flat radial edges of segment color above
@@ -650,7 +650,7 @@ function Flywheel() {
             donut's curve. Top segments use a left-to-right CW arc; bottom
             segments use a reversed (CCW) arc so the letters stay upright. */}
         {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 159;
+          const R_TEXT = 184;
           const inset = 6;
           const isTop = Math.sin((mid * Math.PI) / 180) < 0;
           const start = isTop
@@ -670,11 +670,11 @@ function Flywheel() {
                 stroke="none"
               />
               <text
-                fontSize={16}
+                fontSize={19}
                 fontWeight={900}
                 fill="white"
                 style={{
-                  letterSpacing: "1.1px",
+                  letterSpacing: "1.3px",
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
@@ -695,10 +695,10 @@ function Flywheel() {
         <g>
           <g pointerEvents="none">
             <foreignObject
-              x={CENTER - 16}
-              y={CENTER - 40}
-              width={32}
-              height={32}
+              x={CENTER - 18}
+              y={CENTER - 46}
+              width={36}
+              height={36}
             >
               <div
                 style={{
@@ -711,8 +711,8 @@ function Flywheel() {
               >
                 <div
                   style={{
-                    width: 28,
-                    height: 28,
+                    width: 32,
+                    height: 32,
                     backgroundColor: STAGE_THEME.reactivate.color,
                     WebkitMaskImage: `url(${STAGE_THEME.reactivate.iconSrc})`,
                     maskImage: `url(${STAGE_THEME.reactivate.iconSrc})`,
@@ -728,13 +728,13 @@ function Flywheel() {
             </foreignObject>
             <text
               x={CENTER}
-              y={CENTER + 4}
+              y={CENTER + 5}
               textAnchor="middle"
-              fontSize={14}
+              fontSize={17}
               fontWeight={800}
               fill={STAGE_THEME.reactivate.color}
               style={{
-                letterSpacing: "1.4px",
+                letterSpacing: "1.6px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }}
             >
@@ -742,13 +742,13 @@ function Flywheel() {
             </text>
             <text
               x={CENTER}
-              y={CENTER + 18}
+              y={CENTER + 22}
               textAnchor="middle"
-              fontSize={7.5}
+              fontSize={9.5}
               fontWeight={700}
               fill="#475569"
               style={{
-                letterSpacing: "1.6px",
+                letterSpacing: "2px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }}
             >
@@ -763,8 +763,8 @@ function Flywheel() {
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
           const pos = polar(mid, INNER_R);
-          const BG_R = 25;
-          const ICON_PX = 25;
+          const BG_R = 30;
+          const ICON_PX = 30;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same
@@ -859,28 +859,28 @@ function InfoCard({
       />
 
       {/* Header row */}
-      <div className="relative pl-[20px] pr-[18px] pt-[16px] pb-[12px] flex items-start gap-[12px]">
+      <div className="relative pl-[28px] pr-[26px] pt-[22px] pb-[16px] flex items-start gap-[16px]">
         {/* Icon chip */}
         <div
-          className="w-[42px] h-[42px] shrink-0 rounded-[11px] flex items-center justify-center"
+          className="w-[60px] h-[60px] shrink-0 rounded-[15px] flex items-center justify-center"
           style={{
             background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.80) 100%)`,
-            boxShadow: `0 6px 14px -4px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
+            boxShadow: `0 8px 18px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
           }}
         >
           <img
             src={t.iconSrc}
             alt=""
             aria-hidden
-            style={{ width: 24, height: 24, filter: "brightness(0) invert(1)" }}
+            style={{ width: 34, height: 34, filter: "brightness(0) invert(1)" }}
           />
         </div>
 
         {/* Title block */}
-        <div className="flex-1 min-w-0 pt-[1px]">
-          <div className="flex items-center gap-[7px] mb-[4px]">
+        <div className="flex-1 min-w-0 pt-[2px]">
+          <div className="flex items-center gap-[7px] mb-[6px]">
             <span
-              className="inline-flex items-center px-[7px] py-[2px] rounded-[5px] text-[9.5px] font-bold uppercase tracking-[1.2px]"
+              className="inline-flex items-center px-[10px] py-[3px] rounded-[6px] text-[13px] font-bold uppercase tracking-[1.6px]"
               style={{
                 color: t.color,
                 background: `rgba(${t.rgb}, 0.12)`,
@@ -890,7 +890,7 @@ function InfoCard({
             </span>
           </div>
           <div
-            className="text-[20px] font-bold tracking-[-0.3px] text-[#0F172A] leading-[1.15]"
+            className="text-[28px] font-bold tracking-[-0.4px] text-[#0F172A] leading-[1.15]"
             style={{
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
             }}
@@ -904,10 +904,10 @@ function InfoCard({
           aria-hidden
           className="font-black leading-none select-none pointer-events-none -mt-[2px]"
           style={{
-            fontSize: "44px",
+            fontSize: "62px",
             color: `rgba(${t.rgb}, 0.18)`,
             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            letterSpacing: "-2.5px",
+            letterSpacing: "-3px",
           }}
         >
           {t.stageNum}
@@ -915,14 +915,14 @@ function InfoCard({
       </div>
 
       {/* Tagline */}
-      <div className="pl-[20px] pr-[18px] pb-[12px]">
-        <p className="text-[12.5px] text-[#475569] leading-[1.55]">
+      <div className="pl-[28px] pr-[26px] pb-[16px]">
+        <p className="text-[18px] text-[#475569] leading-[1.5]">
           {stage.tagline}
         </p>
       </div>
 
       {/* Hairline divider */}
-      <div className="pl-[20px] pr-[18px]">
+      <div className="pl-[28px] pr-[26px]">
         <div
           className="h-px w-full"
           style={{ background: `rgba(${t.rgb}, 0.14)` }}
@@ -930,21 +930,21 @@ function InfoCard({
       </div>
 
       {/* Bullet list */}
-      <div className="pl-[20px] pr-[18px] pt-[11px] pb-[15px]">
+      <div className="pl-[28px] pr-[26px] pt-[14px] pb-[20px]">
         <div
           className={
             wide
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[18px] gap-y-[7px]"
-              : "flex flex-col gap-[7px]"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[26px] gap-y-[10px]"
+              : "flex flex-col gap-[10px]"
           }
         >
           {cols.flat().map((item, idx) => (
             <div
               key={`${stage.id}-${idx}`}
-              className="flex items-start gap-[9px] text-[12.5px] text-[#1E293B] leading-[1.45]"
+              className="flex items-start gap-[12px] text-[17px] text-[#1E293B] leading-[1.4]"
             >
               <div
-                className="w-[5px] h-[5px] rounded-full mt-[7px] shrink-0"
+                className="w-[7px] h-[7px] rounded-full mt-[9px] shrink-0"
                 style={{ background: t.color }}
               />
               <span>{item}</span>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Sparkles,
   ChevronRight,
@@ -9,6 +10,11 @@ import {
   DollarSign,
   Trophy,
   RefreshCw,
+  Pencil,
+  X,
+  Plus,
+  Trash2,
+  GripVertical,
   type LucideIcon,
 } from "lucide-react";
 
@@ -71,7 +77,7 @@ const STAGE_THEME: Record<StageId, {
   },
 };
 
-const STAGES: Stage[] = [
+const INITIAL_STAGES: Stage[] = [
   {
     id: "capture",
     title: "Capture",
@@ -140,58 +146,76 @@ const STAGES: Stage[] = [
   },
 ];
 
-const getStage = (id: StageId): Stage =>
-  STAGES.find((s) => s.id === id) as Stage;
+interface HeroContent {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+}
+
+const INITIAL_HERO: HeroContent = {
+  eyebrow: "The HighLevel Growth Flywheel",
+  title: "Every Feature, Mapped to Every Stage of Growth",
+  subtitle:
+    "One connected system to capture, nurture, close, evangelize & reactivate — turning strangers into raving fans, then doing it all over again.",
+};
+
+type EditTarget = StageId | "hero" | null;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main workspace — static infographic layout
+// Main workspace — live-editable infographic
 
 export function GrowthFlywheelWorkspace() {
+  const [stages, setStages] = useState<Stage[]>(INITIAL_STAGES);
+  const [hero, setHero] = useState<HeroContent>(INITIAL_HERO);
+  const [editing, setEditing] = useState<EditTarget>(null);
+
+  const getStage = (id: StageId): Stage =>
+    stages.find((s) => s.id === id) as Stage;
+
+  const updateStage = (id: StageId, patch: Partial<Stage>) => {
+    setStages((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    );
+  };
+
+  const resetAll = () => {
+    setStages(INITIAL_STAGES);
+    setHero(INITIAL_HERO);
+  };
+
   return (
     <div
-      className="flex-1 overflow-y-auto"
+      className="flex-1 overflow-y-auto relative"
       style={{
         background:
           "radial-gradient(ellipse 90% 70% at 50% 35%, #EFF6FF 0%, #DBEAFE 45%, #BFDBFE 80%, #93C5FD 100%)",
       }}
     >
+      {/* Editor Nav Bar */}
+      <EditorNav
+        stages={stages}
+        editing={editing}
+        onSelect={setEditing}
+        onReset={resetAll}
+      />
+
       <div className="max-w-[1320px] mx-auto px-[20px] md:px-[36px] py-[36px] md:py-[52px]">
         {/* Hero */}
         <div className="text-center mb-[36px] md:mb-[44px]">
           <div className="inline-flex items-center gap-[8px] px-[14px] py-[6px] rounded-full bg-white border border-[#E2E8F0] mb-[18px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
             <Sparkles className="w-[12px] h-[12px] text-[#F59E0B]" />
             <span className="text-[10.5px] font-bold uppercase tracking-[2px] text-[#475569]">
-              The HighLevel Growth Flywheel
+              {hero.eyebrow}
             </span>
           </div>
           <h1
             className="text-[30px] md:text-[42px] font-bold tracking-[-0.6px] leading-[1.1] text-[#0F172A] mb-[14px]"
             style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
           >
-            Every Feature, Mapped to Every Stage of Growth
+            {hero.title}
           </h1>
           <p className="text-[14px] md:text-[15.5px] text-[#475569] max-w-[820px] mx-auto leading-[1.6]">
-            One connected system to{" "}
-            <span style={{ color: STAGE_THEME.capture.color }} className="font-semibold">
-              capture
-            </span>
-            ,{" "}
-            <span style={{ color: STAGE_THEME.nurture.color }} className="font-semibold">
-              nurture
-            </span>
-            ,{" "}
-            <span style={{ color: STAGE_THEME.close.color }} className="font-semibold">
-              close
-            </span>
-            ,{" "}
-            <span style={{ color: STAGE_THEME.evangelize.color }} className="font-semibold">
-              evangelize
-            </span>{" "}
-            &{" "}
-            <span style={{ color: STAGE_THEME.reactivate.color }} className="font-semibold">
-              reactivate
-            </span>{" "}
-            — turning strangers into raving fans, then doing it all over again.
+            {hero.subtitle}
           </p>
         </div>
 
@@ -204,23 +228,33 @@ export function GrowthFlywheelWorkspace() {
         >
           {/* LEFT column */}
           <div className="flex flex-col gap-[20px] md:gap-[24px]">
-            <InfoCard stage={getStage("evangelize")} />
-            <InfoCard stage={getStage("close")} />
+            <InfoCard stage={getStage("evangelize")} onEdit={() => setEditing("evangelize")} />
+            <InfoCard stage={getStage("close")} onEdit={() => setEditing("close")} />
           </div>
 
           {/* CENTER column */}
           <div className="flex flex-col items-center gap-[20px] md:gap-[24px]">
             <Flywheel />
-            <InfoCard stage={getStage("reactivate")} wide />
+            <InfoCard stage={getStage("reactivate")} wide onEdit={() => setEditing("reactivate")} />
           </div>
 
           {/* RIGHT column */}
           <div className="flex flex-col gap-[20px] md:gap-[24px]">
-            <InfoCard stage={getStage("capture")} />
-            <InfoCard stage={getStage("nurture")} />
+            <InfoCard stage={getStage("capture")} onEdit={() => setEditing("capture")} />
+            <InfoCard stage={getStage("nurture")} onEdit={() => setEditing("nurture")} />
           </div>
         </div>
       </div>
+
+      {/* Edit Drawer */}
+      <EditDrawer
+        target={editing}
+        stages={stages}
+        hero={hero}
+        onClose={() => setEditing(null)}
+        onUpdateStage={updateStage}
+        onUpdateHero={setHero}
+      />
     </div>
   );
 }
@@ -614,9 +648,11 @@ function Flywheel() {
 function InfoCard({
   stage,
   wide,
+  onEdit,
 }: {
   stage: Stage;
   wide?: boolean;
+  onEdit?: () => void;
 }) {
   const t = STAGE_THEME[stage.id];
 
@@ -630,7 +666,7 @@ function InfoCard({
 
   return (
     <div
-      className="relative rounded-[18px] overflow-hidden w-full"
+      className="relative rounded-[18px] overflow-hidden w-full group"
       style={{
         background:
           "linear-gradient(180deg, #FFFFFF 0%, #FBFCFE 100%)",
@@ -639,6 +675,20 @@ function InfoCard({
           "0 1px 2px rgba(15,23,42,0.04), 0 12px 28px -8px rgba(15,23,42,0.10), 0 0 0 1px rgba(15,23,42,0.015)",
       }}
     >
+      {/* Edit button (top-right, fades in on hover) */}
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="absolute top-[12px] right-[12px] z-10 w-[28px] h-[28px] rounded-full bg-white/90 backdrop-blur border border-[#E2E8F0] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+          style={{
+            boxShadow: "0 2px 6px rgba(15,23,42,0.12)",
+          }}
+          aria-label={`Edit ${stage.title}`}
+        >
+          <Pencil className="w-[12px] h-[12px] text-[#475569]" strokeWidth={2.4} />
+        </button>
+      )}
       {/* Bold colored top accent */}
       <div
         className="h-[5px] w-full"
@@ -749,5 +799,433 @@ function InfoCard({
         </div>
       </div>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Editor Nav Bar — top bar with chips for hero + 5 stages
+
+function EditorNav({
+  stages,
+  editing,
+  onSelect,
+  onReset,
+}: {
+  stages: Stage[];
+  editing: EditTarget;
+  onSelect: (t: EditTarget) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div
+      className="sticky top-0 z-30 backdrop-blur-md border-b"
+      style={{
+        background: "rgba(255,255,255,0.82)",
+        borderColor: "rgba(15,23,42,0.08)",
+        boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
+      }}
+    >
+      <div className="max-w-[1320px] mx-auto px-[20px] md:px-[36px] py-[10px] flex items-center gap-[10px] flex-wrap">
+        <div className="flex items-center gap-[6px] mr-[6px]">
+          <Pencil className="w-[13px] h-[13px] text-[#475569]" strokeWidth={2.5} />
+          <span className="text-[11px] font-bold uppercase tracking-[1.4px] text-[#475569]">
+            Live Editor
+          </span>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onSelect("hero")}
+          className="px-[12px] py-[6px] rounded-full text-[12px] font-semibold border transition-colors"
+          style={{
+            background: editing === "hero" ? "#0F172A" : "#FFFFFF",
+            color: editing === "hero" ? "#FFFFFF" : "#334155",
+            borderColor: editing === "hero" ? "#0F172A" : "#E2E8F0",
+          }}
+        >
+          Hero
+        </button>
+
+        {stages.map((s) => {
+          const t = STAGE_THEME[s.id];
+          const active = editing === s.id;
+          return (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => onSelect(s.id)}
+              className="px-[12px] py-[6px] rounded-full text-[12px] font-semibold border transition-colors flex items-center gap-[7px]"
+              style={{
+                background: active ? t.color : "#FFFFFF",
+                color: active ? "#FFFFFF" : "#334155",
+                borderColor: active ? t.color : "#E2E8F0",
+              }}
+            >
+              <span
+                className="w-[8px] h-[8px] rounded-full"
+                style={{ background: active ? "#FFFFFF" : t.color }}
+              />
+              {s.title}
+            </button>
+          );
+        })}
+
+        <div className="ml-auto">
+          <button
+            type="button"
+            onClick={onReset}
+            className="px-[10px] py-[6px] rounded-md text-[11px] font-semibold text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors"
+          >
+            Reset to defaults
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Edit Drawer — slides in from the right
+
+function EditDrawer({
+  target,
+  stages,
+  hero,
+  onClose,
+  onUpdateStage,
+  onUpdateHero,
+}: {
+  target: EditTarget;
+  stages: Stage[];
+  hero: HeroContent;
+  onClose: () => void;
+  onUpdateStage: (id: StageId, patch: Partial<Stage>) => void;
+  onUpdateHero: (h: HeroContent) => void;
+}) {
+  const open = target !== null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Panel */}
+      <div
+        className="fixed top-0 right-0 h-full w-full sm:w-[400px] z-50 bg-white border-l border-[#E2E8F0] shadow-2xl transition-transform duration-300 flex flex-col"
+        style={{
+          transform: open ? "translateX(0)" : "translateX(100%)",
+        }}
+      >
+        {open && target === "hero" && (
+          <HeroEditor hero={hero} onUpdate={onUpdateHero} onClose={onClose} />
+        )}
+        {open && target !== "hero" && target !== null && (
+          <StageEditor
+            stage={stages.find((s) => s.id === target) as Stage}
+            onUpdate={(patch) => onUpdateStage(target, patch)}
+            onClose={onClose}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
+// Field primitives ──────────────────────────────────────────────────────────
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="block text-[11px] font-bold uppercase tracking-[1.2px] text-[#64748B] mb-[6px]">
+      {children}
+    </label>
+  );
+}
+
+function TextInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-[12px] py-[9px] rounded-[8px] border border-[#E2E8F0] bg-white text-[13.5px] text-[#0F172A] outline-none focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 transition"
+    />
+  );
+}
+
+function TextArea({
+  value,
+  onChange,
+  rows = 3,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  rows?: number;
+  placeholder?: string;
+}) {
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      rows={rows}
+      placeholder={placeholder}
+      className="w-full px-[12px] py-[9px] rounded-[8px] border border-[#E2E8F0] bg-white text-[13.5px] text-[#0F172A] outline-none focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 transition resize-y leading-[1.5]"
+    />
+  );
+}
+
+// Stage editor ──────────────────────────────────────────────────────────────
+function StageEditor({
+  stage,
+  onUpdate,
+  onClose,
+}: {
+  stage: Stage;
+  onUpdate: (patch: Partial<Stage>) => void;
+  onClose: () => void;
+}) {
+  const t = STAGE_THEME[stage.id];
+
+  const updateItem = (idx: number, value: string) => {
+    const next = [...stage.items];
+    next[idx] = value;
+    onUpdate({ items: next });
+  };
+  const addItem = () => onUpdate({ items: [...stage.items, "New feature"] });
+  const removeItem = (idx: number) =>
+    onUpdate({ items: stage.items.filter((_, i) => i !== idx) });
+  const moveItem = (idx: number, dir: -1 | 1) => {
+    const j = idx + dir;
+    if (j < 0 || j >= stage.items.length) return;
+    const next = [...stage.items];
+    [next[idx], next[j]] = [next[j], next[idx]];
+    onUpdate({ items: next });
+  };
+
+  return (
+    <>
+      {/* Header */}
+      <div
+        className="px-[20px] py-[16px] border-b border-[#E2E8F0] flex items-center gap-[12px]"
+        style={{
+          background: `linear-gradient(180deg, rgba(${t.rgb}, 0.10) 0%, rgba(${t.rgb}, 0) 100%)`,
+        }}
+      >
+        <div
+          className="w-[36px] h-[36px] rounded-[10px] flex items-center justify-center"
+          style={{
+            background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.82) 100%)`,
+            boxShadow: `0 4px 10px -3px rgba(${t.rgb}, 0.5)`,
+          }}
+        >
+          <t.Icon className="w-[18px] h-[18px] text-white" strokeWidth={2.4} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div
+            className="text-[10px] font-bold uppercase tracking-[1.6px]"
+            style={{ color: t.color }}
+          >
+            Editing · {t.badge}
+          </div>
+          <div className="text-[16px] font-bold text-[#0F172A] leading-tight">
+            {stage.title}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-[32px] h-[32px] rounded-full hover:bg-[#F1F5F9] flex items-center justify-center text-[#475569]"
+          aria-label="Close editor"
+        >
+          <X className="w-[16px] h-[16px]" />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto px-[20px] py-[18px] space-y-[18px]">
+        <div>
+          <FieldLabel>Title</FieldLabel>
+          <TextInput
+            value={stage.title}
+            onChange={(v) => onUpdate({ title: v })}
+          />
+        </div>
+
+        <div>
+          <FieldLabel>Tagline</FieldLabel>
+          <TextArea
+            value={stage.tagline}
+            rows={3}
+            onChange={(v) => onUpdate({ tagline: v })}
+          />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-[6px]">
+            <FieldLabel>Bullet items ({stage.items.length})</FieldLabel>
+            <button
+              type="button"
+              onClick={addItem}
+              className="flex items-center gap-[4px] text-[11px] font-semibold text-[#3B82F6] hover:text-[#2563EB]"
+            >
+              <Plus className="w-[12px] h-[12px]" strokeWidth={2.5} />
+              Add item
+            </button>
+          </div>
+          <div className="space-y-[6px]">
+            {stage.items.map((item, idx) => (
+              <div
+                key={idx}
+                className="flex items-start gap-[6px] p-[6px] rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC]"
+              >
+                <div className="flex flex-col items-center pt-[2px]">
+                  <button
+                    type="button"
+                    onClick={() => moveItem(idx, -1)}
+                    disabled={idx === 0}
+                    className="text-[#94A3B8] hover:text-[#0F172A] disabled:opacity-30"
+                    aria-label="Move up"
+                  >
+                    <ChevronUp className="w-[12px] h-[12px]" strokeWidth={2.5} />
+                  </button>
+                  <GripVertical className="w-[10px] h-[10px] text-[#CBD5E1]" />
+                  <button
+                    type="button"
+                    onClick={() => moveItem(idx, 1)}
+                    disabled={idx === stage.items.length - 1}
+                    className="text-[#94A3B8] hover:text-[#0F172A] disabled:opacity-30"
+                    aria-label="Move down"
+                  >
+                    <ChevronDown className="w-[12px] h-[12px]" strokeWidth={2.5} />
+                  </button>
+                </div>
+                <textarea
+                  value={item}
+                  onChange={(e) => updateItem(idx, e.target.value)}
+                  rows={1}
+                  className="flex-1 px-[8px] py-[6px] rounded-[6px] border border-[#E2E8F0] bg-white text-[13px] text-[#0F172A] outline-none focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 transition resize-none leading-[1.4]"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeItem(idx)}
+                  className="w-[26px] h-[26px] mt-[2px] rounded-md text-[#94A3B8] hover:text-[#DC2626] hover:bg-[#FEE2E2] flex items-center justify-center"
+                  aria-label="Remove item"
+                >
+                  <Trash2 className="w-[12px] h-[12px]" />
+                </button>
+              </div>
+            ))}
+            {stage.items.length === 0 && (
+              <div className="text-[12px] text-[#94A3B8] italic px-[6px] py-[10px]">
+                No items yet. Click "Add item" to create one.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="px-[20px] py-[12px] border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between">
+        <span className="text-[11px] text-[#64748B]">
+          Changes apply live to the preview.
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-[14px] py-[7px] rounded-[8px] bg-[#0F172A] text-white text-[12px] font-semibold hover:bg-[#1E293B]"
+        >
+          Done
+        </button>
+      </div>
+    </>
+  );
+}
+
+// Hero editor ───────────────────────────────────────────────────────────────
+function HeroEditor({
+  hero,
+  onUpdate,
+  onClose,
+}: {
+  hero: HeroContent;
+  onUpdate: (h: HeroContent) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div className="px-[20px] py-[16px] border-b border-[#E2E8F0] flex items-center gap-[12px] bg-gradient-to-b from-[#F8FAFC] to-white">
+        <div className="w-[36px] h-[36px] rounded-[10px] flex items-center justify-center bg-[#0F172A]">
+          <Sparkles className="w-[18px] h-[18px] text-white" strokeWidth={2.4} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-bold uppercase tracking-[1.6px] text-[#475569]">
+            Editing · Hero
+          </div>
+          <div className="text-[16px] font-bold text-[#0F172A] leading-tight">
+            Page Header
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="w-[32px] h-[32px] rounded-full hover:bg-[#F1F5F9] flex items-center justify-center text-[#475569]"
+          aria-label="Close editor"
+        >
+          <X className="w-[16px] h-[16px]" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-[20px] py-[18px] space-y-[18px]">
+        <div>
+          <FieldLabel>Eyebrow (small pill text)</FieldLabel>
+          <TextInput
+            value={hero.eyebrow}
+            onChange={(v) => onUpdate({ ...hero, eyebrow: v })}
+          />
+        </div>
+        <div>
+          <FieldLabel>Title</FieldLabel>
+          <TextArea
+            value={hero.title}
+            rows={2}
+            onChange={(v) => onUpdate({ ...hero, title: v })}
+          />
+        </div>
+        <div>
+          <FieldLabel>Subtitle</FieldLabel>
+          <TextArea
+            value={hero.subtitle}
+            rows={4}
+            onChange={(v) => onUpdate({ ...hero, subtitle: v })}
+          />
+        </div>
+      </div>
+
+      <div className="px-[20px] py-[12px] border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between">
+        <span className="text-[11px] text-[#64748B]">
+          Changes apply live to the preview.
+        </span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-[14px] py-[7px] rounded-[8px] bg-[#0F172A] text-white text-[12px] font-semibold hover:bg-[#1E293B]"
+        >
+          Done
+        </button>
+      </div>
+    </>
   );
 }

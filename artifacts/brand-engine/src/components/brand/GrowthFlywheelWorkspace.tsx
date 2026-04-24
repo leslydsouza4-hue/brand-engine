@@ -425,25 +425,27 @@ export function GrowthFlywheelWorkspace() {
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              padding: "26px 36px 26px",
+              padding: "34px 36px 28px",
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               ...themeVars,
             }}
           >
-            {/* Hero header */}
-            <div className="text-center" style={{ marginBottom: 14 }}>
+            {/* Hero header — generous breathing space below so the
+                headline + sub-headline have room to breathe before the
+                card grid begins. */}
+            <div className="text-center" style={{ marginBottom: 28 }}>
               <img
                 src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=${theme === "dark" ? "Light" : "Dark"}.png`}
                 alt="HighLevel"
                 style={{
-                  height: 40,
+                  height: 38,
                   width: "auto",
                   display: "inline-block",
-                  marginBottom: 10,
+                  marginBottom: 14,
                 }}
               />
               <h1
-                className="text-[34px] font-bold tracking-[-0.6px] leading-[1.1] mb-[6px]"
+                className="text-[32px] font-bold tracking-[-0.6px] leading-[1.15] mb-[10px]"
                 style={{
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                   color: "var(--slide-text)",
@@ -452,7 +454,7 @@ export function GrowthFlywheelWorkspace() {
                 {hero.title}
               </h1>
               <p
-                className="text-[15px] max-w-[1180px] mx-auto leading-[1.45]"
+                className="text-[15px] max-w-[1180px] mx-auto leading-[1.5]"
                 style={{ color: "var(--slide-text-muted)" }}
               >
                 {hero.subtitle}
@@ -527,8 +529,8 @@ export function GrowthFlywheelWorkspace() {
                     transform: "translate(-50%, -50%)",
                     pointerEvents: "none",
                     zIndex: 10,
-                    width: 648,
-                    height: 648,
+                    width: 580,
+                    height: 580,
                     borderRadius: "50%",
                     background: "var(--card-bg)",
                     boxShadow: "0 0 0 1px rgba(15, 23, 42, 0.04)",
@@ -557,17 +559,17 @@ export function GrowthFlywheelWorkspace() {
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
 function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
-  const SIZE = 648;
+  const SIZE = 580;
   const CENTER = SIZE / 2;
-  const OUTER_R = 244;
-  const INNER_R = 126;
-  const ICON_R = 184;
-  const CENTER_R = 115;
+  const OUTER_R = 218;
+  const INNER_R = 113;
+  const ICON_R = 165;
+  const CENTER_R = 103;
   const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
   // Cutout / badge radius — sized so the white arrow badge clips flush into
   // the puzzle notch, with short flat radial edges of segment color above
   // and below the cutout (matches the reference look).
-  const BADGE_R = 31;
+  const BADGE_R = 28;
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -776,7 +778,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             donut's curve. Top segments use a left-to-right CW arc; bottom
             segments use a reversed (CCW) arc so the letters stay upright. */}
         {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 198;
+          const R_TEXT = 177;
           const inset = 7;
           const isTop = Math.sin((mid * Math.PI) / 180) < 0;
           const start = isTop
@@ -796,11 +798,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                 stroke="none"
               />
               <text
-                fontSize={20}
+                fontSize={18}
                 fontWeight={900}
                 fill="white"
                 style={{
-                  letterSpacing: "1.4px",
+                  letterSpacing: "1.3px",
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
@@ -821,10 +823,10 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
         <g>
           <g pointerEvents="none">
             <foreignObject
-              x={CENTER - 19}
-              y={CENTER - 50}
-              width={38}
-              height={38}
+              x={CENTER - 17}
+              y={CENTER - 46}
+              width={34}
+              height={34}
             >
               <div
                 style={{
@@ -837,8 +839,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               >
                 <div
                   style={{
-                    width: 34,
-                    height: 34,
+                    width: 30,
+                    height: 30,
                     backgroundColor:
                       theme === "dark"
                         ? "#93C5FD"
@@ -857,9 +859,9 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </foreignObject>
             <text
               x={CENTER}
-              y={CENTER + 5}
+              y={CENTER + 4}
               textAnchor="middle"
-              fontSize={18}
+              fontSize={16}
               fontWeight={800}
               fill={
                 theme === "dark"
@@ -867,7 +869,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                   : STAGE_THEME.reactivate.color
               }
               style={{
-                letterSpacing: "1.7px",
+                letterSpacing: "1.5px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }}
             >
@@ -875,9 +877,9 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </text>
             <text
               x={CENTER}
-              y={CENTER + 24}
+              y={CENTER + 21}
               textAnchor="middle"
-              fontSize={10}
+              fontSize={9}
               fontWeight={700}
               fill={theme === "dark" ? "#94A3B8" : "#475569"}
               style={{
@@ -896,8 +898,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
           const pos = polar(mid, INNER_R);
-          const BG_R = 32;
-          const ICON_PX = 32;
+          const BG_R = 28;
+          const ICON_PX = 28;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same

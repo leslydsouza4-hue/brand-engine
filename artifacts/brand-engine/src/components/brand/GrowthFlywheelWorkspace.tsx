@@ -818,119 +818,114 @@ function InfoCard({
 
   return (
     <div
-      className="relative rounded-[18px] overflow-hidden w-full"
+      className="relative rounded-[16px] w-full bg-white overflow-hidden"
       style={{
-        background:
-          "linear-gradient(180deg, #FFFFFF 0%, #FBFCFE 100%)",
-        border: "1px solid #E2E8F0",
-        boxShadow:
-          "0 1px 2px rgba(15,23,42,0.04), 0 12px 28px -8px rgba(15,23,42,0.10), 0 0 0 1px rgba(15,23,42,0.015)",
+        border: `1px solid rgba(${t.rgb}, 0.18)`,
+        boxShadow: `0 1px 2px rgba(15,23,42,0.04), 0 18px 40px -16px rgba(${t.rgb}, 0.28), 0 0 0 1px rgba(15,23,42,0.02)`,
       }}
     >
-      {/* Bold colored top accent */}
+      {/* Vertical left accent bar */}
       <div
-        className="h-[5px] w-full"
+        aria-hidden
+        className="absolute left-0 top-0 bottom-0 w-[4px]"
         style={{
-          background: `linear-gradient(90deg, ${t.color} 0%, rgba(${t.rgb}, 0.7) 100%)`,
+          background: `linear-gradient(180deg, ${t.color} 0%, rgba(${t.rgb}, 0.65) 100%)`,
         }}
       />
 
-      {/* Header section with subtle tinted gradient + watermark stage number */}
+      {/* Soft tinted radial glow in upper-right corner */}
       <div
-        className="relative px-[18px] pt-[16px] pb-[14px]"
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
         style={{
-          background: `linear-gradient(180deg, rgba(${t.rgb}, 0.07) 0%, rgba(${t.rgb}, 0) 100%)`,
+          background: `radial-gradient(circle at 100% 0%, rgba(${t.rgb}, 0.10) 0%, transparent 55%)`,
         }}
-      >
-        {/* Big watermark stage number */}
+      />
+
+      {/* Header row */}
+      <div className="relative pl-[20px] pr-[18px] pt-[16px] pb-[12px] flex items-start gap-[12px]">
+        {/* Icon chip */}
+        <div
+          className="w-[42px] h-[42px] shrink-0 rounded-[11px] flex items-center justify-center"
+          style={{
+            background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.80) 100%)`,
+            boxShadow: `0 6px 14px -4px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
+          }}
+        >
+          <t.Icon className="w-[21px] h-[21px] text-white" strokeWidth={2.4} />
+        </div>
+
+        {/* Title block */}
+        <div className="flex-1 min-w-0 pt-[1px]">
+          <div className="flex items-center gap-[7px] mb-[4px]">
+            <span
+              className="inline-flex items-center px-[7px] py-[2px] rounded-[5px] text-[9.5px] font-bold uppercase tracking-[1.2px]"
+              style={{
+                color: t.color,
+                background: `rgba(${t.rgb}, 0.12)`,
+              }}
+            >
+              {t.badge}
+            </span>
+          </div>
+          <div
+            className="text-[20px] font-bold tracking-[-0.3px] text-[#0F172A] leading-[1.15]"
+            style={{
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            }}
+          >
+            {stage.title}
+          </div>
+        </div>
+
+        {/* Big watermark number */}
         <div
           aria-hidden
-          className="absolute right-[14px] top-[6px] font-black leading-none select-none pointer-events-none"
+          className="font-black leading-none select-none pointer-events-none -mt-[2px]"
           style={{
-            fontSize: "52px",
-            color: `rgba(${t.rgb}, 0.11)`,
+            fontSize: "44px",
+            color: `rgba(${t.rgb}, 0.18)`,
             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
             letterSpacing: "-2.5px",
           }}
         >
           {t.stageNum}
         </div>
-
-        <div className="flex items-start gap-[12px] relative">
-          {/* Premium gradient icon badge */}
-          <div
-            className="w-[44px] h-[44px] shrink-0 rounded-[12px] flex items-center justify-center"
-            style={{
-              background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.82) 100%)`,
-              boxShadow: `0 6px 14px -4px rgba(${t.rgb}, 0.5), inset 0 1px 0 rgba(255,255,255,0.25)`,
-            }}
-          >
-            <t.Icon
-              className="w-[22px] h-[22px] text-white"
-              strokeWidth={2.4}
-            />
-          </div>
-          <div className="flex-1 min-w-0 pt-[2px]">
-            <div
-              className="text-[10px] font-bold uppercase tracking-[1.8px] mb-[3px]"
-              style={{ color: t.color, opacity: 0.85 }}
-            >
-              {t.badge}
-            </div>
-            <div
-              className="text-[20px] font-bold tracking-[-0.3px] text-[#0F172A] leading-[1.15]"
-              style={{
-                fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-              }}
-            >
-              {stage.title}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Tagline */}
-      <div className="px-[18px] pt-[10px] pb-[12px]">
+      <div className="pl-[20px] pr-[18px] pb-[12px]">
         <p className="text-[12.5px] text-[#475569] leading-[1.55]">
           {stage.tagline}
         </p>
       </div>
 
-      {/* Subtle gradient divider */}
-      <div className="px-[18px]">
+      {/* Hairline divider */}
+      <div className="pl-[20px] pr-[18px]">
         <div
           className="h-px w-full"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent 0%, #E2E8F0 50%, transparent 100%)",
-          }}
+          style={{ background: `rgba(${t.rgb}, 0.14)` }}
         />
       </div>
 
-      {/* Bullet list with chevron pills */}
-      <div className="px-[18px] pt-[12px] pb-[16px]">
+      {/* Bullet list */}
+      <div className="pl-[20px] pr-[18px] pt-[11px] pb-[15px]">
         <div
           className={
             wide
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[20px] gap-y-[8px]"
-              : "flex flex-col gap-[8px]"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[18px] gap-y-[7px]"
+              : "flex flex-col gap-[7px]"
           }
         >
           {cols.flat().map((item, idx) => (
             <div
               key={`${stage.id}-${idx}`}
-              className="flex items-start gap-[10px] text-[12.5px] text-[#1E293B] leading-[1.45]"
+              className="flex items-start gap-[9px] text-[12.5px] text-[#1E293B] leading-[1.45]"
             >
               <div
-                className="w-[16px] h-[16px] rounded-full flex items-center justify-center mt-[1.5px] shrink-0"
-                style={{ background: `rgba(${t.rgb}, 0.14)` }}
-              >
-                <ChevronRight
-                  className="w-[10px] h-[10px]"
-                  strokeWidth={3}
-                  style={{ color: t.color }}
-                />
-              </div>
+                className="w-[5px] h-[5px] rounded-full mt-[7px] shrink-0"
+                style={{ background: t.color }}
+              />
               <span>{item}</span>
             </div>
           ))}

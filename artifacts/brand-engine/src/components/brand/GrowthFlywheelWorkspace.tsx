@@ -149,7 +149,13 @@ export function GrowthFlywheelWorkspace() {
   const [hoveredStage, setHoveredStage] = useState<StageId | null>(null);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#F8FAFC]">
+    <div
+      className="flex-1 overflow-y-auto"
+      style={{
+        background:
+          "linear-gradient(180deg, #EFF6FF 0%, #E0F2FE 55%, #EFF6FF 100%)",
+      }}
+    >
       <div className="max-w-[1320px] mx-auto px-[20px] md:px-[36px] py-[36px] md:py-[52px]">
         {/* Hero */}
         <div className="text-center mb-[36px] md:mb-[44px]">
@@ -256,16 +262,21 @@ function Flywheel({
 }) {
   const SIZE = 560;
   const CENTER = SIZE / 2;
-  const OUTER_R = 210;       // larger
-  const INNER_R = 110;       // thicker ring (gap = 100)
+  const OUTER_R = 210;
+  const INNER_R = 110;
   const ICON_R = 160;
   const CENTER_R = 100;
-  const BOUNDARY_R = (OUTER_R + INNER_R) / 2; // arrow badges sit in the middle of the ring
+  const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
+  // Cutout / badge radius — equals half the ring thickness so the cutout
+  // bites cleanly from inner edge to outer edge (puzzle-piece notches).
+  const BADGE_R = (OUTER_R - INNER_R) / 2;
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
   const startAngle = -90;
-  const SEGMENT_GAP_DEG = 5;
+  // Segments meet edge-to-edge — the visual "gap" comes from the puzzle-piece
+  // cutouts that hold the arrow badges, not from angular spacing.
+  const SEGMENT_GAP_DEG = 0;
 
   // Clockwise flow arrow at each gap. The boundary angle (in degrees,
   // canvas-space where 0° = right, 90° = bottom) determines which chevron
@@ -282,6 +293,9 @@ function Flywheel({
     return { x: CENTER + r * Math.cos(rad), y: CENTER + r * Math.sin(rad) };
   };
 
+  // Puzzle-piece segment — at each boundary the segment edge is a concave
+  // half-circle of radius BADGE_R that wraps around the arrow badge sitting
+  // in the gap. Outer/inner arcs run between the boundary angles.
   const segmentPath = (a1: number, a2: number) => {
     const p1Outer = polar(a1, OUTER_R);
     const p2Outer = polar(a2, OUTER_R);
@@ -290,9 +304,14 @@ function Flywheel({
     const large = a2 - a1 > 180 ? 1 : 0;
     return [
       `M ${p1Outer.x} ${p1Outer.y}`,
+      // Outer arc clockwise from a1 to a2
       `A ${OUTER_R} ${OUTER_R} 0 ${large} 1 ${p2Outer.x} ${p2Outer.y}`,
-      `L ${p2Inner.x} ${p2Inner.y}`,
+      // Concave cutout at a2 (outer → inner, bulging into segment)
+      `A ${BADGE_R} ${BADGE_R} 0 0 0 ${p2Inner.x} ${p2Inner.y}`,
+      // Inner arc counter-clockwise back from a2 to a1
       `A ${INNER_R} ${INNER_R} 0 ${large} 0 ${p1Inner.x} ${p1Inner.y}`,
+      // Concave cutout at a1 (inner → outer, bulging into segment)
+      `A ${BADGE_R} ${BADGE_R} 0 0 0 ${p1Outer.x} ${p1Outer.y}`,
       "Z",
     ].join(" ");
   };
@@ -498,45 +517,53 @@ function Flywheel({
           })}
         </g>
 
-        {/* Clockwise flow arrows — small white circular badges in each gap */}
+        {/* Clockwise flow arrows — white badges that nest perfectly into the
+            puzzle cutouts at each segment boundary. */}
         {boundaries.map(({ angle, next }) => {
           const pos = polar(angle, BOUNDARY_R);
           const nextTheme = STAGE_THEME[next];
           const Chevron = ChevronAt[((angle % 360) + 360) % 360] || ChevronRight;
+          // Slightly smaller than the cutout so a hairline of segment color
+          // shows through, giving the puzzle look definition.
+          const R_BADGE = BADGE_R - 4;
+          const R_CHEV = R_BADGE * 0.72;
           return (
             <g key={`arrow-${angle}`} pointerEvents="none">
               <circle
                 cx={pos.x}
                 cy={pos.y}
-                r={16}
+                r={R_BADGE}
                 fill="white"
                 filter="url(#fw-arrow-shadow)"
               />
               <circle
                 cx={pos.x}
                 cy={pos.y}
-                r={16}
+                r={R_BADGE}
                 fill="none"
-                stroke={`rgba(${nextTheme.rgb}, 0.35)`}
-                strokeWidth={1.25}
+                stroke={`rgba(${nextTheme.rgb}, 0.45)`}
+                strokeWidth={1.5}
               />
               <foreignObject
-                x={pos.x - 11}
-                y={pos.y - 11}
-                width={22}
-                height={22}
+                x={pos.x - R_CHEV}
+                y={pos.y - R_CHEV}
+                width={R_CHEV * 2}
+                height={R_CHEV * 2}
               >
                 <div
                   style={{
-                    width: 22,
-                    height: 22,
+                    width: "100%",
+                    height: "100%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     color: nextTheme.color,
                   }}
                 >
-                  <Chevron style={{ width: 16, height: 16 }} strokeWidth={3} />
+                  <Chevron
+                    style={{ width: R_CHEV * 1.4, height: R_CHEV * 1.4 }}
+                    strokeWidth={3}
+                  />
                 </div>
               </foreignObject>
             </g>
@@ -547,13 +574,29 @@ function Flywheel({
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
           const pos = polar(mid, ICON_R);
-          const ICON_SIZE = 50;
+          const BG_R = 32;
+          const ICON_SIZE = 48;
           return (
-            <g
-              key={`icon-${id}`}
-              pointerEvents="none"
-              style={{ filter: "drop-shadow(0 4px 8px rgba(15,23,42,0.25))" }}
-            >
+            <g key={`icon-${id}`} pointerEvents="none">
+              {/* White circular backdrop so the dark glass icon reads on
+                  any segment color */}
+              <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={BG_R}
+                fill="white"
+                style={{
+                  filter: "drop-shadow(0 2px 6px rgba(15,23,42,0.18))",
+                }}
+              />
+              <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={BG_R}
+                fill="none"
+                stroke={`rgba(${t.rgb}, 0.35)`}
+                strokeWidth={1.25}
+              />
               <image
                 href={t.iconPath}
                 x={pos.x - ICON_SIZE / 2}

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import { addExport, createThumbnail } from "./exportStore";
+import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -323,18 +324,19 @@ export function GrowthFlywheelWorkspace() {
         isExporting={isExporting}
       />
 
-      {/* RIGHT PREVIEW AREA */}
-      <div
-        ref={stageRef}
-        className="flex-1 overflow-hidden flex items-center justify-center p-[20px] bg-[rgba(6,11,22,0.5)]"
-      >
+      {/* RIGHT PREVIEW AREA — shared LivePreview frame */}
+      <LivePreview>
         <div
-          style={{
-            width: SLIDE_W * scale,
-            height: SLIDE_H * scale,
-            position: "relative",
-          }}
+          ref={stageRef}
+          className="w-full h-full flex items-center justify-center"
         >
+          <div
+            style={{
+              width: SLIDE_W * scale,
+              height: SLIDE_H * scale,
+              position: "relative",
+            }}
+          >
           <div
             ref={previewRef}
             style={{
@@ -349,6 +351,7 @@ export function GrowthFlywheelWorkspace() {
                 "radial-gradient(ellipse 90% 70% at 50% 35%, #EFF6FF 0%, #DBEAFE 45%, #BFDBFE 80%, #93C5FD 100%)",
               boxShadow:
                 "0 25px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04)",
+              borderRadius: "12px",
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
@@ -407,8 +410,9 @@ export function GrowthFlywheelWorkspace() {
               </div>
             </div>
           </div>
+          </div>
         </div>
-      </div>
+      </LivePreview>
     </div>
   );
 }

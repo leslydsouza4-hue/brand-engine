@@ -28,35 +28,35 @@ const STAGE_THEME: Record<StageId, {
   badge: string;        // STAGE label
 }> = {
   capture: {
-    color: "#4DC95F",       // green
-    rgb: "77,201,95",
+    color: "#22C55E",       // green
+    rgb: "34,197,94",
     Icon: Filter,
     stageNum: "01",
     badge: "STAGE 01",
   },
   nurture: {
-    color: "#F4C430",       // yellow
-    rgb: "244,196,48",
+    color: "#F59E0B",       // amber/orange
+    rgb: "245,158,11",
     Icon: MessagesSquare,
     stageNum: "02",
     badge: "STAGE 02",
   },
   close: {
-    color: "#5B8DEF",       // blue
-    rgb: "91,141,239",
+    color: "#3B82F6",       // blue
+    rgb: "59,130,246",
     Icon: DollarSign,
     stageNum: "03",
     badge: "STAGE 03",
   },
   evangelize: {
-    color: "#5DCFCF",       // teal / cyan
-    rgb: "93,207,207",
+    color: "#06B6D4",       // teal / cyan
+    rgb: "6,182,212",
     Icon: Trophy,
     stageNum: "04",
     badge: "STAGE 04",
   },
   reactivate: {
-    color: "#7C5CFF",       // indigo-purple for card UI (SVG center uses navy directly)
+    color: "#7C5CFF",       // indigo-purple for card UI (SVG center uses dark slate)
     rgb: "124,92,255",
     Icon: RefreshCw,
     stageNum: "05",
@@ -405,11 +405,12 @@ function Flywheel({
     return `M ${start.x} ${start.y} A ${r} ${r} 0 ${large} ${ccw ? 0 : 1} ${end.x} ${end.y}`;
   };
 
-  // Per-stage path config — segments meet flush at boundaries; the
-  // boundary cutout mask is what visually separates them.
+  // Per-stage path config — small angular gap between segments for the clean
+  // "nicely separated" look from the spec.
+  const SEGMENT_GAP_DEG = 4;
   const segmentMeta = outerOrder.map((id, i) => {
-    const a1 = startAngle + i * sweep;
-    const a2 = startAngle + (i + 1) * sweep;
+    const a1 = startAngle + i * sweep + SEGMENT_GAP_DEG / 2;
+    const a2 = startAngle + (i + 1) * sweep - SEGMENT_GAP_DEG / 2;
     const mid = (a1 + a2) / 2;
     // Use CCW path on segments whose midpoint sits in the lower half (y > 0)
     // i.e. midpoint angle in [0, 180) — these are nurture (mid 45) and close (mid 135).
@@ -432,20 +433,29 @@ function Flywheel({
     [-90 + 360]: ChevronRight, // 270° / -90 (top) — points right toward Capture
   };
 
-  // Notch radius — exactly matches the chevron-circle radius so segments
-  // cradle the chevron buttons seamlessly with no visible gap, like the reference.
-  const NOTCH_R = 19;
-
   return (
-    <div className="relative" style={{ width: SIZE, height: SIZE }}>
-      {/* Soft outer ambient glow */}
+    <div
+      className="relative flex items-center justify-center rounded-[36px]"
+      style={{
+        width: SIZE + 80,
+        height: SIZE + 80,
+        background:
+          "radial-gradient(120% 120% at 50% 0%, #FFFFFF 0%, #F8FAFC 55%, #EEF2F7 100%)",
+        boxShadow:
+          "0 30px 60px -25px rgba(15,23,42,0.45), 0 12px 30px -12px rgba(15,23,42,0.25), inset 0 1px 0 rgba(255,255,255,0.8)",
+      }}
+    >
+      {/* Subtle ambient color halo behind the wheel */}
       <div
         aria-hidden
-        className="absolute inset-0 rounded-full"
+        className="absolute rounded-full"
         style={{
+          width: SIZE * 0.85,
+          height: SIZE * 0.85,
           background:
-            "radial-gradient(circle at center, rgba(40,150,251,0.10), rgba(124,92,255,0.06) 45%, transparent 70%)",
-          filter: "blur(24px)",
+            "conic-gradient(from -90deg, rgba(34,197,94,0.10), rgba(245,158,11,0.10), rgba(59,130,246,0.10), rgba(6,182,212,0.10), rgba(34,197,94,0.10))",
+          filter: "blur(34px)",
+          opacity: 0.7,
         }}
       />
 
@@ -454,15 +464,19 @@ function Flywheel({
         height={SIZE}
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         className="relative"
-        style={{ overflow: "visible" }}
+        style={{ overflow: "visible", fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, sans-serif" }}
       >
         <defs>
           {outerOrder.map((id) => {
             const c = STAGE_THEME[id].color;
             return (
-              <linearGradient key={`g-${id}`} id={`grad-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient
+                key={`g-${id}`}
+                id={`grad-${id}`}
+                x1="0%" y1="0%" x2="0%" y2="100%"
+              >
                 <stop offset="0%" stopColor={c} stopOpacity={1} />
-                <stop offset="100%" stopColor={c} stopOpacity={0.85} />
+                <stop offset="100%" stopColor={c} stopOpacity={0.92} />
               </linearGradient>
             );
           })}
@@ -477,12 +491,12 @@ function Flywheel({
             />
           ))}
 
-          {/* Subtle drop shadow for the wheel */}
+          {/* Soft drop shadow for the donut */}
           <filter id="fw-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="6" />
+            <feGaussianBlur in="SourceAlpha" stdDeviation="5" />
             <feOffset dy="4" />
             <feComponentTransfer>
-              <feFuncA type="linear" slope="0.35" />
+              <feFuncA type="linear" slope="0.28" />
             </feComponentTransfer>
             <feMerge>
               <feMergeNode />
@@ -490,32 +504,62 @@ function Flywheel({
             </feMerge>
           </filter>
 
-          {/* Mask that punches circular notches at each segment boundary so the
-              chevron buttons cradle into the donut (the "nicely connected" look). */}
-          <mask id="fw-boundary-cutouts" maskUnits="userSpaceOnUse" x={0} y={0} width={SIZE} height={SIZE}>
-            <rect x={0} y={0} width={SIZE} height={SIZE} fill="white" />
-            {boundaries.map(({ angle }) => {
-              const p = polar(angle, BOUNDARY_R);
-              return <circle key={`mask-${angle}`} cx={p.x} cy={p.y} r={NOTCH_R} fill="black" />;
-            })}
-          </mask>
+          {/* Subtle inner highlight + inset shadow on each segment for depth */}
+          <filter id="fw-inset" x="-5%" y="-5%" width="110%" height="110%">
+            {/* top inner highlight (very subtle) */}
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+            <feOffset in="blur" dy="-1.5" result="offsetBlur" />
+            <feFlood floodColor="white" floodOpacity="0.18" result="hl" />
+            <feComposite in="hl" in2="offsetBlur" operator="in" result="hlInset" />
+            {/* bottom inner shadow */}
+            <feOffset in="blur" dy="2" result="offsetBlur2" />
+            <feFlood floodColor="black" floodOpacity="0.22" result="sh" />
+            <feComposite in="sh" in2="offsetBlur2" operator="in" result="shInset" />
+            <feMerge>
+              <feMergeNode in="SourceGraphic" />
+              <feMergeNode in="hlInset" />
+              <feMergeNode in="shInset" />
+            </feMerge>
+          </filter>
+
+          {/* Soft drop shadow for the center hub */}
+          <filter id="fw-hub-shadow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="8" />
+            <feOffset dy="6" />
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.18" />
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
-        {/* WHEEL GROUP (static — no rotation) */}
-        <g filter="url(#fw-shadow)" mask="url(#fw-boundary-cutouts)">
-          {/* 4 segments */}
+        {/* SEGMENTS */}
+        <g filter="url(#fw-shadow)">
           {segmentMeta.map(({ id, a1, a2 }) => {
             const isHover = hoveredStage === id;
             const t = STAGE_THEME[id];
             return (
-              <g key={id}>
+              <g
+                key={id}
+                style={{
+                  transform: isHover ? "scale(1.025)" : "scale(1)",
+                  transformOrigin: `${CENTER}px ${CENTER}px`,
+                  transition: "transform 220ms ease",
+                }}
+              >
                 <path
                   d={segmentPath(a1, a2)}
                   fill={`url(#grad-${id})`}
-                  opacity={hoveredStage && !isHover ? 0.65 : 1}
+                  filter="url(#fw-inset)"
+                  opacity={hoveredStage && !isHover ? 0.7 : 1}
                   style={{
                     transition: "opacity 220ms ease, filter 220ms ease",
-                    filter: isHover ? `drop-shadow(0 0 22px rgba(${t.rgb}, 0.6))` : "none",
+                    filter: isHover
+                      ? `drop-shadow(0 0 24px rgba(${t.rgb}, 0.55)) url(#fw-inset)`
+                      : "url(#fw-inset)",
                     cursor: "pointer",
                   }}
                   onMouseEnter={() => onHover(id)}
@@ -525,103 +569,110 @@ function Flywheel({
               </g>
             );
           })}
-
-          {/* Curved stage labels */}
-          {segmentMeta.map(({ id }) => (
-            <text
-              key={`label-${id}`}
-              fontSize={26}
-              fontWeight={800}
-              fill="white"
-              letterSpacing="1.6"
-              style={{ pointerEvents: "none", textTransform: "uppercase", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))" }}
-            >
-              <textPath href={`#textpath-${id}`} startOffset="50%" textAnchor="middle">
-                {(stages.find((s) => s.id === id)?.title || id).toUpperCase()}
-              </textPath>
-            </text>
-          ))}
-
-          {/* Stage icons inside each segment */}
-          {segmentMeta.map(({ id, mid }) => {
-            const t = STAGE_THEME[id];
-            const Icon = t.Icon;
-            const pos = polar(mid, ICON_R);
-            return (
-              <g key={`icon-${id}`} pointerEvents="none">
-                <circle
-                  cx={pos.x} cy={pos.y} r={22}
-                  fill="white"
-                  opacity={0.95}
-                  style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.18))" }}
-                />
-                <foreignObject x={pos.x - 13} y={pos.y - 13} width={26} height={26}>
-                  <div style={{ width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", color: t.color }}>
-                    <Icon style={{ width: 18, height: 18 }} strokeWidth={2.4} />
-                  </div>
-                </foreignObject>
-              </g>
-            );
-          })}
-
         </g>
 
-        {/* STATIC chevrons at fixed cardinal positions (don't rotate) */}
-        {boundaries.map(({ angle, next }) => {
-          const pos = polar(angle, BOUNDARY_R);
-          const nextTheme = STAGE_THEME[next];
-          const Chevron = ChevronAt[((angle % 360) + 360) % 360] || ChevronRight;
+        {/* Curved stage labels (above segments, separate so hover-scale doesn't move text) */}
+        {segmentMeta.map(({ id }) => (
+          <text
+            key={`label-${id}`}
+            fontSize={26}
+            fontWeight={800}
+            fill="white"
+            letterSpacing="1.6"
+            style={{
+              pointerEvents: "none",
+              textTransform: "uppercase",
+              filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.22))",
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            }}
+          >
+            <textPath href={`#textpath-${id}`} startOffset="50%" textAnchor="middle">
+              {(stages.find((s) => s.id === id)?.title || id).toUpperCase()}
+            </textPath>
+          </text>
+        ))}
+
+        {/* Stage icon badges inside each segment */}
+        {segmentMeta.map(({ id, mid }) => {
+          const t = STAGE_THEME[id];
+          const Icon = t.Icon;
+          const pos = polar(mid, ICON_R);
           return (
-            <g key={`chev-${angle}`} pointerEvents="none">
+            <g key={`icon-${id}`} pointerEvents="none">
               <circle
-                cx={pos.x} cy={pos.y} r={18}
+                cx={pos.x} cy={pos.y} r={22}
                 fill="white"
-                style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.2))" }}
+                style={{ filter: "drop-shadow(0 3px 8px rgba(15,23,42,0.22))" }}
               />
-              <foreignObject x={pos.x - 12} y={pos.y - 12} width={24} height={24}>
-                <div style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: nextTheme.color }}>
-                  <Chevron style={{ width: 18, height: 18 }} strokeWidth={2.75} />
+              <circle cx={pos.x} cy={pos.y} r={22} fill="none" stroke={`rgba(${t.rgb}, 0.18)`} strokeWidth={1} />
+              <foreignObject x={pos.x - 13} y={pos.y - 13} width={26} height={26}>
+                <div style={{ width: 26, height: 26, display: "flex", alignItems: "center", justifyContent: "center", color: t.color }}>
+                  <Icon style={{ width: 18, height: 18 }} strokeWidth={2.4} />
                 </div>
               </foreignObject>
             </g>
           );
         })}
 
-        {/* STATIC CENTER (does not rotate) */}
+        {/* Small flow-arrow indicators in each gap between segments */}
+        {boundaries.map(({ angle, next }) => {
+          const pos = polar(angle, BOUNDARY_R - 6);
+          const nextTheme = STAGE_THEME[next];
+          const Chevron = ChevronAt[((angle % 360) + 360) % 360] || ChevronRight;
+          return (
+            <g key={`chev-${angle}`} pointerEvents="none">
+              <circle
+                cx={pos.x} cy={pos.y} r={13}
+                fill="white"
+                style={{ filter: "drop-shadow(0 2px 5px rgba(15,23,42,0.20))" }}
+              />
+              <circle cx={pos.x} cy={pos.y} r={13} fill="none" stroke={`rgba(${nextTheme.rgb}, 0.28)`} strokeWidth={1} />
+              <foreignObject x={pos.x - 9} y={pos.y - 9} width={18} height={18}>
+                <div style={{ width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", color: nextTheme.color }}>
+                  <Chevron style={{ width: 14, height: 14 }} strokeWidth={3} />
+                </div>
+              </foreignObject>
+            </g>
+          );
+        })}
+
+        {/* CENTER HUB (REACTIVATE) */}
         <g>
           <circle
             cx={CENTER} cy={CENTER} r={CENTER_R}
-            fill="white"
-            style={{ filter: "drop-shadow(0 6px 18px rgba(0,0,0,0.25))" }}
+            fill="#F8FAFC"
+            filter="url(#fw-hub-shadow)"
             onMouseEnter={() => onHover("reactivate")}
             onMouseLeave={() => onHover(null)}
             onClick={() => onStageClick("reactivate")}
+            style={{ cursor: "pointer" }}
           />
-          <circle cx={CENTER} cy={CENTER} r={CENTER_R} fill="none" stroke="rgba(11,20,38,0.08)" strokeWidth={1} pointerEvents="none" />
+          {/* subtle inner ring */}
+          <circle cx={CENTER} cy={CENTER} r={CENTER_R - 1} fill="none" stroke="rgba(15,23,42,0.07)" strokeWidth={1} pointerEvents="none" />
           <g pointerEvents="none">
             {/* Loop arrow icon */}
-            <foreignObject x={CENTER - 18} y={CENTER - 36} width={36} height={36}>
-              <div style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "#0B1426" }}>
-                <RefreshCw style={{ width: 30, height: 30 }} strokeWidth={2.4} />
+            <foreignObject x={CENTER - 18} y={CENTER - 38} width={36} height={36}>
+              <div style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "#0F172A" }}>
+                <RefreshCw style={{ width: 28, height: 28 }} strokeWidth={2.4} />
               </div>
             </foreignObject>
             <text
-              x={CENTER} y={CENTER + 14}
+              x={CENTER} y={CENTER + 12}
               textAnchor="middle"
               fontSize={22}
               fontWeight={800}
-              fill="#0B1426"
-              style={{ letterSpacing: "2px" }}
+              fill="#0F172A"
+              style={{ letterSpacing: "2px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
             >
               REACTIVATE
             </text>
             <text
-              x={CENTER} y={CENTER + 36}
+              x={CENTER} y={CENTER + 34}
               textAnchor="middle"
               fontSize={9}
               fontWeight={700}
-              fill="rgba(11,20,38,0.5)"
-              style={{ letterSpacing: "1.8px" }}
+              fill="rgba(15,23,42,0.45)"
+              style={{ letterSpacing: "1.8px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
             >
               STAGE 05 · THE LOOP
             </text>

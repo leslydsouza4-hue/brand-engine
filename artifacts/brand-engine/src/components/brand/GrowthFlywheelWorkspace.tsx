@@ -378,56 +378,6 @@ function Flywheel() {
           </filter>
         </defs>
 
-        {/* External corner callouts: thin connector + label */}
-        {segmentMeta.map(({ id, mid }) => {
-          const t = STAGE_THEME[id];
-          // Anchor dot at the outer edge of the donut on the segment midline
-          const dot = polar(mid, OUTER_R + 4);
-          // Label position close to the segment — stays within SVG bounds even
-          // for the longest word ("EVANGELIZE").
-          const labelPos = polar(mid, OUTER_R + 24);
-          // Horizontal anchor based on quadrant
-          const anchor: "start" | "end" =
-            labelPos.x < CENTER ? "end" : "start";
-          const labelX = labelPos.x + (anchor === "end" ? -2 : 2);
-          return (
-            <g key={`callout-${id}`}>
-              <line
-                x1={dot.x}
-                y1={dot.y}
-                x2={labelPos.x}
-                y2={labelPos.y}
-                stroke={t.color}
-                strokeWidth={1.5}
-                strokeOpacity={0.65}
-              />
-              <circle cx={dot.x} cy={dot.y} r={3.5} fill={t.color} />
-              <text
-                x={labelX}
-                y={labelPos.y - 3}
-                textAnchor={anchor}
-                fontSize={14}
-                fontWeight={900}
-                fill={t.color}
-                style={{ letterSpacing: "1.2px", textTransform: "uppercase" }}
-              >
-                {id.toUpperCase()}
-              </text>
-              <text
-                x={labelX}
-                y={labelPos.y + 12}
-                textAnchor={anchor}
-                fontSize={9.5}
-                fontWeight={800}
-                fill="#64748B"
-                style={{ letterSpacing: "1.6px" }}
-              >
-                STAGE {t.stageNum}
-              </text>
-            </g>
-          );
-        })}
-
         {/* Donut segments — solid HL brand fills, no hover states */}
         <g filter="url(#fw-shadow)">
           {segmentMeta.map(({ id, a1, a2 }) => {
@@ -494,19 +444,23 @@ function Flywheel() {
           );
         })}
 
-        {/* Stage icon badges inside each segment — colored to match each
-            segment, sitting on a white backdrop so they read cleanly. */}
+        {/* Stage icon badges + inline labels inside each segment.
+            Icon sits near the outer edge, bold label sits beneath it
+            toward the inner edge — both centered on the segment's mid
+            radial line and clearing the center hub. White text reads
+            cleanly on the bold fills. */}
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
           const Icon = t.Icon;
-          const pos = polar(mid, ICON_R);
-          const BG_R = 26;
-          const ICON_PX = 26;
+          const iconPos = polar(mid, 178);
+          const labelPos = polar(mid, 142);
+          const BG_R = 22;
+          const ICON_PX = 22;
           return (
             <g key={`icon-${id}`} pointerEvents="none">
               <circle
-                cx={pos.x}
-                cy={pos.y}
+                cx={iconPos.x}
+                cy={iconPos.y}
                 r={BG_R}
                 fill="white"
                 style={{
@@ -514,16 +468,16 @@ function Flywheel() {
                 }}
               />
               <circle
-                cx={pos.x}
-                cy={pos.y}
+                cx={iconPos.x}
+                cy={iconPos.y}
                 r={BG_R}
                 fill="none"
                 stroke={`rgba(${t.rgb}, 0.55)`}
                 strokeWidth={1.5}
               />
               <foreignObject
-                x={pos.x - ICON_PX / 2}
-                y={pos.y - ICON_PX / 2}
+                x={iconPos.x - ICON_PX / 2}
+                y={iconPos.y - ICON_PX / 2}
                 width={ICON_PX}
                 height={ICON_PX}
               >
@@ -540,6 +494,18 @@ function Flywheel() {
                   <Icon style={{ width: ICON_PX, height: ICON_PX }} strokeWidth={2.4} />
                 </div>
               </foreignObject>
+              <text
+                x={labelPos.x}
+                y={labelPos.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize={13}
+                fontWeight={900}
+                fill="white"
+                style={{ letterSpacing: "1.4px" }}
+              >
+                {id.toUpperCase()}
+              </text>
             </g>
           );
         })}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import {
   Sparkles,
   ChevronRight,
@@ -10,13 +10,18 @@ import {
   DollarSign,
   Trophy,
   RefreshCw,
-  Pencil,
-  X,
   Plus,
   Trash2,
-  GripVertical,
+  Download,
+  Loader2,
+  Edit3,
+  RotateCcw,
   type LucideIcon,
 } from "lucide-react";
+import { toPng } from "html-to-image";
+import { addExport, createThumbnail } from "./exportStore";
+
+const BASE = import.meta.env.BASE_URL;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & data
@@ -162,12 +167,21 @@ const INITIAL_HERO: HeroContent = {
 type EditTarget = StageId | "hero" | null;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Main workspace — live-editable infographic
+// Main workspace — fixed-size slide with left sidebar editor + export
+
+const SLIDE_W = 1280;
+const SLIDE_H = 960;
 
 export function GrowthFlywheelWorkspace() {
   const [stages, setStages] = useState<Stage[]>(INITIAL_STAGES);
   const [hero, setHero] = useState<HeroContent>(INITIAL_HERO);
-  const [editing, setEditing] = useState<EditTarget>(null);
+  const [openSection, setOpenSection] = useState<EditTarget>("hero");
+  const [exportFormat, setExportFormat] = useState<"pdf" | "png">("pdf");
+  const [isExporting, setIsExporting] = useState(false);
+
+  const previewRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
 
   const getStage = (id: StageId): Stage =>
     stages.find((s) => s.id === id) as Stage;
@@ -183,78 +197,218 @@ export function GrowthFlywheelWorkspace() {
     setHero(INITIAL_HERO);
   };
 
+  // Auto-scale the slide to fit the available preview area
+  useEffect(() => {
+    const container = stageRef.current;
+    if (!container) return;
+    const compute = () => {
+      const padding = 40;
+      const w = container.clientWidth - padding;
+      const h = container.clientHeight - padding;
+      const s = Math.min(w / SLIDE_W, h / SLIDE_H, 1);
+      setScale(s > 0 ? s : 1);
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(container);
+    return () => ro.disconnect();
+  }, []);
+
+  const handleExport = useCallback(async () => {
+    if (!previewRef.current) return;
+    setIsExporting(true);
+    try {
+      const el = previewRef.current;
+      const w = SLIDE_W;
+      const h = SLIDE_H;
+      const DPI = 200;
+      // Landscape page at 11x8.5
+      const pageW = 11;
+      const pageH = (h / w) * pageW;
+      const pxW = pageW * DPI;
+      const pixelRatio = pxW / w;
+      const dataUrl = await toPng(el, {
+        width: w,
+        height: h,
+        pixelRatio,
+        cacheBust: true,
+        skipAutoScale: true,
+        style: {
+          transform: "none",
+          borderRadius: "0",
+        },
+      });
+      const safeName = (hero.title || "Growth_Flywheel")
+        .replace(/[^a-zA-Z0-9\s\-_]/g, "")
+        .replace(/\s+/g, "_");
+      const d = new Date();
+      const dp = `${d.getMonth() + 1}_${d.getDate()}_${String(d.getFullYear()).slice(-2)}`;
+      const fname = `${safeName}_${dp}`;
+      if (exportFormat === "pdf") {
+        const resp = await fetch(`${BASE}api/convert-cmyk`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            imageData: dataUrl,
+            filename: `${fname}.pdf`,
+            pageWidth: pageW,
+            pageHeight: pageH,
+          }),
+        });
+        if (!resp.ok)
+          throw new Error(`CMYK conversion failed: ${resp.statusText}`);
+        const { pdf: pdfBase64 } = await resp.json();
+        const pdfBytes = Uint8Array.from(atob(pdfBase64), (c) =>
+          c.charCodeAt(0),
+        );
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${fname}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        createThumbnail(dataUrl).then((t) =>
+          addExport({
+            name: `${fname}.pdf`,
+            source: "Growth Flywheel",
+            format: "pdf",
+            thumbnail: t,
+            dimensions: `${pageW}×${pageH.toFixed(1)}in (CMYK)`,
+          }),
+        );
+      } else {
+        const a = document.createElement("a");
+        a.href = dataUrl;
+        a.download = `${fname}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        createThumbnail(dataUrl).then((t) =>
+          addExport({
+            name: `${fname}.png`,
+            source: "Growth Flywheel",
+            format: "png",
+            thumbnail: t,
+            dimensions: `${Math.round(pxW)}×${Math.round(h * pixelRatio)}`,
+          }),
+        );
+      }
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [hero.title, exportFormat]);
+
+  const toggleSection = (target: EditTarget) =>
+    setOpenSection((prev) => (prev === target ? null : target));
+
   return (
-    <div
-      className="flex-1 overflow-y-auto relative"
-      style={{
-        background:
-          "radial-gradient(ellipse 90% 70% at 50% 35%, #EFF6FF 0%, #DBEAFE 45%, #BFDBFE 80%, #93C5FD 100%)",
-      }}
-    >
-      {/* Editor Nav Bar */}
-      <EditorNav
+    <div className="flex-1 flex overflow-hidden">
+      {/* LEFT SIDEBAR EDITOR */}
+      <LeftSidebar
         stages={stages}
-        editing={editing}
-        onSelect={setEditing}
+        hero={hero}
+        openSection={openSection}
+        onToggleSection={toggleSection}
+        onUpdateStage={updateStage}
+        onUpdateHero={setHero}
         onReset={resetAll}
+        exportFormat={exportFormat}
+        onExportFormatChange={setExportFormat}
+        onExport={handleExport}
+        isExporting={isExporting}
       />
 
-      <div className="max-w-[1320px] mx-auto px-[20px] md:px-[36px] py-[36px] md:py-[52px]">
-        {/* Hero */}
-        <div className="text-center mb-[36px] md:mb-[44px]">
-          <div className="inline-flex items-center gap-[8px] px-[14px] py-[6px] rounded-full bg-white border border-[#E2E8F0] mb-[18px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-            <Sparkles className="w-[12px] h-[12px] text-[#F59E0B]" />
-            <span className="text-[10.5px] font-bold uppercase tracking-[2px] text-[#475569]">
-              {hero.eyebrow}
-            </span>
-          </div>
-          <h1
-            className="text-[30px] md:text-[42px] font-bold tracking-[-0.6px] leading-[1.1] text-[#0F172A] mb-[14px]"
-            style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
-          >
-            {hero.title}
-          </h1>
-          <p className="text-[14px] md:text-[15.5px] text-[#475569] max-w-[820px] mx-auto leading-[1.6]">
-            {hero.subtitle}
-          </p>
-        </div>
-
-        {/* 3-column infographic grid */}
+      {/* RIGHT PREVIEW AREA */}
+      <div
+        ref={stageRef}
+        className="flex-1 overflow-hidden flex items-center justify-center p-[20px] bg-[rgba(6,11,22,0.5)]"
+      >
         <div
-          className="grid gap-[20px] md:gap-[24px] items-start"
           style={{
-            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 540px) minmax(0, 1fr)",
+            width: SLIDE_W * scale,
+            height: SLIDE_H * scale,
+            position: "relative",
           }}
         >
-          {/* LEFT column */}
-          <div className="flex flex-col gap-[20px] md:gap-[24px]">
-            <InfoCard stage={getStage("evangelize")} onEdit={() => setEditing("evangelize")} />
-            <InfoCard stage={getStage("close")} onEdit={() => setEditing("close")} />
-          </div>
+          <div
+            ref={previewRef}
+            style={{
+              width: SLIDE_W,
+              height: SLIDE_H,
+              position: "absolute",
+              top: 0,
+              left: 0,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
+              background:
+                "radial-gradient(ellipse 90% 70% at 50% 35%, #EFF6FF 0%, #DBEAFE 45%, #BFDBFE 80%, #93C5FD 100%)",
+              boxShadow:
+                "0 25px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.04)",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              padding: "32px 36px 28px",
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            }}
+          >
+            {/* Hero */}
+            <div className="text-center" style={{ marginBottom: "20px" }}>
+              <div className="inline-flex items-center gap-[8px] px-[14px] py-[6px] rounded-full bg-white border border-[#E2E8F0] mb-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+                <Sparkles className="w-[12px] h-[12px] text-[#F59E0B]" />
+                <span className="text-[10.5px] font-bold uppercase tracking-[2px] text-[#475569]">
+                  {hero.eyebrow}
+                </span>
+              </div>
+              <h1
+                className="text-[34px] font-bold tracking-[-0.6px] leading-[1.1] text-[#0F172A] mb-[10px]"
+                style={{
+                  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                }}
+              >
+                {hero.title}
+              </h1>
+              <p className="text-[14px] text-[#475569] max-w-[860px] mx-auto leading-[1.55]">
+                {hero.subtitle}
+              </p>
+            </div>
 
-          {/* CENTER column */}
-          <div className="flex flex-col items-center gap-[20px] md:gap-[24px]">
-            <Flywheel />
-            <InfoCard stage={getStage("reactivate")} wide onEdit={() => setEditing("reactivate")} />
-          </div>
+            {/* 3-column infographic grid */}
+            <div
+              className="grid items-start"
+              style={{
+                gap: "20px",
+                gridTemplateColumns:
+                  "minmax(0, 1fr) minmax(0, 520px) minmax(0, 1fr)",
+                flex: 1,
+                minHeight: 0,
+              }}
+            >
+              {/* LEFT column */}
+              <div className="flex flex-col gap-[18px]">
+                <InfoCard stage={getStage("evangelize")} />
+                <InfoCard stage={getStage("close")} />
+              </div>
 
-          {/* RIGHT column */}
-          <div className="flex flex-col gap-[20px] md:gap-[24px]">
-            <InfoCard stage={getStage("capture")} onEdit={() => setEditing("capture")} />
-            <InfoCard stage={getStage("nurture")} onEdit={() => setEditing("nurture")} />
+              {/* CENTER column */}
+              <div className="flex flex-col items-center gap-[14px]">
+                <Flywheel />
+                <InfoCard stage={getStage("reactivate")} wide />
+              </div>
+
+              {/* RIGHT column */}
+              <div className="flex flex-col gap-[18px]">
+                <InfoCard stage={getStage("capture")} />
+                <InfoCard stage={getStage("nurture")} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
-
-      {/* Edit Drawer */}
-      <EditDrawer
-        target={editing}
-        stages={stages}
-        hero={hero}
-        onClose={() => setEditing(null)}
-        onUpdateStage={updateStage}
-        onUpdateHero={setHero}
-      />
     </div>
   );
 }
@@ -648,11 +802,9 @@ function Flywheel() {
 function InfoCard({
   stage,
   wide,
-  onEdit,
 }: {
   stage: Stage;
   wide?: boolean;
-  onEdit?: () => void;
 }) {
   const t = STAGE_THEME[stage.id];
 
@@ -666,7 +818,7 @@ function InfoCard({
 
   return (
     <div
-      className="relative rounded-[18px] overflow-hidden w-full group"
+      className="relative rounded-[18px] overflow-hidden w-full"
       style={{
         background:
           "linear-gradient(180deg, #FFFFFF 0%, #FBFCFE 100%)",
@@ -675,20 +827,6 @@ function InfoCard({
           "0 1px 2px rgba(15,23,42,0.04), 0 12px 28px -8px rgba(15,23,42,0.10), 0 0 0 1px rgba(15,23,42,0.015)",
       }}
     >
-      {/* Edit button (top-right, fades in on hover) */}
-      {onEdit && (
-        <button
-          type="button"
-          onClick={onEdit}
-          className="absolute top-[12px] right-[12px] z-10 w-[28px] h-[28px] rounded-full bg-white/90 backdrop-blur border border-[#E2E8F0] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-          style={{
-            boxShadow: "0 2px 6px rgba(15,23,42,0.12)",
-          }}
-          aria-label={`Edit ${stage.title}`}
-        >
-          <Pencil className="w-[12px] h-[12px] text-[#475569]" strokeWidth={2.4} />
-        </button>
-      )}
       {/* Bold colored top accent */}
       <div
         className="h-[5px] w-full"
@@ -802,167 +940,7 @@ function InfoCard({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Editor Nav Bar — top bar with chips for hero + 5 stages
-
-function EditorNav({
-  stages,
-  editing,
-  onSelect,
-  onReset,
-}: {
-  stages: Stage[];
-  editing: EditTarget;
-  onSelect: (t: EditTarget) => void;
-  onReset: () => void;
-}) {
-  return (
-    <div
-      className="sticky top-0 z-30 backdrop-blur-md border-b"
-      style={{
-        background: "rgba(255,255,255,0.82)",
-        borderColor: "rgba(15,23,42,0.08)",
-        boxShadow: "0 1px 3px rgba(15,23,42,0.04)",
-      }}
-    >
-      <div className="max-w-[1320px] mx-auto px-[20px] md:px-[36px] py-[10px] flex items-center gap-[10px] flex-wrap">
-        <div className="flex items-center gap-[6px] mr-[6px]">
-          <Pencil className="w-[13px] h-[13px] text-[#475569]" strokeWidth={2.5} />
-          <span className="text-[11px] font-bold uppercase tracking-[1.4px] text-[#475569]">
-            Live Editor
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => onSelect("hero")}
-          className="px-[12px] py-[6px] rounded-full text-[12px] font-semibold border transition-colors"
-          style={{
-            background: editing === "hero" ? "#0F172A" : "#FFFFFF",
-            color: editing === "hero" ? "#FFFFFF" : "#334155",
-            borderColor: editing === "hero" ? "#0F172A" : "#E2E8F0",
-          }}
-        >
-          Hero
-        </button>
-
-        {stages.map((s) => {
-          const t = STAGE_THEME[s.id];
-          const active = editing === s.id;
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onSelect(s.id)}
-              className="px-[12px] py-[6px] rounded-full text-[12px] font-semibold border transition-colors flex items-center gap-[7px]"
-              style={{
-                background: active ? t.color : "#FFFFFF",
-                color: active ? "#FFFFFF" : "#334155",
-                borderColor: active ? t.color : "#E2E8F0",
-              }}
-            >
-              <span
-                className="w-[8px] h-[8px] rounded-full"
-                style={{ background: active ? "#FFFFFF" : t.color }}
-              />
-              {s.title}
-            </button>
-          );
-        })}
-
-        <div className="ml-auto">
-          <button
-            type="button"
-            onClick={onReset}
-            className="px-[10px] py-[6px] rounded-md text-[11px] font-semibold text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] transition-colors"
-          >
-            Reset to defaults
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Edit Drawer — slides in from the right
-
-function EditDrawer({
-  target,
-  stages,
-  hero,
-  onClose,
-  onUpdateStage,
-  onUpdateHero,
-}: {
-  target: EditTarget;
-  stages: Stage[];
-  hero: HeroContent;
-  onClose: () => void;
-  onUpdateStage: (id: StageId, patch: Partial<Stage>) => void;
-  onUpdateHero: (h: HeroContent) => void;
-}) {
-  const open = target !== null;
-
-  return (
-    <>
-      {/* Backdrop */}
-      {open && (
-        <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px]"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Panel */}
-      <div
-        className="fixed top-0 right-0 h-full w-full sm:w-[460px] z-50 border-l shadow-2xl transition-transform duration-300 flex flex-col"
-        style={{
-          transform: open ? "translateX(0)" : "translateX(100%)",
-          background:
-            "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
-          borderColor: "rgba(15,23,42,0.10)",
-          boxShadow: "-20px 0 60px -20px rgba(15,23,42,0.25)",
-        }}
-        role="dialog"
-        aria-modal="true"
-      >
-        {open && target === "hero" && (
-          <HeroEditor hero={hero} onUpdate={onUpdateHero} onClose={onClose} />
-        )}
-        {open && target !== "hero" && target !== null && (
-          <StageEditor
-            stage={stages.find((s) => s.id === target) as Stage}
-            onUpdate={(patch) => onUpdateStage(target, patch)}
-            onClose={onClose}
-          />
-        )}
-      </div>
-    </>
-  );
-}
-
 // Field primitives ──────────────────────────────────────────────────────────
-function FieldLabel({
-  children,
-  hint,
-}: {
-  children: React.ReactNode;
-  hint?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-baseline justify-between mb-[8px]">
-      <label className="block text-[11px] font-bold uppercase tracking-[1.4px] text-[#475569]">
-        {children}
-      </label>
-      {hint && (
-        <span className="text-[10.5px] font-medium text-[#94A3B8]">
-          {hint}
-        </span>
-      )}
-    </div>
-  );
-}
 
 function TextInput({
   value,
@@ -1021,274 +999,6 @@ function TextArea({
       style={accentStyle}
       className="w-full px-[14px] py-[11px] rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] text-[#0F172A] outline-none transition resize-y leading-[1.5] shadow-[0_1px_2px_rgba(15,23,42,0.03)] focus:border-[var(--accent,#3B82F6)] focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb,59_130_246)/0.18)]"
     />
-  );
-}
-
-// Drawer header — premium gradient with watermark stage number ──────────────
-function DrawerHeader({
-  Icon,
-  iconBg,
-  iconShadow,
-  eyebrow,
-  eyebrowColor,
-  title,
-  watermark,
-  bgGradient,
-  onClose,
-}: {
-  Icon: LucideIcon;
-  iconBg: string;
-  iconShadow: string;
-  eyebrow: string;
-  eyebrowColor: string;
-  title: string;
-  watermark?: string;
-  bgGradient: string;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      className="relative px-[24px] pt-[22px] pb-[20px] border-b overflow-hidden"
-      style={{
-        background: bgGradient,
-        borderColor: "rgba(15,23,42,0.08)",
-      }}
-    >
-      {/* Watermark stage number */}
-      {watermark && (
-        <div
-          aria-hidden
-          className="absolute -right-[6px] -top-[8px] font-black leading-none select-none pointer-events-none"
-          style={{
-            fontSize: "120px",
-            color: "rgba(15,23,42,0.04)",
-            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            letterSpacing: "-6px",
-          }}
-        >
-          {watermark}
-        </div>
-      )}
-
-      {/* Close button */}
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute top-[14px] right-[14px] w-[32px] h-[32px] rounded-full bg-white/70 hover:bg-white border border-[#E2E8F0] flex items-center justify-center text-[#475569] transition shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
-        aria-label="Close editor"
-      >
-        <X className="w-[15px] h-[15px]" />
-      </button>
-
-      <div className="flex items-center gap-[14px] relative">
-        <div
-          className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center shrink-0"
-          style={{
-            background: iconBg,
-            boxShadow: `${iconShadow}, inset 0 1px 0 rgba(255,255,255,0.25)`,
-          }}
-        >
-          <Icon className="w-[26px] h-[26px] text-white" strokeWidth={2.3} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div
-            className="text-[10.5px] font-bold uppercase tracking-[1.8px] mb-[3px]"
-            style={{ color: eyebrowColor }}
-          >
-            {eyebrow}
-          </div>
-          <div
-            className="text-[22px] font-bold tracking-[-0.4px] text-[#0F172A] leading-[1.1]"
-            style={{
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            }}
-          >
-            {title}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Drawer footer ─────────────────────────────────────────────────────────────
-function DrawerFooter({
-  onClose,
-  ctaColor,
-  ctaRgb,
-}: {
-  onClose: () => void;
-  ctaColor: string;
-  ctaRgb: string;
-}) {
-  return (
-    <div
-      className="px-[24px] py-[14px] border-t flex items-center justify-between"
-      style={{
-        borderColor: "rgba(15,23,42,0.08)",
-        background: "rgba(255,255,255,0.6)",
-        backdropFilter: "blur(8px)",
-      }}
-    >
-      <div className="flex items-center gap-[6px] text-[11px] text-[#64748B]">
-        <span
-          className="w-[6px] h-[6px] rounded-full animate-pulse"
-          style={{ background: "#10B981" }}
-        />
-        Live preview enabled
-      </div>
-      <button
-        type="button"
-        onClick={onClose}
-        className="px-[18px] py-[9px] rounded-[10px] text-white text-[13px] font-bold transition hover:brightness-110"
-        style={{
-          background: `linear-gradient(135deg, ${ctaColor} 0%, rgba(${ctaRgb}, 0.85) 100%)`,
-          boxShadow: `0 4px 12px -2px rgba(${ctaRgb}, 0.45)`,
-        }}
-      >
-        Done
-      </button>
-    </div>
-  );
-}
-
-// Stage editor ──────────────────────────────────────────────────────────────
-function StageEditor({
-  stage,
-  onUpdate,
-  onClose,
-}: {
-  stage: Stage;
-  onUpdate: (patch: Partial<Stage>) => void;
-  onClose: () => void;
-}) {
-  const t = STAGE_THEME[stage.id];
-  const accent = { color: t.color, rgb: t.rgb.replace(/,/g, " ") };
-
-  const updateItem = (idx: number, value: string) => {
-    const next = [...stage.items];
-    next[idx] = value;
-    onUpdate({ items: next });
-  };
-  const addItem = () => onUpdate({ items: [...stage.items, "New feature"] });
-  const removeItem = (idx: number) =>
-    onUpdate({ items: stage.items.filter((_, i) => i !== idx) });
-  const moveItem = (idx: number, dir: -1 | 1) => {
-    const j = idx + dir;
-    if (j < 0 || j >= stage.items.length) return;
-    const next = [...stage.items];
-    [next[idx], next[j]] = [next[j], next[idx]];
-    onUpdate({ items: next });
-  };
-
-  return (
-    <>
-      <DrawerHeader
-        Icon={t.Icon}
-        iconBg={`linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.82) 100%)`}
-        iconShadow={`0 8px 18px -4px rgba(${t.rgb}, 0.55)`}
-        eyebrow={`Editing · ${t.badge}`}
-        eyebrowColor={t.color}
-        title={stage.title || "Untitled stage"}
-        watermark={t.stageNum}
-        bgGradient={`linear-gradient(180deg, rgba(${t.rgb}, 0.12) 0%, rgba(${t.rgb}, 0.02) 100%)`}
-        onClose={onClose}
-      />
-
-      {/* Body */}
-      <div className="flex-1 overflow-y-auto px-[24px] py-[22px] space-y-[22px]">
-        {/* Title field */}
-        <div>
-          <FieldLabel hint={`${stage.title.length} chars`}>
-            Stage title
-          </FieldLabel>
-          <TextInput
-            value={stage.title}
-            onChange={(v) => onUpdate({ title: v })}
-            placeholder="e.g. Capture"
-            accent={accent}
-          />
-        </div>
-
-        {/* Tagline field */}
-        <div>
-          <FieldLabel hint={`${stage.tagline.length} chars`}>
-            Tagline
-          </FieldLabel>
-          <TextArea
-            value={stage.tagline}
-            rows={3}
-            onChange={(v) => onUpdate({ tagline: v })}
-            placeholder="One-sentence summary of this stage"
-            accent={accent}
-          />
-        </div>
-
-        {/* Bullet items section */}
-        <div>
-          <div className="flex items-center justify-between mb-[10px]">
-            <div className="flex items-center gap-[8px]">
-              <label className="block text-[11px] font-bold uppercase tracking-[1.4px] text-[#475569]">
-                Feature bullets
-              </label>
-              <span
-                className="px-[7px] py-[1px] rounded-full text-[10px] font-bold"
-                style={{
-                  background: `rgba(${t.rgb}, 0.14)`,
-                  color: t.color,
-                }}
-              >
-                {stage.items.length}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-[8px]">
-            {stage.items.map((item, idx) => (
-              <ItemRow
-                key={idx}
-                idx={idx}
-                value={item}
-                accent={accent}
-                themeColor={t.color}
-                themeRgb={t.rgb}
-                isFirst={idx === 0}
-                isLast={idx === stage.items.length - 1}
-                onChange={(v) => updateItem(idx, v)}
-                onMoveUp={() => moveItem(idx, -1)}
-                onMoveDown={() => moveItem(idx, 1)}
-                onRemove={() => removeItem(idx)}
-              />
-            ))}
-
-            {stage.items.length === 0 && (
-              <div className="px-[14px] py-[20px] rounded-[10px] border-2 border-dashed border-[#E2E8F0] bg-white text-center">
-                <div className="text-[12.5px] text-[#94A3B8]">
-                  No bullets yet — add one below to get started.
-                </div>
-              </div>
-            )}
-
-            {/* Add item button */}
-            <button
-              type="button"
-              onClick={addItem}
-              className="w-full mt-[4px] px-[14px] py-[12px] rounded-[10px] border-2 border-dashed flex items-center justify-center gap-[6px] text-[12.5px] font-semibold transition hover:bg-white"
-              style={{
-                borderColor: `rgba(${t.rgb}, 0.35)`,
-                color: t.color,
-                background: `rgba(${t.rgb}, 0.04)`,
-              }}
-            >
-              <Plus className="w-[14px] h-[14px]" strokeWidth={2.6} />
-              Add new bullet
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <DrawerFooter onClose={onClose} ctaColor={t.color} ctaRgb={t.rgb} />
-    </>
   );
 }
 
@@ -1387,67 +1097,386 @@ function ItemRow({
   );
 }
 
-// Hero editor ───────────────────────────────────────────────────────────────
-function HeroEditor({
+// ─────────────────────────────────────────────────────────────────────────────
+// Left Sidebar — collapsible accordion editor + theme/export/download
+
+function LeftSidebar({
+  stages,
   hero,
-  onUpdate,
-  onClose,
+  openSection,
+  onToggleSection,
+  onUpdateStage,
+  onUpdateHero,
+  onReset,
+  exportFormat,
+  onExportFormatChange,
+  onExport,
+  isExporting,
 }: {
+  stages: Stage[];
   hero: HeroContent;
-  onUpdate: (h: HeroContent) => void;
-  onClose: () => void;
+  openSection: EditTarget;
+  onToggleSection: (t: EditTarget) => void;
+  onUpdateStage: (id: StageId, patch: Partial<Stage>) => void;
+  onUpdateHero: (h: HeroContent) => void;
+  onReset: () => void;
+  exportFormat: "pdf" | "png";
+  onExportFormatChange: (f: "pdf" | "png") => void;
+  onExport: () => void;
+  isExporting: boolean;
 }) {
-  const accent = { color: "#0F172A", rgb: "15 23 42" };
-  const ctaRgb = "15,23,42";
-
   return (
-    <>
-      <DrawerHeader
-        Icon={Sparkles}
-        iconBg="linear-gradient(135deg, #1E293B 0%, #0F172A 100%)"
-        iconShadow="0 8px 18px -4px rgba(15,23,42,0.45)"
-        eyebrow="Editing · Page Header"
-        eyebrowColor="#475569"
-        title="Hero Section"
-        bgGradient="linear-gradient(180deg, #F1F5F9 0%, #FFFFFF 100%)"
-        onClose={onClose}
-      />
-
-      <div className="flex-1 overflow-y-auto px-[24px] py-[22px] space-y-[22px]">
+    <div className="w-[300px] shrink-0 border-r border-white/5 bg-[rgba(3,11,23,0.6)] flex flex-col h-full">
+      {/* TOP — fixed */}
+      <div className="p-[18px] pb-[12px] border-b border-white/5 flex flex-col gap-[12px]">
         <div>
-          <FieldLabel hint="Small pill above title">Eyebrow</FieldLabel>
-          <TextInput
-            value={hero.eyebrow}
-            onChange={(v) => onUpdate({ ...hero, eyebrow: v })}
-            placeholder="The HighLevel Growth Flywheel"
-            accent={accent}
-          />
+          <h2 className="text-white text-[15px] font-semibold mb-[4px]">
+            Growth Flywheel
+          </h2>
+          <p className="text-[11px] text-[#64748B] leading-[1.5]">
+            Presentation slide — edit content and export.
+          </p>
         </div>
-        <div>
-          <FieldLabel hint={`${hero.title.length} chars`}>Headline</FieldLabel>
-          <TextArea
-            value={hero.title}
-            rows={2}
-            onChange={(v) => onUpdate({ ...hero, title: v })}
-            placeholder="Main page title"
-            accent={accent}
-          />
-        </div>
-        <div>
-          <FieldLabel hint={`${hero.subtitle.length} chars`}>
-            Sub-headline
-          </FieldLabel>
-          <TextArea
-            value={hero.subtitle}
-            rows={5}
-            onChange={(v) => onUpdate({ ...hero, subtitle: v })}
-            placeholder="Supporting paragraph beneath the title"
-            accent={accent}
-          />
+        <div className="flex items-center gap-[8px]">
+          <div className="flex-1 flex items-center gap-[6px] py-[8px] px-[10px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]">
+            <Edit3 className="w-[12px] h-[12px] text-[#94A3B8]" />
+            <span className="text-[11px] font-semibold text-[#94A3B8]">
+              Live editing on
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={onReset}
+            className="w-[34px] h-[34px] flex items-center justify-center rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[#64748B] hover:text-[#FF8A8A] hover:border-[rgba(255,77,77,0.3)] cursor-pointer transition-all"
+            title="Reset to defaults"
+            aria-label="Reset to defaults"
+          >
+            <RotateCcw className="w-[12px] h-[12px]" />
+          </button>
         </div>
       </div>
 
-      <DrawerFooter onClose={onClose} ctaColor="#0F172A" ctaRgb={ctaRgb} />
-    </>
+      {/* MIDDLE — scrollable */}
+      <div className="flex-1 min-h-0 overflow-y-auto sidebar-scroll p-[18px] flex flex-col gap-[10px]">
+        <SidebarSection
+          label="Hero"
+          accent="#94A3B8"
+          accentRgb="148,163,184"
+          isOpen={openSection === "hero"}
+          onToggle={() => onToggleSection("hero")}
+        >
+          <HeroPane hero={hero} onUpdate={onUpdateHero} />
+        </SidebarSection>
+
+        {stages.map((s) => {
+          const t = STAGE_THEME[s.id];
+          return (
+            <SidebarSection
+              key={s.id}
+              label={s.title}
+              eyebrow={t.badge}
+              accent={t.color}
+              accentRgb={t.rgb}
+              isOpen={openSection === s.id}
+              onToggle={() => onToggleSection(s.id)}
+            >
+              <StagePane
+                stage={s}
+                onUpdate={(patch) => onUpdateStage(s.id, patch)}
+              />
+            </SidebarSection>
+          );
+        })}
+      </div>
+
+      {/* BOTTOM — fixed */}
+      <div className="p-[18px] pt-[14px] border-t border-white/5 bg-[rgba(0,0,0,0.25)] flex flex-col gap-[10px]">
+        <div>
+          <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[6px]">
+            Export Format
+          </div>
+          <div className="flex gap-[4px]">
+            {(["pdf", "png"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => onExportFormatChange(f)}
+                className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-bold border cursor-pointer transition-all uppercase ${
+                  exportFormat === f
+                    ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
+                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onExport}
+          disabled={isExporting}
+          className="w-full flex items-center justify-center gap-[8px] py-[12px] rounded-[14px] text-[13px] font-bold cursor-pointer transition-all bg-gradient-to-r from-[#2896FB] to-[#095DC3] text-white shadow-[0_4px_20px_rgba(40,150,251,0.3)] hover:shadow-[0_6px_28px_rgba(40,150,251,0.4)] disabled:opacity-50 disabled:cursor-not-allowed border-none"
+        >
+          {isExporting ? (
+            <Loader2 className="w-[16px] h-[16px] animate-spin" />
+          ) : (
+            <Download className="w-[16px] h-[16px]" />
+          )}
+          {isExporting ? "Exporting…" : `Download ${exportFormat.toUpperCase()}`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Collapsible accordion section
+function SidebarSection({
+  label,
+  eyebrow,
+  accent,
+  accentRgb,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  label: string;
+  eyebrow?: string;
+  accent: string;
+  accentRgb: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="rounded-[10px] border overflow-hidden transition-colors"
+      style={{
+        borderColor: isOpen
+          ? `rgba(${accentRgb}, 0.35)`
+          : "rgba(255,255,255,0.06)",
+        background: isOpen
+          ? `rgba(${accentRgb}, 0.06)`
+          : "rgba(255,255,255,0.02)",
+      }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between py-[10px] px-[12px] cursor-pointer bg-transparent border-none outline-none"
+      >
+        <div className="flex items-center gap-[10px] min-w-0">
+          <span
+            className="w-[8px] h-[8px] rounded-full shrink-0"
+            style={{ background: accent }}
+          />
+          <div className="min-w-0 text-left">
+            {eyebrow && (
+              <div
+                className="text-[8.5px] font-bold uppercase tracking-[1.6px] mb-[1px] truncate"
+                style={{ color: accent, opacity: 0.85 }}
+              >
+                {eyebrow}
+              </div>
+            )}
+            <div className="text-[12.5px] font-semibold text-white truncate">
+              {label}
+            </div>
+          </div>
+        </div>
+        <ChevronDown
+          className={`w-[14px] h-[14px] text-[#94A3B8] shrink-0 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-200 ${
+          isOpen ? "max-h-[1600px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-[12px] pb-[12px] pt-[2px]">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// Hero editing pane (used inside SidebarSection)
+function HeroPane({
+  hero,
+  onUpdate,
+}: {
+  hero: HeroContent;
+  onUpdate: (h: HeroContent) => void;
+}) {
+  const accent = { color: "#3B82F6", rgb: "59 130 246" };
+  return (
+    <div className="space-y-[12px]">
+      <div>
+        <SidebarFieldLabel hint="Top pill">Eyebrow</SidebarFieldLabel>
+        <TextInput
+          value={hero.eyebrow}
+          onChange={(v) => onUpdate({ ...hero, eyebrow: v })}
+          placeholder="The HighLevel Growth Flywheel"
+          accent={accent}
+        />
+      </div>
+      <div>
+        <SidebarFieldLabel hint={`${hero.title.length} chars`}>
+          Headline
+        </SidebarFieldLabel>
+        <TextArea
+          value={hero.title}
+          rows={2}
+          onChange={(v) => onUpdate({ ...hero, title: v })}
+          placeholder="Main slide title"
+          accent={accent}
+        />
+      </div>
+      <div>
+        <SidebarFieldLabel hint={`${hero.subtitle.length} chars`}>
+          Sub-headline
+        </SidebarFieldLabel>
+        <TextArea
+          value={hero.subtitle}
+          rows={4}
+          onChange={(v) => onUpdate({ ...hero, subtitle: v })}
+          placeholder="Supporting paragraph"
+          accent={accent}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Stage editing pane (used inside SidebarSection)
+function StagePane({
+  stage,
+  onUpdate,
+}: {
+  stage: Stage;
+  onUpdate: (patch: Partial<Stage>) => void;
+}) {
+  const t = STAGE_THEME[stage.id];
+  const accent = { color: t.color, rgb: t.rgb.replace(/,/g, " ") };
+
+  const updateItem = (idx: number, value: string) => {
+    const next = [...stage.items];
+    next[idx] = value;
+    onUpdate({ items: next });
+  };
+  const addItem = () =>
+    onUpdate({ items: [...stage.items, "New feature"] });
+  const removeItem = (idx: number) =>
+    onUpdate({ items: stage.items.filter((_, i) => i !== idx) });
+  const moveItem = (idx: number, dir: -1 | 1) => {
+    const j = idx + dir;
+    if (j < 0 || j >= stage.items.length) return;
+    const next = [...stage.items];
+    [next[idx], next[j]] = [next[j], next[idx]];
+    onUpdate({ items: next });
+  };
+
+  return (
+    <div className="space-y-[12px]">
+      <div>
+        <SidebarFieldLabel hint={`${stage.title.length} chars`}>
+          Title
+        </SidebarFieldLabel>
+        <TextInput
+          value={stage.title}
+          onChange={(v) => onUpdate({ title: v })}
+          placeholder="e.g. Capture"
+          accent={accent}
+        />
+      </div>
+      <div>
+        <SidebarFieldLabel hint={`${stage.tagline.length} chars`}>
+          Tagline
+        </SidebarFieldLabel>
+        <TextArea
+          value={stage.tagline}
+          rows={3}
+          onChange={(v) => onUpdate({ tagline: v })}
+          placeholder="One-sentence summary"
+          accent={accent}
+        />
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-[6px]">
+          <label className="block text-[10px] font-bold uppercase tracking-[1.2px] text-[#94A3B8]">
+            Bullets
+          </label>
+          <span
+            className="px-[7px] py-[1px] rounded-full text-[9.5px] font-bold"
+            style={{
+              background: `rgba(${t.rgb}, 0.18)`,
+              color: t.color,
+            }}
+          >
+            {stage.items.length}
+          </span>
+        </div>
+        <div className="space-y-[6px]">
+          {stage.items.map((item, idx) => (
+            <ItemRow
+              key={idx}
+              idx={idx}
+              value={item}
+              accent={accent}
+              themeColor={t.color}
+              themeRgb={t.rgb}
+              isFirst={idx === 0}
+              isLast={idx === stage.items.length - 1}
+              onChange={(v) => updateItem(idx, v)}
+              onMoveUp={() => moveItem(idx, -1)}
+              onMoveDown={() => moveItem(idx, 1)}
+              onRemove={() => removeItem(idx)}
+            />
+          ))}
+          {stage.items.length === 0 && (
+            <div className="px-[12px] py-[14px] rounded-[8px] border-2 border-dashed border-[rgba(255,255,255,0.10)] text-center">
+              <div className="text-[11px] text-[#64748B]">
+                No bullets yet — add one below.
+              </div>
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={addItem}
+            className="w-full mt-[2px] px-[12px] py-[10px] rounded-[8px] border-2 border-dashed flex items-center justify-center gap-[6px] text-[11.5px] font-semibold transition hover:bg-white"
+            style={{
+              borderColor: `rgba(${t.rgb}, 0.45)`,
+              color: t.color,
+              background: `rgba(${t.rgb}, 0.06)`,
+            }}
+          >
+            <Plus className="w-[12px] h-[12px]" strokeWidth={2.6} />
+            Add bullet
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Sidebar variant of FieldLabel — lighter colors for dark sidebar
+function SidebarFieldLabel({
+  children,
+  hint,
+}: {
+  children: React.ReactNode;
+  hint?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline justify-between mb-[6px]">
+      <label className="block text-[10px] font-bold uppercase tracking-[1.2px] text-[#94A3B8]">
+        {children}
+      </label>
+      {hint && (
+        <span className="text-[9.5px] font-medium text-[#64748B]">{hint}</span>
+      )}
+    </div>
   );
 }

@@ -559,17 +559,17 @@ export function GrowthFlywheelWorkspace() {
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
 function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
-  const SIZE = 500;
+  const SIZE = 600;
   const CENTER = SIZE / 2;
-  const OUTER_R = 188;
-  const INNER_R = 97;
-  const ICON_R = 142;
-  const CENTER_R = 89;
+  const OUTER_R = 226;
+  const INNER_R = 116;
+  const ICON_R = 170;
+  const CENTER_R = 107;
   const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
   // Cutout / badge radius — sized so the white arrow badge clips flush into
   // the puzzle notch, with short flat radial edges of segment color above
   // and below the cutout (matches the reference look).
-  const BADGE_R = 24;
+  const BADGE_R = 29;
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -778,7 +778,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             donut's curve. Top segments use a left-to-right CW arc; bottom
             segments use a reversed (CCW) arc so the letters stay upright. */}
         {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 153;
+          const R_TEXT = 184;
           const inset = 7;
           const isTop = Math.sin((mid * Math.PI) / 180) < 0;
           const start = isTop
@@ -798,11 +798,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                 stroke="none"
               />
               <text
-                fontSize={16}
+                fontSize={19}
                 fontWeight={900}
                 fill="white"
                 style={{
-                  letterSpacing: "1.2px",
+                  letterSpacing: "1.4px",
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
@@ -823,10 +823,10 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
         <g>
           <g pointerEvents="none">
             <foreignObject
-              x={CENTER - 14}
-              y={CENTER - 40}
-              width={28}
-              height={28}
+              x={CENTER - 17}
+              y={CENTER - 48}
+              width={34}
+              height={34}
             >
               <div
                 style={{
@@ -839,8 +839,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               >
                 <div
                   style={{
-                    width: 26,
-                    height: 26,
+                    width: 31,
+                    height: 31,
                     backgroundColor:
                       theme === "dark"
                         ? "#93C5FD"
@@ -859,9 +859,9 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </foreignObject>
             <text
               x={CENTER}
-              y={CENTER + 3}
+              y={CENTER + 5}
               textAnchor="middle"
-              fontSize={14}
+              fontSize={17}
               fontWeight={800}
               fill={
                 theme === "dark"
@@ -869,7 +869,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                   : STAGE_THEME.reactivate.color
               }
               style={{
-                letterSpacing: "1.3px",
+                letterSpacing: "1.6px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }}
             >
@@ -877,9 +877,9 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </text>
             <text
               x={CENTER}
-              y={CENTER + 18}
+              y={CENTER + 22}
               textAnchor="middle"
-              fontSize={8}
+              fontSize={10}
               fontWeight={700}
               fill={theme === "dark" ? "#94A3B8" : "#475569"}
               style={{
@@ -898,8 +898,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
           const pos = polar(mid, INNER_R);
-          const BG_R = 24;
-          const ICON_PX = 24;
+          const BG_R = 29;
+          const ICON_PX = 29;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same

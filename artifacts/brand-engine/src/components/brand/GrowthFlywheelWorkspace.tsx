@@ -152,7 +152,7 @@ export function GrowthFlywheelWorkspace() {
       className="flex-1 overflow-y-auto"
       style={{
         background:
-          "linear-gradient(180deg, #EFF6FF 0%, #E0F2FE 55%, #EFF6FF 100%)",
+          "radial-gradient(ellipse 90% 70% at 50% 35%, #EFF6FF 0%, #DBEAFE 45%, #BFDBFE 80%, #93C5FD 100%)",
       }}
     >
       <div className="max-w-[1320px] mx-auto px-[20px] md:px-[36px] py-[36px] md:py-[52px]">
@@ -488,24 +488,9 @@ function Flywheel() {
           );
         })}
 
-        {/* Center hub: REACTIVATE */}
+        {/* Center hub: REACTIVATE — no white disc, sits directly on the
+            page gradient so the donut feels like an open ring. */}
         <g>
-          <circle
-            cx={CENTER}
-            cy={CENTER}
-            r={CENTER_R}
-            fill="white"
-            filter="url(#fw-hub-shadow)"
-          />
-          <circle
-            cx={CENTER}
-            cy={CENTER}
-            r={CENTER_R - 1}
-            fill="none"
-            stroke="rgba(15,23,42,0.06)"
-            strokeWidth={1}
-            pointerEvents="none"
-          />
           <g pointerEvents="none">
             <foreignObject
               x={CENTER - 22}

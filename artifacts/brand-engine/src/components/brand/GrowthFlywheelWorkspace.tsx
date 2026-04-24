@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Magnet, MessageCircle, DollarSign, Star, RefreshCw,
+  Filter, MessagesSquare, DollarSign, Trophy, RefreshCw,
   Plus, X, Pencil, RotateCcw, Check, Download, Sparkles,
+  ChevronRight, ChevronDown, ChevronLeft, ChevronUp, Pause, Play,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,41 +23,41 @@ const STORAGE_KEY = "brandengine.growthFlywheel.v1";
 const STAGE_THEME: Record<StageId, {
   color: string;        // primary hex
   rgb: string;          // "r,g,b" for rgba
-  Icon: typeof Magnet;
+  Icon: typeof Filter;
   stageNum: string;
   badge: string;        // STAGE label
 }> = {
   capture: {
-    color: "#17D94B",
-    rgb: "23,217,75",
-    Icon: Magnet,
+    color: "#4DC95F",       // green
+    rgb: "77,201,95",
+    Icon: Filter,
     stageNum: "01",
     badge: "STAGE 01",
   },
   nurture: {
-    color: "#FF7A45",
-    rgb: "255,122,69",
-    Icon: MessageCircle,
+    color: "#F4C430",       // yellow
+    rgb: "244,196,48",
+    Icon: MessagesSquare,
     stageNum: "02",
     badge: "STAGE 02",
   },
   close: {
-    color: "#2896FB",
-    rgb: "40,150,251",
+    color: "#5B8DEF",       // blue
+    rgb: "91,141,239",
     Icon: DollarSign,
     stageNum: "03",
     badge: "STAGE 03",
   },
   evangelize: {
-    color: "#FFC328",
-    rgb: "255,195,40",
-    Icon: Star,
+    color: "#5DCFCF",       // teal / cyan
+    rgb: "93,207,207",
+    Icon: Trophy,
     stageNum: "04",
     badge: "STAGE 04",
   },
   reactivate: {
-    color: "#A855F7",
-    rgb: "168,85,247",
+    color: "#7C5CFF",       // indigo-purple for card UI (SVG center uses navy directly)
+    rgb: "124,92,255",
     Icon: RefreshCw,
     stageNum: "05",
     badge: "STAGE 05 · THE LOOP",
@@ -194,6 +195,15 @@ export function GrowthFlywheelWorkspace() {
   const [stages, setStages] = useState<Stage[]>(() => loadStages());
   const [hoveredStage, setHoveredStage] = useState<StageId | null>(null);
   const [activeStage, setActiveStage] = useState<StageId | null>(null);
+  const [spinning, setSpinning] = useState(() => {
+    if (typeof window === "undefined") return true;
+    // Respect user's reduced-motion preference: default to paused.
+    try {
+      return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    } catch {
+      return true;
+    }
+  });
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => { saveStages(stages); }, [stages]);
@@ -306,12 +316,14 @@ export function GrowthFlywheelWorkspace() {
         </div>
 
         {/* Flywheel visualization */}
-        <div className="flex justify-center mb-[40px]">
+        <div className="flex justify-center mb-[60px]">
           <Flywheel
             stages={stages}
             hoveredStage={hoveredStage}
             onHover={setHoveredStage}
             onStageClick={handleStageClick}
+            spinning={spinning}
+            onToggleSpin={() => setSpinning((v) => !v)}
           />
         </div>
 
@@ -346,32 +358,37 @@ export function GrowthFlywheelWorkspace() {
 // Flywheel SVG visualization
 
 function Flywheel({
-  stages, hoveredStage, onHover, onStageClick,
+  stages, hoveredStage, onHover, onStageClick, spinning, onToggleSpin,
 }: {
   stages: Stage[];
   hoveredStage: StageId | null;
   onHover: (id: StageId | null) => void;
   onStageClick: (id: StageId) => void;
+  spinning: boolean;
+  onToggleSpin: () => void;
 }) {
-  const SIZE = 540;
+  const SIZE = 560;
   const CENTER = SIZE / 2;
-  const OUTER_R = 200;
-  const INNER_R = 130;
-  const LABEL_R = 240;
-  const ICON_R = 165;
+  const OUTER_R = 240;       // thick donut outer
+  const INNER_R = 140;       // thick donut inner
+  const TEXT_R = (OUTER_R + INNER_R) / 2 + 18; // bias toward outer
+  const ICON_R = (OUTER_R + INNER_R) / 2 - 22; // bias toward inner
+  const CENTER_R = INNER_R - 10;
+  const BOUNDARY_R = OUTER_R; // chevron circles sit on the outer edge
 
   // 4 outer stages, Reactivate is the center loop.
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length; // 90deg each
-  // Start at -45° so quadrants land top-right, bottom-right, bottom-left, top-left.
-  const startAngle = -45 - 90;
+  // Start at -90° so Capture sits in the top-right quadrant.
+  const startAngle = -90;
 
   const polar = (angleDeg: number, r: number) => {
     const rad = (angleDeg * Math.PI) / 180;
     return { x: CENTER + r * Math.cos(rad), y: CENTER + r * Math.sin(rad) };
   };
 
-  const arcPath = (a1: number, a2: number) => {
+  // Donut segment path
+  const segmentPath = (a1: number, a2: number) => {
     const p1Outer = polar(a1, OUTER_R);
     const p2Outer = polar(a2, OUTER_R);
     const p1Inner = polar(a1, INNER_R);
@@ -386,18 +403,67 @@ function Flywheel({
     ].join(" ");
   };
 
+  // Curved arc path for textPath. CW for top half (text reads upright),
+  // CCW for bottom half (so text doesn't appear upside-down).
+  const textArcPath = (a1: number, a2: number, ccw: boolean) => {
+    const start = polar(ccw ? a2 : a1, TEXT_R);
+    const end   = polar(ccw ? a1 : a2, TEXT_R);
+    const large = (a2 - a1) > 180 ? 1 : 0;
+    return `M ${start.x} ${start.y} A ${TEXT_R} ${TEXT_R} 0 ${large} ${ccw ? 0 : 1} ${end.x} ${end.y}`;
+  };
+
+  // Per-stage path config
+  const segmentMeta = outerOrder.map((id, i) => {
+    const a1 = startAngle + i * sweep + 2.5; // tiny gap between segments
+    const a2 = startAngle + (i + 1) * sweep - 2.5;
+    const mid = (a1 + a2) / 2;
+    // Use CCW path on segments whose midpoint sits in the lower half (y > 0)
+    // i.e. midpoint angle in [0, 180) — these are nurture (mid 45) and close (mid 135).
+    const ccw = mid > 0 && mid < 180;
+    return { id, a1, a2, mid, ccw };
+  });
+
+  // Boundary chevrons (between segments) — 4 of them at the segment seams
+  const boundaries = outerOrder.map((id, i) => {
+    const angle = startAngle + (i + 1) * sweep; // end of segment i / start of next
+    const next = outerOrder[(i + 1) % outerOrder.length];
+    return { angle, prev: id, next };
+  });
+
+  // Chevron icon to use at each boundary, points from current → next segment
+  const ChevronAt: Record<number, typeof ChevronRight> = {
+    [-90 + 90]: ChevronDown,   // 0° (right) — points down toward Nurture
+    [-90 + 180]: ChevronLeft,  // 90° (bottom) — points left toward Close
+    [-90 + 270]: ChevronUp,    // 180° (left) — points up toward Evangelize
+    [-90 + 360]: ChevronRight, // 270° / -90 (top) — points right toward Capture
+  };
+
   return (
     <div className="relative" style={{ width: SIZE, height: SIZE }}>
-      {/* Soft glowing backdrop */}
+      {/* Inline keyframes for the rotation */}
+      <style>{`
+        @keyframes flywheel-spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .fw-rotate { animation: flywheel-spin 80s linear infinite; transform-origin: ${CENTER}px ${CENTER}px; }
+        .fw-rotate.paused { animation-play-state: paused; }
+        @media (prefers-reduced-motion: reduce) {
+          .fw-rotate { animation: none !important; }
+        }
+      `}</style>
+
+      {/* Soft outer ambient glow */}
       <div
         aria-hidden
         className="absolute inset-0 rounded-full"
         style={{
           background:
-            "radial-gradient(circle at center, rgba(255,255,255,0.04), transparent 60%)",
-          filter: "blur(20px)",
+            "radial-gradient(circle at center, rgba(40,150,251,0.10), rgba(124,92,255,0.06) 45%, transparent 70%)",
+          filter: "blur(24px)",
         }}
       />
+
       <svg
         width={SIZE}
         height={SIZE}
@@ -409,192 +475,175 @@ function Flywheel({
           {outerOrder.map((id) => {
             const c = STAGE_THEME[id].color;
             return (
-              <radialGradient key={`g-${id}`} id={`grad-${id}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={c} stopOpacity={0.95} />
-                <stop offset="100%" stopColor={c} stopOpacity={0.65} />
-              </radialGradient>
+              <linearGradient key={`g-${id}`} id={`grad-${id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={c} stopOpacity={1} />
+                <stop offset="100%" stopColor={c} stopOpacity={0.85} />
+              </linearGradient>
             );
           })}
-          <radialGradient id="grad-reactivate" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor={STAGE_THEME.reactivate.color} stopOpacity={1} />
-            <stop offset="100%" stopColor="#5B21B6" stopOpacity={0.9} />
-          </radialGradient>
-          <filter id="fw-glow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="6" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+
+          {/* Curved text paths, one per segment */}
+          {segmentMeta.map(({ id, a1, a2, ccw }) => (
+            <path
+              key={`tp-${id}`}
+              id={`textpath-${id}`}
+              d={textArcPath(a1, a2, ccw)}
+              fill="none"
+            />
+          ))}
+
+          {/* Subtle drop shadow for the wheel */}
+          <filter id="fw-shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="6" />
+            <feOffset dy="4" />
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.35" />
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
           </filter>
         </defs>
 
-        {/* Ambient outer ring */}
-        <circle cx={CENTER} cy={CENTER} r={OUTER_R + 12} fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth={1} />
-        <circle cx={CENTER} cy={CENTER} r={OUTER_R + 4} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
+        {/* ROTATING WHEEL GROUP */}
+        <g className={`fw-rotate ${spinning ? "" : "paused"}`} filter="url(#fw-shadow)">
+          {/* 4 segments */}
+          {segmentMeta.map(({ id, a1, a2 }) => {
+            const isHover = hoveredStage === id;
+            const t = STAGE_THEME[id];
+            return (
+              <g key={id}>
+                <path
+                  d={segmentPath(a1, a2)}
+                  fill={`url(#grad-${id})`}
+                  opacity={hoveredStage && !isHover ? 0.65 : 1}
+                  style={{
+                    transition: "opacity 220ms ease, filter 220ms ease",
+                    filter: isHover ? `drop-shadow(0 0 22px rgba(${t.rgb}, 0.6))` : "none",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={() => onHover(id)}
+                  onMouseLeave={() => onHover(null)}
+                  onClick={() => onStageClick(id)}
+                />
+              </g>
+            );
+          })}
 
-        {/* 4 segments */}
-        {outerOrder.map((id, i) => {
-          const a1 = startAngle + i * sweep + 2; // tiny gap
-          const a2 = startAngle + (i + 1) * sweep - 2;
-          const isHover = hoveredStage === id;
-          const t = STAGE_THEME[id];
-          return (
-            <g key={id}>
-              <path
-                d={arcPath(a1, a2)}
-                fill={`url(#grad-${id})`}
-                opacity={hoveredStage && !isHover ? 0.55 : 1}
-                style={{
-                  transition: "opacity 220ms ease, transform 220ms ease, filter 220ms ease",
-                  transformOrigin: `${CENTER}px ${CENTER}px`,
-                  transform: isHover ? "scale(1.025)" : "scale(1)",
-                  filter: isHover ? `drop-shadow(0 0 18px rgba(${t.rgb}, 0.55))` : "none",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={() => onHover(id)}
-                onMouseLeave={() => onHover(null)}
-                onClick={() => onStageClick(id)}
-              />
-              {/* Inner highlight stroke */}
-              <path
-                d={arcPath(a1, a2)}
-                fill="none"
-                stroke="rgba(255,255,255,0.15)"
-                strokeWidth={1}
-                pointerEvents="none"
-              />
-            </g>
-          );
-        })}
+          {/* Curved stage labels */}
+          {segmentMeta.map(({ id }) => (
+            <text
+              key={`label-${id}`}
+              fontSize={36}
+              fontWeight={800}
+              fill="white"
+              letterSpacing="2.5"
+              style={{ pointerEvents: "none", textTransform: "uppercase", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))" }}
+            >
+              <textPath href={`#textpath-${id}`} startOffset="50%" textAnchor="middle">
+                {(stages.find((s) => s.id === id)?.title || id).toUpperCase()}
+              </textPath>
+            </text>
+          ))}
 
-        {/* Center disc — Reactivate (the loop) */}
-        <circle
-          cx={CENTER}
-          cy={CENTER}
-          r={INNER_R - 4}
-          fill="url(#grad-reactivate)"
-          opacity={hoveredStage && hoveredStage !== "reactivate" ? 0.8 : 1}
-          onMouseEnter={() => onHover("reactivate")}
-          onMouseLeave={() => onHover(null)}
-          onClick={() => onStageClick("reactivate")}
-          style={{
-            cursor: "pointer",
-            transition: "opacity 220ms ease, filter 220ms ease",
-            filter: hoveredStage === "reactivate" ? `drop-shadow(0 0 22px rgba(${STAGE_THEME.reactivate.rgb}, 0.6))` : "none",
-          }}
-        />
-        <circle
-          cx={CENTER} cy={CENTER} r={INNER_R - 4}
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth={1}
-          pointerEvents="none"
-        />
+          {/* Stage icons inside each segment */}
+          {segmentMeta.map(({ id, mid }) => {
+            const t = STAGE_THEME[id];
+            const Icon = t.Icon;
+            const pos = polar(mid, ICON_R);
+            return (
+              <g key={`icon-${id}`} pointerEvents="none">
+                <circle
+                  cx={pos.x} cy={pos.y} r={22}
+                  fill="white"
+                  opacity={0.95}
+                  style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.18))" }}
+                />
+                <foreignObject x={pos.x - 14} y={pos.y - 14} width={28} height={28}>
+                  <div style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", color: t.color }}>
+                    <Icon style={{ width: 18, height: 18 }} strokeWidth={2.4} />
+                  </div>
+                </foreignObject>
+              </g>
+            );
+          })}
 
-        {/* Reactivate center label */}
-        <g pointerEvents="none">
-          <text
-            x={CENTER}
-            y={CENTER - 6}
-            textAnchor="middle"
-            fontSize={22}
-            fontWeight={700}
-            fill="white"
-            style={{ letterSpacing: "-0.5px" }}
-          >
-            Reactivate
-          </text>
-          <text
-            x={CENTER}
-            y={CENTER + 16}
-            textAnchor="middle"
-            fontSize={9.5}
-            fontWeight={700}
-            fill="rgba(255,255,255,0.7)"
-            style={{ letterSpacing: "1.6px" }}
-          >
-            STAGE 05 · THE LOOP
-          </text>
-          {/* Small loop arrow */}
-          <RefreshArrow cx={CENTER} cy={CENTER + 38} />
         </g>
 
-        {/* Per-segment icon + label inside the ring */}
-        {outerOrder.map((id, i) => {
-          const mid = startAngle + (i + 0.5) * sweep;
-          const iconPos = polar(mid, ICON_R);
-          const t = STAGE_THEME[id];
-          const stage = stages.find((s) => s.id === id)!;
+        {/* STATIC chevrons at fixed cardinal positions (don't rotate) */}
+        {boundaries.map(({ angle, next }) => {
+          const pos = polar(angle, BOUNDARY_R);
+          const nextTheme = STAGE_THEME[next];
+          const Chevron = ChevronAt[((angle % 360) + 360) % 360] || ChevronRight;
           return (
-            <g key={`icon-${id}`} pointerEvents="none">
+            <g key={`chev-${angle}`} pointerEvents="none">
               <circle
-                cx={iconPos.x}
-                cy={iconPos.y}
-                r={20}
-                fill="rgba(255,255,255,0.95)"
-                style={{ filter: hoveredStage === id ? `drop-shadow(0 0 12px rgba(${t.rgb}, 0.7))` : "none" }}
+                cx={pos.x} cy={pos.y} r={18}
+                fill="white"
+                style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.2))" }}
               />
-              <foreignObject x={iconPos.x - 12} y={iconPos.y - 12} width={24} height={24}>
-                <div style={{
-                  width: 24, height: 24,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: t.color,
-                }}>
-                  <t.Icon style={{ width: 16, height: 16 }} strokeWidth={2.4} />
+              <foreignObject x={pos.x - 11} y={pos.y - 11} width={22} height={22}>
+                <div style={{ width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", color: nextTheme.color }}>
+                  <Chevron style={{ width: 16, height: 16 }} strokeWidth={3} />
                 </div>
               </foreignObject>
             </g>
           );
         })}
 
-        {/* Outside labels */}
-        {outerOrder.map((id, i) => {
-          const mid = startAngle + (i + 0.5) * sweep;
-          const labelPos = polar(mid, LABEL_R);
-          const t = STAGE_THEME[id];
-          const stage = stages.find((s) => s.id === id)!;
-          return (
-            <g key={`label-${id}`} pointerEvents="none">
-              <text
-                x={labelPos.x}
-                y={labelPos.y - 6}
-                textAnchor="middle"
-                fontSize={9}
-                fontWeight={700}
-                fill="rgba(255,255,255,0.55)"
-                style={{ letterSpacing: "1.6px" }}
-              >
-                {t.badge}
-              </text>
-              <text
-                x={labelPos.x}
-                y={labelPos.y + 12}
-                textAnchor="middle"
-                fontSize={17}
-                fontWeight={700}
-                fill={t.color}
-                style={{ letterSpacing: "-0.3px" }}
-              >
-                {stage.title}
-              </text>
-            </g>
-          );
-        })}
+        {/* STATIC CENTER (does not rotate) */}
+        <g>
+          <circle
+            cx={CENTER} cy={CENTER} r={CENTER_R}
+            fill="white"
+            style={{ filter: "drop-shadow(0 6px 18px rgba(0,0,0,0.25))" }}
+            onMouseEnter={() => onHover("reactivate")}
+            onMouseLeave={() => onHover(null)}
+            onClick={() => onStageClick("reactivate")}
+          />
+          <circle cx={CENTER} cy={CENTER} r={CENTER_R} fill="none" stroke="rgba(11,20,38,0.08)" strokeWidth={1} pointerEvents="none" />
+          <g pointerEvents="none">
+            {/* Loop arrow icon */}
+            <foreignObject x={CENTER - 18} y={CENTER - 36} width={36} height={36}>
+              <div style={{ width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", color: "#0B1426" }}>
+                <RefreshCw style={{ width: 30, height: 30 }} strokeWidth={2.4} />
+              </div>
+            </foreignObject>
+            <text
+              x={CENTER} y={CENTER + 14}
+              textAnchor="middle"
+              fontSize={22}
+              fontWeight={800}
+              fill="#0B1426"
+              style={{ letterSpacing: "2px" }}
+            >
+              REACTIVATE
+            </text>
+            <text
+              x={CENTER} y={CENTER + 36}
+              textAnchor="middle"
+              fontSize={9}
+              fontWeight={700}
+              fill="rgba(11,20,38,0.5)"
+              style={{ letterSpacing: "1.8px" }}
+            >
+              STAGE 05 · THE LOOP
+            </text>
+          </g>
+        </g>
       </svg>
-    </div>
-  );
-}
 
-function RefreshArrow({ cx, cy }: { cx: number; cy: number }) {
-  // Tiny stylized loop arrow under the Reactivate label
-  return (
-    <g transform={`translate(${cx - 14}, ${cy - 10})`}>
-      <path
-        d="M 4 8 A 10 10 0 1 1 18 14"
-        fill="none"
-        stroke="rgba(255,255,255,0.85)"
-        strokeWidth={2}
-        strokeLinecap="round"
-      />
-      <path d="M 16 11 L 19 14 L 22 11" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-    </g>
+      {/* Pause / play button (positioned bottom-right of the wheel) */}
+      <button
+        onClick={onToggleSpin}
+        title={spinning ? "Pause rotation" : "Resume rotation"}
+        aria-label={spinning ? "Pause rotation" : "Resume rotation"}
+        className="absolute bottom-[6px] right-[6px] w-[36px] h-[36px] rounded-full bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md border border-white/[0.12] text-white/80 hover:text-white flex items-center justify-center cursor-pointer transition-all"
+      >
+        {spinning ? <Pause className="w-[14px] h-[14px]" /> : <Play className="w-[14px] h-[14px]" />}
+      </button>
+    </div>
   );
 }
 

@@ -979,18 +979,19 @@ function InfoCard({
 
   // Align modes:
   //  "full"  → content fills entire card width (default + wide row)
-  //  "left"  → content occupies the LEFT 62% of card; right 38% is left clear
-  //            so the flywheel halo can overlap it without hiding text
-  //  "right" → content occupies the RIGHT 62% of card; left 38% is clear
-  // The 62% value is tuned so the inner edge of the content sits ~20px
-  // shy of the halo edge — pulling text as close to the wheel as possible
-  // without being covered.
+  //  "left"  → card sits on LEFT side of slide (wheel is to its RIGHT);
+  //            content is pushed RIGHTWARD inside the card so it hugs the
+  //            wheel halo, with a 35% buffer on the inner edge to clear it
+  //  "right" → card sits on RIGHT side of slide (wheel is to its LEFT);
+  //            content is pushed LEFTWARD inside the card so it hugs the
+  //            wheel halo, with a 35% buffer on the inner edge to clear it
+  // Both sides are symmetric — content always cuddles up to the wheel.
   const isAligned = align === "left" || align === "right";
   const contentBoxStyle: React.CSSProperties = isAligned
     ? {
         maxWidth: "62%",
-        marginLeft: align === "right" ? "auto" : 0,
-        marginRight: align === "left" ? "auto" : 0,
+        marginLeft: align === "left" ? "auto" : "35%",
+        marginRight: align === "right" ? "auto" : "35%",
       }
     : {};
   const glowCorner = align === "left" ? "0% 0%" : "100% 0%";

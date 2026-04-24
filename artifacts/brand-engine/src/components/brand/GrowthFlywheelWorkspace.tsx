@@ -406,9 +406,11 @@ export function GrowthFlywheelWorkspace() {
               </div>
 
               {/* CENTER column */}
-              <div className="flex flex-col items-center gap-[14px]">
+              <div className="flex flex-col items-center">
                 <Flywheel />
-                <InfoCard stage={getStage("reactivate")} wide />
+                <div className="w-full -mt-[18px]">
+                  <InfoCard stage={getStage("reactivate")} wide />
+                </div>
               </div>
 
               {/* RIGHT column */}

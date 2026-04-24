@@ -849,15 +849,6 @@ function InfoCard({
         boxShadow: `0 1px 2px rgba(15,23,42,0.04), 0 18px 40px -16px rgba(${t.rgb}, 0.28)`,
       }}
     >
-      {/* Vertical left accent bar */}
-      <div
-        aria-hidden
-        className="absolute left-0 top-0 bottom-0 w-[4px]"
-        style={{
-          background: `linear-gradient(180deg, ${t.color} 0%, rgba(${t.rgb}, 0.65) 100%)`,
-        }}
-      />
-
       {/* Soft tinted radial glow in upper-right corner */}
       <div
         aria-hidden

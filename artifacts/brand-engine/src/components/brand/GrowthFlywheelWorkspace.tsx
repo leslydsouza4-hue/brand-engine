@@ -425,184 +425,89 @@ export function GrowthFlywheelWorkspace() {
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
-              padding: "22px 28px",
-              gap: "16px",
+              padding: "26px 36px 26px",
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               ...themeVars,
             }}
           >
-            {/* HEADER BAR — bento style */}
-            <HeaderBar theme={theme} subtitle={hero.subtitle} />
+            {/* Hero header */}
+            <div className="text-center" style={{ marginBottom: 14 }}>
+              <img
+                src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=${theme === "dark" ? "Light" : "Dark"}.png`}
+                alt="HighLevel"
+                style={{
+                  height: 40,
+                  width: "auto",
+                  display: "inline-block",
+                  marginBottom: 10,
+                }}
+              />
+              <h1
+                className="text-[34px] font-bold tracking-[-0.6px] leading-[1.1] mb-[6px]"
+                style={{
+                  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                  color: "var(--slide-text)",
+                }}
+              >
+                {hero.title}
+              </h1>
+              <p
+                className="text-[15px] max-w-[1180px] mx-auto leading-[1.45]"
+                style={{ color: "var(--slide-text-muted)" }}
+              >
+                {hero.subtitle}
+              </p>
+            </div>
 
-            {/* BENTO GRID */}
+            {/* Slide grid:
+                row 1+2 — [LEFT cards] [FLYWHEEL] [RIGHT cards]
+                row 3   — Reactivate spans full width */}
             <div
               style={{
                 flex: 1,
                 minHeight: 0,
                 display: "grid",
-                gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1fr)",
-                gridTemplateRows: "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.62fr)",
+                gridTemplateColumns:
+                  "minmax(0, 1fr) minmax(0, 600px) minmax(0, 1fr)",
+                gridTemplateRows:
+                  "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.66fr)",
                 gridTemplateAreas: `
-                  "capture hero evangelize"
-                  "nurture hero reactivate"
-                  "close   close close"
+                  "capture flywheel close"
+                  "nurture flywheel evangelize"
+                  "react   react    react"
                 `,
-                gap: "16px",
+                gap: "18px",
+                alignItems: "stretch",
+                justifyItems: "stretch",
               }}
             >
-              <div style={{ gridArea: "capture" }} className="min-h-0">
+              <div style={{ gridArea: "capture" }} className="min-h-0 flex">
                 <InfoCard stage={getStage("capture")} />
               </div>
-              <div style={{ gridArea: "nurture" }} className="min-h-0">
+              <div style={{ gridArea: "nurture" }} className="min-h-0 flex">
                 <InfoCard stage={getStage("nurture")} />
               </div>
               <div
-                style={{ gridArea: "hero" }}
+                style={{ gridArea: "flywheel" }}
                 ref={wheelRef}
-                className="min-h-0"
+                className="min-h-0 flex items-center justify-center"
               >
-                <HeroCard hero={hero} theme={theme} />
+                <Flywheel theme={theme} />
               </div>
-              <div style={{ gridArea: "evangelize" }} className="min-h-0">
+              <div style={{ gridArea: "close" }} className="min-h-0 flex">
+                <InfoCard stage={getStage("close")} />
+              </div>
+              <div style={{ gridArea: "evangelize" }} className="min-h-0 flex">
                 <InfoCard stage={getStage("evangelize")} />
               </div>
-              <div style={{ gridArea: "reactivate" }} className="min-h-0">
-                <InfoCard stage={getStage("reactivate")} />
-              </div>
-              <div style={{ gridArea: "close" }} className="min-h-0">
-                <InfoCard stage={getStage("close")} wide />
+              <div style={{ gridArea: "react" }} className="min-h-0 flex">
+                <InfoCard stage={getStage("reactivate")} wide />
               </div>
             </div>
           </div>
           </div>
         </div>
       </LivePreview>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Header Bar — top bento card with HL logo + tagline + stage indicator
-function HeaderBar({
-  theme,
-  subtitle,
-}: {
-  theme: SlideTheme;
-  subtitle: string;
-}) {
-  return (
-    <div
-      className="flex items-center justify-between rounded-[16px]"
-      style={{
-        background: "var(--header-bg)",
-        boxShadow:
-          "0 1px 2px var(--card-shadow-inner), 0 10px 28px -16px rgba(15,23,42,0.20)",
-        padding: "14px 22px",
-        minHeight: 70,
-      }}
-    >
-      {/* Left — logo + small tagline */}
-      <div className="flex items-center gap-[18px] min-w-0">
-        <img
-          src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=${theme === "dark" ? "Light" : "Dark"}.png`}
-          alt="HighLevel"
-          style={{ height: 38, width: "auto" }}
-        />
-        <div
-          className="hidden md:block h-[28px] w-px"
-          style={{ background: "rgba(148,163,184,0.30)" }}
-        />
-        <p
-          className="text-[14px] leading-[1.45] truncate"
-          style={{
-            color: "var(--header-text-muted)",
-            maxWidth: 820,
-          }}
-        >
-          {subtitle}
-        </p>
-      </div>
-
-      {/* Right — pill badges */}
-      <div className="flex items-center gap-[10px] shrink-0">
-        <span
-          className="inline-flex items-center px-[12px] py-[6px] rounded-[999px] text-[11px] font-bold uppercase tracking-[1.4px]"
-          style={{
-            background: "var(--badge-bg)",
-            color: "var(--badge-text)",
-          }}
-        >
-          Growth Flywheel
-        </span>
-        <span
-          className="inline-flex items-center px-[12px] py-[6px] rounded-[999px] text-[11px] font-bold uppercase tracking-[1.4px]"
-          style={{
-            background: "var(--badge-bg)",
-            color: "var(--badge-text)",
-          }}
-        >
-          5 Stages · 1 Loop
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// Hero Card — big center bento card containing headline + flywheel
-function HeroCard({
-  hero,
-  theme,
-}: {
-  hero: HeroContent;
-  theme: SlideTheme;
-}) {
-  return (
-    <div
-      className="relative w-full h-full rounded-[18px] overflow-hidden flex flex-col items-center"
-      style={{
-        background: "var(--card-bg)",
-        boxShadow:
-          "0 1px 2px var(--card-shadow-inner), 0 18px 40px -18px rgba(15,23,42,0.30)",
-        padding: "22px 28px 18px",
-      }}
-    >
-      {/* Subtle radial accent */}
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 70% 55% at 50% 0%, rgba(40,150,251,0.08) 0%, transparent 70%)",
-        }}
-      />
-
-      {/* Title block */}
-      <div className="relative text-center" style={{ marginBottom: 8 }}>
-        <span
-          className="inline-flex items-center px-[10px] py-[3px] rounded-[6px] text-[10px] font-bold uppercase tracking-[1.6px] mb-[10px]"
-          style={{
-            background: "rgba(40,150,251,0.12)",
-            color: "#2896FB",
-          }}
-        >
-          The Flywheel
-        </span>
-        <h1
-          className="font-bold tracking-[-0.5px] leading-[1.1]"
-          style={{
-            fontSize: 30,
-            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            color: "var(--card-text)",
-          }}
-        >
-          {hero.title}
-        </h1>
-      </div>
-
-      {/* Flywheel diagram */}
-      <div className="relative flex-1 flex items-center justify-center min-h-0 w-full">
-        <Flywheel theme={theme} />
-      </div>
     </div>
   );
 }

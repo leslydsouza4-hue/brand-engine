@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Filter, MessagesSquare, DollarSign, Trophy, RefreshCw,
   Plus, X, Pencil, RotateCcw, Check, Download, Sparkles,
-  ChevronRight, ChevronDown, ChevronLeft, ChevronUp, Pause, Play,
+  ChevronRight, ChevronDown, ChevronLeft, ChevronUp,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -195,15 +195,6 @@ export function GrowthFlywheelWorkspace() {
   const [stages, setStages] = useState<Stage[]>(() => loadStages());
   const [hoveredStage, setHoveredStage] = useState<StageId | null>(null);
   const [activeStage, setActiveStage] = useState<StageId | null>(null);
-  const [spinning, setSpinning] = useState(() => {
-    if (typeof window === "undefined") return true;
-    // Respect user's reduced-motion preference: default to paused.
-    try {
-      return !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    } catch {
-      return true;
-    }
-  });
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => { saveStages(stages); }, [stages]);
@@ -322,8 +313,6 @@ export function GrowthFlywheelWorkspace() {
             hoveredStage={hoveredStage}
             onHover={setHoveredStage}
             onStageClick={handleStageClick}
-            spinning={spinning}
-            onToggleSpin={() => setSpinning((v) => !v)}
           />
         </div>
 
@@ -358,14 +347,12 @@ export function GrowthFlywheelWorkspace() {
 // Flywheel SVG visualization
 
 function Flywheel({
-  stages, hoveredStage, onHover, onStageClick, spinning, onToggleSpin,
+  stages, hoveredStage, onHover, onStageClick,
 }: {
   stages: Stage[];
   hoveredStage: StageId | null;
   onHover: (id: StageId | null) => void;
   onStageClick: (id: StageId) => void;
-  spinning: boolean;
-  onToggleSpin: () => void;
 }) {
   const SIZE = 560;
   const CENTER = SIZE / 2;
@@ -438,21 +425,12 @@ function Flywheel({
     [-90 + 360]: ChevronRight, // 270° / -90 (top) — points right toward Capture
   };
 
+  // Notch radius — exactly matches the chevron-circle radius so segments
+  // cradle the chevron buttons seamlessly with no visible gap, like the reference.
+  const NOTCH_R = 19;
+
   return (
     <div className="relative" style={{ width: SIZE, height: SIZE }}>
-      {/* Inline keyframes for the rotation */}
-      <style>{`
-        @keyframes flywheel-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .fw-rotate { animation: flywheel-spin 80s linear infinite; transform-origin: ${CENTER}px ${CENTER}px; }
-        .fw-rotate.paused { animation-play-state: paused; }
-        @media (prefers-reduced-motion: reduce) {
-          .fw-rotate { animation: none !important; }
-        }
-      `}</style>
-
       {/* Soft outer ambient glow */}
       <div
         aria-hidden
@@ -504,10 +482,20 @@ function Flywheel({
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+
+          {/* Mask that punches circular notches at each segment boundary so the
+              chevron buttons cradle into the donut (the "nicely connected" look). */}
+          <mask id="fw-boundary-cutouts" maskUnits="userSpaceOnUse" x={0} y={0} width={SIZE} height={SIZE}>
+            <rect x={0} y={0} width={SIZE} height={SIZE} fill="white" />
+            {boundaries.map(({ angle }) => {
+              const p = polar(angle, BOUNDARY_R);
+              return <circle key={`mask-${angle}`} cx={p.x} cy={p.y} r={NOTCH_R} fill="black" />;
+            })}
+          </mask>
         </defs>
 
-        {/* ROTATING WHEEL GROUP */}
-        <g className={`fw-rotate ${spinning ? "" : "paused"}`} filter="url(#fw-shadow)">
+        {/* WHEEL GROUP (static — no rotation) */}
+        <g filter="url(#fw-shadow)" mask="url(#fw-boundary-cutouts)">
           {/* 4 segments */}
           {segmentMeta.map(({ id, a1, a2 }) => {
             const isHover = hoveredStage === id;
@@ -633,16 +621,6 @@ function Flywheel({
           </g>
         </g>
       </svg>
-
-      {/* Pause / play button (positioned bottom-right of the wheel) */}
-      <button
-        onClick={onToggleSpin}
-        title={spinning ? "Pause rotation" : "Resume rotation"}
-        aria-label={spinning ? "Pause rotation" : "Resume rotation"}
-        className="absolute bottom-[6px] right-[6px] w-[36px] h-[36px] rounded-full bg-white/[0.08] hover:bg-white/[0.15] backdrop-blur-md border border-white/[0.12] text-white/80 hover:text-white flex items-center justify-center cursor-pointer transition-all"
-      >
-        {spinning ? <Pause className="w-[14px] h-[14px]" /> : <Play className="w-[14px] h-[14px]" />}
-      </button>
     </div>
   );
 }

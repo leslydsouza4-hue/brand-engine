@@ -39,10 +39,13 @@ interface Stage {
 // Official HighLevel brand palette: Capture Yellow, Nurture Blue, Close Green,
 // Reactivate Navy. Evangelize uses an HL-friendly warm coral/orange accent
 // (HL only ships 3 named bundle colors, so this complements without colliding).
+const ICON_BASE = `${BASE}assets/hl-icons`;
+
 const STAGE_THEME: Record<StageId, {
   color: string;
   rgb: string;
   Icon: LucideIcon;
+  iconSrc: string;
   stageNum: string;
   badge: string;
 }> = {
@@ -50,6 +53,7 @@ const STAGE_THEME: Record<StageId, {
     color: "#FFC107",          // HL Capture Yellow — bolder
     rgb: "255,193,7",
     Icon: Filter,
+    iconSrc: `${ICON_BASE}/capture.svg`,
     stageNum: "01",
     badge: "STAGE 01",
   },
@@ -57,6 +61,7 @@ const STAGE_THEME: Record<StageId, {
     color: "#1B96E0",          // HL Nurture Blue — bolder
     rgb: "27,150,224",
     Icon: MessagesSquare,
+    iconSrc: `${ICON_BASE}/nurture.svg`,
     stageNum: "02",
     badge: "STAGE 02",
   },
@@ -64,6 +69,7 @@ const STAGE_THEME: Record<StageId, {
     color: "#10B838",          // HL Close Green — bolder
     rgb: "16,184,56",
     Icon: DollarSign,
+    iconSrc: `${ICON_BASE}/close.svg`,
     stageNum: "03",
     badge: "STAGE 03",
   },
@@ -71,6 +77,7 @@ const STAGE_THEME: Record<StageId, {
     color: "#F25C19",          // HL-styled celebration coral — bolder
     rgb: "242,92,25",
     Icon: Trophy,
+    iconSrc: `${ICON_BASE}/evangelize.svg`,
     stageNum: "04",
     badge: "STAGE 04",
   },
@@ -78,6 +85,7 @@ const STAGE_THEME: Record<StageId, {
     color: "#13235A",          // HL Navy — deeper
     rgb: "19,35,90",
     Icon: RefreshCw,
+    iconSrc: `${ICON_BASE}/reactivate.svg`,
     stageNum: "05",
     badge: "STAGE 05 · THE LOOP",
   },
@@ -697,10 +705,23 @@ function Flywheel() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: STAGE_THEME.reactivate.color,
                 }}
               >
-                <RefreshCw style={{ width: 26, height: 26 }} strokeWidth={2.4} />
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    backgroundColor: STAGE_THEME.reactivate.color,
+                    WebkitMaskImage: `url(${STAGE_THEME.reactivate.iconSrc})`,
+                    maskImage: `url(${STAGE_THEME.reactivate.iconSrc})`,
+                    WebkitMaskSize: "contain",
+                    maskSize: "contain",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                    maskPosition: "center",
+                  }}
+                />
               </div>
             </foreignObject>
             <text
@@ -739,7 +760,6 @@ function Flywheel() {
             colored ring and the hub disc. */}
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
-          const Icon = t.Icon;
           const pos = polar(mid, INNER_R);
           const BG_R = 22;
           const ICON_PX = 22;
@@ -778,19 +798,19 @@ function Flywheel() {
               >
                 <div
                   style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: t.color,
+                    width: ICON_PX,
+                    height: ICON_PX,
+                    backgroundColor: t.color,
+                    WebkitMaskImage: `url(${t.iconSrc})`,
+                    maskImage: `url(${t.iconSrc})`,
+                    WebkitMaskSize: "contain",
+                    maskSize: "contain",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskPosition: "center",
+                    maskPosition: "center",
                   }}
-                >
-                  <Icon
-                    style={{ width: ICON_PX, height: ICON_PX }}
-                    strokeWidth={2.4}
-                  />
-                </div>
+                />
               </foreignObject>
             </g>
           );
@@ -856,7 +876,12 @@ function InfoCard({
             boxShadow: `0 6px 14px -4px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
           }}
         >
-          <t.Icon className="w-[21px] h-[21px] text-white" strokeWidth={2.4} />
+          <img
+            src={t.iconSrc}
+            alt=""
+            aria-hidden
+            style={{ width: 24, height: 24, filter: "brightness(0) invert(1)" }}
+          />
         </div>
 
         {/* Title block */}

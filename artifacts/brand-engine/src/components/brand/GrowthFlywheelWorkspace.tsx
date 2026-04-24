@@ -6,6 +6,10 @@ import {
   Trophy,
   RefreshCw,
   Sparkles,
+  ChevronRight,
+  ChevronDown,
+  ChevronLeft,
+  ChevronUp,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -28,36 +32,36 @@ const STAGE_THEME: Record<StageId, {
   badge: string;
 }> = {
   capture: {
-    color: "#22C55E",
-    rgb: "34,197,94",
+    color: "#16C65B",
+    rgb: "22,198,91",
     Icon: Filter,
     stageNum: "01",
     badge: "STAGE 01",
   },
   nurture: {
-    color: "#F97316",
-    rgb: "249,115,22",
+    color: "#FF6B1A",
+    rgb: "255,107,26",
     Icon: MessagesSquare,
     stageNum: "02",
     badge: "STAGE 02",
   },
   close: {
-    color: "#3B82F6",
-    rgb: "59,130,246",
+    color: "#2F80ED",
+    rgb: "47,128,237",
     Icon: DollarSign,
     stageNum: "03",
     badge: "STAGE 03",
   },
   evangelize: {
-    color: "#FBBF24",
-    rgb: "251,191,36",
+    color: "#FFB800",
+    rgb: "255,184,0",
     Icon: Trophy,
     stageNum: "04",
     badge: "STAGE 04",
   },
   reactivate: {
-    color: "#1E3A8A",
-    rgb: "30,58,138",
+    color: "#173B8F",
+    rgb: "23,59,143",
     Icon: RefreshCw,
     stageNum: "05",
     badge: "STAGE 05 · THE LOOP",
@@ -248,17 +252,28 @@ function Flywheel({
   hoveredStage: StageId | null;
   onHover: (id: StageId | null) => void;
 }) {
-  const SIZE = 520;
+  const SIZE = 560;
   const CENTER = SIZE / 2;
-  const OUTER_R = 175;
-  const INNER_R = 100;
-  const ICON_R = 138;
-  const CENTER_R = 92;
+  const OUTER_R = 210;       // larger
+  const INNER_R = 110;       // thicker ring (gap = 100)
+  const ICON_R = 160;
+  const CENTER_R = 100;
+  const BOUNDARY_R = OUTER_R; // arrow badges cradle on the outer edge
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
   const startAngle = -90;
-  const SEGMENT_GAP_DEG = 4;
+  const SEGMENT_GAP_DEG = 5;
+
+  // Clockwise flow arrow at each gap. The boundary angle (in degrees,
+  // canvas-space where 0° = right, 90° = bottom) determines which chevron
+  // points cleanly along the tangent of the wheel.
+  const ChevronAt: Record<number, typeof ChevronRight> = {
+    0: ChevronDown,    // right side  → flow downward (Capture→Nurture)
+    90: ChevronLeft,   // bottom side → flow leftward (Nurture→Close)
+    180: ChevronUp,    // left side   → flow upward   (Close→Evangelize)
+    270: ChevronRight, // top side    → flow rightward (Evangelize→Capture)
+  };
 
   const polar = (angleDeg: number, r: number) => {
     const rad = (angleDeg * Math.PI) / 180;
@@ -285,6 +300,14 @@ function Flywheel({
     const a2 = startAngle + (i + 1) * sweep - SEGMENT_GAP_DEG / 2;
     const mid = (a1 + a2) / 2;
     return { id, a1, a2, mid };
+  });
+
+  // Boundaries between segments — where clockwise flow arrows sit.
+  // Each boundary is at the seam between segment[i] (prev) and segment[i+1] (next).
+  const boundaries = outerOrder.map((id, i) => {
+    const angle = startAngle + (i + 1) * sweep; // 0, 90, 180, 270
+    const next = outerOrder[(i + 1) % outerOrder.length];
+    return { angle, prev: id, next };
   });
 
   return (
@@ -314,17 +337,17 @@ function Flywheel({
                 y2="100%"
               >
                 <stop offset="0%" stopColor={c} stopOpacity={1} />
-                <stop offset="100%" stopColor={c} stopOpacity={0.92} />
+                <stop offset="100%" stopColor={c} stopOpacity={0.86} />
               </linearGradient>
             );
           })}
 
-          {/* Soft drop shadow under the donut */}
-          <filter id="fw-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="6" />
-            <feOffset dy="6" />
+          {/* Stronger soft drop shadow under the whole donut */}
+          <filter id="fw-shadow" x="-25%" y="-25%" width="150%" height="150%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="10" />
+            <feOffset dy="10" />
             <feComponentTransfer>
-              <feFuncA type="linear" slope="0.16" />
+              <feFuncA type="linear" slope="0.28" />
             </feComponentTransfer>
             <feMerge>
               <feMergeNode />
@@ -348,12 +371,33 @@ function Flywheel({
             </feMerge>
           </filter>
 
-          {/* Soft drop shadow for the center hub */}
-          <filter id="fw-hub-shadow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="6" />
-            <feOffset dy="4" />
+          {/* Stronger raised-hub shadow for the center disc */}
+          <filter id="fw-hub-shadow" x="-40%" y="-40%" width="180%" height="180%">
+            {/* main soft drop */}
+            <feGaussianBlur in="SourceAlpha" stdDeviation="9" result="b1" />
+            <feOffset in="b1" dy="8" result="o1" />
+            <feComponentTransfer in="o1" result="s1">
+              <feFuncA type="linear" slope="0.25" />
+            </feComponentTransfer>
+            {/* tight contact shadow */}
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="b2" />
+            <feOffset in="b2" dy="2" result="o2" />
+            <feComponentTransfer in="o2" result="s2">
+              <feFuncA type="linear" slope="0.18" />
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode in="s1" />
+              <feMergeNode in="s2" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          {/* Small drop shadow for the arrow badges */}
+          <filter id="fw-arrow-shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+            <feOffset dy="2" />
             <feComponentTransfer>
-              <feFuncA type="linear" slope="0.14" />
+              <feFuncA type="linear" slope="0.25" />
             </feComponentTransfer>
             <feMerge>
               <feMergeNode />
@@ -365,21 +409,21 @@ function Flywheel({
         {/* External corner callouts: thin connector + label */}
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
-          // Anchor dot just outside the donut on the segment midline
-          const dot = polar(mid, OUTER_R + 6);
-          // Label position further out diagonally
-          const labelPos = polar(mid, OUTER_R + 70);
+          // Anchor dot at the outer edge of the donut on the segment midline
+          const dot = polar(mid, OUTER_R + 4);
+          // Label position close to the segment — stays within SVG bounds even
+          // for the longest word ("EVANGELIZE").
+          const labelPos = polar(mid, OUTER_R + 24);
           const isHover = hoveredStage === id;
           // Horizontal anchor based on quadrant
           const anchor: "start" | "end" =
             labelPos.x < CENTER ? "end" : "start";
-          // Adjust label x for visual breathing room
-          const labelX = labelPos.x + (anchor === "end" ? -4 : 4);
+          const labelX = labelPos.x + (anchor === "end" ? -2 : 2);
           return (
             <g
               key={`callout-${id}`}
               style={{
-                opacity: hoveredStage && !isHover ? 0.5 : 1,
+                opacity: hoveredStage && !isHover ? 0.45 : 1,
                 transition: "opacity 220ms ease",
               }}
             >
@@ -389,18 +433,18 @@ function Flywheel({
                 x2={labelPos.x}
                 y2={labelPos.y}
                 stroke={t.color}
-                strokeWidth={1.25}
-                strokeOpacity={0.55}
+                strokeWidth={1.5}
+                strokeOpacity={0.65}
               />
-              <circle cx={dot.x} cy={dot.y} r={3} fill={t.color} />
+              <circle cx={dot.x} cy={dot.y} r={3.5} fill={t.color} />
               <text
                 x={labelX}
-                y={labelPos.y - 4}
+                y={labelPos.y - 3}
                 textAnchor={anchor}
                 fontSize={14}
-                fontWeight={800}
+                fontWeight={900}
                 fill={t.color}
-                style={{ letterSpacing: "1.4px", textTransform: "uppercase" }}
+                style={{ letterSpacing: "1.2px", textTransform: "uppercase" }}
               >
                 {id.toUpperCase()}
               </text>
@@ -408,9 +452,9 @@ function Flywheel({
                 x={labelX}
                 y={labelPos.y + 12}
                 textAnchor={anchor}
-                fontSize={9}
-                fontWeight={700}
-                fill="#94A3B8"
+                fontSize={9.5}
+                fontWeight={800}
+                fill="#64748B"
                 style={{ letterSpacing: "1.6px" }}
               >
                 STAGE {t.stageNum}
@@ -440,8 +484,8 @@ function Flywheel({
                   style={{
                     transition: "opacity 220ms ease, filter 220ms ease",
                     filter: isHover
-                      ? `drop-shadow(0 0 18px rgba(${t.rgb}, 0.45)) url(#fw-inset)`
-                      : "url(#fw-inset)",
+                      ? `drop-shadow(0 0 26px rgba(${t.rgb}, 0.7)) url(#fw-inset)`
+                      : `drop-shadow(0 0 14px rgba(${t.rgb}, 0.22)) url(#fw-inset)`,
                     cursor: "pointer",
                   }}
                   onMouseEnter={() => onHover(id)}
@@ -451,6 +495,51 @@ function Flywheel({
             );
           })}
         </g>
+
+        {/* Clockwise flow arrows — small white circular badges in each gap */}
+        {boundaries.map(({ angle, next }) => {
+          const pos = polar(angle, BOUNDARY_R);
+          const nextTheme = STAGE_THEME[next];
+          const Chevron = ChevronAt[((angle % 360) + 360) % 360] || ChevronRight;
+          return (
+            <g key={`arrow-${angle}`} pointerEvents="none">
+              <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={16}
+                fill="white"
+                filter="url(#fw-arrow-shadow)"
+              />
+              <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={16}
+                fill="none"
+                stroke={`rgba(${nextTheme.rgb}, 0.35)`}
+                strokeWidth={1.25}
+              />
+              <foreignObject
+                x={pos.x - 11}
+                y={pos.y - 11}
+                width={22}
+                height={22}
+              >
+                <div
+                  style={{
+                    width: 22,
+                    height: 22,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: nextTheme.color,
+                  }}
+                >
+                  <Chevron style={{ width: 16, height: 16 }} strokeWidth={3} />
+                </div>
+              </foreignObject>
+            </g>
+          );
+        })}
 
         {/* Stage icon badges inside each segment */}
         {segmentMeta.map(({ id, mid }) => {

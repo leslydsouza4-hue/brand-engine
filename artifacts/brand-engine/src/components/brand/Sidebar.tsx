@@ -16,7 +16,8 @@ import {
   Clock,
   MessageSquarePlus,
   Mail,
-  Brain
+  Brain,
+  RefreshCw
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -154,6 +155,18 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           >
             <Gift className={iconCls(currentMode === 'super-promo')} />
             Super Promo
+          </button>
+        </div>
+
+        <div className="px-[12px] mb-[10px] relative">
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Flywheel</div>
+
+          <button
+            onClick={() => handleSetMode('growth-flywheel')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'growth-flywheel' ? activeClass : inactiveClass}`}
+          >
+            <RefreshCw className={iconCls(currentMode === 'growth-flywheel')} />
+            Growth Flywheel
           </button>
         </div>
 

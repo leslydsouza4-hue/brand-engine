@@ -16,10 +16,11 @@ import { FeatureRequestBubble } from "@/components/brand/FeatureRequestBubble";
 import { FeatureRequestsWorkspace } from "@/components/brand/FeatureRequestsWorkspace";
 import { EmailTemplatesWorkspace } from "@/components/brand/EmailTemplatesWorkspace";
 import { BrandBrainWorkspace } from "@/components/brand/BrandBrainWorkspace";
+import { GrowthFlywheelWorkspace } from "@/components/brand/GrowthFlywheelWorkspace";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
 
 export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests"];
+  const VALID_MODES = ["brand-brain", "templates", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -68,6 +69,7 @@ export default function BrandEngine() {
         {currentMode === "events" && <EventsWorkspace />}
         {currentMode === "email-templates" && <EmailTemplatesWorkspace />}
         {currentMode === "feature-requests" && <FeatureRequestsWorkspace />}
+        {currentMode === "growth-flywheel" && <GrowthFlywheelWorkspace />}
       </div>
       <FeatureRequestBubble />
       <TutorialPopup currentMode={currentMode} />

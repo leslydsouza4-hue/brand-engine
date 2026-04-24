@@ -5,11 +5,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronUp,
+  Filter,
+  MessagesSquare,
+  DollarSign,
+  Trophy,
+  RefreshCw,
+  type LucideIcon,
 } from "lucide-react";
-
-const BASE = import.meta.env.BASE_URL;
-const hlIcon = (name: string) =>
-  `${BASE}assets/icons/Icon=${name}, Glass=Medium, Color=None (Glass).png`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types & data
@@ -29,42 +31,42 @@ interface Stage {
 const STAGE_THEME: Record<StageId, {
   color: string;
   rgb: string;
-  iconPath: string;
+  Icon: LucideIcon;
   stageNum: string;
   badge: string;
 }> = {
   capture: {
     color: "#FFCD2D",          // HL Capture Yellow
     rgb: "255,205,45",
-    iconPath: hlIcon("Capture"),
+    Icon: Filter,
     stageNum: "01",
     badge: "STAGE 01",
   },
   nurture: {
     color: "#2EA3F0",          // HL Nurture Blue
     rgb: "46,163,240",
-    iconPath: hlIcon("Nurture"),
+    Icon: MessagesSquare,
     stageNum: "02",
     badge: "STAGE 02",
   },
   close: {
     color: "#17D94B",          // HL Close Green
     rgb: "23,217,75",
-    iconPath: hlIcon("Close"),
+    Icon: DollarSign,
     stageNum: "03",
     badge: "STAGE 03",
   },
   evangelize: {
     color: "#F97316",          // HL-styled celebration coral
     rgb: "249,115,22",
-    iconPath: hlIcon("Evangelize"),
+    Icon: Trophy,
     stageNum: "04",
     badge: "STAGE 04",
   },
   reactivate: {
     color: "#1B2A66",          // HL Navy
     rgb: "27,42,102",
-    iconPath: hlIcon("Reactivate"),
+    Icon: RefreshCw,
     stageNum: "05",
     badge: "STAGE 05 · THE LOOP",
   },
@@ -523,9 +525,9 @@ function Flywheel({
           const pos = polar(angle, BOUNDARY_R);
           const nextTheme = STAGE_THEME[next];
           const Chevron = ChevronAt[((angle % 360) + 360) % 360] || ChevronRight;
-          // Slightly smaller than the cutout so a hairline of segment color
-          // shows through, giving the puzzle look definition.
-          const R_BADGE = BADGE_R - 4;
+          // Compact arrow badge that floats inside the puzzle cutout
+          // (~30% smaller than the cutout itself for breathing room).
+          const R_BADGE = (BADGE_R - 4) * 0.7;
           const R_CHEV = R_BADGE * 0.72;
           return (
             <g key={`arrow-${angle}`} pointerEvents="none">
@@ -570,16 +572,16 @@ function Flywheel({
           );
         })}
 
-        {/* Stage icon badges inside each segment — official HL glass icons */}
+        {/* Stage icon badges inside each segment — colored to match each
+            segment, sitting on a white backdrop so they read cleanly. */}
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
+          const Icon = t.Icon;
           const pos = polar(mid, ICON_R);
-          const BG_R = 32;
-          const ICON_SIZE = 48;
+          const BG_R = 26;
+          const ICON_PX = 26;
           return (
             <g key={`icon-${id}`} pointerEvents="none">
-              {/* White circular backdrop so the dark glass icon reads on
-                  any segment color */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
@@ -594,17 +596,28 @@ function Flywheel({
                 cy={pos.y}
                 r={BG_R}
                 fill="none"
-                stroke={`rgba(${t.rgb}, 0.35)`}
-                strokeWidth={1.25}
+                stroke={`rgba(${t.rgb}, 0.55)`}
+                strokeWidth={1.5}
               />
-              <image
-                href={t.iconPath}
-                x={pos.x - ICON_SIZE / 2}
-                y={pos.y - ICON_SIZE / 2}
-                width={ICON_SIZE}
-                height={ICON_SIZE}
-                preserveAspectRatio="xMidYMid meet"
-              />
+              <foreignObject
+                x={pos.x - ICON_PX / 2}
+                y={pos.y - ICON_PX / 2}
+                width={ICON_PX}
+                height={ICON_PX}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: t.color,
+                  }}
+                >
+                  <Icon style={{ width: ICON_PX, height: ICON_PX }} strokeWidth={2.4} />
+                </div>
+              </foreignObject>
             </g>
           );
         })}
@@ -631,22 +644,32 @@ function Flywheel({
             pointerEvents="none"
           />
           <g pointerEvents="none">
-            <image
-              href={STAGE_THEME.reactivate.iconPath}
-              x={CENTER - 32}
-              y={CENTER - 56}
-              width={64}
-              height={64}
-              preserveAspectRatio="xMidYMid meet"
-              style={{ filter: "drop-shadow(0 3px 6px rgba(15,23,42,0.2))" }}
-            />
+            <foreignObject
+              x={CENTER - 22}
+              y={CENTER - 50}
+              width={44}
+              height={44}
+            >
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: STAGE_THEME.reactivate.color,
+                }}
+              >
+                <RefreshCw style={{ width: 36, height: 36 }} strokeWidth={2.4} />
+              </div>
+            </foreignObject>
             <text
               x={CENTER}
               y={CENTER + 10}
               textAnchor="middle"
               fontSize={18}
               fontWeight={800}
-              fill="#0F172A"
+              fill={STAGE_THEME.reactivate.color}
               style={{
                 letterSpacing: "1.8px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
@@ -719,12 +742,19 @@ function InfoCard({
 
       {/* Header */}
       <div className="px-[18px] pt-[16px] pb-[10px] flex items-start gap-[12px]">
-        <img
-          src={t.iconPath}
-          alt=""
-          className="w-[40px] h-[40px] shrink-0 select-none"
-          style={{ filter: `drop-shadow(0 3px 8px rgba(${t.rgb}, 0.35))` }}
-        />
+        <div
+          className="w-[40px] h-[40px] shrink-0 rounded-full flex items-center justify-center"
+          style={{
+            backgroundColor: `rgba(${t.rgb}, 0.14)`,
+            border: `1.5px solid rgba(${t.rgb}, 0.5)`,
+          }}
+        >
+          <t.Icon
+            className="w-[20px] h-[20px]"
+            style={{ color: t.color }}
+            strokeWidth={2.4}
+          />
+        </div>
         <div className="flex-1 min-w-0">
           <div
             className="text-[10px] font-bold uppercase tracking-[1.6px] mb-[2px]"

@@ -916,10 +916,16 @@ function EditDrawer({
 
       {/* Panel */}
       <div
-        className="fixed top-0 right-0 h-full w-full sm:w-[400px] z-50 bg-white border-l border-[#E2E8F0] shadow-2xl transition-transform duration-300 flex flex-col"
+        className="fixed top-0 right-0 h-full w-full sm:w-[460px] z-50 border-l shadow-2xl transition-transform duration-300 flex flex-col"
         style={{
           transform: open ? "translateX(0)" : "translateX(100%)",
+          background:
+            "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
+          borderColor: "rgba(15,23,42,0.10)",
+          boxShadow: "-20px 0 60px -20px rgba(15,23,42,0.25)",
         }}
+        role="dialog"
+        aria-modal="true"
       >
         {open && target === "hero" && (
           <HeroEditor hero={hero} onUpdate={onUpdateHero} onClose={onClose} />
@@ -937,11 +943,24 @@ function EditDrawer({
 }
 
 // Field primitives ──────────────────────────────────────────────────────────
-function FieldLabel({ children }: { children: React.ReactNode }) {
+function FieldLabel({
+  children,
+  hint,
+}: {
+  children: React.ReactNode;
+  hint?: React.ReactNode;
+}) {
   return (
-    <label className="block text-[11px] font-bold uppercase tracking-[1.2px] text-[#64748B] mb-[6px]">
-      {children}
-    </label>
+    <div className="flex items-baseline justify-between mb-[8px]">
+      <label className="block text-[11px] font-bold uppercase tracking-[1.4px] text-[#475569]">
+        {children}
+      </label>
+      {hint && (
+        <span className="text-[10.5px] font-medium text-[#94A3B8]">
+          {hint}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -949,18 +968,27 @@ function TextInput({
   value,
   onChange,
   placeholder,
+  accent,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  accent?: { color: string; rgb: string };
 }) {
+  const accentStyle = accent
+    ? ({
+        ["--accent" as never]: accent.color,
+        ["--accent-rgb" as never]: accent.rgb,
+      } as React.CSSProperties)
+    : undefined;
   return (
     <input
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-[12px] py-[9px] rounded-[8px] border border-[#E2E8F0] bg-white text-[13.5px] text-[#0F172A] outline-none focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 transition"
+      style={accentStyle}
+      className="w-full px-[14px] py-[11px] rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] text-[#0F172A] outline-none transition shadow-[0_1px_2px_rgba(15,23,42,0.03)] focus:border-[var(--accent,#3B82F6)] focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb,59_130_246)/0.18)]"
     />
   );
 }
@@ -970,20 +998,157 @@ function TextArea({
   onChange,
   rows = 3,
   placeholder,
+  accent,
 }: {
   value: string;
   onChange: (v: string) => void;
   rows?: number;
   placeholder?: string;
+  accent?: { color: string; rgb: string };
 }) {
+  const accentStyle = accent
+    ? ({
+        ["--accent" as never]: accent.color,
+        ["--accent-rgb" as never]: accent.rgb,
+      } as React.CSSProperties)
+    : undefined;
   return (
     <textarea
       value={value}
       onChange={(e) => onChange(e.target.value)}
       rows={rows}
       placeholder={placeholder}
-      className="w-full px-[12px] py-[9px] rounded-[8px] border border-[#E2E8F0] bg-white text-[13.5px] text-[#0F172A] outline-none focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 transition resize-y leading-[1.5]"
+      style={accentStyle}
+      className="w-full px-[14px] py-[11px] rounded-[10px] border border-[#E2E8F0] bg-white text-[14px] text-[#0F172A] outline-none transition resize-y leading-[1.5] shadow-[0_1px_2px_rgba(15,23,42,0.03)] focus:border-[var(--accent,#3B82F6)] focus:shadow-[0_0_0_3px_rgb(var(--accent-rgb,59_130_246)/0.18)]"
     />
+  );
+}
+
+// Drawer header — premium gradient with watermark stage number ──────────────
+function DrawerHeader({
+  Icon,
+  iconBg,
+  iconShadow,
+  eyebrow,
+  eyebrowColor,
+  title,
+  watermark,
+  bgGradient,
+  onClose,
+}: {
+  Icon: LucideIcon;
+  iconBg: string;
+  iconShadow: string;
+  eyebrow: string;
+  eyebrowColor: string;
+  title: string;
+  watermark?: string;
+  bgGradient: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="relative px-[24px] pt-[22px] pb-[20px] border-b overflow-hidden"
+      style={{
+        background: bgGradient,
+        borderColor: "rgba(15,23,42,0.08)",
+      }}
+    >
+      {/* Watermark stage number */}
+      {watermark && (
+        <div
+          aria-hidden
+          className="absolute -right-[6px] -top-[8px] font-black leading-none select-none pointer-events-none"
+          style={{
+            fontSize: "120px",
+            color: "rgba(15,23,42,0.04)",
+            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            letterSpacing: "-6px",
+          }}
+        >
+          {watermark}
+        </div>
+      )}
+
+      {/* Close button */}
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-[14px] right-[14px] w-[32px] h-[32px] rounded-full bg-white/70 hover:bg-white border border-[#E2E8F0] flex items-center justify-center text-[#475569] transition shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+        aria-label="Close editor"
+      >
+        <X className="w-[15px] h-[15px]" />
+      </button>
+
+      <div className="flex items-center gap-[14px] relative">
+        <div
+          className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center shrink-0"
+          style={{
+            background: iconBg,
+            boxShadow: `${iconShadow}, inset 0 1px 0 rgba(255,255,255,0.25)`,
+          }}
+        >
+          <Icon className="w-[26px] h-[26px] text-white" strokeWidth={2.3} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div
+            className="text-[10.5px] font-bold uppercase tracking-[1.8px] mb-[3px]"
+            style={{ color: eyebrowColor }}
+          >
+            {eyebrow}
+          </div>
+          <div
+            className="text-[22px] font-bold tracking-[-0.4px] text-[#0F172A] leading-[1.1]"
+            style={{
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            }}
+          >
+            {title}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Drawer footer ─────────────────────────────────────────────────────────────
+function DrawerFooter({
+  onClose,
+  ctaColor,
+  ctaRgb,
+}: {
+  onClose: () => void;
+  ctaColor: string;
+  ctaRgb: string;
+}) {
+  return (
+    <div
+      className="px-[24px] py-[14px] border-t flex items-center justify-between"
+      style={{
+        borderColor: "rgba(15,23,42,0.08)",
+        background: "rgba(255,255,255,0.6)",
+        backdropFilter: "blur(8px)",
+      }}
+    >
+      <div className="flex items-center gap-[6px] text-[11px] text-[#64748B]">
+        <span
+          className="w-[6px] h-[6px] rounded-full animate-pulse"
+          style={{ background: "#10B981" }}
+        />
+        Live preview enabled
+      </div>
+      <button
+        type="button"
+        onClick={onClose}
+        className="px-[18px] py-[9px] rounded-[10px] text-white text-[13px] font-bold transition hover:brightness-110"
+        style={{
+          background: `linear-gradient(135deg, ${ctaColor} 0%, rgba(${ctaRgb}, 0.85) 100%)`,
+          boxShadow: `0 4px 12px -2px rgba(${ctaRgb}, 0.45)`,
+        }}
+      >
+        Done
+      </button>
+    </div>
   );
 }
 
@@ -998,6 +1163,7 @@ function StageEditor({
   onClose: () => void;
 }) {
   const t = STAGE_THEME[stage.id];
+  const accent = { color: t.color, rgb: t.rgb.replace(/,/g, " ") };
 
   const updateItem = (idx: number, value: string) => {
     const next = [...stage.items];
@@ -1017,140 +1183,207 @@ function StageEditor({
 
   return (
     <>
-      {/* Header */}
-      <div
-        className="px-[20px] py-[16px] border-b border-[#E2E8F0] flex items-center gap-[12px]"
-        style={{
-          background: `linear-gradient(180deg, rgba(${t.rgb}, 0.10) 0%, rgba(${t.rgb}, 0) 100%)`,
-        }}
-      >
-        <div
-          className="w-[36px] h-[36px] rounded-[10px] flex items-center justify-center"
-          style={{
-            background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.82) 100%)`,
-            boxShadow: `0 4px 10px -3px rgba(${t.rgb}, 0.5)`,
-          }}
-        >
-          <t.Icon className="w-[18px] h-[18px] text-white" strokeWidth={2.4} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div
-            className="text-[10px] font-bold uppercase tracking-[1.6px]"
-            style={{ color: t.color }}
-          >
-            Editing · {t.badge}
-          </div>
-          <div className="text-[16px] font-bold text-[#0F172A] leading-tight">
-            {stage.title}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-[32px] h-[32px] rounded-full hover:bg-[#F1F5F9] flex items-center justify-center text-[#475569]"
-          aria-label="Close editor"
-        >
-          <X className="w-[16px] h-[16px]" />
-        </button>
-      </div>
+      <DrawerHeader
+        Icon={t.Icon}
+        iconBg={`linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.82) 100%)`}
+        iconShadow={`0 8px 18px -4px rgba(${t.rgb}, 0.55)`}
+        eyebrow={`Editing · ${t.badge}`}
+        eyebrowColor={t.color}
+        title={stage.title || "Untitled stage"}
+        watermark={t.stageNum}
+        bgGradient={`linear-gradient(180deg, rgba(${t.rgb}, 0.12) 0%, rgba(${t.rgb}, 0.02) 100%)`}
+        onClose={onClose}
+      />
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-[20px] py-[18px] space-y-[18px]">
+      <div className="flex-1 overflow-y-auto px-[24px] py-[22px] space-y-[22px]">
+        {/* Title field */}
         <div>
-          <FieldLabel>Title</FieldLabel>
+          <FieldLabel hint={`${stage.title.length} chars`}>
+            Stage title
+          </FieldLabel>
           <TextInput
             value={stage.title}
             onChange={(v) => onUpdate({ title: v })}
+            placeholder="e.g. Capture"
+            accent={accent}
           />
         </div>
 
+        {/* Tagline field */}
         <div>
-          <FieldLabel>Tagline</FieldLabel>
+          <FieldLabel hint={`${stage.tagline.length} chars`}>
+            Tagline
+          </FieldLabel>
           <TextArea
             value={stage.tagline}
             rows={3}
             onChange={(v) => onUpdate({ tagline: v })}
+            placeholder="One-sentence summary of this stage"
+            accent={accent}
           />
         </div>
 
+        {/* Bullet items section */}
         <div>
-          <div className="flex items-center justify-between mb-[6px]">
-            <FieldLabel>Bullet items ({stage.items.length})</FieldLabel>
+          <div className="flex items-center justify-between mb-[10px]">
+            <div className="flex items-center gap-[8px]">
+              <label className="block text-[11px] font-bold uppercase tracking-[1.4px] text-[#475569]">
+                Feature bullets
+              </label>
+              <span
+                className="px-[7px] py-[1px] rounded-full text-[10px] font-bold"
+                style={{
+                  background: `rgba(${t.rgb}, 0.14)`,
+                  color: t.color,
+                }}
+              >
+                {stage.items.length}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-[8px]">
+            {stage.items.map((item, idx) => (
+              <ItemRow
+                key={idx}
+                idx={idx}
+                value={item}
+                accent={accent}
+                themeColor={t.color}
+                themeRgb={t.rgb}
+                isFirst={idx === 0}
+                isLast={idx === stage.items.length - 1}
+                onChange={(v) => updateItem(idx, v)}
+                onMoveUp={() => moveItem(idx, -1)}
+                onMoveDown={() => moveItem(idx, 1)}
+                onRemove={() => removeItem(idx)}
+              />
+            ))}
+
+            {stage.items.length === 0 && (
+              <div className="px-[14px] py-[20px] rounded-[10px] border-2 border-dashed border-[#E2E8F0] bg-white text-center">
+                <div className="text-[12.5px] text-[#94A3B8]">
+                  No bullets yet — add one below to get started.
+                </div>
+              </div>
+            )}
+
+            {/* Add item button */}
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center gap-[4px] text-[11px] font-semibold text-[#3B82F6] hover:text-[#2563EB]"
+              className="w-full mt-[4px] px-[14px] py-[12px] rounded-[10px] border-2 border-dashed flex items-center justify-center gap-[6px] text-[12.5px] font-semibold transition hover:bg-white"
+              style={{
+                borderColor: `rgba(${t.rgb}, 0.35)`,
+                color: t.color,
+                background: `rgba(${t.rgb}, 0.04)`,
+              }}
             >
-              <Plus className="w-[12px] h-[12px]" strokeWidth={2.5} />
-              Add item
+              <Plus className="w-[14px] h-[14px]" strokeWidth={2.6} />
+              Add new bullet
             </button>
-          </div>
-          <div className="space-y-[6px]">
-            {stage.items.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex items-start gap-[6px] p-[6px] rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC]"
-              >
-                <div className="flex flex-col items-center pt-[2px]">
-                  <button
-                    type="button"
-                    onClick={() => moveItem(idx, -1)}
-                    disabled={idx === 0}
-                    className="text-[#94A3B8] hover:text-[#0F172A] disabled:opacity-30"
-                    aria-label="Move up"
-                  >
-                    <ChevronUp className="w-[12px] h-[12px]" strokeWidth={2.5} />
-                  </button>
-                  <GripVertical className="w-[10px] h-[10px] text-[#CBD5E1]" />
-                  <button
-                    type="button"
-                    onClick={() => moveItem(idx, 1)}
-                    disabled={idx === stage.items.length - 1}
-                    className="text-[#94A3B8] hover:text-[#0F172A] disabled:opacity-30"
-                    aria-label="Move down"
-                  >
-                    <ChevronDown className="w-[12px] h-[12px]" strokeWidth={2.5} />
-                  </button>
-                </div>
-                <textarea
-                  value={item}
-                  onChange={(e) => updateItem(idx, e.target.value)}
-                  rows={1}
-                  className="flex-1 px-[8px] py-[6px] rounded-[6px] border border-[#E2E8F0] bg-white text-[13px] text-[#0F172A] outline-none focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 transition resize-none leading-[1.4]"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeItem(idx)}
-                  className="w-[26px] h-[26px] mt-[2px] rounded-md text-[#94A3B8] hover:text-[#DC2626] hover:bg-[#FEE2E2] flex items-center justify-center"
-                  aria-label="Remove item"
-                >
-                  <Trash2 className="w-[12px] h-[12px]" />
-                </button>
-              </div>
-            ))}
-            {stage.items.length === 0 && (
-              <div className="text-[12px] text-[#94A3B8] italic px-[6px] py-[10px]">
-                No items yet. Click "Add item" to create one.
-              </div>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="px-[20px] py-[12px] border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between">
-        <span className="text-[11px] text-[#64748B]">
-          Changes apply live to the preview.
-        </span>
+      <DrawerFooter onClose={onClose} ctaColor={t.color} ctaRgb={t.rgb} />
+    </>
+  );
+}
+
+// Numbered, polished item row ───────────────────────────────────────────────
+function ItemRow({
+  idx,
+  value,
+  accent,
+  themeColor,
+  themeRgb,
+  isFirst,
+  isLast,
+  onChange,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+}: {
+  idx: number;
+  value: string;
+  accent: { color: string; rgb: string };
+  themeColor: string;
+  themeRgb: string;
+  isFirst: boolean;
+  isLast: boolean;
+  onChange: (v: string) => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div
+      className="group relative flex items-stretch rounded-[10px] border bg-white overflow-hidden transition shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:shadow-[0_2px_6px_rgba(15,23,42,0.06)]"
+      style={{ borderColor: "#E2E8F0" }}
+    >
+      {/* Colored left accent bar */}
+      <div
+        className="w-[3px] shrink-0"
+        style={{ background: themeColor }}
+      />
+
+      {/* Number badge */}
+      <div className="flex items-center justify-center pl-[10px] pr-[8px]">
+        <div
+          className="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[10.5px] font-bold"
+          style={{
+            background: `rgba(${themeRgb}, 0.12)`,
+            color: themeColor,
+          }}
+        >
+          {idx + 1}
+        </div>
+      </div>
+
+      {/* Text input */}
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={1}
+        style={{
+          ["--accent" as never]: accent.color,
+          ["--accent-rgb" as never]: accent.rgb,
+        } as React.CSSProperties}
+        className="flex-1 min-w-0 px-[6px] py-[10px] bg-transparent text-[13px] text-[#0F172A] outline-none resize-none leading-[1.45] focus:bg-[rgb(var(--accent-rgb)/0.05)]"
+      />
+
+      {/* Action cluster */}
+      <div className="flex items-center gap-[1px] pr-[6px]">
         <button
           type="button"
-          onClick={onClose}
-          className="px-[14px] py-[7px] rounded-[8px] bg-[#0F172A] text-white text-[12px] font-semibold hover:bg-[#1E293B]"
+          onClick={onMoveUp}
+          disabled={isFirst}
+          className="w-[26px] h-[26px] rounded-md text-[#94A3B8] hover:text-[#0F172A] hover:bg-[#F1F5F9] disabled:opacity-25 disabled:hover:bg-transparent flex items-center justify-center transition"
+          aria-label="Move up"
         >
-          Done
+          <ChevronUp className="w-[14px] h-[14px]" strokeWidth={2.4} />
+        </button>
+        <button
+          type="button"
+          onClick={onMoveDown}
+          disabled={isLast}
+          className="w-[26px] h-[26px] rounded-md text-[#94A3B8] hover:text-[#0F172A] hover:bg-[#F1F5F9] disabled:opacity-25 disabled:hover:bg-transparent flex items-center justify-center transition"
+          aria-label="Move down"
+        >
+          <ChevronDown className="w-[14px] h-[14px]" strokeWidth={2.4} />
+        </button>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="w-[26px] h-[26px] rounded-md text-[#94A3B8] hover:text-[#DC2626] hover:bg-[#FEE2E2] flex items-center justify-center transition"
+          aria-label="Remove"
+        >
+          <Trash2 className="w-[13px] h-[13px]" />
         </button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -1164,68 +1397,57 @@ function HeroEditor({
   onUpdate: (h: HeroContent) => void;
   onClose: () => void;
 }) {
+  const accent = { color: "#0F172A", rgb: "15 23 42" };
+  const ctaRgb = "15,23,42";
+
   return (
     <>
-      <div className="px-[20px] py-[16px] border-b border-[#E2E8F0] flex items-center gap-[12px] bg-gradient-to-b from-[#F8FAFC] to-white">
-        <div className="w-[36px] h-[36px] rounded-[10px] flex items-center justify-center bg-[#0F172A]">
-          <Sparkles className="w-[18px] h-[18px] text-white" strokeWidth={2.4} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-bold uppercase tracking-[1.6px] text-[#475569]">
-            Editing · Hero
-          </div>
-          <div className="text-[16px] font-bold text-[#0F172A] leading-tight">
-            Page Header
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-[32px] h-[32px] rounded-full hover:bg-[#F1F5F9] flex items-center justify-center text-[#475569]"
-          aria-label="Close editor"
-        >
-          <X className="w-[16px] h-[16px]" />
-        </button>
-      </div>
+      <DrawerHeader
+        Icon={Sparkles}
+        iconBg="linear-gradient(135deg, #1E293B 0%, #0F172A 100%)"
+        iconShadow="0 8px 18px -4px rgba(15,23,42,0.45)"
+        eyebrow="Editing · Page Header"
+        eyebrowColor="#475569"
+        title="Hero Section"
+        bgGradient="linear-gradient(180deg, #F1F5F9 0%, #FFFFFF 100%)"
+        onClose={onClose}
+      />
 
-      <div className="flex-1 overflow-y-auto px-[20px] py-[18px] space-y-[18px]">
+      <div className="flex-1 overflow-y-auto px-[24px] py-[22px] space-y-[22px]">
         <div>
-          <FieldLabel>Eyebrow (small pill text)</FieldLabel>
+          <FieldLabel hint="Small pill above title">Eyebrow</FieldLabel>
           <TextInput
             value={hero.eyebrow}
             onChange={(v) => onUpdate({ ...hero, eyebrow: v })}
+            placeholder="The HighLevel Growth Flywheel"
+            accent={accent}
           />
         </div>
         <div>
-          <FieldLabel>Title</FieldLabel>
+          <FieldLabel hint={`${hero.title.length} chars`}>Headline</FieldLabel>
           <TextArea
             value={hero.title}
             rows={2}
             onChange={(v) => onUpdate({ ...hero, title: v })}
+            placeholder="Main page title"
+            accent={accent}
           />
         </div>
         <div>
-          <FieldLabel>Subtitle</FieldLabel>
+          <FieldLabel hint={`${hero.subtitle.length} chars`}>
+            Sub-headline
+          </FieldLabel>
           <TextArea
             value={hero.subtitle}
-            rows={4}
+            rows={5}
             onChange={(v) => onUpdate({ ...hero, subtitle: v })}
+            placeholder="Supporting paragraph beneath the title"
+            accent={accent}
           />
         </div>
       </div>
 
-      <div className="px-[20px] py-[12px] border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-between">
-        <span className="text-[11px] text-[#64748B]">
-          Changes apply live to the preview.
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-[14px] py-[7px] rounded-[8px] bg-[#0F172A] text-white text-[12px] font-semibold hover:bg-[#1E293B]"
-        >
-          Done
-        </button>
-      </div>
+      <DrawerFooter onClose={onClose} ctaColor="#0F172A" ctaRgb={ctaRgb} />
     </>
   );
 }

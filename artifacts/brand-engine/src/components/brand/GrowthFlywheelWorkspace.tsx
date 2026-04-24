@@ -258,7 +258,7 @@ function Flywheel({
   const INNER_R = 110;       // thicker ring (gap = 100)
   const ICON_R = 160;
   const CENTER_R = 100;
-  const BOUNDARY_R = OUTER_R; // arrow badges cradle on the outer edge
+  const BOUNDARY_R = (OUTER_R + INNER_R) / 2; // arrow badges sit in the middle of the ring
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;

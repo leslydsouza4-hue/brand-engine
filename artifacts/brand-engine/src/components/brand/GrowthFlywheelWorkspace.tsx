@@ -444,67 +444,45 @@ function Flywheel() {
           );
         })}
 
-        {/* Stage icon badges + inline labels inside each segment.
-            Icon sits near the outer edge, bold label sits beneath it
-            toward the inner edge — both centered on the segment's mid
-            radial line and clearing the center hub. White text reads
-            cleanly on the bold fills. */}
-        {segmentMeta.map(({ id, mid }) => {
-          const t = STAGE_THEME[id];
-          const Icon = t.Icon;
-          const iconPos = polar(mid, 178);
-          const labelPos = polar(mid, 142);
-          const BG_R = 22;
-          const ICON_PX = 22;
+        {/* Curved stage names that arc along each segment, following the
+            donut's curve. Top segments use a left-to-right CW arc; bottom
+            segments use a reversed (CCW) arc so the letters stay upright. */}
+        {segmentMeta.map(({ id, a1, a2, mid }) => {
+          const R_TEXT = 172;
+          const inset = 6;
+          const isTop = Math.sin((mid * Math.PI) / 180) < 0;
+          const start = isTop
+            ? polar(a1 + inset, R_TEXT)
+            : polar(a2 - inset, R_TEXT);
+          const end = isTop
+            ? polar(a2 - inset, R_TEXT)
+            : polar(a1 + inset, R_TEXT);
+          const sweepFlag = isTop ? 1 : 0;
+          const arcPath = `M ${start.x} ${start.y} A ${R_TEXT} ${R_TEXT} 0 0 ${sweepFlag} ${end.x} ${end.y}`;
           return (
-            <g key={`icon-${id}`} pointerEvents="none">
-              <circle
-                cx={iconPos.x}
-                cy={iconPos.y}
-                r={BG_R}
-                fill="white"
-                style={{
-                  filter: "drop-shadow(0 2px 6px rgba(15,23,42,0.18))",
-                }}
-              />
-              <circle
-                cx={iconPos.x}
-                cy={iconPos.y}
-                r={BG_R}
+            <g key={`label-${id}`} pointerEvents="none">
+              <path
+                id={`fw-textpath-${id}`}
+                d={arcPath}
                 fill="none"
-                stroke={`rgba(${t.rgb}, 0.55)`}
-                strokeWidth={1.5}
+                stroke="none"
               />
-              <foreignObject
-                x={iconPos.x - ICON_PX / 2}
-                y={iconPos.y - ICON_PX / 2}
-                width={ICON_PX}
-                height={ICON_PX}
-              >
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: t.color,
-                  }}
-                >
-                  <Icon style={{ width: ICON_PX, height: ICON_PX }} strokeWidth={2.4} />
-                </div>
-              </foreignObject>
               <text
-                x={labelPos.x}
-                y={labelPos.y}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize={13}
+                fontSize={28}
                 fontWeight={900}
                 fill="white"
-                style={{ letterSpacing: "1.4px" }}
+                style={{
+                  letterSpacing: "1.6px",
+                  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                }}
               >
-                {id.toUpperCase()}
+                <textPath
+                  href={`#fw-textpath-${id}`}
+                  startOffset="50%"
+                  textAnchor="middle"
+                >
+                  {id.toUpperCase()}
+                </textPath>
               </text>
             </g>
           );
@@ -578,6 +556,68 @@ function Flywheel() {
             </text>
           </g>
         </g>
+
+        {/* Stage icon badges on the inner edge of the donut, straddling the
+            white center hub. Rendered LAST so they sit on top of both the
+            colored ring and the hub disc. */}
+        {segmentMeta.map(({ id, mid }) => {
+          const t = STAGE_THEME[id];
+          const Icon = t.Icon;
+          const pos = polar(mid, INNER_R);
+          const BG_R = 22;
+          const ICON_PX = 22;
+          return (
+            <g key={`inner-icon-${id}`} pointerEvents="none">
+              {/* Solid white base so the tinted overlay reads the same
+                  whether it sits over the white hub or the colored ring. */}
+              <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={BG_R}
+                fill="white"
+                style={{
+                  filter: "drop-shadow(0 2px 5px rgba(15,23,42,0.18))",
+                }}
+              />
+              <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={BG_R}
+                fill={`rgba(${t.rgb}, 0.22)`}
+              />
+              <circle
+                cx={pos.x}
+                cy={pos.y}
+                r={BG_R}
+                fill="none"
+                stroke={`rgba(${t.rgb}, 0.7)`}
+                strokeWidth={1.5}
+              />
+              <foreignObject
+                x={pos.x - ICON_PX / 2}
+                y={pos.y - ICON_PX / 2}
+                width={ICON_PX}
+                height={ICON_PX}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: t.color,
+                  }}
+                >
+                  <Icon
+                    style={{ width: ICON_PX, height: ICON_PX }}
+                    strokeWidth={2.4}
+                  />
+                </div>
+              </foreignObject>
+            </g>
+          );
+        })}
       </svg>
     </div>
   );

@@ -417,12 +417,12 @@ export function GrowthFlywheelWorkspace() {
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
 function Flywheel() {
-  const SIZE = 560;
+  const SIZE = 460;
   const CENTER = SIZE / 2;
-  const OUTER_R = 210;
-  const INNER_R = 110;
-  const ICON_R = 160;
-  const CENTER_R = 100;
+  const OUTER_R = 172;
+  const INNER_R = 90;
+  const ICON_R = 131;
+  const CENTER_R = 82;
   const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
   // Cutout / badge radius — sized so the white arrow badge clips flush into
   // the puzzle notch, with short flat radial edges of segment color above
@@ -656,11 +656,11 @@ function Flywheel() {
                 stroke="none"
               />
               <text
-                fontSize={20}
+                fontSize={16}
                 fontWeight={900}
                 fill="white"
                 style={{
-                  letterSpacing: "1.4px",
+                  letterSpacing: "1.1px",
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                 }}
               >

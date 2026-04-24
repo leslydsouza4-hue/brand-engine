@@ -236,9 +236,10 @@ function Flywheel() {
   const ICON_R = 160;
   const CENTER_R = 100;
   const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
-  // Cutout / badge radius — equals half the ring thickness so the cutout
-  // bites cleanly from inner edge to outer edge (puzzle-piece notches).
-  const BADGE_R = (OUTER_R - INNER_R) / 2;
+  // Cutout / badge radius — sized so the white arrow badge clips flush into
+  // the puzzle notch, with short flat radial edges of segment color above
+  // and below the cutout (matches the reference look).
+  const BADGE_R = 26;
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -262,25 +263,39 @@ function Flywheel() {
     return { x: CENTER + r * Math.cos(rad), y: CENTER + r * Math.sin(rad) };
   };
 
-  // Puzzle-piece segment — at each boundary the segment edge is a concave
-  // half-circle of radius BADGE_R that wraps around the arrow badge sitting
-  // in the gap. Outer/inner arcs run between the boundary angles.
+  // Puzzle-piece segment. At each boundary the segment edge is:
+  //   1) a short flat radial line from outer edge inward,
+  //   2) a concave half-circle cutout of radius BADGE_R wrapping the badge,
+  //   3) another short flat radial line continuing inward to the inner edge.
   const segmentPath = (a1: number, a2: number) => {
     const p1Outer = polar(a1, OUTER_R);
     const p2Outer = polar(a2, OUTER_R);
     const p1Inner = polar(a1, INNER_R);
     const p2Inner = polar(a2, INNER_R);
+    // Cutout endpoints on the boundary radial lines
+    const p1CutOut = polar(a1, BOUNDARY_R + BADGE_R);
+    const p1CutIn = polar(a1, BOUNDARY_R - BADGE_R);
+    const p2CutOut = polar(a2, BOUNDARY_R + BADGE_R);
+    const p2CutIn = polar(a2, BOUNDARY_R - BADGE_R);
     const large = a2 - a1 > 180 ? 1 : 0;
     return [
       `M ${p1Outer.x} ${p1Outer.y}`,
       // Outer arc clockwise from a1 to a2
       `A ${OUTER_R} ${OUTER_R} 0 ${large} 1 ${p2Outer.x} ${p2Outer.y}`,
-      // Concave cutout at a2 (outer → inner, bulging into segment)
-      `A ${BADGE_R} ${BADGE_R} 0 0 0 ${p2Inner.x} ${p2Inner.y}`,
+      // Flat radial edge inward to where cutout begins on the outer side
+      `L ${p2CutOut.x} ${p2CutOut.y}`,
+      // Concave cutout wrapping around badge at a2
+      `A ${BADGE_R} ${BADGE_R} 0 0 0 ${p2CutIn.x} ${p2CutIn.y}`,
+      // Flat radial edge continuing inward to inner ring
+      `L ${p2Inner.x} ${p2Inner.y}`,
       // Inner arc counter-clockwise back from a2 to a1
       `A ${INNER_R} ${INNER_R} 0 ${large} 0 ${p1Inner.x} ${p1Inner.y}`,
-      // Concave cutout at a1 (inner → outer, bulging into segment)
-      `A ${BADGE_R} ${BADGE_R} 0 0 0 ${p1Outer.x} ${p1Outer.y}`,
+      // Flat radial edge outward to where cutout begins on the inner side
+      `L ${p1CutIn.x} ${p1CutIn.y}`,
+      // Concave cutout wrapping around badge at a1
+      `A ${BADGE_R} ${BADGE_R} 0 0 0 ${p1CutOut.x} ${p1CutOut.y}`,
+      // Flat radial edge continuing outward to outer ring
+      `L ${p1Outer.x} ${p1Outer.y}`,
       "Z",
     ].join(" ");
   };
@@ -433,10 +448,9 @@ function Flywheel() {
           const pos = polar(angle, BOUNDARY_R);
           const nextTheme = STAGE_THEME[next];
           const Chevron = ChevronAt[((angle % 360) + 360) % 360] || ChevronRight;
-          // Compact arrow badge that floats inside the puzzle cutout
-          // (~30% smaller than the cutout itself for breathing room).
-          const R_BADGE = (BADGE_R - 4) * 0.7;
-          const R_CHEV = R_BADGE * 0.72;
+          // Arrow badge clips flush into the puzzle cutout
+          const R_BADGE = BADGE_R;
+          const R_CHEV = R_BADGE * 0.7;
           return (
             <g key={`arrow-${angle}`} pointerEvents="none">
               <circle

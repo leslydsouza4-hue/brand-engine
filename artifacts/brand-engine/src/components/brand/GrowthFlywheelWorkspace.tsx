@@ -510,7 +510,9 @@ export function GrowthFlywheelWorkspace() {
                   <InfoCard stage={getStage("evangelize")} align="right" />
                 </div>
 
-                {/* Flywheel — absolutely centered over rows 1+2 */}
+                {/* Flywheel — absolutely centered over rows 1+2,
+                    with a soft white halo disc behind it so it reads
+                    as a floating centerpiece on top of the cards. */}
                 <div
                   ref={wheelRef}
                   style={{
@@ -520,6 +522,15 @@ export function GrowthFlywheelWorkspace() {
                     transform: "translate(-50%, -50%)",
                     pointerEvents: "none",
                     zIndex: 10,
+                    width: 648,
+                    height: 648,
+                    borderRadius: "50%",
+                    background: "var(--card-bg)",
+                    boxShadow:
+                      "0 30px 80px -25px rgba(15, 23, 42, 0.30), 0 0 0 1px rgba(15, 23, 42, 0.05)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   <Flywheel theme={theme} />
@@ -542,17 +553,17 @@ export function GrowthFlywheelWorkspace() {
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
 function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
-  const SIZE = 540;
+  const SIZE = 648;
   const CENTER = SIZE / 2;
-  const OUTER_R = 203;
-  const INNER_R = 105;
-  const ICON_R = 153;
-  const CENTER_R = 96;
+  const OUTER_R = 244;
+  const INNER_R = 126;
+  const ICON_R = 184;
+  const CENTER_R = 115;
   const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
   // Cutout / badge radius — sized so the white arrow badge clips flush into
   // the puzzle notch, with short flat radial edges of segment color above
   // and below the cutout (matches the reference look).
-  const BADGE_R = 26;
+  const BADGE_R = 31;
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -761,8 +772,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             donut's curve. Top segments use a left-to-right CW arc; bottom
             segments use a reversed (CCW) arc so the letters stay upright. */}
         {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 165;
-          const inset = 6;
+          const R_TEXT = 198;
+          const inset = 7;
           const isTop = Math.sin((mid * Math.PI) / 180) < 0;
           const start = isTop
             ? polar(a1 + inset, R_TEXT)
@@ -781,11 +792,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                 stroke="none"
               />
               <text
-                fontSize={17}
+                fontSize={20}
                 fontWeight={900}
                 fill="white"
                 style={{
-                  letterSpacing: "1.2px",
+                  letterSpacing: "1.4px",
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
@@ -806,10 +817,10 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
         <g>
           <g pointerEvents="none">
             <foreignObject
-              x={CENTER - 16}
-              y={CENTER - 42}
-              width={32}
-              height={32}
+              x={CENTER - 19}
+              y={CENTER - 50}
+              width={38}
+              height={38}
             >
               <div
                 style={{
@@ -822,8 +833,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               >
                 <div
                   style={{
-                    width: 28,
-                    height: 28,
+                    width: 34,
+                    height: 34,
                     backgroundColor:
                       theme === "dark"
                         ? "#93C5FD"
@@ -842,9 +853,9 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </foreignObject>
             <text
               x={CENTER}
-              y={CENTER + 4}
+              y={CENTER + 5}
               textAnchor="middle"
-              fontSize={15}
+              fontSize={18}
               fontWeight={800}
               fill={
                 theme === "dark"
@@ -852,7 +863,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                   : STAGE_THEME.reactivate.color
               }
               style={{
-                letterSpacing: "1.4px",
+                letterSpacing: "1.7px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }}
             >
@@ -860,13 +871,13 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </text>
             <text
               x={CENTER}
-              y={CENTER + 20}
+              y={CENTER + 24}
               textAnchor="middle"
-              fontSize={8.5}
+              fontSize={10}
               fontWeight={700}
               fill={theme === "dark" ? "#94A3B8" : "#475569"}
               style={{
-                letterSpacing: "2px",
+                letterSpacing: "2.4px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }}
             >
@@ -881,8 +892,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
           const pos = polar(mid, INNER_R);
-          const BG_R = 27;
-          const ICON_PX = 27;
+          const BG_R = 32;
+          const ICON_PX = 32;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same
@@ -997,28 +1008,28 @@ function InfoCard({
       <div className="relative" style={contentBoxStyle}>
 
       {/* Header row */}
-      <div className="relative pl-[18px] pr-[16px] pt-[13px] pb-[8px] flex items-start gap-[11px]">
+      <div className="relative pl-[22px] pr-[20px] pt-[16px] pb-[10px] flex items-start gap-[14px]">
         {/* Icon chip */}
         <div
-          className="w-[40px] h-[40px] shrink-0 rounded-[11px] flex items-center justify-center"
+          className="w-[50px] h-[50px] shrink-0 rounded-[13px] flex items-center justify-center"
           style={{
             background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.80) 100%)`,
-            boxShadow: `0 7px 14px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
+            boxShadow: `0 8px 18px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
           }}
         >
           <img
             src={t.iconSrc}
             alt=""
             aria-hidden
-            style={{ width: 22, height: 22, filter: "brightness(0) invert(1)" }}
+            style={{ width: 28, height: 28, filter: "brightness(0) invert(1)" }}
           />
         </div>
 
         {/* Title block */}
-        <div className="flex-1 min-w-0 pt-[1px]">
-          <div className="flex items-center gap-[6px] mb-[3px]">
+        <div className="flex-1 min-w-0 pt-[2px]">
+          <div className="flex items-center gap-[7px] mb-[4px]">
             <span
-              className="inline-flex items-center px-[7px] py-[2px] rounded-[5px] text-[10px] font-bold uppercase tracking-[1.1px]"
+              className="inline-flex items-center px-[9px] py-[3px] rounded-[6px] text-[12px] font-bold uppercase tracking-[1.3px]"
               style={{
                 color: t.color,
                 background: `rgba(${t.rgb}, 0.14)`,
@@ -1028,7 +1039,7 @@ function InfoCard({
             </span>
           </div>
           <div
-            className="text-[20px] font-bold tracking-[-0.3px] leading-[1.15]"
+            className="text-[24px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{
               fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               color: "var(--card-text)",
@@ -1043,10 +1054,10 @@ function InfoCard({
           aria-hidden
           className="font-black leading-none select-none pointer-events-none -mt-[2px]"
           style={{
-            fontSize: "42px",
+            fontSize: "52px",
             color: `rgba(${t.rgb}, 0.18)`,
             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            letterSpacing: "-2px",
+            letterSpacing: "-2.5px",
           }}
         >
           {t.stageNum}
@@ -1054,9 +1065,9 @@ function InfoCard({
       </div>
 
       {/* Tagline */}
-      <div className="pl-[18px] pr-[16px] pb-[10px]">
+      <div className="pl-[22px] pr-[20px] pb-[12px]">
         <p
-          className="text-[13px] leading-[1.4]"
+          className="text-[15px] leading-[1.45]"
           style={{ color: "var(--card-text-muted)" }}
         >
           {stage.tagline}
@@ -1064,7 +1075,7 @@ function InfoCard({
       </div>
 
       {/* Hairline divider */}
-      <div className="pl-[18px] pr-[16px]">
+      <div className="pl-[22px] pr-[20px]">
         <div
           className="h-px w-full"
           style={{ background: `rgba(${t.rgb}, 0.18)` }}
@@ -1072,22 +1083,22 @@ function InfoCard({
       </div>
 
       {/* Bullet list */}
-      <div className="pl-[18px] pr-[16px] pt-[8px] pb-[12px]">
+      <div className="pl-[22px] pr-[20px] pt-[10px] pb-[14px]">
         <div
           className={
             wide
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[18px] gap-y-[5px]"
-              : "flex flex-col gap-[5px]"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[22px] gap-y-[7px]"
+              : "flex flex-col gap-[7px]"
           }
         >
           {cols.flat().map((item, idx) => (
             <div
               key={`${stage.id}-${idx}`}
-              className="flex items-start gap-[8px] text-[12px] leading-[1.4]"
+              className="flex items-start gap-[10px] text-[14px] leading-[1.45]"
               style={{ color: "var(--card-bullet-text)" }}
             >
               <div
-                className="w-[5px] h-[5px] rounded-full mt-[6px] shrink-0"
+                className="w-[6px] h-[6px] rounded-full mt-[7px] shrink-0"
                 style={{ background: t.color }}
               />
               <span>{item}</span>

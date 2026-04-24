@@ -482,7 +482,9 @@ export function GrowthFlywheelWorkspace() {
                   gap: "14px",
                 }}
               >
-                {/* Row 1 */}
+                {/* Row 1 — top row mirrors the flywheel's top half:
+                    Evangelize sits top-LEFT (top-left segment, orange)
+                    Capture   sits top-RIGHT (top-right segment, yellow) */}
                 <div
                   style={{
                     display: "grid",
@@ -492,11 +494,13 @@ export function GrowthFlywheelWorkspace() {
                     minHeight: 0,
                   }}
                 >
-                  <InfoCard stage={getStage("capture")} align="left" />
-                  <InfoCard stage={getStage("close")} align="right" />
+                  <InfoCard stage={getStage("evangelize")} align="left" />
+                  <InfoCard stage={getStage("capture")} align="right" />
                 </div>
 
-                {/* Row 2 */}
+                {/* Row 2 — bottom row mirrors the flywheel's bottom half:
+                    Close   sits bottom-LEFT (bottom-left segment, green)
+                    Nurture sits bottom-RIGHT (bottom-right segment, blue) */}
                 <div
                   style={{
                     display: "grid",
@@ -506,13 +510,14 @@ export function GrowthFlywheelWorkspace() {
                     minHeight: 0,
                   }}
                 >
-                  <InfoCard stage={getStage("nurture")} align="left" />
-                  <InfoCard stage={getStage("evangelize")} align="right" />
+                  <InfoCard stage={getStage("close")} align="left" />
+                  <InfoCard stage={getStage("nurture")} align="right" />
                 </div>
 
-                {/* Flywheel — absolutely centered over rows 1+2,
-                    with a soft white halo disc behind it so it reads
-                    as a floating centerpiece on top of the cards. */}
+                {/* Flywheel — absolutely centered over rows 1+2.
+                    The halo disc shares the card background so it
+                    visually fuses with the surrounding info cards
+                    rather than reading as a separate floating layer. */}
                 <div
                   ref={wheelRef}
                   style={{
@@ -526,8 +531,7 @@ export function GrowthFlywheelWorkspace() {
                     height: 648,
                     borderRadius: "50%",
                     background: "var(--card-bg)",
-                    boxShadow:
-                      "0 30px 80px -25px rgba(15, 23, 42, 0.30), 0 0 0 1px rgba(15, 23, 42, 0.05)",
+                    boxShadow: "0 0 0 1px rgba(15, 23, 42, 0.04)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -975,12 +979,16 @@ function InfoCard({
 
   // Align modes:
   //  "full"  → content fills entire card width (default + wide row)
-  //  "left"  → content sits on left half of card (right half left clear for flywheel overlay)
-  //  "right" → content sits on right half of card (left half left clear for flywheel overlay)
+  //  "left"  → content occupies the LEFT 62% of card; right 38% is left clear
+  //            so the flywheel halo can overlap it without hiding text
+  //  "right" → content occupies the RIGHT 62% of card; left 38% is clear
+  // The 62% value is tuned so the inner edge of the content sits ~20px
+  // shy of the halo edge — pulling text as close to the wheel as possible
+  // without being covered.
   const isAligned = align === "left" || align === "right";
   const contentBoxStyle: React.CSSProperties = isAligned
     ? {
-        maxWidth: "55%",
+        maxWidth: "62%",
         marginLeft: align === "right" ? "auto" : 0,
         marginRight: align === "left" ? "auto" : 0,
       }

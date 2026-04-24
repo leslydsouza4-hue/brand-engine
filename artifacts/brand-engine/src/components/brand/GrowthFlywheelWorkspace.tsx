@@ -194,6 +194,8 @@ const THEME_VARS: Record<SlideTheme, Record<string, string>> = {
     "--card-text-muted": "#475569",
     "--card-bullet-text": "#1E293B",
     "--card-shadow-inner": "rgba(15,23,42,0.04)",
+    "--card-border": "1px solid transparent",
+    "--card-backdrop": "none",
     "--hub-sub-text": "#475569",
     "--header-bg": "#FFFFFF",
     "--header-text": "#0F172A",
@@ -202,19 +204,25 @@ const THEME_VARS: Record<SlideTheme, Record<string, string>> = {
     "--badge-text": "#0F172A",
   },
   dark: {
+    // Deep blue radial — navy at the center fading into nearly black
+    // at the edges, giving the glass cards plenty of color to refract.
     "--slide-bg":
-      "radial-gradient(ellipse 90% 70% at 50% 30%, #1E293B 0%, #0F172A 55%, #020617 100%)",
+      "radial-gradient(ellipse 100% 80% at 50% 30%, #1E40AF 0%, #1E3A8A 28%, #172554 60%, #0B1A3A 100%)",
     "--slide-text": "#F8FAFC",
     "--slide-text-muted": "#CBD5E1",
-    "--card-bg": "#1E293B",
+    // Glassmorphism: translucent navy + backdrop blur + hairline border.
+    // The blur picks up the deep blue gradient behind for a frosted look.
+    "--card-bg": "rgba(30, 41, 59, 0.42)",
     "--card-text": "#F8FAFC",
-    "--card-text-muted": "#94A3B8",
+    "--card-text-muted": "#CBD5E1",
     "--card-bullet-text": "#E2E8F0",
-    "--card-shadow-inner": "rgba(0,0,0,0.4)",
-    "--hub-sub-text": "#94A3B8",
+    "--card-shadow-inner": "rgba(0,0,0,0.45)",
+    "--card-border": "1px solid rgba(255,255,255,0.10)",
+    "--card-backdrop": "blur(24px) saturate(180%)",
+    "--hub-sub-text": "#CBD5E1",
     "--header-bg": "#1E293B",
     "--header-text": "#F8FAFC",
-    "--header-text-muted": "#94A3B8",
+    "--header-text-muted": "#CBD5E1",
     "--badge-bg": "rgba(248,250,252,0.10)",
     "--badge-text": "#F8FAFC",
   },
@@ -526,6 +534,9 @@ export function GrowthFlywheelWorkspace() {
                     height: 500,
                     borderRadius: "50%",
                     background: "var(--card-bg)",
+                    border: "var(--card-border)",
+                    backdropFilter: "var(--card-backdrop)",
+                    WebkitBackdropFilter: "var(--card-backdrop)" as React.CSSProperties["backdropFilter"],
                     boxShadow: "0 0 0 1px rgba(15, 23, 42, 0.04)",
                     display: "flex",
                     alignItems: "center",
@@ -982,6 +993,9 @@ function InfoCard({
       className="relative rounded-[12px] w-full h-full overflow-hidden"
       style={{
         background: "var(--card-bg)",
+        border: "var(--card-border)",
+        backdropFilter: "var(--card-backdrop)",
+        WebkitBackdropFilter: "var(--card-backdrop)" as React.CSSProperties["backdropFilter"],
         boxShadow: `0 1px 2px var(--card-shadow-inner), 0 12px 26px -12px rgba(${t.rgb}, 0.26)`,
       }}
     >
@@ -1060,11 +1074,11 @@ function InfoCard({
           {cols.flat().map((item, idx) => (
             <div
               key={`${stage.id}-${idx}`}
-              className="flex items-start gap-[10px] text-[14px] leading-[1.45]"
+              className="flex items-start gap-[12px] text-[17px] leading-[1.45] font-medium"
               style={{ color: "var(--card-bullet-text)" }}
             >
               <div
-                className="w-[6px] h-[6px] rounded-full mt-[7px] shrink-0"
+                className="w-[8px] h-[8px] rounded-full mt-[8px] shrink-0"
                 style={{ background: t.color }}
               />
               <span>{item}</span>

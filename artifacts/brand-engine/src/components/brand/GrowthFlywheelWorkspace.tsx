@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Sparkles,
   ChevronRight,
@@ -36,36 +35,36 @@ const STAGE_THEME: Record<StageId, {
   badge: string;
 }> = {
   capture: {
-    color: "#FFCD2D",          // HL Capture Yellow
-    rgb: "255,205,45",
+    color: "#FFC107",          // HL Capture Yellow — bolder
+    rgb: "255,193,7",
     Icon: Filter,
     stageNum: "01",
     badge: "STAGE 01",
   },
   nurture: {
-    color: "#2EA3F0",          // HL Nurture Blue
-    rgb: "46,163,240",
+    color: "#1B96E0",          // HL Nurture Blue — bolder
+    rgb: "27,150,224",
     Icon: MessagesSquare,
     stageNum: "02",
     badge: "STAGE 02",
   },
   close: {
-    color: "#17D94B",          // HL Close Green
-    rgb: "23,217,75",
+    color: "#10B838",          // HL Close Green — bolder
+    rgb: "16,184,56",
     Icon: DollarSign,
     stageNum: "03",
     badge: "STAGE 03",
   },
   evangelize: {
-    color: "#F97316",          // HL-styled celebration coral
-    rgb: "249,115,22",
+    color: "#F25C19",          // HL-styled celebration coral — bolder
+    rgb: "242,92,25",
     Icon: Trophy,
     stageNum: "04",
     badge: "STAGE 04",
   },
   reactivate: {
-    color: "#1B2A66",          // HL Navy
-    rgb: "27,42,102",
+    color: "#13235A",          // HL Navy — deeper
+    rgb: "19,35,90",
     Icon: RefreshCw,
     stageNum: "05",
     badge: "STAGE 05 · THE LOOP",
@@ -148,8 +147,6 @@ const getStage = (id: StageId): Stage =>
 // Main workspace — static infographic layout
 
 export function GrowthFlywheelWorkspace() {
-  const [hoveredStage, setHoveredStage] = useState<StageId | null>(null);
-
   return (
     <div
       className="flex-1 overflow-y-auto"
@@ -207,44 +204,20 @@ export function GrowthFlywheelWorkspace() {
         >
           {/* LEFT column */}
           <div className="flex flex-col gap-[20px] md:gap-[24px]">
-            <InfoCard
-              stage={getStage("evangelize")}
-              hovered={hoveredStage === "evangelize"}
-              onHover={setHoveredStage}
-            />
-            <InfoCard
-              stage={getStage("close")}
-              hovered={hoveredStage === "close"}
-              onHover={setHoveredStage}
-            />
+            <InfoCard stage={getStage("evangelize")} />
+            <InfoCard stage={getStage("close")} />
           </div>
 
           {/* CENTER column */}
           <div className="flex flex-col items-center gap-[20px] md:gap-[24px]">
-            <Flywheel
-              hoveredStage={hoveredStage}
-              onHover={setHoveredStage}
-            />
-            <InfoCard
-              stage={getStage("reactivate")}
-              hovered={hoveredStage === "reactivate"}
-              onHover={setHoveredStage}
-              wide
-            />
+            <Flywheel />
+            <InfoCard stage={getStage("reactivate")} wide />
           </div>
 
           {/* RIGHT column */}
           <div className="flex flex-col gap-[20px] md:gap-[24px]">
-            <InfoCard
-              stage={getStage("capture")}
-              hovered={hoveredStage === "capture"}
-              onHover={setHoveredStage}
-            />
-            <InfoCard
-              stage={getStage("nurture")}
-              hovered={hoveredStage === "nurture"}
-              onHover={setHoveredStage}
-            />
+            <InfoCard stage={getStage("capture")} />
+            <InfoCard stage={getStage("nurture")} />
           </div>
         </div>
       </div>
@@ -255,13 +228,7 @@ export function GrowthFlywheelWorkspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
-function Flywheel({
-  hoveredStage,
-  onHover,
-}: {
-  hoveredStage: StageId | null;
-  onHover: (id: StageId | null) => void;
-}) {
+function Flywheel() {
   const SIZE = 560;
   const CENTER = SIZE / 2;
   const OUTER_R = 210;
@@ -348,23 +315,6 @@ function Flywheel({
         }}
       >
         <defs>
-          {outerOrder.map((id) => {
-            const c = STAGE_THEME[id].color;
-            return (
-              <linearGradient
-                key={`g-${id}`}
-                id={`grad-${id}`}
-                x1="0%"
-                y1="0%"
-                x2="0%"
-                y2="100%"
-              >
-                <stop offset="0%" stopColor={c} stopOpacity={1} />
-                <stop offset="100%" stopColor={c} stopOpacity={0.86} />
-              </linearGradient>
-            );
-          })}
-
           {/* Stronger soft drop shadow under the whole donut */}
           <filter id="fw-shadow" x="-25%" y="-25%" width="150%" height="150%">
             <feGaussianBlur in="SourceAlpha" stdDeviation="10" />
@@ -375,22 +325,6 @@ function Flywheel({
             <feMerge>
               <feMergeNode />
               <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-
-          {/* Subtle inset shadow for depth on each segment */}
-          <filter id="fw-inset" x="-5%" y="-5%" width="110%" height="110%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
-            <feOffset in="blur" dy="-1.5" result="offsetBlur" />
-            <feFlood floodColor="white" floodOpacity="0.18" result="hl" />
-            <feComposite in="hl" in2="offsetBlur" operator="in" result="hlInset" />
-            <feOffset in="blur" dy="2" result="offsetBlur2" />
-            <feFlood floodColor="black" floodOpacity="0.18" result="sh" />
-            <feComposite in="sh" in2="offsetBlur2" operator="in" result="shInset" />
-            <feMerge>
-              <feMergeNode in="SourceGraphic" />
-              <feMergeNode in="hlInset" />
-              <feMergeNode in="shInset" />
             </feMerge>
           </filter>
 
@@ -437,19 +371,12 @@ function Flywheel({
           // Label position close to the segment — stays within SVG bounds even
           // for the longest word ("EVANGELIZE").
           const labelPos = polar(mid, OUTER_R + 24);
-          const isHover = hoveredStage === id;
           // Horizontal anchor based on quadrant
           const anchor: "start" | "end" =
             labelPos.x < CENTER ? "end" : "start";
           const labelX = labelPos.x + (anchor === "end" ? -2 : 2);
           return (
-            <g
-              key={`callout-${id}`}
-              style={{
-                opacity: hoveredStage && !isHover ? 0.45 : 1,
-                transition: "opacity 220ms ease",
-              }}
-            >
+            <g key={`callout-${id}`}>
               <line
                 x1={dot.x}
                 y1={dot.y}
@@ -486,35 +413,16 @@ function Flywheel({
           );
         })}
 
-        {/* Donut segments */}
+        {/* Donut segments — solid HL brand fills, no hover states */}
         <g filter="url(#fw-shadow)">
           {segmentMeta.map(({ id, a1, a2 }) => {
-            const isHover = hoveredStage === id;
             const t = STAGE_THEME[id];
             return (
-              <g
+              <path
                 key={id}
-                style={{
-                  transform: isHover ? "scale(1.025)" : "scale(1)",
-                  transformOrigin: `${CENTER}px ${CENTER}px`,
-                  transition: "transform 220ms ease",
-                }}
-              >
-                <path
-                  d={segmentPath(a1, a2)}
-                  fill={`url(#grad-${id})`}
-                  opacity={hoveredStage && !isHover ? 0.55 : 1}
-                  style={{
-                    transition: "opacity 220ms ease, filter 220ms ease",
-                    filter: isHover
-                      ? `drop-shadow(0 0 26px rgba(${t.rgb}, 0.7)) url(#fw-inset)`
-                      : `drop-shadow(0 0 14px rgba(${t.rgb}, 0.22)) url(#fw-inset)`,
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={() => onHover(id)}
-                  onMouseLeave={() => onHover(null)}
-                />
-              </g>
+                d={segmentPath(a1, a2)}
+                fill={t.color}
+              />
             );
           })}
         </g>
@@ -630,9 +538,6 @@ function Flywheel({
             r={CENTER_R}
             fill="white"
             filter="url(#fw-hub-shadow)"
-            onMouseEnter={() => onHover("reactivate")}
-            onMouseLeave={() => onHover(null)}
-            style={{ cursor: "pointer" }}
           />
           <circle
             cx={CENTER}
@@ -703,13 +608,9 @@ function Flywheel({
 
 function InfoCard({
   stage,
-  hovered,
-  onHover,
   wide,
 }: {
   stage: Stage;
-  hovered: boolean;
-  onHover: (id: StageId | null) => void;
   wide?: boolean;
 }) {
   const t = STAGE_THEME[stage.id];
@@ -724,14 +625,11 @@ function InfoCard({
 
   return (
     <div
-      onMouseEnter={() => onHover(stage.id)}
-      onMouseLeave={() => onHover(null)}
-      className="relative bg-white rounded-[14px] border overflow-hidden transition-all duration-300 w-full"
+      className="relative bg-white rounded-[14px] border overflow-hidden w-full"
       style={{
-        borderColor: hovered ? `rgba(${t.rgb}, 0.45)` : "#E2E8F0",
-        boxShadow: hovered
-          ? `0 12px 28px -10px rgba(${t.rgb}, 0.35), 0 4px 10px rgba(15,23,42,0.06)`
-          : "0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.05)",
+        borderColor: "#E2E8F0",
+        boxShadow:
+          "0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.05)",
       }}
     >
       {/* Colored top border */}

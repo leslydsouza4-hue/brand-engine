@@ -636,7 +636,7 @@ function Flywheel() {
             donut's curve. Top segments use a left-to-right CW arc; bottom
             segments use a reversed (CCW) arc so the letters stay upright. */}
         {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 172;
+          const R_TEXT = 141;
           const inset = 6;
           const isTop = Math.sin((mid * Math.PI) / 180) < 0;
           const start = isTop

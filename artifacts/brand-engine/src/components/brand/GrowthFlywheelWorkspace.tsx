@@ -434,7 +434,7 @@ export function GrowthFlywheelWorkspace() {
               display: "flex",
               flexDirection: "column",
               padding: "34px 36px 28px",
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
               ...themeVars,
             }}
           >
@@ -454,7 +454,7 @@ export function GrowthFlywheelWorkspace() {
               <h1
                 className="text-[44px] font-bold tracking-[-0.8px] leading-[1.1]"
                 style={{
-                  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                  fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
                   color: "var(--slide-text)",
                 }}
               >
@@ -660,7 +660,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         style={{
           overflow: "visible",
-          fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+          fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
         }}
       >
         <defs>
@@ -807,7 +807,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                 fill="white"
                 style={{
                   letterSpacing: "1.4px",
-                  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                  fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
                 <textPath
@@ -874,7 +874,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               }
               style={{
                 letterSpacing: "1.6px",
-                fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
               }}
             >
               REACTIVATE
@@ -1035,7 +1035,7 @@ function InfoCard({
           <div
             className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{
-              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+              fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
               color: "var(--card-text)",
             }}
           >

@@ -1,0 +1,66 @@
+Redesign the page to match the reference layout EXACTLY.
+
+Important layout:
+- Do NOT make feature cards below the flywheel.
+- Put the Growth Flywheel in the exact center of the page.
+- Place 5 feature cards around it:
+  - Capture card on top-right
+  - Nurture card on bottom-right
+  - Close card on bottom-left
+  - Evangelize card on top-left
+  - Reactivate card centered below the flywheel
+
+Overall page:
+- White / very light background, not dark.
+- Big centered title at top:
+  “Every Feature, Mapped to Every Stage of Growth”
+- Subtitle below:
+  “One connected system to capture, nurture, close, evangelize & reactivate — turning strangers into raving fans, then doing it all over again.”
+
+Flywheel:
+- Center large circular donut chart.
+- 4 outer segments:
+  Capture green
+  Nurture orange
+  Close blue
+  Evangelize yellow
+- Center circle says:
+  REACTIVATE
+  STAGE 05 · THE LOOP
+- Make the flywheel cleaner and more premium than reference:
+  rounded segments, soft shadows, subtle gradients, small icon badges, thin connector lines to labels.
+
+Feature cards:
+- Each card should be white with rounded corners, subtle shadow, thin border.
+- Each card has colored top border matching stage color.
+- Cards should be medium size like the reference, not full-width columns.
+- Card content should use bullet lists.
+
+Exact arrangement desktop:
+- Use CSS grid with 3 columns:
+  left cards column, center flywheel column, right cards column.
+- Left column:
+  Evangelize card on top
+  Close card below
+- Center column:
+  Flywheel centered
+  Reactivate card below flywheel
+- Right column:
+  Capture card on top
+  Nurture card below
+- Keep spacing tight and balanced like an infographic.
+
+Use HighLevel-inspired colors:
+Capture: #22C55E
+Nurture: #F97316
+Close: #3B82F6
+Evangelize: #FBBF24
+Reactivate: #1E3A8A
+Text: #0F172A
+Background: #F8FAFC
+
+Make it look like a polished SaaS marketing infographic, not a dashboard app.
+Remove reset/export/add feature buttons.
+No dark theme.
+No editing UI.
+Only final static visual.

@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  Sparkles,
   ChevronRight,
   ChevronDown,
   ChevronLeft,
@@ -369,12 +368,16 @@ export function GrowthFlywheelWorkspace() {
           >
             {/* Hero */}
             <div className="text-center" style={{ marginBottom: "20px" }}>
-              <div className="inline-flex items-center gap-[10px] px-[18px] py-[7px] rounded-full bg-white border border-[#E2E8F0] mb-[14px] shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-                <Sparkles className="w-[15px] h-[15px] text-[#F59E0B]" />
-                <span className="text-[13px] font-bold uppercase tracking-[2.5px] text-[#475569]">
-                  {hero.eyebrow}
-                </span>
-              </div>
+              <img
+                src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=Dark.png`}
+                alt="HighLevel"
+                style={{
+                  height: 56,
+                  width: "auto",
+                  display: "inline-block",
+                  marginBottom: 18,
+                }}
+              />
               <h1
                 className="text-[44px] font-bold tracking-[-0.8px] leading-[1.1] text-[#0F172A] mb-[12px]"
                 style={{
@@ -1328,15 +1331,6 @@ function HeroPane({
   const accent = { color: "#3B82F6", rgb: "59 130 246" };
   return (
     <div className="space-y-[12px]">
-      <div>
-        <SidebarFieldLabel hint="Top pill">Eyebrow</SidebarFieldLabel>
-        <TextInput
-          value={hero.eyebrow}
-          onChange={(v) => onUpdate({ ...hero, eyebrow: v })}
-          placeholder="The HighLevel Growth Flywheel"
-          accent={accent}
-        />
-      </div>
       <div>
         <SidebarFieldLabel hint={`${hero.title.length} chars`}>
           Headline

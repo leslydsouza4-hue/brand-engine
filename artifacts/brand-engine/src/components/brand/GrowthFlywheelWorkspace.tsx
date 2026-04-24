@@ -394,7 +394,7 @@ export function GrowthFlywheelWorkspace() {
               style={{
                 gap: "20px",
                 gridTemplateColumns:
-                  "minmax(0, 1fr) minmax(0, 520px) minmax(0, 1fr)",
+                  "minmax(0, 1fr) minmax(0, 580px) minmax(0, 1fr)",
                 flex: 1,
                 minHeight: 0,
               }}
@@ -429,12 +429,12 @@ export function GrowthFlywheelWorkspace() {
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
 function Flywheel() {
-  const SIZE = 460;
+  const SIZE = 520;
   const CENTER = SIZE / 2;
-  const OUTER_R = 172;
-  const INNER_R = 90;
-  const ICON_R = 131;
-  const CENTER_R = 82;
+  const OUTER_R = 195;
+  const INNER_R = 102;
+  const ICON_R = 148;
+  const CENTER_R = 93;
   const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
   // Cutout / badge radius — sized so the white arrow badge clips flush into
   // the puzzle notch, with short flat radial edges of segment color above
@@ -648,7 +648,7 @@ function Flywheel() {
             donut's curve. Top segments use a left-to-right CW arc; bottom
             segments use a reversed (CCW) arc so the letters stay upright. */}
         {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 141;
+          const R_TEXT = 159;
           const inset = 6;
           const isTop = Math.sin((mid * Math.PI) / 180) < 0;
           const start = isTop
@@ -761,8 +761,8 @@ function Flywheel() {
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
           const pos = polar(mid, INNER_R);
-          const BG_R = 22;
-          const ICON_PX = 22;
+          const BG_R = 25;
+          const ICON_PX = 25;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same

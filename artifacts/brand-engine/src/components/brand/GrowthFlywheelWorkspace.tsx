@@ -468,11 +468,11 @@ function Flywheel() {
                 stroke="none"
               />
               <text
-                fontSize={28}
+                fontSize={20}
                 fontWeight={900}
                 fill="white"
                 style={{
-                  letterSpacing: "1.6px",
+                  letterSpacing: "1.4px",
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
@@ -493,10 +493,10 @@ function Flywheel() {
         <g>
           <g pointerEvents="none">
             <foreignObject
-              x={CENTER - 22}
-              y={CENTER - 50}
-              width={44}
-              height={44}
+              x={CENTER - 16}
+              y={CENTER - 40}
+              width={32}
+              height={32}
             >
               <div
                 style={{
@@ -508,18 +508,18 @@ function Flywheel() {
                   color: STAGE_THEME.reactivate.color,
                 }}
               >
-                <RefreshCw style={{ width: 36, height: 36 }} strokeWidth={2.4} />
+                <RefreshCw style={{ width: 26, height: 26 }} strokeWidth={2.4} />
               </div>
             </foreignObject>
             <text
               x={CENTER}
-              y={CENTER + 10}
+              y={CENTER + 4}
               textAnchor="middle"
-              fontSize={18}
+              fontSize={14}
               fontWeight={800}
               fill={STAGE_THEME.reactivate.color}
               style={{
-                letterSpacing: "1.8px",
+                letterSpacing: "1.4px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }}
             >
@@ -527,11 +527,11 @@ function Flywheel() {
             </text>
             <text
               x={CENTER}
-              y={CENTER + 28}
+              y={CENTER + 18}
               textAnchor="middle"
-              fontSize={8.5}
+              fontSize={7.5}
               fontWeight={700}
-              fill="#94A3B8"
+              fill="#475569"
               style={{
                 letterSpacing: "1.6px",
                 fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",

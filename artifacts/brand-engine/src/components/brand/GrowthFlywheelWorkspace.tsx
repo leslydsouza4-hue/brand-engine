@@ -430,22 +430,21 @@ export function GrowthFlywheelWorkspace() {
               ...themeVars,
             }}
           >
-            {/* Hero header — generous breathing space below so the
-                headline + sub-headline have room to breathe before the
-                card grid begins. */}
+            {/* Hero header — headline only, sized large to anchor the
+                top of the slide with confident presence. */}
             <div className="text-center" style={{ marginBottom: 28 }}>
               <img
                 src={`${BASE}assets/logos/Lockup=Full Horizontal, Color=${theme === "dark" ? "Light" : "Dark"}.png`}
                 alt="HighLevel"
                 style={{
-                  height: 38,
+                  height: 40,
                   width: "auto",
                   display: "inline-block",
-                  marginBottom: 14,
+                  marginBottom: 16,
                 }}
               />
               <h1
-                className="text-[32px] font-bold tracking-[-0.6px] leading-[1.15] mb-[10px]"
+                className="text-[44px] font-bold tracking-[-0.8px] leading-[1.1]"
                 style={{
                   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
                   color: "var(--slide-text)",
@@ -453,12 +452,6 @@ export function GrowthFlywheelWorkspace() {
               >
                 {hero.title}
               </h1>
-              <p
-                className="text-[15px] max-w-[1180px] mx-auto leading-[1.5]"
-                style={{ color: "var(--slide-text-muted)" }}
-              >
-                {hero.subtitle}
-              </p>
             </div>
 
             {/* Slide layout:

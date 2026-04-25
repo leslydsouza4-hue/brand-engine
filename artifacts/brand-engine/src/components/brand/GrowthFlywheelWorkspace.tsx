@@ -239,7 +239,36 @@ export function GrowthFlywheelWorkspace() {
   const previewRef = useRef<HTMLDivElement>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const sidebarScrollRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
+
+  // When a section opens, scroll it into view inside the sidebar so the
+  // user can immediately see (and edit) the expanded fields without
+  // having to discover the scrollbar.
+  useEffect(() => {
+    if (!openSection) return;
+    const container = sidebarScrollRef.current;
+    if (!container) return;
+    // Wait for the accordion's max-height transition (200ms) to expand
+    // before scrolling — otherwise we measure the collapsed position.
+    const t = window.setTimeout(() => {
+      const target = container.querySelector(
+        `[data-section-id="${openSection}"]`,
+      ) as HTMLElement | null;
+      if (!target) return;
+      const cRect = container.getBoundingClientRect();
+      const tRect = target.getBoundingClientRect();
+      const offset = tRect.top - cRect.top + container.scrollTop - 8;
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      container.scrollTo({
+        top: offset,
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+      });
+    }, 220);
+    return () => window.clearTimeout(t);
+  }, [openSection]);
 
   const themeVars = THEME_VARS[theme] as React.CSSProperties;
 
@@ -400,6 +429,7 @@ export function GrowthFlywheelWorkspace() {
     <div className="flex-1 flex overflow-hidden">
       {/* LEFT SIDEBAR EDITOR */}
       <LeftSidebar
+        scrollContainerRef={sidebarScrollRef}
         stages={stages}
         hero={hero}
         openSection={openSection}
@@ -1268,6 +1298,7 @@ function ItemRow({
 // Left Sidebar — collapsible accordion editor + theme/export/download
 
 function LeftSidebar({
+  scrollContainerRef,
   stages,
   hero,
   openSection,
@@ -1284,6 +1315,7 @@ function LeftSidebar({
   onExport,
   isExporting,
 }: {
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   stages: Stage[];
   hero: HeroContent;
   openSection: EditTarget;
@@ -1348,70 +1380,103 @@ function LeftSidebar({
         </div>
       </div>
 
-      {/* MIDDLE — scrollable */}
-      <div className="flex-1 min-h-0 overflow-y-auto sidebar-scroll p-[18px] flex flex-col gap-[10px]">
-        <SidebarSection
-          label="Hero"
-          accent="#94A3B8"
-          accentRgb="148,163,184"
-          isOpen={openSection === "hero"}
-          onToggle={() => onToggleSection("hero")}
-        >
-          <HeroPane hero={hero} onUpdate={onUpdateHero} />
-        </SidebarSection>
+      {/* MIDDLE — scrollable. Uses the visible `editor-scroll` thin
+          scrollbar so users can clearly see there's more content
+          below when stages are open. */}
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto editor-scroll px-[14px] py-[14px] flex flex-col gap-[8px]"
+      >
+        <div data-section-id="hero">
+          <SidebarSection
+            label="Hero"
+            accent="#94A3B8"
+            accentRgb="148,163,184"
+            isOpen={openSection === "hero"}
+            onToggle={() => onToggleSection("hero")}
+          >
+            <HeroPane hero={hero} onUpdate={onUpdateHero} />
+          </SidebarSection>
+        </div>
 
         {stages.map((s) => {
           const t = STAGE_THEME[s.id];
           return (
-            <SidebarSection
-              key={s.id}
-              label={s.title}
-              eyebrow={t.badge}
-              accent={t.color}
-              accentRgb={t.rgb}
-              isOpen={openSection === s.id}
-              onToggle={() => onToggleSection(s.id)}
-            >
-              <StagePane
-                stage={s}
-                onUpdate={(patch) => onUpdateStage(s.id, patch)}
-              />
-            </SidebarSection>
+            <div key={s.id} data-section-id={s.id}>
+              <SidebarSection
+                label={s.title}
+                eyebrow={t.badge}
+                accent={t.color}
+                accentRgb={t.rgb}
+                isOpen={openSection === s.id}
+                onToggle={() => onToggleSection(s.id)}
+              >
+                <StagePane
+                  stage={s}
+                  onUpdate={(patch) => onUpdateStage(s.id, patch)}
+                />
+              </SidebarSection>
+            </div>
           );
         })}
+        {/* Spacer so the last opened section can scroll up into view */}
+        <div className="h-[8px] shrink-0" />
       </div>
 
       {/* BOTTOM — fixed */}
-      <div className="p-[18px] pt-[14px] border-t border-white/5 bg-[rgba(0,0,0,0.25)] flex flex-col gap-[10px]">
-        {/* Theme toggle */}
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[6px]">
-            Slide Theme
+      <div className="p-[14px] pt-[12px] border-t border-white/5 bg-[rgba(0,0,0,0.25)] flex flex-col gap-[8px]">
+        {/* Theme + Format — side-by-side to save vertical room */}
+        <div className="grid grid-cols-2 gap-[8px]">
+          <div>
+            <div className="text-[9.5px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[4px]">
+              Theme
+            </div>
+            <div className="flex gap-[3px]">
+              {(["light", "dark"] as const).map((th) => (
+                <button
+                  key={th}
+                  type="button"
+                  onClick={() => onThemeChange(th)}
+                  className={`flex-1 py-[6px] rounded-[7px] text-[10.5px] font-bold border cursor-pointer transition-all uppercase ${
+                    theme === th
+                      ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
+                      : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
+                  }`}
+                >
+                  {th}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-[4px]">
-            {(["light", "dark"] as const).map((th) => (
-              <button
-                key={th}
-                type="button"
-                onClick={() => onThemeChange(th)}
-                className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-bold border cursor-pointer transition-all uppercase ${
-                  theme === th
-                    ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
-                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
-                }`}
-              >
-                {th}
-              </button>
-            ))}
+          <div>
+            <div className="text-[9.5px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[4px]">
+              Format
+            </div>
+            <div className="flex gap-[3px]">
+              {(["pdf", "png"] as const).map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => onExportFormatChange(f)}
+                  className={`flex-1 py-[6px] rounded-[7px] text-[10.5px] font-bold border cursor-pointer transition-all uppercase ${
+                    exportFormat === f
+                      ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
+                      : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Export scope toggle */}
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[6px]">
+          <div className="text-[9.5px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[4px]">
             Export Scope
           </div>
-          <div className="flex gap-[4px]">
+          <div className="flex gap-[3px]">
             {(
               [
                 { id: "slide", label: "Full Slide" },
@@ -1422,7 +1487,7 @@ function LeftSidebar({
                 key={opt.id}
                 type="button"
                 onClick={() => onExportScopeChange(opt.id)}
-                className={`flex-1 py-[7px] rounded-[8px] text-[10.5px] font-bold border cursor-pointer transition-all uppercase tracking-[0.4px] ${
+                className={`flex-1 py-[6px] rounded-[7px] text-[10.5px] font-bold border cursor-pointer transition-all uppercase tracking-[0.4px] ${
                   exportScope === opt.id
                     ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
                     : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
@@ -1434,34 +1499,11 @@ function LeftSidebar({
           </div>
         </div>
 
-        {/* Format toggle */}
-        <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[6px]">
-            Export Format
-          </div>
-          <div className="flex gap-[4px]">
-            {(["pdf", "png"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => onExportFormatChange(f)}
-                className={`flex-1 py-[7px] rounded-[8px] text-[11px] font-bold border cursor-pointer transition-all uppercase ${
-                  exportFormat === f
-                    ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
-                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <button
           type="button"
           onClick={onExport}
           disabled={isExporting}
-          className="w-full flex items-center justify-center gap-[8px] py-[12px] rounded-[14px] text-[13px] font-bold cursor-pointer transition-all bg-gradient-to-r from-[#2896FB] to-[#095DC3] text-white shadow-[0_4px_20px_rgba(40,150,251,0.3)] hover:shadow-[0_6px_28px_rgba(40,150,251,0.4)] disabled:opacity-50 disabled:cursor-not-allowed border-none"
+          className="w-full flex items-center justify-center gap-[8px] py-[10px] mt-[2px] rounded-[12px] text-[12.5px] font-bold cursor-pointer transition-all bg-gradient-to-r from-[#2896FB] to-[#095DC3] text-white shadow-[0_4px_20px_rgba(40,150,251,0.3)] hover:shadow-[0_6px_28px_rgba(40,150,251,0.4)] disabled:opacity-50 disabled:cursor-not-allowed border-none"
         >
           {isExporting ? (
             <Loader2 className="w-[16px] h-[16px] animate-spin" />

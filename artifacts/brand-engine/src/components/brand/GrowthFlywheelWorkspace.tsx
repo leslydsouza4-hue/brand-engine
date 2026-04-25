@@ -372,10 +372,11 @@ export function GrowthFlywheelWorkspace() {
             filename: `${fname}.pdf`,
             pageWidth: pageW,
             pageHeight: pageH,
+            colorSpace: "rgb",
           }),
         });
         if (!resp.ok)
-          throw new Error(`CMYK conversion failed: ${resp.statusText}`);
+          throw new Error(`PDF conversion failed: ${resp.statusText}`);
         const { pdf: pdfBase64 } = await resp.json();
         const pdfBytes = Uint8Array.from(atob(pdfBase64), (c) =>
           c.charCodeAt(0),
@@ -395,7 +396,7 @@ export function GrowthFlywheelWorkspace() {
             source: sourceLabel,
             format: "pdf",
             thumbnail: t,
-            dimensions: `${pageW}×${pageH.toFixed(1)}in (CMYK)`,
+            dimensions: `${pageW}×${pageH.toFixed(1)}in (RGB)`,
           }),
         );
       } else {

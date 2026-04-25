@@ -1012,7 +1012,7 @@ function InfoCard({
       <div className="relative" style={contentBoxStyle}>
 
       {/* Header row */}
-      <div className="relative pl-[22px] pr-[20px] pt-[14px] pb-[6px] flex items-start gap-[14px]">
+      <div className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]">
         {/* Icon chip */}
         <div
           className="w-[50px] h-[50px] shrink-0 rounded-[13px] flex items-center justify-center"
@@ -1045,7 +1045,7 @@ function InfoCard({
       </div>
 
       {/* Tagline */}
-      <div className="pl-[22px] pr-[20px] pb-[8px]">
+      <div className="pl-[28px] pr-[26px] pb-[8px]">
         <p
           className="text-[15px] leading-[1.4]"
           style={{ color: "var(--card-text-muted)" }}
@@ -1055,7 +1055,7 @@ function InfoCard({
       </div>
 
       {/* Hairline divider */}
-      <div className="pl-[22px] pr-[20px]">
+      <div className="pl-[28px] pr-[26px]">
         <div
           className="h-px w-full"
           style={{ background: `rgba(${t.rgb}, 0.18)` }}
@@ -1063,22 +1063,22 @@ function InfoCard({
       </div>
 
       {/* Bullet list */}
-      <div className="pl-[22px] pr-[20px] pt-[8px] pb-[10px]">
+      <div className="pl-[28px] pr-[26px] pt-[10px] pb-[12px]">
         <div
           className={
             wide
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[22px] gap-y-[5px]"
-              : "flex flex-col gap-[5px]"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[24px] gap-y-[6px]"
+              : "flex flex-col gap-[6px]"
           }
         >
           {cols.flat().map((item, idx) => (
             <div
               key={`${stage.id}-${idx}`}
-              className="flex items-start gap-[14px] text-[21px] leading-[1.4] font-medium"
+              className="flex items-start gap-[12px] text-[19px] leading-[1.4] font-medium"
               style={{ color: "var(--card-bullet-text)" }}
             >
               <div
-                className="w-[10px] h-[10px] rounded-full mt-[9px] shrink-0"
+                className="w-[9px] h-[9px] rounded-full mt-[8px] shrink-0"
                 style={{ background: t.color }}
               />
               <span>{item}</span>

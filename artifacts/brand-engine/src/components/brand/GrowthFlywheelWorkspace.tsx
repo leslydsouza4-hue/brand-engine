@@ -13,7 +13,6 @@ import {
   Trash2,
   Download,
   Loader2,
-  Edit3,
   RotateCcw,
   type LucideIcon,
 } from "lucide-react";
@@ -281,12 +280,15 @@ export function GrowthFlywheelWorkspace() {
     if (!sourceEl) return;
     setIsExporting(true);
     try {
-      // Wheel-only export: snapshot the wheel container at its natural size
-      // (square ≈ flywheel size), then ship as a square 9"×9" CMYK PDF/PNG.
+      // Wheel-only export: snapshot the wheel container at the SVG's
+      // natural 600×600 size (the halo is 500×500 but the wheel SVG
+      // overflows it slightly to fit labels and corner badges). Reset
+      // the centering transform so the captured content isn't clipped
+      // off the top-left of the canvas.
       // Slide export: full 1920×1080 → 13.333"×7.5" landscape.
-      const rect = sourceEl.getBoundingClientRect();
-      const w = isWheel ? Math.round(rect.width) : SLIDE_W;
-      const h = isWheel ? Math.round(rect.height) : SLIDE_H;
+      const WHEEL_NATURAL = 600;
+      const w = isWheel ? WHEEL_NATURAL : SLIDE_W;
+      const h = isWheel ? WHEEL_NATURAL : SLIDE_H;
       const DPI = 200;
       const pageW = isWheel ? 9 : 13.333;
       const pageH = (h / w) * pageW;
@@ -298,11 +300,23 @@ export function GrowthFlywheelWorkspace() {
         pixelRatio,
         cacheBust: true,
         skipAutoScale: true,
-        backgroundColor: isWheel
-          ? "transparent"
-          : undefined,
+        backgroundColor: isWheel ? "transparent" : undefined,
         style: isWheel
-          ? {}
+          ? ({
+              transform: "none",
+              position: "static",
+              width: `${w}px`,
+              height: `${h}px`,
+              background: "transparent",
+              border: "none",
+              boxShadow: "none",
+              backdropFilter: "none",
+              WebkitBackdropFilter: "none",
+              borderRadius: "0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            } as Partial<CSSStyleDeclaration>)
           : {
               transform: "none",
               borderRadius: "0",
@@ -1299,20 +1313,37 @@ function LeftSidebar({
           </p>
         </div>
         <div className="flex items-center gap-[8px]">
-          <div className="flex-1 flex items-center gap-[6px] py-[8px] px-[10px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)]">
-            <Edit3 className="w-[12px] h-[12px] text-[#94A3B8]" />
-            <span className="text-[11px] font-semibold text-[#94A3B8]">
-              Live editing on
+          <div
+            className="flex-1 flex items-center gap-[8px] py-[9px] px-[12px] rounded-[10px] border"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(34,197,94,0.10) 0%, rgba(34,197,94,0.04) 100%)",
+              borderColor: "rgba(34,197,94,0.28)",
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px rgba(34,197,94,0.06)",
+            }}
+          >
+            <span className="relative flex w-[8px] h-[8px] shrink-0">
+              <span className="absolute inset-0 rounded-full bg-[#22C55E] opacity-75 animate-ping" />
+              <span className="relative inline-flex w-[8px] h-[8px] rounded-full bg-[#22C55E] shadow-[0_0_6px_rgba(34,197,94,0.7)]" />
             </span>
+            <div className="flex flex-col leading-none">
+              <span className="text-[11px] font-bold text-[#86EFAC] tracking-[0.2px]">
+                Live Editing
+              </span>
+              <span className="text-[9px] font-medium text-[#22C55E]/70 mt-[2px] uppercase tracking-[0.6px]">
+                Auto-saving
+              </span>
+            </div>
           </div>
           <button
             type="button"
             onClick={onReset}
-            className="w-[34px] h-[34px] flex items-center justify-center rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[#64748B] hover:text-[#FF8A8A] hover:border-[rgba(255,77,77,0.3)] cursor-pointer transition-all"
+            className="w-[40px] h-[40px] shrink-0 flex items-center justify-center rounded-[10px] border border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.04)] text-[#64748B] hover:text-[#FF8A8A] hover:border-[rgba(255,77,77,0.3)] hover:bg-[rgba(255,77,77,0.06)] cursor-pointer transition-all"
             title="Reset to defaults"
             aria-label="Reset to defaults"
           >
-            <RotateCcw className="w-[12px] h-[12px]" />
+            <RotateCcw className="w-[14px] h-[14px]" />
           </button>
         </div>
       </div>

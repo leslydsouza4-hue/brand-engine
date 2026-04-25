@@ -16,7 +16,6 @@ import {
   Clock,
   MessageSquarePlus,
   Mail,
-  Brain,
   RefreshCw
 } from "lucide-react";
 
@@ -71,24 +70,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         <div className="px-[12px] mb-[10px] relative">
           <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Create</div>
 
-          <button
-            onClick={() => handleSetMode('brand-brain')}
-            className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[10px] rounded-[12px] cursor-pointer border-none transition-all duration-250 mb-[4px] ${
-              currentMode === 'brand-brain'
-                ? 'bg-white/[0.05] text-white'
-                : 'text-[#CBD5E1] hover:bg-white/[0.03] hover:text-white hover:translate-x-[2px]'
-            }`}
-          >
-            {currentMode === 'brand-brain' && (
-              <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] bg-gradient-to-b from-[#A855F7] to-[#2896FB] rounded-r-[4px]" />
-            )}
-            <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center bg-gradient-to-br from-[#A855F7] via-[#2896FB] to-[#00B2A9] shadow-[0_2px_8px_rgba(168,85,247,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0">
-              <Brain className="w-[12px] h-[12px] text-white" />
-            </span>
-            <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">
-              Brand Brain
-            </span>
-          </button>
+          {/* Brand Brain hidden from nav (route still reachable via #brand-brain) */}
 
           <button
             onClick={() => handleSetMode('templates')}

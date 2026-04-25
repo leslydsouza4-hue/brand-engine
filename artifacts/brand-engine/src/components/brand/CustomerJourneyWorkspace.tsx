@@ -154,9 +154,9 @@ export function CustomerJourneyWorkspace() {
         const resp = await fetch(`${BASE}api/convert-cmyk`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageData: dataUrl, filename: `${fname}.pdf`, pageWidth: pageW, pageHeight: pageH }),
+          body: JSON.stringify({ imageData: dataUrl, filename: `${fname}.pdf`, pageWidth: pageW, pageHeight: pageH, colorSpace: "cmyk" }),
         });
-        if (!resp.ok) throw new Error(`CMYK conversion failed: ${resp.statusText}`);
+        if (!resp.ok) throw new Error(`PDF conversion failed: ${resp.statusText}`);
         const { pdf: pdfBase64 } = await resp.json();
         const pdfBytes = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
         const blob = new Blob([pdfBytes], { type: "application/pdf" });

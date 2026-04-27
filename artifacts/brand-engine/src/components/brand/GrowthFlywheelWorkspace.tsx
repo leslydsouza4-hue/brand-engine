@@ -1008,9 +1008,9 @@ function InfoCard({
           />
         </div>
 
-        {/* Title block — stage chip + watermark removed; the title now
-            stands alone next to the icon for a cleaner header. */}
-        <div className="flex-1 min-w-0 pt-[6px]">
+        {/* Title + tagline stacked together, sitting next to the icon
+            for a tight, scannable header (no divider needed below). */}
+        <div className="flex-1 min-w-0 pt-[2px]">
           <div
             className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{
@@ -1020,29 +1020,17 @@ function InfoCard({
           >
             {stage.title}
           </div>
+          <p
+            className="text-[15px] leading-[1.4] mt-[4px]"
+            style={{ color: "var(--card-text-muted)" }}
+          >
+            {stage.tagline}
+          </p>
         </div>
       </div>
 
-      {/* Tagline */}
-      <div className="pl-[28px] pr-[26px] pb-[8px]">
-        <p
-          className="text-[15px] leading-[1.4]"
-          style={{ color: "var(--card-text-muted)" }}
-        >
-          {stage.tagline}
-        </p>
-      </div>
-
-      {/* Hairline divider */}
-      <div className="pl-[28px] pr-[26px]">
-        <div
-          className="h-px w-full"
-          style={{ background: `rgba(${t.rgb}, 0.18)` }}
-        />
-      </div>
-
       {/* Bullet list */}
-      <div className="pl-[28px] pr-[26px] pt-[10px] pb-[12px]">
+      <div className="pl-[28px] pr-[26px] pt-[12px] pb-[14px]">
         <div
           className={
             wide

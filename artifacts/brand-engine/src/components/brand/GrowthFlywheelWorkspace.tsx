@@ -963,24 +963,12 @@ function InfoCard({
       ]
     : [stage.items];
 
-  // Align modes:
-  //  "full"  → content fills entire card width (default + wide row)
-  //  "left"  → card sits on LEFT side of slide (wheel is to its RIGHT);
-  //            content is pushed RIGHTWARD inside the card so it hugs the
-  //            wheel halo, with a 35% buffer on the inner edge to clear it
-  //  "right" → card sits on RIGHT side of slide (wheel is to its LEFT);
-  //            content is pushed LEFTWARD inside the card so it hugs the
-  //            wheel halo, with a 35% buffer on the inner edge to clear it
-  // Both sides are symmetric — content always cuddles up to the wheel.
-  const isAligned = align === "left" || align === "right";
-  const contentBoxStyle: React.CSSProperties = isAligned
-    ? {
-        maxWidth: "68%",
-        marginLeft: align === "left" ? "auto" : "27%",
-        marginRight: align === "right" ? "auto" : "27%",
-      }
-    : {};
-  const glowCorner = align === "left" ? "0% 0%" : "100% 0%";
+  // All cards are left-aligned: content fills the card naturally from
+  // the left edge with the card's standard padding. The `align` prop is
+  // kept only so the soft radial glow lights up the correct corner of
+  // each card (left cards glow from top-left, right cards from top-right).
+  const contentBoxStyle: React.CSSProperties = {};
+  const glowCorner = align === "right" ? "100% 0%" : "0% 0%";
 
   return (
     <div

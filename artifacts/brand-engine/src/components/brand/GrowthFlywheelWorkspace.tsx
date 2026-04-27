@@ -616,13 +616,13 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   const OUTER_R = 240;
   const HUB_R = 102;          // inner edge of petals = outer edge of center hub
   const CENTER_R = 92;        // white REACTIVATE disc radius (slightly inside hub)
-  // Where the icon-bearing white badge sits inside each petal. Pulled
-  // outward toward the rim, but kept on each petal's NOMINAL mid radial
-  // so the badge sits well inside the colored area regardless of the
-  // pinwheel swirl. The visual mid at this radius is offset by the
-  // boundary bulge, but anchoring on the nominal mid gives the cleanest,
-  // safest placement for every petal.
-  const ICON_R = 178;
+  // Where the icon-bearing white badge sits inside each petal. Anchored
+  // on each petal's CW boundary radial — for our CW pinwheel that lands
+  // exactly at the cardinal directions (top, right, bottom, left), which
+  // is also where each petal's fat lobe lives. This matches the look of
+  // the reference: a big white icon badge sitting in the outer fat lobe
+  // of every petal at 12, 3, 6, 9 o'clock.
+  const ICON_R = 195;
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -837,14 +837,16 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           </g>
         </g>
 
-        {/* Stage icon badges anchored on each petal's nominal mid radial
-            and pulled outward toward the rim. Rendered LAST so they paint
-            cleanly on top of the colored petals and the hub disc. */}
-        {segmentMeta.map(({ id, mid }) => {
+        {/* Stage icon badges anchored on each petal's CW boundary radial
+            (cardinal directions: top/right/bottom/left) — that's the fat
+            lobe of every petal in our CW pinwheel, matching the reference
+            layout. Rendered LAST so they paint cleanly on top of the
+            colored petals and the hub disc. */}
+        {segmentMeta.map(({ id, a2 }) => {
           const t = STAGE_THEME[id];
-          const pos = polar(mid, ICON_R);
-          const BG_R = 38;
-          const ICON_PX = 38;
+          const pos = polar(a2, ICON_R);
+          const BG_R = 42;
+          const ICON_PX = 40;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same

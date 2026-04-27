@@ -618,13 +618,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   const CENTER_R = 92;        // white REACTIVATE disc radius (slightly inside hub)
   // Where the icon-bearing white badge sits inside each petal. Anchored
   // on each petal's CW boundary radial — for our CW pinwheel that lands
-  // at the cardinal directions (top/right/bottom/left), which is the
-  // outer corner of the fat lobe. We then pull the badge slightly CCW
-  // (back toward the petal's nominal mid) so it lands in the *visual
-  // middle* of the petal's fat lobe, not on the boundary line between
-  // two petals.
+  // exactly at the cardinal directions (top/right/bottom/left). Each
+  // badge sits centered on the boundary curve between two petals, which
+  // matches the reference: the white icon disc straddles the swirl edge
+  // of the fat lobe.
   const ICON_R = 195;
-  const ICON_ANGLE_OFFSET = 23; // degrees CCW from each petal's CW corner
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -846,9 +844,10 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             colored petals and the hub disc. */}
         {segmentMeta.map(({ id, a2 }) => {
           const t = STAGE_THEME[id];
-          // a2 is the cardinal direction (top/right/bottom/left); pull
-          // back CCW into the visual middle of each petal's fat lobe.
-          const pos = polar(a2 - ICON_ANGLE_OFFSET, ICON_R);
+          // a2 is the cardinal direction (top/right/bottom/left) — the
+          // boundary radial between two petals. The badge sits centered
+          // on the curving petal edge here, matching the reference.
+          const pos = polar(a2, ICON_R);
           const BG_R = 42;
           const ICON_PX = 40;
           return (

@@ -1,8 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-  ChevronRight,
   ChevronDown,
-  ChevronLeft,
   ChevronUp,
   Filter,
   MessagesSquare,
@@ -610,88 +608,66 @@ export function GrowthFlywheelWorkspace() {
 function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   const SIZE = 600;
   const CENTER = SIZE / 2;
-  const OUTER_R = 226;
-  const INNER_R = 116;
+  const OUTER_R = 240;
+  const HUB_R = 102;          // inner edge of petals = outer edge of center hub
+  const CENTER_R = 92;        // white REACTIVATE disc radius (slightly inside hub)
+  // Where the icon-bearing white badge sits inside each petal. With the
+  // CW pinwheel swirl, the visual "fat lobe" of each petal sits along its
+  // mid angle but pulled toward the outer edge.
   const ICON_R = 170;
-  const CENTER_R = 107;
-  const BOUNDARY_R = (OUTER_R + INNER_R) / 2;
-  // Cutout / badge radius — sized so the white arrow badge clips flush into
-  // the puzzle notch, with short flat radial edges of segment color above
-  // and below the cutout (matches the reference look).
-  const BADGE_R = 29;
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
   const startAngle = -90;
-  // Segments meet edge-to-edge — the visual "gap" comes from the puzzle-piece
-  // cutouts that hold the arrow badges, not from angular spacing.
-  const SEGMENT_GAP_DEG = 0;
-
-  // Clockwise flow arrow at each gap. The boundary angle (in degrees,
-  // canvas-space where 0° = right, 90° = bottom) determines which chevron
-  // points cleanly along the tangent of the wheel.
-  const ChevronAt: Record<number, typeof ChevronRight> = {
-    0: ChevronDown,    // right side  → flow downward (Capture→Nurture)
-    90: ChevronLeft,   // bottom side → flow leftward (Nurture→Close)
-    180: ChevronUp,    // left side   → flow upward   (Close→Evangelize)
-    270: ChevronRight, // top side    → flow rightward (Evangelize→Capture)
-  };
 
   const polar = (angleDeg: number, r: number) => {
     const rad = (angleDeg * Math.PI) / 180;
     return { x: CENTER + r * Math.cos(rad), y: CENTER + r * Math.sin(rad) };
   };
 
-  // Puzzle-piece segment. At each boundary the segment edge is:
-  //   1) a short flat radial line from outer edge inward,
-  //   2) a concave half-circle cutout of radius BADGE_R wrapping the badge,
-  //   3) another short flat radial line continuing inward to the inner edge.
+  // Per-stage gradient stops — light "highlight" shade fading to a deeper
+  // shade of the same brand color (matches the reference's lit-petal look).
+  const PETAL_GRADIENT: Record<StageId, [string, string]> = {
+    capture:    ["#FFE082", "#FF8F00"], // yellow → deep amber
+    nurture:    ["#4FC3F7", "#01579B"], // sky → deep blue
+    close:      ["#66BB6A", "#1B5E20"], // mint → forest green
+    evangelize: ["#FFB74D", "#BF360C"], // light orange → burnt orange
+    reactivate: ["#1E40AF", "#0B1A3A"], // (only used for icon tint, not petal)
+  };
+
+  // Pinwheel petal. Each petal fills a 90° sweep around the wheel, but the
+  // two boundaries between adjacent petals are S-curves (semicircles) of
+  // radius (OUTER_R - HUB_R) / 2 instead of straight radial lines. Every
+  // boundary bulges in the same rotational direction (clockwise here),
+  // which produces the swirling yin-yang / pinwheel look.
   const segmentPath = (a1: number, a2: number) => {
     const p1Outer = polar(a1, OUTER_R);
     const p2Outer = polar(a2, OUTER_R);
-    const p1Inner = polar(a1, INNER_R);
-    const p2Inner = polar(a2, INNER_R);
-    // Cutout endpoints on the boundary radial lines
-    const p1CutOut = polar(a1, BOUNDARY_R + BADGE_R);
-    const p1CutIn = polar(a1, BOUNDARY_R - BADGE_R);
-    const p2CutOut = polar(a2, BOUNDARY_R + BADGE_R);
-    const p2CutIn = polar(a2, BOUNDARY_R - BADGE_R);
+    const p1Hub = polar(a1, HUB_R);
+    const p2Hub = polar(a2, HUB_R);
+    const boundaryR = (OUTER_R - HUB_R) / 2;
     const large = a2 - a1 > 180 ? 1 : 0;
     return [
       `M ${p1Outer.x} ${p1Outer.y}`,
-      // Outer arc clockwise from a1 to a2
+      // Outer arc clockwise from a1 → a2
       `A ${OUTER_R} ${OUTER_R} 0 ${large} 1 ${p2Outer.x} ${p2Outer.y}`,
-      // Flat radial edge inward to where cutout begins on the outer side
-      `L ${p2CutOut.x} ${p2CutOut.y}`,
-      // Concave cutout wrapping around badge at a2
-      `A ${BADGE_R} ${BADGE_R} 0 0 0 ${p2CutIn.x} ${p2CutIn.y}`,
-      // Flat radial edge continuing inward to inner ring
-      `L ${p2Inner.x} ${p2Inner.y}`,
-      // Inner arc counter-clockwise back from a2 to a1
-      `A ${INNER_R} ${INNER_R} 0 ${large} 0 ${p1Inner.x} ${p1Inner.y}`,
-      // Flat radial edge outward to where cutout begins on the inner side
-      `L ${p1CutIn.x} ${p1CutIn.y}`,
-      // Concave cutout wrapping around badge at a1
-      `A ${BADGE_R} ${BADGE_R} 0 0 0 ${p1CutOut.x} ${p1CutOut.y}`,
-      // Flat radial edge continuing outward to outer ring
-      `L ${p1Outer.x} ${p1Outer.y}`,
+      // CW boundary curve: semicircle from outer(a2) → hub(a2),
+      // bulging clockwise (eats into the *next* petal).
+      `A ${boundaryR} ${boundaryR} 0 0 1 ${p2Hub.x} ${p2Hub.y}`,
+      // Inner arc counter-clockwise from hub(a2) → hub(a1)
+      `A ${HUB_R} ${HUB_R} 0 ${large} 0 ${p1Hub.x} ${p1Hub.y}`,
+      // CCW boundary curve: same physical semicircle as the previous
+      // petal's CW edge, traversed backwards (sweep flag flipped).
+      `A ${boundaryR} ${boundaryR} 0 0 0 ${p1Outer.x} ${p1Outer.y}`,
       "Z",
     ].join(" ");
   };
 
   const segmentMeta = outerOrder.map((id, i) => {
-    const a1 = startAngle + i * sweep + SEGMENT_GAP_DEG / 2;
-    const a2 = startAngle + (i + 1) * sweep - SEGMENT_GAP_DEG / 2;
+    const a1 = startAngle + i * sweep;
+    const a2 = startAngle + (i + 1) * sweep;
     const mid = (a1 + a2) / 2;
     return { id, a1, a2, mid };
-  });
-
-  // Boundaries between segments — where clockwise flow arrows sit.
-  // Each boundary is at the seam between segment[i] (prev) and segment[i+1] (next).
-  const boundaries = outerOrder.map((id, i) => {
-    const angle = startAngle + (i + 1) * sweep; // 0, 90, 180, 270
-    const next = outerOrder[(i + 1) % outerOrder.length];
-    return { angle, prev: id, next };
   });
 
   return (
@@ -743,85 +719,36 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </feMerge>
           </filter>
 
-          {/* Small drop shadow for the arrow badges */}
-          <filter id="fw-arrow-shadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
-            <feOffset dy="2" />
-            <feComponentTransfer>
-              <feFuncA type="linear" slope="0.25" />
-            </feComponentTransfer>
-            <feMerge>
-              <feMergeNode />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* Donut segments — solid HL brand fills, no hover states */}
-        <g filter="url(#fw-shadow)">
-          {segmentMeta.map(({ id, a1, a2 }) => {
-            const t = STAGE_THEME[id];
+          {/* Per-petal linear gradients — top-to-bottom of each petal's
+              bounding box (objectBoundingBox is the default). */}
+          {outerOrder.map((id) => {
+            const [light, dark] = PETAL_GRADIENT[id];
             return (
-              <path
-                key={id}
-                d={segmentPath(a1, a2)}
-                fill={t.color}
-              />
+              <linearGradient
+                key={`grad-${id}`}
+                id={`fw-grad-${id}`}
+                x1="0%"
+                y1="0%"
+                x2="0%"
+                y2="100%"
+              >
+                <stop offset="0%" stopColor={light} />
+                <stop offset="100%" stopColor={dark} />
+              </linearGradient>
             );
           })}
-        </g>
+        </defs>
 
-        {/* Clockwise flow arrows — white badges that nest perfectly into the
-            puzzle cutouts at each segment boundary. */}
-        {boundaries.map(({ angle, next }) => {
-          const pos = polar(angle, BOUNDARY_R);
-          const nextTheme = STAGE_THEME[next];
-          const Chevron = ChevronAt[((angle % 360) + 360) % 360] || ChevronRight;
-          // Arrow badge clips flush into the puzzle cutout
-          const R_BADGE = BADGE_R;
-          const R_CHEV = R_BADGE * 0.7;
-          return (
-            <g key={`arrow-${angle}`} pointerEvents="none">
-              <circle
-                cx={pos.x}
-                cy={pos.y}
-                r={R_BADGE}
-                fill="white"
-                filter="url(#fw-arrow-shadow)"
-              />
-              <circle
-                cx={pos.x}
-                cy={pos.y}
-                r={R_BADGE}
-                fill="none"
-                stroke={`rgba(${nextTheme.rgb}, 0.45)`}
-                strokeWidth={1.5}
-              />
-              <foreignObject
-                x={pos.x - R_CHEV}
-                y={pos.y - R_CHEV}
-                width={R_CHEV * 2}
-                height={R_CHEV * 2}
-              >
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: nextTheme.color,
-                  }}
-                >
-                  <Chevron
-                    style={{ width: R_CHEV * 1.4, height: R_CHEV * 1.4 }}
-                    strokeWidth={3}
-                  />
-                </div>
-              </foreignObject>
-            </g>
-          );
-        })}
+        {/* Pinwheel petals — gradient brand fills, no flow arrows. */}
+        <g filter="url(#fw-shadow)">
+          {segmentMeta.map(({ id, a1, a2 }) => (
+            <path
+              key={id}
+              d={segmentPath(a1, a2)}
+              fill={`url(#fw-grad-${id})`}
+            />
+          ))}
+        </g>
 
         {/* Curved stage names that arc along each segment, following the
             donut's curve. Top segments use a left-to-right CW arc; bottom
@@ -867,9 +794,16 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           );
         })}
 
-        {/* Center hub: REACTIVATE — no white disc, sits directly on the
-            page gradient so the donut feels like an open ring. */}
+        {/* Center hub: white disc with REACTIVATE label + icon (matches
+            the reference's clean white center). */}
         <g>
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r={CENTER_R}
+            fill="white"
+            filter="url(#fw-hub-shadow)"
+          />
           <g pointerEvents="none">
             <foreignObject
               x={CENTER - 17}
@@ -927,14 +861,14 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           </g>
         </g>
 
-        {/* Stage icon badges on the inner edge of the donut, straddling the
-            white center hub. Rendered LAST so they sit on top of both the
-            colored ring and the hub disc. */}
+        {/* Stage icon badges sitting in the "fat lobe" of each pinwheel
+            petal. Rendered LAST so they sit on top of the colored petals
+            and the hub disc. */}
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
-          const pos = polar(mid, INNER_R);
-          const BG_R = 29;
-          const ICON_PX = 29;
+          const pos = polar(mid, ICON_R);
+          const BG_R = 32;
+          const ICON_PX = 32;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same

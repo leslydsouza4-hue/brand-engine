@@ -530,17 +530,21 @@ export function GrowthFlywheelWorkspace() {
               >
                 {/* Row 1 — top row mirrors the flywheel's top half:
                     Evangelize sits top-LEFT (top-left segment, orange)
-                    Capture   sits top-RIGHT (top-right segment, yellow) */}
+                    Capture   sits top-RIGHT (top-right segment, yellow)
+                    The fixed 520px middle column reserves real estate for
+                    the absolutely-positioned wheel, so card content stays
+                    naturally left-aligned and never sits under the wheel. */}
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateColumns: "1fr 520px 1fr",
                     gap: "14px",
                     flex: 1,
                     minHeight: 0,
                   }}
                 >
                   <InfoCard stage={getStage("evangelize")} align="left" />
+                  <div aria-hidden />
                   <InfoCard stage={getStage("capture")} align="right" />
                 </div>
 
@@ -550,13 +554,14 @@ export function GrowthFlywheelWorkspace() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
+                    gridTemplateColumns: "1fr 520px 1fr",
                     gap: "14px",
                     flex: 1,
                     minHeight: 0,
                   }}
                 >
                   <InfoCard stage={getStage("close")} align="left" />
+                  <div aria-hidden />
                   <InfoCard stage={getStage("nurture")} align="right" />
                 </div>
 
@@ -611,12 +616,13 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   const OUTER_R = 240;
   const HUB_R = 102;          // inner edge of petals = outer edge of center hub
   const CENTER_R = 92;        // white REACTIVATE disc radius (slightly inside hub)
-  // Where the icon-bearing white badge sits inside each petal. With the
-  // CW pinwheel swirl, the visual "fat lobe" of each petal sits at its
-  // CW outer corner — so we pull the icon outward (closer to the rim)
-  // and rotate it CW from the petal mid into that wide area.
-  const ICON_R = 198;
-  const ICON_ANGLE_OFFSET = 28; // degrees, CW from mid → into fat lobe
+  // Where the icon-bearing white badge sits inside each petal. Pulled
+  // outward toward the rim, but kept on each petal's NOMINAL mid radial
+  // so the badge sits well inside the colored area regardless of the
+  // pinwheel swirl. The visual mid at this radius is offset by the
+  // boundary bulge, but anchoring on the nominal mid gives the cleanest,
+  // safest placement for every petal.
+  const ICON_R = 178;
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -759,54 +765,10 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           ))}
         </g>
 
-        {/* Curved stage names that arc along each segment, following the
-            donut's curve. Top segments use a left-to-right CW arc; bottom
-            segments use a reversed (CCW) arc so the letters stay upright. */}
-        {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 218;
-          const inset = 9;
-          const isTop = Math.sin((mid * Math.PI) / 180) < 0;
-          const start = isTop
-            ? polar(a1 + inset, R_TEXT)
-            : polar(a2 - inset, R_TEXT);
-          const end = isTop
-            ? polar(a2 - inset, R_TEXT)
-            : polar(a1 + inset, R_TEXT);
-          const sweepFlag = isTop ? 1 : 0;
-          const arcPath = `M ${start.x} ${start.y} A ${R_TEXT} ${R_TEXT} 0 0 ${sweepFlag} ${end.x} ${end.y}`;
-          // Icon sits at the CW end of each petal (the fat lobe), so push
-          // the curved label toward the CCW end so the two never collide.
-          // For top petals the path runs CCW→CW so 20% lands on the CCW
-          // end; for bottom petals the path is reversed, so 80% does.
-          const startOffset = isTop ? "20%" : "80%";
-          return (
-            <g key={`label-${id}`} pointerEvents="none">
-              <path
-                id={`fw-textpath-${id}`}
-                d={arcPath}
-                fill="none"
-                stroke="none"
-              />
-              <text
-                fontSize={17}
-                fontWeight={800}
-                fill="rgba(255,255,255,0.92)"
-                style={{
-                  letterSpacing: "1.6px",
-                  fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
-                }}
-              >
-                <textPath
-                  href={`#fw-textpath-${id}`}
-                  startOffset={startOffset}
-                  textAnchor="middle"
-                >
-                  {id.toUpperCase()}
-                </textPath>
-              </text>
-            </g>
-          );
-        })}
+        {/* Stage names are intentionally NOT drawn on the wheel — the four
+            info cards already title each segment, and curved text on the
+            petals fights with the swirl boundaries and the icon badges.
+            Keeping the wheel as a clean color graphic reads much better. */}
 
         {/* Center hub: white disc with REACTIVATE label + icon (matches
             the reference's clean white center). */}
@@ -875,15 +837,14 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           </g>
         </g>
 
-        {/* Stage icon badges sitting in the "fat lobe" of each pinwheel
-            petal — pushed out to the rim and offset CCW from the petal
-            mid so they sit in the wide outer end of each section.
-            Rendered LAST so they paint on top of the petals. */}
+        {/* Stage icon badges anchored on each petal's nominal mid radial
+            and pulled outward toward the rim. Rendered LAST so they paint
+            cleanly on top of the colored petals and the hub disc. */}
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
-          const pos = polar(mid + ICON_ANGLE_OFFSET, ICON_R);
-          const BG_R = 36;
-          const ICON_PX = 36;
+          const pos = polar(mid, ICON_R);
+          const BG_R = 38;
+          const ICON_PX = 38;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same

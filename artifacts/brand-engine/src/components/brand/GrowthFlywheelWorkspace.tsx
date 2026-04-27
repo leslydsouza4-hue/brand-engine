@@ -612,9 +612,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   const HUB_R = 102;          // inner edge of petals = outer edge of center hub
   const CENTER_R = 92;        // white REACTIVATE disc radius (slightly inside hub)
   // Where the icon-bearing white badge sits inside each petal. With the
-  // CW pinwheel swirl, the visual "fat lobe" of each petal sits along its
-  // mid angle but pulled toward the outer edge.
-  const ICON_R = 170;
+  // CW pinwheel swirl, the visual "fat lobe" of each petal sits at its
+  // CW outer corner — so we pull the icon outward (closer to the rim)
+  // and rotate it CW from the petal mid into that wide area.
+  const ICON_R = 198;
+  const ICON_ANGLE_OFFSET = 28; // degrees, CW from mid → into fat lobe
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -625,13 +627,15 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
     return { x: CENTER + r * Math.cos(rad), y: CENTER + r * Math.sin(rad) };
   };
 
-  // Per-stage gradient stops — light "highlight" shade fading to a deeper
-  // shade of the same brand color (matches the reference's lit-petal look).
+  // Per-stage gradient stops — saturated highlight at the OUTER edge of
+  // each petal fading to a deep, punchy shade near the hub. Each gradient
+  // is rendered in user-space along the petal's mid radial so the lit
+  // edge always reads as the rim of the wheel (matches the reference).
   const PETAL_GRADIENT: Record<StageId, [string, string]> = {
-    capture:    ["#FFE082", "#FF8F00"], // yellow → deep amber
-    nurture:    ["#4FC3F7", "#01579B"], // sky → deep blue
-    close:      ["#66BB6A", "#1B5E20"], // mint → forest green
-    evangelize: ["#FFB74D", "#BF360C"], // light orange → burnt orange
+    capture:    ["#FFD54F", "#E65100"], // bright amber → deep orange
+    nurture:    ["#29B6F6", "#01579B"], // vivid cyan-blue → deep blue
+    close:      ["#43A047", "#1B5E20"], // bright green → forest
+    evangelize: ["#FF7043", "#BF360C"], // vivid coral → burnt orange
     reactivate: ["#1E40AF", "#0B1A3A"], // (only used for icon tint, not petal)
   };
 
@@ -719,18 +723,23 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             </feMerge>
           </filter>
 
-          {/* Per-petal linear gradients — top-to-bottom of each petal's
-              bounding box (objectBoundingBox is the default). */}
-          {outerOrder.map((id) => {
+          {/* Per-petal linear gradients in user space — light highlight at
+              the OUTER rim of the petal, deep shade near the hub. The
+              gradient runs along each petal's mid radial, so every petal
+              reads with the same "lit edge → shaded core" treatment. */}
+          {segmentMeta.map(({ id, mid }) => {
             const [light, dark] = PETAL_GRADIENT[id];
+            const outer = polar(mid, OUTER_R);
+            const inner = polar(mid, HUB_R);
             return (
               <linearGradient
                 key={`grad-${id}`}
                 id={`fw-grad-${id}`}
-                x1="0%"
-                y1="0%"
-                x2="0%"
-                y2="100%"
+                gradientUnits="userSpaceOnUse"
+                x1={outer.x}
+                y1={outer.y}
+                x2={inner.x}
+                y2={inner.y}
               >
                 <stop offset="0%" stopColor={light} />
                 <stop offset="100%" stopColor={dark} />
@@ -754,8 +763,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             donut's curve. Top segments use a left-to-right CW arc; bottom
             segments use a reversed (CCW) arc so the letters stay upright. */}
         {segmentMeta.map(({ id, a1, a2, mid }) => {
-          const R_TEXT = 184;
-          const inset = 7;
+          const R_TEXT = 218;
+          const inset = 9;
           const isTop = Math.sin((mid * Math.PI) / 180) < 0;
           const start = isTop
             ? polar(a1 + inset, R_TEXT)
@@ -765,6 +774,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             : polar(a1 + inset, R_TEXT);
           const sweepFlag = isTop ? 1 : 0;
           const arcPath = `M ${start.x} ${start.y} A ${R_TEXT} ${R_TEXT} 0 0 ${sweepFlag} ${end.x} ${end.y}`;
+          // Icon sits at the CW end of each petal (the fat lobe), so push
+          // the curved label toward the CCW end so the two never collide.
+          // For top petals the path runs CCW→CW so 20% lands on the CCW
+          // end; for bottom petals the path is reversed, so 80% does.
+          const startOffset = isTop ? "20%" : "80%";
           return (
             <g key={`label-${id}`} pointerEvents="none">
               <path
@@ -774,17 +788,17 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                 stroke="none"
               />
               <text
-                fontSize={19}
-                fontWeight={900}
-                fill="white"
+                fontSize={17}
+                fontWeight={800}
+                fill="rgba(255,255,255,0.92)"
                 style={{
-                  letterSpacing: "1.4px",
+                  letterSpacing: "1.6px",
                   fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
                 }}
               >
                 <textPath
                   href={`#fw-textpath-${id}`}
-                  startOffset="50%"
+                  startOffset={startOffset}
                   textAnchor="middle"
                 >
                   {id.toUpperCase()}
@@ -862,13 +876,14 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
         </g>
 
         {/* Stage icon badges sitting in the "fat lobe" of each pinwheel
-            petal. Rendered LAST so they sit on top of the colored petals
-            and the hub disc. */}
+            petal — pushed out to the rim and offset CCW from the petal
+            mid so they sit in the wide outer end of each section.
+            Rendered LAST so they paint on top of the petals. */}
         {segmentMeta.map(({ id, mid }) => {
           const t = STAGE_THEME[id];
-          const pos = polar(mid, ICON_R);
-          const BG_R = 32;
-          const ICON_PX = 32;
+          const pos = polar(mid + ICON_ANGLE_OFFSET, ICON_R);
+          const BG_R = 36;
+          const ICON_PX = 36;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base so the tinted overlay reads the same

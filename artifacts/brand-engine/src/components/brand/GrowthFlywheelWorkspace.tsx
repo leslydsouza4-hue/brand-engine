@@ -638,9 +638,9 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   // badge cleanly inside the colored ring — not touching the rim, not
   // touching the center "REACTIVATE" disc.
   const ICON_LAYOUT: Record<StageId, { cx: number; cy: number }> = {
-    evangelize: wheelPos(0.50, 0.17), // trophy at TOP
-    capture:    wheelPos(0.83, 0.50), // funnel at RIGHT
-    nurture:    wheelPos(0.50, 0.85), // chat   at BOTTOM
+    evangelize: wheelPos(0.50, 0.14), // trophy at TOP
+    capture:    wheelPos(0.86, 0.50), // funnel at RIGHT
+    nurture:    wheelPos(0.50, 0.86), // chat   at BOTTOM
     close:      wheelPos(0.14, 0.50), // dollar at LEFT
   };
 

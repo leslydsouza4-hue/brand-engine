@@ -546,7 +546,12 @@ export function GrowthFlywheelWorkspace() {
                     minHeight: 0,
                   }}
                 >
-                  <InfoCard stage={getStage("evangelize")} align="left" />
+                  {/* Left cards get a leading pad so the visible card box
+                      shrinks toward the content (no more dead white slab
+                      on the far left). */}
+                  <div style={{ paddingLeft: 110, height: "100%" }}>
+                    <InfoCard stage={getStage("evangelize")} align="left" />
+                  </div>
                   <InfoCard stage={getStage("capture")} align="right" />
                 </div>
 
@@ -562,7 +567,9 @@ export function GrowthFlywheelWorkspace() {
                     minHeight: 0,
                   }}
                 >
-                  <InfoCard stage={getStage("close")} align="left" />
+                  <div style={{ paddingLeft: 110, height: "100%" }}>
+                    <InfoCard stage={getStage("close")} align="left" />
+                  </div>
                   <InfoCard stage={getStage("nurture")} align="right" />
                 </div>
 

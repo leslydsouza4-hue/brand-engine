@@ -617,21 +617,26 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   const HUB_R = 102;          // inner edge of petals = outer edge of center hub
   const CENTER_R = 92;        // white REACTIVATE disc radius (slightly inside hub)
   // Icon badge size — uniform across all four petals.
-  const BG_R = 42;
+  // BG_R is in SVG units; with SIZE=600 rendered into a ~480px box this
+  // works out to roughly 54px badges on screen, matching the spec.
+  const BG_R = 34;
 
-  // Per-stage badge placement, driven by percentage offsets (so the
-  // layout stays correct at any container size — SVG viewBox scales it).
-  // Numbers come straight from the reference layout:
-  //   trophy / evangelize → top 13%, right 25%
-  //   funnel / capture    → top 48%, right  7%
-  //   chat   / nurture    → bottom 14%, left 29%
-  //   dollar / close      → top 30%, left  8%
-  // Each entry resolves to the badge's CENTER point in SVG coordinates.
+  // Per-stage badge placement. Percentages are RELATIVE TO THE WHEEL
+  // CIRCLE (not the outer SVG box which has padding for the drop shadow)
+  // so a position of (top: 50%, left: 50%) lands at the wheel center.
+  // Each badge sits inside the colored ring, balanced between hub and rim.
+  const WHEEL_DIAM = 2 * OUTER_R;
+  const WHEEL_LEFT = CENTER - OUTER_R;
+  const WHEEL_TOP = CENTER - OUTER_R;
+  const wheelPos = (leftPct: number, topPct: number) => ({
+    cx: WHEEL_LEFT + leftPct * WHEEL_DIAM,
+    cy: WHEEL_TOP + topPct * WHEEL_DIAM,
+  });
   const ICON_LAYOUT: Record<StageId, { cx: number; cy: number }> = {
-    evangelize: { cx: SIZE - 0.25 * SIZE - BG_R, cy: 0.13 * SIZE + BG_R },
-    capture:    { cx: SIZE - 0.07 * SIZE - BG_R, cy: 0.48 * SIZE + BG_R },
-    nurture:    { cx: 0.29 * SIZE + BG_R,        cy: SIZE - 0.14 * SIZE - BG_R },
-    close:      { cx: 0.08 * SIZE + BG_R,        cy: 0.30 * SIZE + BG_R },
+    evangelize: wheelPos(0.57, 0.11), // trophy: top 11%, left 57%
+    capture:    wheelPos(0.78, 0.48), // funnel: top 48%, left 78%
+    nurture:    wheelPos(0.31, 0.72), // chat:   top 72%, left 31%
+    close:      wheelPos(0.12, 0.37), // dollar: top 37%, left 12%
   };
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
@@ -857,7 +862,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           // Absolute, percentage-driven badge position from ICON_LAYOUT
           // (responsive: SVG viewBox keeps these correct at any size).
           const pos = { x: ICON_LAYOUT[id].cx, y: ICON_LAYOUT[id].cy };
-          const ICON_PX = 40;
+          const ICON_PX = 32;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
               {/* Solid white base + elevated drop shadow so the badge

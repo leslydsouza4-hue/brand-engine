@@ -1089,10 +1089,11 @@ function InfoCard({
           />
         </div>
 
-        {/* Title + tagline stacked together, sitting next to the icon
-            for a tight, scannable header (no divider needed below). */}
+        {/* Title sits next to the icon. Tagline is rendered BELOW the
+            header row (outside this flex) so it can use the full
+            content-box width and stay on a single line. */}
         <div
-          className="flex-1 min-w-0 pt-[2px]"
+          className="flex-1 min-w-0 pt-[6px]"
           style={align === "right" ? { textAlign: "right" } : undefined}
         >
           <div
@@ -1104,14 +1105,20 @@ function InfoCard({
           >
             {stage.title}
           </div>
-          <p
-            className="text-[15px] leading-[1.4] mt-[4px]"
-            style={{ color: "var(--card-text-muted)" }}
-          >
-            {stage.tagline}
-          </p>
         </div>
       </div>
+
+      {/* Tagline — full content-box width, single line. */}
+      <p
+        className="pl-[28px] pr-[26px] mt-[2px] text-[14px] leading-[1.4]"
+        style={{
+          color: "var(--card-text-muted)",
+          textAlign: align === "right" ? "right" : "left",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {stage.tagline}
+      </p>
 
       {/* Bullet list — right-aligned cards flip each bullet row so the
           coloured dot sits on the right and the label reads in toward

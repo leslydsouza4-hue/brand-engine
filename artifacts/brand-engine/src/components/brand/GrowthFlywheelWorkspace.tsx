@@ -778,7 +778,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               clockwise arc, bottom-half petals use a counter-clockwise
               arc, so the text always reads right-side up. */}
           {segmentMeta.map(({ id, mid }) => {
-            const TEXT_R = 200;
+            const TEXT_R = 170;
             const halfSpan = 38; // ~76° arc per label
             const isBottomHalf =
               Math.sin((mid * Math.PI) / 180) > 0;

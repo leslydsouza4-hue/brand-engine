@@ -561,7 +561,6 @@ export function GrowthFlywheelWorkspace() {
                   }}
                 >
                   <InfoCard stage={getStage("close")} align="left" />
-                  <div aria-hidden />
                   <InfoCard stage={getStage("nurture")} align="right" />
                 </div>
 

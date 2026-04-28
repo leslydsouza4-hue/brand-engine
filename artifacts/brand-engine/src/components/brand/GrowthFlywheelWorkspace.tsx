@@ -616,13 +616,23 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   const OUTER_R = 240;
   const HUB_R = 102;          // inner edge of petals = outer edge of center hub
   const CENTER_R = 92;        // white REACTIVATE disc radius (slightly inside hub)
-  // Where the icon-bearing white badge sits inside each petal. The CW
-  // boundary radial (a2) lands at the cardinal direction, but the actual
-  // boundary CURVE bulges CW from there — so to sit centered ON the
-  // swirling edge of the petal head (matching the reference), the badge
-  // is offset CW from the cardinal by the bulge angle at this radius.
-  const ICON_R = 195;
-  const ICON_ANGLE_OFFSET = 20; // degrees CW; puts icon ON the swirl edge curve
+  // Icon badge size — uniform across all four petals.
+  const BG_R = 42;
+
+  // Per-stage badge placement, driven by percentage offsets (so the
+  // layout stays correct at any container size — SVG viewBox scales it).
+  // Numbers come straight from the reference layout:
+  //   trophy / evangelize → top 13%, right 25%
+  //   funnel / capture    → top 48%, right  7%
+  //   chat   / nurture    → bottom 14%, left 29%
+  //   dollar / close      → top 30%, left  8%
+  // Each entry resolves to the badge's CENTER point in SVG coordinates.
+  const ICON_LAYOUT: Record<StageId, { cx: number; cy: number }> = {
+    evangelize: { cx: SIZE - 0.25 * SIZE - BG_R, cy: 0.13 * SIZE + BG_R },
+    capture:    { cx: SIZE - 0.07 * SIZE - BG_R, cy: 0.48 * SIZE + BG_R },
+    nurture:    { cx: 0.29 * SIZE + BG_R,        cy: SIZE - 0.14 * SIZE - BG_R },
+    close:      { cx: 0.08 * SIZE + BG_R,        cy: 0.30 * SIZE + BG_R },
+  };
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
   const sweep = 360 / outerOrder.length;
@@ -842,24 +852,24 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             lobe of every petal in our CW pinwheel, matching the reference
             layout. Rendered LAST so they paint cleanly on top of the
             colored petals and the hub disc. */}
-        {segmentMeta.map(({ id, a2 }) => {
+        {segmentMeta.map(({ id }) => {
           const t = STAGE_THEME[id];
-          // Shift CW from the cardinal so the badge lands centered ON
-          // the swirling boundary curve of the petal head, not next to it.
-          const pos = polar(a2 + ICON_ANGLE_OFFSET, ICON_R);
-          const BG_R = 42;
+          // Absolute, percentage-driven badge position from ICON_LAYOUT
+          // (responsive: SVG viewBox keeps these correct at any size).
+          const pos = { x: ICON_LAYOUT[id].cx, y: ICON_LAYOUT[id].cy };
           const ICON_PX = 40;
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
-              {/* Solid white base so the tinted overlay reads the same
-                  whether it sits over the white hub or the colored ring. */}
+              {/* Solid white base + elevated drop shadow so the badge
+                  reads as a floating disc above the colored petals. */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
                 r={BG_R}
                 fill="white"
                 style={{
-                  filter: "drop-shadow(0 2px 5px rgba(15,23,42,0.18))",
+                  filter:
+                    "drop-shadow(0 4px 10px rgba(15,23,42,0.22)) drop-shadow(0 1px 2px rgba(15,23,42,0.12))",
                 }}
               />
               <circle

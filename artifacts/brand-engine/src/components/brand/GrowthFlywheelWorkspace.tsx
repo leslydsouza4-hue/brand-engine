@@ -190,8 +190,10 @@ const THEME_VARS: Record<SlideTheme, Record<string, string>> = {
     "--card-text": "#0F172A",
     "--card-text-muted": "#475569",
     "--card-bullet-text": "#1E293B",
-    "--card-shadow-inner": "rgba(15,23,42,0.04)",
-    "--card-border": "1px solid transparent",
+    "--card-shadow-inner": "rgba(15,23,42,0.08)",
+    // Visible hairline so the white cards read as distinct surfaces on
+    // top of the very-light blue slide gradient (they were blending in).
+    "--card-border": "1px solid rgba(15, 23, 42, 0.10)",
     "--card-backdrop": "none",
     "--hub-sub-text": "#475569",
     "--header-bg": "#FFFFFF",

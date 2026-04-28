@@ -561,6 +561,8 @@ export function GrowthFlywheelWorkspace() {
                   }}
                 >
                   <InfoCard stage={getStage("close")} align="left" />
+                  <div aria-hidden />
+                  <InfoCard stage={getStage("nurture")} align="right" />
                 </div>
 
                 {/* Flywheel — absolutely centered over rows 1+2.

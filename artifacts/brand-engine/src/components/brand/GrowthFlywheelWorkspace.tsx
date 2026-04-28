@@ -824,11 +824,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           {segmentMeta.map(({ id }) => (
             <text
               key={`label-${id}`}
-              fontSize={15}
+              fontSize={19}
               fontWeight={800}
               fill="white"
               style={{
-                letterSpacing: "2px",
+                letterSpacing: "2.5px",
                 fontFamily:
                   "Poppins, ui-sans-serif, system-ui, sans-serif",
               }}

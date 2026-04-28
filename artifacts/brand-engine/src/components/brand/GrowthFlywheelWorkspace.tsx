@@ -989,14 +989,16 @@ function InfoCard({
   // The flywheel cards stretch all the way across the slide — meeting
   // in the middle behind the wheel — so the card surface forms one
   // continuous strip. The actual content (header + bullets) is capped
-  // and pinned to the outer edge so it never slides under the wheel.
+  // and pulled toward the INNER edge of each side card (closer to the
+  // wheel), but with a buffer so it never tucks under the wheel halo.
   // Wide (Reactivate) and full cards keep their natural full-width
-  // content layout.
+  // layout.
+  const wheelBuffer = 180; // px of breathing room next to the wheel
   const contentBoxStyle: React.CSSProperties =
     align === "left"
-      ? { maxWidth: 440, marginRight: "auto" }
+      ? { maxWidth: 440, marginLeft: "auto", marginRight: wheelBuffer }
       : align === "right"
-        ? { maxWidth: 440, marginLeft: "auto" }
+        ? { maxWidth: 440, marginRight: "auto", marginLeft: wheelBuffer }
         : {};
   const glowCorner = align === "right" ? "100% 0%" : "0% 0%";
 

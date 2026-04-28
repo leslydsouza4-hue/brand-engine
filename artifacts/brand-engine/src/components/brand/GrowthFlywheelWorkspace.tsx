@@ -996,19 +996,22 @@ function InfoCard({
   // Wide (Reactivate) and full cards keep their natural full-width
   // layout.
   const wheelBuffer = 180; // px of breathing room next to the wheel
-  // Left cards get an additional ~5% nudge to the left so the Close /
-  // Evangelize content sits a bit further from the wheel than the
-  // right-side cards.
-  const leftNudge = 96; // ~5% of card width
+  // Each side card gets an additional ~5% outward nudge so content
+  // sits a bit further from the wheel — symmetric on both sides.
+  const outwardNudge = 96; // ~5% of card width
   const contentBoxStyle: React.CSSProperties =
     align === "left"
       ? {
           maxWidth: 440,
           marginLeft: "auto",
-          marginRight: wheelBuffer + leftNudge,
+          marginRight: wheelBuffer + outwardNudge,
         }
       : align === "right"
-        ? { maxWidth: 440, marginRight: "auto", marginLeft: wheelBuffer }
+        ? {
+            maxWidth: 440,
+            marginRight: "auto",
+            marginLeft: wheelBuffer + outwardNudge,
+          }
         : {};
   const glowCorner = align === "right" ? "100% 0%" : "0% 0%";
 

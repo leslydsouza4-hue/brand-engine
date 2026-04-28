@@ -1010,16 +1010,20 @@ function InfoCard({
   // Each side card gets an additional ~5% outward nudge so content
   // sits a bit further from the wheel — symmetric on both sides.
   const outwardNudge = 96; // ~5% of card width
+  // 500px is enough to keep the longest bullet ("Ringless Voicemail &
+  // Auto Call Connect") on a single line so the Nurture card doesn't
+  // overflow its row.
+  const contentMax = 500;
   const contentBoxStyle: React.CSSProperties =
     align === "left"
       ? {
-          maxWidth: 440,
+          maxWidth: contentMax,
           marginLeft: "auto",
           marginRight: wheelBuffer + outwardNudge,
         }
       : align === "right"
         ? {
-            maxWidth: 440,
+            maxWidth: contentMax,
             marginRight: "auto",
             marginLeft: wheelBuffer + outwardNudge,
           }

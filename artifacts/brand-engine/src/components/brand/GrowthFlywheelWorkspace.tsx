@@ -607,8 +607,17 @@ export function GrowthFlywheelWorkspace() {
                 </div>
               </div>
 
-              {/* Row 3 — Reactivate wide */}
-              <div style={{ flexShrink: 0 }}>
+              {/* Row 3 — Reactivate wide.
+                  Pad left+right by 110 to match the visible width of
+                  the four top cards (which are wrapped with the same
+                  paddingLeft/paddingRight). */}
+              <div
+                style={{
+                  flexShrink: 0,
+                  paddingLeft: 110,
+                  paddingRight: 110,
+                }}
+              >
                 <InfoCard stage={getStage("reactivate")} wide />
               </div>
             </div>

@@ -632,11 +632,16 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
     cx: WHEEL_LEFT + leftPct * WHEEL_DIAM,
     cy: WHEEL_TOP + topPct * WHEEL_DIAM,
   });
+  // Each badge sits at the TRUE CARDINAL of its stage's petal head
+  // (matches the reference: trophy = top, funnel = right, chat = bottom,
+  // dollar = left). The percentage from the cardinal edge places the
+  // badge cleanly inside the colored ring — not touching the rim, not
+  // touching the center "REACTIVATE" disc.
   const ICON_LAYOUT: Record<StageId, { cx: number; cy: number }> = {
-    evangelize: wheelPos(0.57, 0.11), // trophy: top 11%, left 57%
-    capture:    wheelPos(0.78, 0.48), // funnel: top 48%, left 78%
-    nurture:    wheelPos(0.31, 0.72), // chat:   top 72%, left 31%
-    close:      wheelPos(0.12, 0.37), // dollar: top 37%, left 12%
+    evangelize: wheelPos(0.50, 0.17), // trophy at TOP
+    capture:    wheelPos(0.83, 0.50), // funnel at RIGHT
+    nurture:    wheelPos(0.50, 0.83), // chat   at BOTTOM
+    close:      wheelPos(0.17, 0.50), // dollar at LEFT
   };
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
@@ -859,14 +864,13 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             colored petals and the hub disc. */}
         {segmentMeta.map(({ id }) => {
           const t = STAGE_THEME[id];
-          // Absolute, percentage-driven badge position from ICON_LAYOUT
-          // (responsive: SVG viewBox keeps these correct at any size).
           const pos = { x: ICON_LAYOUT[id].cx, y: ICON_LAYOUT[id].cy };
-          const ICON_PX = 32;
+          const ICON_PX = 34;
+          // Reference style: pure white disc + deep navy icon glyph.
+          // No colored tint / no colored stroke — the badge reads cleanly
+          // against the saturated petal underneath.
           return (
             <g key={`inner-icon-${id}`} pointerEvents="none">
-              {/* Solid white base + elevated drop shadow so the badge
-                  reads as a floating disc above the colored petals. */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
@@ -876,20 +880,6 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                   filter:
                     "drop-shadow(0 4px 10px rgba(15,23,42,0.22)) drop-shadow(0 1px 2px rgba(15,23,42,0.12))",
                 }}
-              />
-              <circle
-                cx={pos.x}
-                cy={pos.y}
-                r={BG_R}
-                fill={`rgba(${t.rgb}, 0.22)`}
-              />
-              <circle
-                cx={pos.x}
-                cy={pos.y}
-                r={BG_R}
-                fill="none"
-                stroke={`rgba(${t.rgb}, 0.7)`}
-                strokeWidth={1.5}
               />
               <foreignObject
                 x={pos.x - ICON_PX / 2}
@@ -901,7 +891,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                   style={{
                     width: ICON_PX,
                     height: ICON_PX,
-                    backgroundColor: t.color,
+                    backgroundColor: STAGE_THEME.reactivate.color,
                     WebkitMaskImage: `url(${t.iconSrc})`,
                     maskImage: `url(${t.iconSrc})`,
                     WebkitMaskSize: "contain",

@@ -531,20 +531,20 @@ export function GrowthFlywheelWorkspace() {
                 {/* Row 1 — top row mirrors the flywheel's top half:
                     Evangelize sits top-LEFT (top-left segment, orange)
                     Capture   sits top-RIGHT (top-right segment, yellow)
-                    The fixed 520px middle column reserves real estate for
-                    the absolutely-positioned wheel, so card content stays
-                    naturally left-aligned and never sits under the wheel. */}
+                    Each card now spans its full half-width and the two
+                    halves meet in the centre, forming one continuous
+                    horizontal strip behind the absolutely-positioned
+                    wheel. The wheel disc covers the 14px seam. */}
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 520px 1fr",
+                    gridTemplateColumns: "1fr 1fr",
                     gap: "14px",
                     flex: 1,
                     minHeight: 0,
                   }}
                 >
                   <InfoCard stage={getStage("evangelize")} align="left" />
-                  <div aria-hidden />
                   <InfoCard stage={getStage("capture")} align="right" />
                 </div>
 
@@ -554,14 +554,13 @@ export function GrowthFlywheelWorkspace() {
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 520px 1fr",
+                    gridTemplateColumns: "1fr 1fr",
                     gap: "14px",
                     flex: 1,
                     minHeight: 0,
                   }}
                 >
                   <InfoCard stage={getStage("close")} align="left" />
-                  <div aria-hidden />
                   <InfoCard stage={getStage("nurture")} align="right" />
                 </div>
 
@@ -987,11 +986,18 @@ function InfoCard({
       ]
     : [stage.items];
 
-  // All cards are left-aligned: content fills the card naturally from
-  // the left edge with the card's standard padding. The `align` prop is
-  // kept only so the soft radial glow lights up the correct corner of
-  // each card (left cards glow from top-left, right cards from top-right).
-  const contentBoxStyle: React.CSSProperties = {};
+  // The flywheel cards stretch all the way across the slide — meeting
+  // in the middle behind the wheel — so the card surface forms one
+  // continuous strip. The actual content (header + bullets) is capped
+  // and pinned to the outer edge so it never slides under the wheel.
+  // Wide (Reactivate) and full cards keep their natural full-width
+  // content layout.
+  const contentBoxStyle: React.CSSProperties =
+    align === "left"
+      ? { maxWidth: 440, marginRight: "auto" }
+      : align === "right"
+        ? { maxWidth: 440, marginLeft: "auto" }
+        : {};
   const glowCorner = align === "right" ? "100% 0%" : "0% 0%";
 
   return (

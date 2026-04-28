@@ -773,20 +773,28 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             );
           })}
 
-          {/* Invisible arc paths for the curved stage labels. Each label
-              follows an arc inside its petal body. Top-half petals use a
-              clockwise arc, bottom-half petals use a counter-clockwise
-              arc, so the text always reads right-side up. */}
-          {segmentMeta.map(({ id, mid }) => {
-            const TEXT_R = 170;
-            const halfSpan = 38; // ~76° arc per label
+          {/* Invisible arc paths for the curved stage labels. Each
+              petal is an S-curve: it bulges out at the head (a2, where
+              the icon sits) and tapers toward the tail (a1). To keep
+              the text inside the petal body — not bleeding into the
+              neighbouring petal at the tail end — we shift the arc
+              toward the head and leave explicit margins on both ends.
+              Top-half petals use a CW arc and bottom-half petals use a
+              CCW arc so the text always reads right-side up. */}
+          {segmentMeta.map(({ id, a1, a2 }) => {
+            const TEXT_R = 185;
+            const tailMargin = 22; // clear of the tapered tail
+            const headMargin = 14; // clear of the icon badge at the head
+            const lo = a1 + tailMargin;
+            const hi = a2 - headMargin;
+            const labelMid = (lo + hi) / 2;
             const isBottomHalf =
-              Math.sin((mid * Math.PI) / 180) > 0;
+              Math.sin((labelMid * Math.PI) / 180) > 0;
             const sweep = isBottomHalf ? 0 : 1;
-            const startAngle = isBottomHalf ? mid + halfSpan : mid - halfSpan;
-            const endAngle = isBottomHalf ? mid - halfSpan : mid + halfSpan;
-            const start = polar(startAngle, TEXT_R);
-            const end = polar(endAngle, TEXT_R);
+            const fromAngle = isBottomHalf ? hi : lo;
+            const toAngle = isBottomHalf ? lo : hi;
+            const start = polar(fromAngle, TEXT_R);
+            const end = polar(toAngle, TEXT_R);
             return (
               <path
                 key={`textpath-${id}`}

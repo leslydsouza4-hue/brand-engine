@@ -637,10 +637,10 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   // badge cleanly inside the colored ring — not touching the rim, not
   // touching the center "REACTIVATE" disc.
   const ICON_LAYOUT: Record<StageId, { cx: number; cy: number }> = {
-    evangelize: wheelPos(0.50, 0.10), // trophy at TOP
-    capture:    wheelPos(0.90, 0.50), // funnel at RIGHT
-    nurture:    wheelPos(0.50, 0.90), // chat   at BOTTOM
-    close:      wheelPos(0.10, 0.50), // dollar at LEFT
+    evangelize: wheelPos(0.50, 0.14), // trophy at TOP
+    capture:    wheelPos(0.86, 0.50), // funnel at RIGHT
+    nurture:    wheelPos(0.50, 0.86), // chat   at BOTTOM
+    close:      wheelPos(0.14, 0.50), // dollar at LEFT
   };
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];
@@ -782,8 +782,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               CCW arc so the text always reads right-side up. */}
           {segmentMeta.map(({ id, a1, a2 }) => {
             const TEXT_R = 178;
-            const tailMargin = 18; // clear of the tapered tail
-            const headMargin = 8;  // clear of the icon badge at the head
+            const tailMargin = 22; // clear of the tapered tail
+            const headMargin = 14; // clear of the icon badge at the head
             const lo = a1 + tailMargin;
             const hi = a2 - headMargin;
             const labelMid = (lo + hi) / 2;
@@ -823,11 +823,11 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           {segmentMeta.map(({ id }) => (
             <text
               key={`label-${id}`}
-              fontSize={22}
+              fontSize={19}
               fontWeight={800}
               fill="white"
               style={{
-                letterSpacing: "3px",
+                letterSpacing: "2.5px",
                 fontFamily:
                   "Poppins, ui-sans-serif, system-ui, sans-serif",
               }}

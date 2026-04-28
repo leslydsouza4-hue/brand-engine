@@ -640,7 +640,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   const ICON_LAYOUT: Record<StageId, { cx: number; cy: number }> = {
     evangelize: wheelPos(0.50, 0.17), // trophy at TOP
     capture:    wheelPos(0.83, 0.50), // funnel at RIGHT
-    nurture:    wheelPos(0.50, 0.83), // chat   at BOTTOM
+    nurture:    wheelPos(0.50, 0.85), // chat   at BOTTOM
     close:      wheelPos(0.14, 0.50), // dollar at LEFT
   };
 

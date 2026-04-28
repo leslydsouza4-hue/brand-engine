@@ -1023,8 +1023,15 @@ function InfoCard({
       {/* Inner content box — constrained when aligned */}
       <div className="relative" style={contentBoxStyle}>
 
-      {/* Header row */}
-      <div className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]">
+      {/* Header row — when right-aligned, the icon chip moves to the
+          right edge and the title/tagline text right-aligns next to it,
+          mirroring the left card's layout. */}
+      <div
+        className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]"
+        style={
+          align === "right" ? { flexDirection: "row-reverse" } : undefined
+        }
+      >
         {/* Icon chip */}
         <div
           className="w-[50px] h-[50px] shrink-0 rounded-[13px] flex items-center justify-center"
@@ -1043,7 +1050,10 @@ function InfoCard({
 
         {/* Title + tagline stacked together, sitting next to the icon
             for a tight, scannable header (no divider needed below). */}
-        <div className="flex-1 min-w-0 pt-[2px]">
+        <div
+          className="flex-1 min-w-0 pt-[2px]"
+          style={align === "right" ? { textAlign: "right" } : undefined}
+        >
           <div
             className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{
@@ -1062,7 +1072,9 @@ function InfoCard({
         </div>
       </div>
 
-      {/* Bullet list */}
+      {/* Bullet list — right-aligned cards flip each bullet row so the
+          coloured dot sits on the right and the label reads in toward
+          the wheel. */}
       <div className="pl-[28px] pr-[26px] pt-[12px] pb-[14px]">
         <div
           className={
@@ -1075,7 +1087,12 @@ function InfoCard({
             <div
               key={`${stage.id}-${idx}`}
               className="flex items-start gap-[12px] text-[19px] leading-[1.4] font-medium"
-              style={{ color: "var(--card-bullet-text)" }}
+              style={{
+                color: "var(--card-bullet-text)",
+                ...(align === "right"
+                  ? { flexDirection: "row-reverse", textAlign: "right" }
+                  : null),
+              }}
             >
               <div
                 className="w-[9px] h-[9px] rounded-full mt-[8px] shrink-0"

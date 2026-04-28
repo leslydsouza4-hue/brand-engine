@@ -782,7 +782,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               Top-half petals use a CW arc and bottom-half petals use a
               CCW arc so the text always reads right-side up. */}
           {segmentMeta.map(({ id, a1, a2 }) => {
-            const TEXT_R = 185;
+            const TEXT_R = 178;
             const tailMargin = 22; // clear of the tapered tail
             const headMargin = 14; // clear of the icon badge at the head
             const lo = a1 + tailMargin;

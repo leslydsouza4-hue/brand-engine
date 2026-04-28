@@ -552,7 +552,9 @@ export function GrowthFlywheelWorkspace() {
                   <div style={{ paddingLeft: 110, height: "100%" }}>
                     <InfoCard stage={getStage("evangelize")} align="left" />
                   </div>
-                  <InfoCard stage={getStage("capture")} align="right" />
+                  <div style={{ paddingRight: 110, height: "100%" }}>
+                    <InfoCard stage={getStage("capture")} align="right" />
+                  </div>
                 </div>
 
                 {/* Row 2 — bottom row mirrors the flywheel's bottom half:
@@ -570,7 +572,9 @@ export function GrowthFlywheelWorkspace() {
                   <div style={{ paddingLeft: 110, height: "100%" }}>
                     <InfoCard stage={getStage("close")} align="left" />
                   </div>
-                  <InfoCard stage={getStage("nurture")} align="right" />
+                  <div style={{ paddingRight: 110, height: "100%" }}>
+                    <InfoCard stage={getStage("nurture")} align="right" />
+                  </div>
                 </div>
 
                 {/* Flywheel — absolutely centered over rows 1+2.

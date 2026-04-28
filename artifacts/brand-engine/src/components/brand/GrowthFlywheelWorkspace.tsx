@@ -1015,12 +1015,17 @@ function InfoCard({
         boxShadow: `0 1px 2px var(--card-shadow-inner), 0 12px 26px -12px rgba(${t.rgb}, 0.26)`,
       }}
     >
-      {/* Soft tinted radial glow */}
+      {/* Soft tinted radial glow — all four flywheel side cards share
+          the Evangelize coral wash so the row reads as one cohesive
+          surface (per user request). The wide Reactivate card keeps its
+          own theme tint. */}
       <div
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(circle at ${glowCorner}, rgba(${t.rgb}, 0.14) 0%, transparent 55%)`,
+          background: `radial-gradient(circle at ${glowCorner}, rgba(${
+            wide ? t.rgb : "242,92,25"
+          }, 0.14) 0%, transparent 55%)`,
         }}
       />
 

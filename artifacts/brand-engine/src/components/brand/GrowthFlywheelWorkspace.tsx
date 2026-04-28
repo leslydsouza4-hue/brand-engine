@@ -641,7 +641,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
     evangelize: wheelPos(0.50, 0.17), // trophy at TOP
     capture:    wheelPos(0.83, 0.50), // funnel at RIGHT
     nurture:    wheelPos(0.50, 0.83), // chat   at BOTTOM
-    close:      wheelPos(0.12, 0.50), // dollar at LEFT (nudged 5% left)
+    close:      wheelPos(0.14, 0.50), // dollar at LEFT
   };
 
   const outerOrder: StageId[] = ["capture", "nurture", "close", "evangelize"];

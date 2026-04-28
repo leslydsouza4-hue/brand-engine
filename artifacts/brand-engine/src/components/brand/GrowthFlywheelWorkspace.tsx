@@ -772,6 +772,30 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               </linearGradient>
             );
           })}
+
+          {/* Invisible arc paths for the curved stage labels. Each label
+              follows an arc inside its petal body. Top-half petals use a
+              clockwise arc, bottom-half petals use a counter-clockwise
+              arc, so the text always reads right-side up. */}
+          {segmentMeta.map(({ id, mid }) => {
+            const TEXT_R = 200;
+            const halfSpan = 38; // ~76° arc per label
+            const isBottomHalf =
+              Math.sin((mid * Math.PI) / 180) > 0;
+            const sweep = isBottomHalf ? 0 : 1;
+            const startAngle = isBottomHalf ? mid + halfSpan : mid - halfSpan;
+            const endAngle = isBottomHalf ? mid - halfSpan : mid + halfSpan;
+            const start = polar(startAngle, TEXT_R);
+            const end = polar(endAngle, TEXT_R);
+            return (
+              <path
+                key={`textpath-${id}`}
+                id={`fw-textpath-${id}`}
+                d={`M ${start.x} ${start.y} A ${TEXT_R} ${TEXT_R} 0 0 ${sweep} ${end.x} ${end.y}`}
+                fill="none"
+              />
+            );
+          })}
         </defs>
 
         {/* Pinwheel petals — gradient brand fills, no flow arrows. */}
@@ -785,10 +809,32 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
           ))}
         </g>
 
-        {/* Stage names are intentionally NOT drawn on the wheel — the four
-            info cards already title each segment, and curved text on the
-            petals fights with the swirl boundaries and the icon badges.
-            Keeping the wheel as a clean color graphic reads much better. */}
+        {/* Curved stage labels — each name follows an arc inside its
+            petal body, sitting between the head (where the icon lives)
+            and the tail. Bold white text reads cleanly on every petal. */}
+        <g pointerEvents="none">
+          {segmentMeta.map(({ id }) => (
+            <text
+              key={`label-${id}`}
+              fontSize={22}
+              fontWeight={800}
+              fill="white"
+              style={{
+                letterSpacing: "3px",
+                fontFamily:
+                  "Poppins, ui-sans-serif, system-ui, sans-serif",
+              }}
+            >
+              <textPath
+                href={`#fw-textpath-${id}`}
+                startOffset="50%"
+                textAnchor="middle"
+              >
+                {id.toUpperCase()}
+              </textPath>
+            </text>
+          ))}
+        </g>
 
         {/* Center hub: white disc with REACTIVATE label + icon (matches
             the reference's clean white center). */}

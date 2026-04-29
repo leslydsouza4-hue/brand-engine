@@ -163,6 +163,7 @@ function useFitParent(ref: RefObject<HTMLDivElement | null>, ratio: number) {
 function HorizontalTemplate({
   config,
   headline,
+  subheadline,
   dateText,
   guestName,
   guestRole,
@@ -172,6 +173,7 @@ function HorizontalTemplate({
 }: {
   config: TemplateConfig;
   headline: string;
+  subheadline: string;
   dateText: string;
   guestName: string;
   guestRole: string;
@@ -312,7 +314,7 @@ function HorizontalTemplate({
           flexDirection: "column",
         }}
       >
-        <div style={{ paddingBottom: "0.6em" }}>
+        <div style={{ paddingBottom: subheadline ? "0.4em" : "0.6em" }}>
           <span
             style={{
               fontSize: "1.18em",
@@ -326,6 +328,20 @@ function HorizontalTemplate({
             {headline || "Enter Headline"}
           </span>
         </div>
+        {subheadline && (
+          <div
+            style={{
+              paddingBottom: "0.7em",
+              fontSize: "0.55em",
+              fontWeight: 500,
+              lineHeight: 1.35,
+              color: "rgba(220,232,255,0.85)",
+              letterSpacing: "0.005em",
+            }}
+          >
+            {subheadline}
+          </div>
+        )}
 
         {showDate && dateText && (
           <div
@@ -485,6 +501,7 @@ function HorizontalTemplate({
 function SquareTemplate({
   config,
   headline,
+  subheadline,
   dateText,
   guestName,
   guestRole,
@@ -494,6 +511,7 @@ function SquareTemplate({
 }: {
   config: TemplateConfig;
   headline: string;
+  subheadline: string;
   dateText: string;
   guestName: string;
   guestRole: string;
@@ -618,6 +636,22 @@ function SquareTemplate({
         >
           {headline || "Enter Headline"}
         </div>
+        {subheadline && (
+          <div
+            style={{
+              fontSize: "0.5em",
+              fontWeight: 500,
+              lineHeight: 1.4,
+              color: "rgba(220,232,255,0.85)",
+              letterSpacing: "0.005em",
+              textAlign: "center",
+              marginTop: "-0.2em",
+              maxWidth: "90%",
+            }}
+          >
+            {subheadline}
+          </div>
+        )}
 
         {showDate && dateText && (
           <div
@@ -791,6 +825,7 @@ function SquareTemplate({
 function PortraitTemplate({
   config,
   headline,
+  subheadline,
   dateText,
   guestName,
   guestRole,
@@ -800,6 +835,7 @@ function PortraitTemplate({
 }: {
   config: TemplateConfig;
   headline: string;
+  subheadline: string;
   dateText: string;
   guestName: string;
   guestRole: string;
@@ -924,6 +960,22 @@ function PortraitTemplate({
         >
           {headline || "Enter Headline"}
         </div>
+        {subheadline && (
+          <div
+            style={{
+              fontSize: "0.5em",
+              fontWeight: 500,
+              lineHeight: 1.4,
+              color: "rgba(220,232,255,0.85)",
+              letterSpacing: "0.005em",
+              textAlign: "center",
+              marginTop: "-0.2em",
+              maxWidth: "90%",
+            }}
+          >
+            {subheadline}
+          </div>
+        )}
 
         {showDate && dateText && (
           <div
@@ -1097,6 +1149,7 @@ function PortraitTemplate({
 function StoryTemplate({
   config,
   headline,
+  subheadline,
   dateText,
   guestName,
   guestRole,
@@ -1106,6 +1159,7 @@ function StoryTemplate({
 }: {
   config: TemplateConfig;
   headline: string;
+  subheadline: string;
   dateText: string;
   guestName: string;
   guestRole: string;
@@ -1230,6 +1284,22 @@ function StoryTemplate({
         >
           {headline || "Enter Headline"}
         </div>
+        {subheadline && (
+          <div
+            style={{
+              fontSize: "0.5em",
+              fontWeight: 500,
+              lineHeight: 1.4,
+              color: "rgba(220,232,255,0.85)",
+              letterSpacing: "0.005em",
+              textAlign: "center",
+              marginTop: "-0.2em",
+              maxWidth: "90%",
+            }}
+          >
+            {subheadline}
+          </div>
+        )}
 
         {showDate && dateText && (
           <div
@@ -1403,6 +1473,7 @@ function StoryTemplate({
 function TemplatePreview(props: {
   config: TemplateConfig;
   headline: string;
+  subheadline: string;
   dateText: string;
   guestName: string;
   guestRole: string;
@@ -1450,6 +1521,7 @@ function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) 
 
 export function MasterClassWorkspace() {
   const [headline, setHeadline] = usePersistedState("headline", "");
+  const [subheadline, setSubheadline] = usePersistedState("subheadline", "");
   const [dateText, setDateText] = usePersistedState("dateText", "");
   const [guestName, setGuestName] = usePersistedState("guestName", "");
   const [guestRole, setGuestRole] = usePersistedState("guestRole", "Guest");
@@ -1691,6 +1763,11 @@ export function MasterClassWorkspace() {
             <textarea value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="Land Your First 5 Clients With HighLevel (No Ads Needed)" rows={3} className={`${inputCls} resize-none`} />
           </div>
 
+          <div className="flex flex-col">
+            <label className={labelCls}>Subheadline <span className="text-[#64748B]">(optional)</span></label>
+            <textarea value={subheadline} onChange={(e) => setSubheadline(e.target.value)} placeholder="A live walkthrough for new agency owners" rows={2} className={`${inputCls} resize-none`} />
+          </div>
+
           {currentConfig.variant === "dates" && (
             <div className="flex flex-col">
               <label className={labelCls}>Date <span className="text-[#FF6B6B]">*</span></label>
@@ -1815,7 +1892,7 @@ export function MasterClassWorkspace() {
         {!showGallery ? (
           <LivePreview>
             <div className="w-full h-full max-w-[640px] flex items-center justify-center min-h-0" ref={previewRef}>
-              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
+              <TemplatePreview config={currentConfig} headline={headline} subheadline={subheadline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
             </div>
           </LivePreview>
         ) : (
@@ -1838,7 +1915,7 @@ export function MasterClassWorkspace() {
                 {activeTemplates.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={getImgSettingsFor(t.group)} />
+                      <TemplatePreview config={t} headline={headline} subheadline={subheadline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={getImgSettingsFor(t.group)} />
                     </div>
                     <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
                       <div>

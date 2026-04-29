@@ -96,24 +96,27 @@ function HorizontalTemplate({
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
 
-      {/* Vertical ghost first-name text behind guest, faded blue */}
+      {/* Vertical stroked guest first-name behind guest, faded blue outline */}
       {guestName && (
         <div
           style={{
             position: "absolute",
-            right: "5.5%",
-            top: "50%",
-            transform: "translateY(-50%) rotate(180deg)",
+            right: "3.5%",
+            top: "8%",
+            bottom: "8%",
             writingMode: "vertical-rl",
-            fontSize: "1.95em",
-            fontWeight: 800,
-            letterSpacing: "0.18em",
-            color: "rgba(120,180,255,0.16)",
+            fontSize: "2.4em",
+            fontWeight: 900,
+            letterSpacing: "0.22em",
+            color: "transparent",
+            WebkitTextStroke: "0.045em rgba(150, 200, 255, 0.32)",
             textTransform: "uppercase",
             lineHeight: 1,
             zIndex: 1,
             pointerEvents: "none",
             whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
           }}
         >
           {firstName}
@@ -127,9 +130,9 @@ function HorizontalTemplate({
         crossOrigin="anonymous"
         style={{
           position: "absolute",
-          top: "7%",
-          left: "4%",
-          width: "32%",
+          top: "5%",
+          left: "3.5%",
+          width: "38%",
           height: "auto",
           objectFit: "contain",
           zIndex: 4,

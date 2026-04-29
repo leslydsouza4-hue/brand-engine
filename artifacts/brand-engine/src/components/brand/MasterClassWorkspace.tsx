@@ -11,7 +11,8 @@ const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/masterclass/bg-horizontal-clean.jpg`;
 const LINE_HORIZONTAL = `${BASE}assets/masterclass/line-horizontal.png`;
 const BG_SQUARE = `${BASE}assets/masterclass/background-square.png`;
-const BG_PORTRAIT = `${BASE}assets/masterclass/background-portrait.png`;
+const BG_PORTRAIT = `${BASE}assets/masterclass/bg-portrait-clean.jpg`;
+const LINE_PORTRAIT = `${BASE}assets/masterclass/line-portrait.png`;
 const BG_STORY = `${BASE}assets/masterclass/bg-story-clean.jpg`;
 const LINE_STORY = `${BASE}assets/masterclass/line-story.png`;
 const LOGO_URL = `${BASE}assets/masterclass/logo-light.png`;
@@ -646,6 +647,21 @@ function PortraitTemplate({
         alt=""
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+      {/* Line frame - rendered on top so it crosses in front of guest */}
+      <img
+        src={LINE_PORTRAIT}
+        alt=""
+        crossOrigin="anonymous"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 6,
+          pointerEvents: "none",
+        }}
       />
       {/* Vertical stroked guest full name on LEFT side */}
       {guestName && (

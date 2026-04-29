@@ -187,7 +187,6 @@ function HorizontalTemplate({
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
-  const firstName = (guestName.trim().split(/\s+/)[0] || "GUEST").toUpperCase();
 
   return (
     <div
@@ -226,33 +225,6 @@ function HorizontalTemplate({
           pointerEvents: "none",
         }}
       />
-
-      {/* Vertical stroked guest first-name behind guest, faded blue outline */}
-      {guestName && (
-        <div
-          style={{
-            position: "absolute",
-            right: "3.5%",
-            top: "8%",
-            bottom: "8%",
-            writingMode: "vertical-rl",
-            fontSize: "2.4em",
-            fontWeight: 900,
-            letterSpacing: "0.22em",
-            color: "transparent",
-            WebkitTextStroke: "0.018em rgba(150, 200, 255, 0.14)",
-            textTransform: "uppercase",
-            lineHeight: 1,
-            zIndex: 1,
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {firstName}
-        </div>
-      )}
 
       {/* Logo top-left */}
       <img
@@ -525,7 +497,6 @@ function SquareTemplate({
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
-  const fullName = (guestName.trim() || "GUEST").toUpperCase();
 
   return (
     <div
@@ -564,35 +535,6 @@ function SquareTemplate({
           pointerEvents: "none",
         }}
       />
-      {/* Vertical stroked guest full name on LEFT side */}
-      {guestName && (
-        <div
-          style={{
-            position: "absolute",
-            left: "3.5%",
-            top: "6%",
-            bottom: "6%",
-            writingMode: "vertical-rl",
-            transform: "rotate(180deg)",
-            transformOrigin: "center center",
-            fontSize: "1.55em",
-            fontWeight: 900,
-            letterSpacing: "0.22em",
-            color: "transparent",
-            WebkitTextStroke: "0.018em rgba(150, 200, 255, 0.14)",
-            textTransform: "uppercase",
-            lineHeight: 1,
-            zIndex: 1,
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {fullName}
-        </div>
-      )}
-
       {/* Logo top center */}
       <img
         src={LOGO_URL}
@@ -851,7 +793,6 @@ function PortraitTemplate({
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
-  const fullName = (guestName.trim() || "GUEST").toUpperCase();
 
   return (
     <div
@@ -890,35 +831,6 @@ function PortraitTemplate({
           pointerEvents: "none",
         }}
       />
-      {/* Vertical stroked guest full name on LEFT side */}
-      {guestName && (
-        <div
-          style={{
-            position: "absolute",
-            left: "3.5%",
-            top: 0,
-            bottom: 0,
-            writingMode: "vertical-rl",
-            transform: "rotate(180deg)",
-            transformOrigin: "center center",
-            fontSize: "1.7em",
-            fontWeight: 900,
-            letterSpacing: "0.22em",
-            color: "transparent",
-            WebkitTextStroke: "0.018em rgba(150, 200, 255, 0.14)",
-            textTransform: "uppercase",
-            lineHeight: 1,
-            zIndex: 1,
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {fullName}
-        </div>
-      )}
-
       {/* Logo top center */}
       <img
         src={LOGO_URL}
@@ -1175,7 +1087,6 @@ function StoryTemplate({
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
-  const fullName = (guestName.trim() || "GUEST").toUpperCase();
 
   return (
     <div
@@ -1214,35 +1125,6 @@ function StoryTemplate({
           pointerEvents: "none",
         }}
       />
-      {/* Vertical stroked guest full name on LEFT side */}
-      {guestName && (
-        <div
-          style={{
-            position: "absolute",
-            left: "3.5%",
-            top: 0,
-            bottom: "40%",
-            writingMode: "vertical-rl",
-            transform: "rotate(180deg)",
-            transformOrigin: "center center",
-            fontSize: "1.65em",
-            fontWeight: 900,
-            letterSpacing: "0.22em",
-            color: "transparent",
-            WebkitTextStroke: "0.018em rgba(150, 200, 255, 0.14)",
-            textTransform: "uppercase",
-            lineHeight: 1,
-            zIndex: 1,
-            pointerEvents: "none",
-            whiteSpace: "nowrap",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {fullName}
-        </div>
-      )}
-
       {/* Logo top center */}
       <img
         src={LOGO_URL}

@@ -177,9 +177,9 @@ function HorizontalTemplate({
         <div
           style={{
             position: "absolute",
-            right: "4%",
+            right: "0%",
             bottom: 0,
-            width: "44%",
+            width: "58%",
             height: "100%",
             display: "flex",
             alignItems: "flex-end",
@@ -193,7 +193,7 @@ function HorizontalTemplate({
             alt=""
             crossOrigin="anonymous"
             style={{
-              height: `${82 * imgSettings.scale}%`,
+              height: `${100 * imgSettings.scale}%`,
               transform: `translate(${imgSettings.offsetX}%, ${imgSettings.offsetY}%)`,
               objectFit: "contain",
               objectPosition: "bottom center",
@@ -300,9 +300,9 @@ function HorizontalTemplate({
         <div
           style={{
             position: "absolute",
-            right: "4%",
+            right: "0%",
             bottom: "10.5%",
-            width: "44%",
+            width: "58%",
             zIndex: 5,
             textAlign: "center",
           }}

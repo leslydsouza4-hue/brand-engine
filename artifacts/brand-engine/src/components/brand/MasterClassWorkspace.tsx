@@ -112,6 +112,22 @@ function HorizontalTemplate({
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
+      {/* Frame overlay - line in front of guest */}
+      <img
+        src={BG_HORIZONTAL}
+        alt=""
+        crossOrigin="anonymous"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          mixBlendMode: "screen",
+          zIndex: 6,
+          pointerEvents: "none",
+        }}
+      />
 
       {/* Vertical stroked guest first-name behind guest, faded blue outline */}
       {guestName && (
@@ -370,6 +386,22 @@ function SquareTemplate({
         alt=""
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+      {/* Frame overlay - line in front of guest */}
+      <img
+        src={BG_SQUARE}
+        alt=""
+        crossOrigin="anonymous"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          mixBlendMode: "screen",
+          zIndex: 6,
+          pointerEvents: "none",
+        }}
       />
 
       {/* Vertical stroked guest full name on LEFT side */}
@@ -631,6 +663,22 @@ function PortraitTemplate({
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
+      {/* Frame overlay - line in front of guest */}
+      <img
+        src={BG_PORTRAIT}
+        alt=""
+        crossOrigin="anonymous"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          mixBlendMode: "screen",
+          zIndex: 6,
+          pointerEvents: "none",
+        }}
+      />
 
       {/* Vertical stroked guest full name on LEFT side */}
       {guestName && (
@@ -890,6 +938,22 @@ function StoryTemplate({
         alt=""
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+      {/* Frame overlay - line in front of guest */}
+      <img
+        src={BG_STORY}
+        alt=""
+        crossOrigin="anonymous"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          mixBlendMode: "screen",
+          zIndex: 6,
+          pointerEvents: "none",
+        }}
       />
 
       {/* Vertical stroked guest full name on LEFT side */}

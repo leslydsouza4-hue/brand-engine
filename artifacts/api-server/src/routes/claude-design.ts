@@ -531,6 +531,38 @@ Use semantic class names so the result is readable: .gh-app, .gh-rail, .gh-rail-
 - Add 1-2 floating "callout" chips that point at specific screen elements with a thin 1px line and a small pill containing a feature label (e.g. "AI auto-replies", "Drag-and-drop builder", "One-click dialer"). Use #FFC328 or #17D94B fills.
 - The HighLevel wordmark/logo still goes in the corner of the OUTER canvas — never inside the simulated product UI (the product chrome can show a small placeholder square as the in-app brand mark).`;
 
+const OVERLAP_FIX_SYSTEM = `You are a CSS layout enforcer. You receive an HTML document for a fixed-pixel marketing graphic and a target canvas size. Your ONE job: detect any element overlap problems and emit a corrected HTML with NO overlaps.
+
+You do NOT redesign. You do NOT change copy. You do NOT change colors. You do NOT remove elements. You ONLY adjust geometry (position, width, max-width, padding, grid columns, margins, font-size on overflowing text) to eliminate overlap.
+
+## Overlap definitions you must fix
+1. **Right-card crossing into text column.** Any chat panel, dashboard card, dialer mockup, calendar, kanban, or device frame whose left edge is < 56% of canvas width when its sibling is a left-side text block. FIX: set the card's container left ≥ 56% of canvas width and its width ≤ 38% of canvas width. If the card has \`position: absolute\`, change its \`left\` and \`width\`/\`right\` so its bounding rect lives entirely in the right 38% of the canvas. Also set the text-column container \`max-width: 50%\` and add \`overflow: visible\` so we can see what was hidden.
+
+2. **Floating chips covering headline text.** Any pill, badge, or chip ("REPLIES IN 1.2s", "BOOKED IN 12s", "AI ACTIVE", "NEW", etc.) positioned with absolute coords on top of a headline word, subhead word, or paragraph word. FIX: re-anchor the chip inside the right card's container (or move it above/below the card). Its bounding box must NOT intersect the text column.
+
+3. **Subhead / body paragraph running under a card.** Any <p> or text block whose right edge would be hidden by the right card. FIX: set its \`max-width\` to ≤ 50% of canvas width.
+
+4. **Stat label overlapping stat number.** A stat group ("94%" + "Lead response") where the small label has \`position: absolute\` parked on top of the big number. FIX: rewrite the stat as a flex column with \`gap: 6px\` (label below the number) OR a flex row with \`gap: 14px\` (label to the right of the number). Multiple stat blocks must sit in a flex row with \`gap: 32px\` minimum.
+
+5. **Headline text overflowing past 52% of canvas width** in a side-card layout. FIX: reduce the headline \`font-size\` until the longest line fits inside \`max-width: 50%\` of canvas. Alternatively narrow it with \`max-width\` but keep text readable.
+
+6. **Headline / subhead bleeding under an absolutely-positioned image or photo.** Same fix as #1 — push the image right and constrain text-column max-width.
+
+## How to decide where the right card lives
+Parse the canvas size. Compute pixel boundaries: textColMaxRight = floor(0.50 * W), gutterStart = floor(0.50 * W), cardColLeft = floor(0.56 * W), cardColRight = floor(0.94 * W). Force every absolute right-side element into [cardColLeft, cardColRight].
+
+## Output format
+Return ONLY the corrected, complete HTML document. NO commentary, NO markdown fences, NO "Here's the fixed version", NOTHING else. Just <!DOCTYPE html>...</html>.
+
+If the input HTML has zero overlap problems, return it UNCHANGED.
+
+## Editing technique
+- Prefer the smallest possible change. Adjust container geometry, not internal structure.
+- If a card uses \`position: absolute; left: 40%;\`, change it to \`left: 58%;\`.
+- If a chip uses \`position: absolute; left: 30%; top: 25%;\` and sits over the headline, move it INSIDE the card container with \`position: absolute; top: -16px; right: -8px;\` or similar.
+- If a text block has no \`max-width\`, add \`max-width: 50%;\` (or use the canvas-width pixel equivalent).
+- Never delete anything. Never reword copy. Never restyle colors. Geometry only.`;
+
 router.post("/claude-design", async (req, res) => {
   const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
   const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
@@ -1076,7 +1108,45 @@ Return ONE complete <!doctype html> document. The root .canvas div has exactly t
       .map(s => s.trim())
       .filter(s => /<!doctype|<html/i.test(s));
 
-    const finalSlides = (slides.length === 0 ? [cleaned] : slides).map((s) => {
+    const slidesToFix = slides.length === 0 ? [cleaned] : slides;
+
+    // Post-generation overlap-fix pass. Claude's first pass routinely lets
+    // a right-side card creep over the headline column; we force a deterministic
+    // critique step that ONLY adjusts geometry to eliminate overlaps. Run the
+    // pass for every slide in parallel so total latency only adds one round-trip.
+    const fixedSlides = await Promise.all(
+      slidesToFix.map(async (originalHtml) => {
+        try {
+          const fixMsg = await client.messages.create({
+            model: "claude-opus-4-7",
+            max_tokens: 8192,
+            system: OVERLAP_FIX_SYSTEM,
+            messages: [
+              {
+                role: "user",
+                content: `Canvas size: ${aspect}\n\nHTML to audit and fix:\n\n${originalHtml}`,
+              },
+            ],
+          });
+          const fb = fixMsg.content[0];
+          const ftext = fb && fb.type === "text" ? fb.text : "";
+          const fcleaned = ftext
+            .replace(/^```html\s*/i, "")
+            .replace(/^```\s*/, "")
+            .replace(/\s*```\s*$/, "")
+            .trim();
+          if (/<!doctype|<html/i.test(fcleaned)) {
+            return fcleaned;
+          }
+          return originalHtml;
+        } catch (err) {
+          req.log?.warn?.({ err }, "[claude-design] overlap-fix pass failed");
+          return originalHtml;
+        }
+      }),
+    );
+
+    const finalSlides = fixedSlides.map((s) => {
       let out = s;
       if (humanDataUrl) {
         out = out.split(HUMAN_PLACEHOLDER).join(humanDataUrl);

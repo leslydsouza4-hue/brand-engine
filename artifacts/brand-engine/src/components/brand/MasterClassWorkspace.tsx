@@ -1382,7 +1382,7 @@ export function MasterClassWorkspace() {
   const [guestRole, setGuestRole] = usePersistedState("guestRole", "Guest");
   const [ctaText, setCtaText] = usePersistedState("ctaText", "");
   const [personImage, setPersonImage] = usePersistedState<string | null>("personImage", null);
-  const [imgSettings, setImgSettings] = usePersistedState<ImageSettings>("imgSettings", { scale: 1, offsetX: 0, offsetY: 0 });
+  const [imgSettingsByGroup, setImgSettingsByGroup] = usePersistedState<Record<string, ImageSettings>>("imgSettingsByGroup", {});
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = usePersistedState("selectedTemplate", "horizontal-dates");
   const [isExporting, setIsExporting] = useState<string | null>(null);
@@ -1424,6 +1424,17 @@ export function MasterClassWorkspace() {
   const currentConfig = TEMPLATES.find((t) => t.id === selectedTemplate) || TEMPLATES[0];
   const currentGroup = currentConfig.group;
   const groupTemplates = activeTemplates.filter((t) => t.group === currentGroup);
+
+  const DEFAULT_IMG_SETTINGS: ImageSettings = { scale: 1, offsetX: 0, offsetY: 0 };
+  const imgSettings = imgSettingsByGroup[currentGroup] ?? DEFAULT_IMG_SETTINGS;
+  const setImgSettings = (updater: ImageSettings | ((s: ImageSettings) => ImageSettings)) => {
+    setImgSettingsByGroup((all) => {
+      const prev = all[currentGroup] ?? DEFAULT_IMG_SETTINGS;
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      return { ...all, [currentGroup]: next };
+    });
+  };
+  const getImgSettingsFor = (group: string): ImageSettings => imgSettingsByGroup[group] ?? DEFAULT_IMG_SETTINGS;
 
   const dataUrlToBlob = useCallback((dataUrl: string): Blob => {
     const [header, base64] = dataUrl.split(",");
@@ -1666,7 +1677,7 @@ export function MasterClassWorkspace() {
                     <button onClick={() => fileInputRef.current?.click()} className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#94A3B8] flex items-center justify-center cursor-pointer hover:bg-[rgba(40,150,251,0.15)] hover:text-[#2896FB] transition-all" title="Replace image">
                       <RefreshCw className="w-[10px] h-[10px]" />
                     </button>
-                    <button onClick={() => { setPersonImage(null); setImgSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all" title="Remove image">
+                    <button onClick={() => { setPersonImage(null); setImgSettingsByGroup({}); if (fileInputRef.current) fileInputRef.current.value = ""; }} className="w-[24px] h-[24px] border-none bg-[rgba(255,255,255,0.06)] rounded-[5px] text-[#64748B] flex items-center justify-center cursor-pointer hover:bg-[rgba(255,77,77,0.15)] hover:text-[#FF4D4D] transition-all" title="Remove image">
                       <X className="w-[10px] h-[10px]" />
                     </button>
                   </div>
@@ -1754,7 +1765,7 @@ export function MasterClassWorkspace() {
                 {activeTemplates.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
+                      <TemplatePreview config={t} headline={headline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={getImgSettingsFor(t.group)} />
                     </div>
                     <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
                       <div>

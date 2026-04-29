@@ -471,7 +471,7 @@ function HorizontalTemplate({
           <div
             style={{
               fontSize: "0.5em",
-              marginTop: "0.7em",
+              marginTop: "0.3em",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -797,7 +797,7 @@ function SquareTemplate({
           <div
             style={{
               fontSize: "0.5em",
-              marginTop: "0.7em",
+              marginTop: "0.3em",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -1121,7 +1121,7 @@ function PortraitTemplate({
           <div
             style={{
               fontSize: "0.5em",
-              marginTop: "0.7em",
+              marginTop: "0.3em",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -1445,7 +1445,7 @@ function StoryTemplate({
           <div
             style={{
               fontSize: "0.5em",
-              marginTop: "0.7em",
+              marginTop: "0.3em",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

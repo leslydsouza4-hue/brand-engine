@@ -329,6 +329,21 @@ function HorizontalTemplate({
         )}
       </div>
 
+      {/* Dark radial glow behind guest name for legibility */}
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          bottom: 0,
+          width: "58%",
+          height: "55%",
+          background:
+            "radial-gradient(ellipse 65% 100% at center bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 40%, transparent 80%)",
+          zIndex: 4,
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Guest name + role under photo */}
       {guestName && (
         <div
@@ -603,6 +618,21 @@ function SquareTemplate({
           />
         </div>
       )}
+
+      {/* Dark radial glow behind guest name for legibility */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: "42%",
+          background:
+            "radial-gradient(ellipse 55% 100% at center bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 40%, transparent 80%)",
+          zIndex: 4,
+          pointerEvents: "none",
+        }}
+      />
 
       {/* Guest name + role under photo */}
       {guestName && (
@@ -879,6 +909,21 @@ function PortraitTemplate({
         </div>
       )}
 
+      {/* Dark radial glow behind guest name for legibility */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: "42%",
+          background:
+            "radial-gradient(ellipse 55% 100% at center bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 40%, transparent 80%)",
+          zIndex: 4,
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Guest name + role under photo */}
       {guestName && (
         <div
@@ -1153,6 +1198,21 @@ function StoryTemplate({
           />
         </div>
       )}
+
+      {/* Dark radial glow behind guest name for legibility */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: "38%",
+          background:
+            "radial-gradient(ellipse 55% 100% at center bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 40%, transparent 80%)",
+          zIndex: 4,
+          pointerEvents: "none",
+        }}
+      />
 
       {/* Guest name + role under photo */}
       {guestName && (

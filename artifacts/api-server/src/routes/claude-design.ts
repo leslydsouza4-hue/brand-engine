@@ -941,19 +941,40 @@ Return ONE complete <!doctype html> document. The root .canvas div has exactly t
 
   try {
     const client = new Anthropic({ baseURL: baseUrl, apiKey });
-    const message = await client.messages.create({
-      model,
-      max_tokens: pageMode === "landing-page"
-        ? 32000
-        : slideCount > 1 ? Math.min(32000, 4500 * slideCount + 4000) : 8192,
-      system: HIGHLEVEL_BRAND_SYSTEM,
-      messages: [
-        { role: "user", content: userContent },
-      ],
-    });
+    const maxTokens = pageMode === "landing-page"
+      ? 32000
+      : slideCount > 1 ? Math.min(32000, 4500 * slideCount + 4000) : 8192;
 
-    const block = message.content[0];
-    const text = block && block.type === "text" ? block.text : "";
+    // Landing-page mode (Opus 4.7 + 32k tokens) routinely exceeds Anthropic's
+    // 10-minute non-streaming timeout, so stream the response and assemble the
+    // full text from the deltas.
+    const useStreaming = pageMode === "landing-page";
+
+    let text = "";
+    if (useStreaming) {
+      const stream = await client.messages.stream({
+        model,
+        max_tokens: maxTokens,
+        system: HIGHLEVEL_BRAND_SYSTEM,
+        messages: [
+          { role: "user", content: userContent },
+        ],
+      });
+      const final = await stream.finalMessage();
+      const block = final.content[0];
+      text = block && block.type === "text" ? block.text : "";
+    } else {
+      const message = await client.messages.create({
+        model,
+        max_tokens: maxTokens,
+        system: HIGHLEVEL_BRAND_SYSTEM,
+        messages: [
+          { role: "user", content: userContent },
+        ],
+      });
+      const block = message.content[0];
+      text = block && block.type === "text" ? block.text : "";
+    }
 
     // Extract HTML — strip any accidental markdown fences just in case.
     const cleaned = text

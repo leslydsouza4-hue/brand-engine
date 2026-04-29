@@ -360,12 +360,13 @@ function HorizontalTemplate({
         >
           <div
             style={{
-              fontSize: "0.76em",
+              fontSize: "1em",
               fontWeight: 800,
               color: "#FFFFFF",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
               lineHeight: 1,
+              whiteSpace: "nowrap",
               textShadow: "0 0.05em 0.4em rgba(0,0,0,0.5)",
             }}
           >
@@ -373,7 +374,7 @@ function HorizontalTemplate({
           </div>
           <div
             style={{
-              fontSize: "0.46em",
+              fontSize: "0.5em",
               fontWeight: 700,
               color: "rgba(220,232,255,0.78)",
               letterSpacing: "0.32em",

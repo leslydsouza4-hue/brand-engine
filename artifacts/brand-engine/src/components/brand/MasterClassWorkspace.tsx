@@ -338,7 +338,7 @@ function HorizontalTemplate({
           left: 0,
           right: 0,
           bottom: 0,
-          height: "55%",
+          height: "28%",
           background:
             "linear-gradient(to top, rgba(4,9,28,0.95) 0%, rgba(4,9,28,0.65) 18%, rgba(4,9,28,0.3) 38%, transparent 72%)",
           zIndex: 4,
@@ -646,7 +646,7 @@ function SquareTemplate({
           left: 0,
           right: 0,
           bottom: 0,
-          height: "42%",
+          height: "26%",
           background:
             "linear-gradient(to top, rgba(4,9,28,0.95) 0%, rgba(4,9,28,0.65) 18%, rgba(4,9,28,0.3) 38%, transparent 72%)",
           zIndex: 4,
@@ -953,7 +953,7 @@ function PortraitTemplate({
           left: 0,
           right: 0,
           bottom: 0,
-          height: "42%",
+          height: "24%",
           background:
             "linear-gradient(to top, rgba(4,9,28,0.95) 0%, rgba(4,9,28,0.65) 18%, rgba(4,9,28,0.3) 38%, transparent 72%)",
           zIndex: 4,
@@ -1260,7 +1260,7 @@ function StoryTemplate({
           left: 0,
           right: 0,
           bottom: 0,
-          height: "38%",
+          height: "20%",
           background:
             "linear-gradient(to top, rgba(4,9,28,0.95) 0%, rgba(4,9,28,0.65) 18%, rgba(4,9,28,0.3) 38%, transparent 72%)",
           zIndex: 4,

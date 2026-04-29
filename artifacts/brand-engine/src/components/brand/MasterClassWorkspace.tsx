@@ -583,7 +583,7 @@ function SquareTemplate({
           position: "absolute",
           left: "8%",
           right: "8%",
-          top: "31%",
+          top: "26%",
           zIndex: 3,
           display: "flex",
           flexDirection: "column",

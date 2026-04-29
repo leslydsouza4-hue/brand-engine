@@ -331,7 +331,7 @@ function HorizontalTemplate({
         {subheadline && (
           <div
             style={{
-              paddingBottom: "0.7em",
+              paddingBottom: "1.5em",
               fontSize: "0.55em",
               fontWeight: 500,
               lineHeight: 1.35,
@@ -771,7 +771,7 @@ function SquareTemplate({
             position: "absolute",
             left: "8%",
             right: "8%",
-            bottom: "4.5%",
+            bottom: "9.5%",
             zIndex: 7,
             textAlign: "center",
           }}
@@ -1095,7 +1095,7 @@ function PortraitTemplate({
             position: "absolute",
             left: "8%",
             right: "8%",
-            bottom: "3.5%",
+            bottom: "8.5%",
             zIndex: 7,
             textAlign: "center",
           }}
@@ -1419,7 +1419,7 @@ function StoryTemplate({
             position: "absolute",
             left: "8%",
             right: "8%",
-            bottom: "3%",
+            bottom: "8%",
             zIndex: 7,
             textAlign: "center",
           }}

@@ -127,10 +127,10 @@ function HorizontalTemplate({
         crossOrigin="anonymous"
         style={{
           position: "absolute",
-          top: "5%",
+          top: "7%",
           left: "4%",
-          height: "19%",
-          width: "auto",
+          width: "32%",
+          height: "auto",
           objectFit: "contain",
           zIndex: 4,
         }}

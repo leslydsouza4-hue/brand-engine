@@ -95,7 +95,7 @@ export function LandingPageWorkspace() {
   const [width, setWidth] = useState<typeof WIDTH_PRESETS[number]["w"]>(1440);
   const [height, setHeight] = useState<typeof LENGTH_PRESETS[number]["h"]>(3600);
   const [creativeMode, setCreativeMode] = useState<"safe" | "bold" | "wild">("bold");
-  const [model, setModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-opus-4-7");
+  const [model, setModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-sonnet-4-6");
   const [vibe, setVibe] = useState<VibeId>("glass-aurora");
   const [prompt, setPrompt] = useState("");
   const [selectedSections, setSelectedSections] = useState<Set<string>>(
@@ -141,6 +141,7 @@ export function LandingPageWorkspace() {
     if (!trimmed || loading) return;
     setLoading(true);
     setError(null);
+    setHtml("");
     try {
       const apiBase = import.meta.env.BASE_URL;
       const res = await fetch(`${apiBase}api/claude-design`, {
@@ -158,11 +159,54 @@ export function LandingPageWorkspace() {
           slideCount: 1,
         }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      const out = typeof data.html === "string" ? data.html : "";
-      if (!out) throw new Error("No HTML returned");
-      setHtml(out);
+
+      if (!res.ok || !res.body) {
+        const errBody = await res.text().catch(() => "");
+        let msg = `Request failed (${res.status})`;
+        try {
+          const j = JSON.parse(errBody);
+          if (j?.error) msg = j.error;
+        } catch { /* not json */ }
+        throw new Error(msg);
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let lastFlush = 0;
+      const FLUSH_MS = 250;
+
+      const stripFences = (s: string) =>
+        s.replace(/^\s*```(?:html)?\s*/i, "")
+         .replace(/\s*```\s*$/, "")
+         .trim();
+
+      const flush = () => {
+        const cleaned = stripFences(buffer);
+        // Only paint into the iframe once we have at least an opening doctype/html
+        // tag — otherwise the iframe shows raw whitespace + markdown chars.
+        if (/<!doctype|<html/i.test(cleaned)) {
+          setHtml(cleaned);
+        }
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const now = Date.now();
+        if (now - lastFlush > FLUSH_MS) {
+          lastFlush = now;
+          flush();
+        }
+      }
+      buffer += decoder.decode();
+
+      const finalCleaned = stripFences(buffer);
+      if (!/<!doctype|<html/i.test(finalCleaned)) {
+        throw new Error("Claude did not return an HTML document");
+      }
+      setHtml(finalCleaned);
     } catch (e: any) {
       setError(e?.message || "Generation failed");
     } finally {
@@ -397,7 +441,7 @@ export function LandingPageWorkspace() {
           )}
         </button>
         <div className="text-[10px] text-[#64748B] mb-[12px] text-center">
-          Opus 4.7 with this many sections takes 60-120 seconds
+          Sonnet 4.6 streams live (~30-60s). Opus 4.7 is slower but more polished.
         </div>
 
         {error && (
@@ -429,8 +473,10 @@ export function LandingPageWorkspace() {
       <div className="flex-1 overflow-hidden flex flex-col bg-[#0a1020]">
         <div className="flex items-center justify-between px-[24px] py-[14px] border-b border-[rgba(255,255,255,0.04)]">
           <div className="flex items-center gap-[8px]">
-            <span className="w-[8px] h-[8px] rounded-full bg-[#17D94B]" />
-            <span className="text-[12px] text-[#94A3B8] font-semibold">Live Preview</span>
+            <span className={`w-[8px] h-[8px] rounded-full ${loading ? "bg-[#2896FB] animate-pulse" : "bg-[#17D94B]"}`} />
+            <span className="text-[12px] text-[#94A3B8] font-semibold">
+              {loading ? (html ? "Streaming…" : "Connecting…") : "Live Preview"}
+            </span>
             {html && (
               <span className="text-[10px] text-[#64748B] ml-[8px]">
                 {width}×{height} · scale {Math.round(previewScale * 100)}%
@@ -455,8 +501,8 @@ export function LandingPageWorkspace() {
           {loading && !html && (
             <div className="h-full flex flex-col items-center justify-center">
               <Loader2 className="w-[40px] h-[40px] text-[#2896FB] animate-spin mb-[14px]" />
-              <div className="text-[13px] font-bold text-white mb-[4px]">Composing your landing page…</div>
-              <div className="text-[11.5px] text-[#64748B]">Opus 4.7 is writing all {selectedSections.size} sections</div>
+              <div className="text-[13px] font-bold text-white mb-[4px]">Warming up Claude…</div>
+              <div className="text-[11.5px] text-[#64748B]">Streaming will start in a sec — you'll see the page build live</div>
             </div>
           )}
 

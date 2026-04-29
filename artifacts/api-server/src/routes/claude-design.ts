@@ -942,16 +942,20 @@ Return ONE complete <!doctype html> document. The root .canvas div has exactly t
   try {
     const client = new Anthropic({ baseURL: baseUrl, apiKey });
     const maxTokens = pageMode === "landing-page"
-      ? 32000
+      ? 18000
       : slideCount > 1 ? Math.min(32000, 4500 * slideCount + 4000) : 8192;
 
-    // Landing-page mode (Opus 4.7 + 32k tokens) routinely exceeds Anthropic's
-    // 10-minute non-streaming timeout, so stream the response and assemble the
-    // full text from the deltas.
-    const useStreaming = pageMode === "landing-page";
+    // Landing-page mode streams the raw text deltas straight back to the
+    // client so the iframe preview can render in real time. This lets the user
+    // see the page being built incrementally instead of waiting for a single
+    // huge JSON response at the end.
+    if (pageMode === "landing-page") {
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-transform");
+      res.setHeader("X-Accel-Buffering", "no");
+      // Flush headers immediately so the browser opens the streaming pipe.
+      (res as any).flushHeaders?.();
 
-    let text = "";
-    if (useStreaming) {
       const stream = await client.messages.stream({
         model,
         max_tokens: maxTokens,
@@ -960,21 +964,30 @@ Return ONE complete <!doctype html> document. The root .canvas div has exactly t
           { role: "user", content: userContent },
         ],
       });
-      const final = await stream.finalMessage();
-      const block = final.content[0];
-      text = block && block.type === "text" ? block.text : "";
-    } else {
-      const message = await client.messages.create({
-        model,
-        max_tokens: maxTokens,
-        system: HIGHLEVEL_BRAND_SYSTEM,
-        messages: [
-          { role: "user", content: userContent },
-        ],
+
+      stream.on("text", (delta) => {
+        res.write(delta);
       });
-      const block = message.content[0];
-      text = block && block.type === "text" ? block.text : "";
+
+      try {
+        await stream.finalMessage();
+      } catch (streamErr: any) {
+        req.log?.error?.({ err: streamErr }, "[claude-design] stream error");
+      }
+      res.end();
+      return;
     }
+
+    const message = await client.messages.create({
+      model,
+      max_tokens: maxTokens,
+      system: HIGHLEVEL_BRAND_SYSTEM,
+      messages: [
+        { role: "user", content: userContent },
+      ],
+    });
+    const block = message.content[0];
+    const text = block && block.type === "text" ? block.text : "";
 
     // Extract HTML — strip any accidental markdown fences just in case.
     const cleaned = text

@@ -519,6 +519,13 @@ router.post("/claude-design", async (req, res) => {
   const requestedCreative = typeof req.body?.creativeMode === "string" ? req.body.creativeMode : "bold";
   const creativeMode = ALLOWED_CREATIVE.has(requestedCreative) ? requestedCreative : "bold";
 
+  const ALLOWED_PAGE_MODES = new Set(["graphic", "landing-page"]);
+  const requestedPageMode = typeof req.body?.pageMode === "string" ? req.body.pageMode : "graphic";
+  const pageMode = ALLOWED_PAGE_MODES.has(requestedPageMode) ? requestedPageMode : "graphic";
+  const requestedSections = Array.isArray(req.body?.sections)
+    ? (req.body.sections as unknown[]).filter((s): s is string => typeof s === "string").slice(0, 12)
+    : [];
+
   const assetBlock: string[] = [];
   if (logoUrl) {
     assetBlock.push(`HighLevel logo (REQUIRED — use this exact URL in an <img> tag, do NOT type the wordmark in CSS, do NOT substitute another image):
@@ -697,12 +704,58 @@ Forbidden in BOLD mode:
 - A centered headline + subhead + button stacked vertically with nothing else going on. Add structural interest.`;
   })();
 
+  const landingPageBlock = pageMode === "landing-page"
+    ? `\n# OUTPUT MODE: LANDING PAGE (CRITICAL — overrides single-canvas defaults)
+You are NOT designing a single marketing graphic. You are designing a complete, production-quality SaaS LANDING PAGE that will render as a tall, scrollable HTML document.
+
+## Page structure
+The root <div class="canvas"> is a TALL container at exactly the requested width × height. Inside it, stack 6-10 full-width SECTIONS vertically — like a real Stripe / Linear / Vercel / Notion landing page. Each section is full-width (100% of canvas width), variable height (typically 480-960px), and contains a focused design treatment.
+
+## Required sections (in order)
+${requestedSections.length
+  ? requestedSections.map((s, i) => `${i + 1}. ${s}`).join("\n")
+  : `1. NAV BAR (slim, sticky-feel: logo left, 4-5 nav links center, "Get Started" CTA right; ~72px tall)
+2. HERO (the headline moment — eyebrow + huge headline + subhead + CTA + secondary action; optional product mockup or illustration on the right; ~720-900px tall)
+3. SOCIAL PROOF (logo wall — 5-7 fictional but realistic SaaS company wordmarks in muted #94A3B8; ~140px tall)
+4. FEATURES (3 or 4 column feature grid — each with an icon, headline, 2-line description; ~520px tall)
+5. PRODUCT SECTION (a "see it in action" mockup — use the HighLevel Product UI Reference Library to render a realistic in-browser frame; ~640px tall)
+6. TESTIMONIAL (single big quote with attribution + small avatar circle + company; or 2-3 quote cards in a row; ~440px tall)
+7. PRICING (2-3 pricing tiers as cards with feature checklists, "Most Popular" badge on middle tier; ~640px tall)
+8. FINAL CTA (centered hook headline + big CTA button + small disclaimer line; ~360px tall)
+9. FOOTER (4-column link grid + copyright line; ~280px tall)`}
+
+## Section design rules
+- Each section is its own composition zone. Apply the TEXT/VISUAL/CTA zone discipline INSIDE each section just like you would for a single graphic.
+- Alternate surface colors between sections to create visual rhythm: deep navy (#0B1426) → mid navy (#122036) → off-white (#F8FAFC, with text switched to #0F172A / #475569) → mid navy → off-white. About 1 in 3 sections should be the off-white "light" surface so the page breathes.
+- Internal section padding: top/bottom ~80-120px, left/right ~6-8% of canvas width. NEVER let content touch the section edges.
+- Max content width inside any section: ~1200px (or 85% of canvas width if smaller). Center horizontally with margin: 0 auto.
+- Section headings (the kicker + section-title pair): eyebrow uppercase #17D94B 0.9rem letter-spacing 0.18em, then 2-3 word headline 48-64px font-weight 700.
+- Each section has a clear visual focal point (a giant headline, a product mockup, a stat, a quote). Never two competing focal points in the same section.
+- Use ONE Editorial pattern as the HERO section's structural skeleton (per CREATIVE INTENSITY). Other sections can be simpler — symmetric grids are fine for features/pricing/footer.
+- Sticky-feel nav at top: position relative inside the canvas (not actual position:sticky since it's a static screenshot), but visually anchored to the top edge with the same surface color as the section beneath it OR a frosted-glass treatment (background rgba(11,20,38,0.7), backdrop-filter blur(20px), 1px bottom border rgba(255,255,255,0.06)).
+
+## Light-surface section rules (CRITICAL — light sections look bad if text colors aren't switched)
+When a section uses an off-white #F8FAFC or #FFFFFF background:
+- Headlines: #0F172A
+- Body text: #475569
+- Eyebrow: #00B2A9 (mid green) or #2896FB — NOT bright #17D94B (it vibrates on white)
+- Card backgrounds: #FFFFFF with 1px border #E2E8F0 and shadow 0 8px 24px rgba(15,23,42,0.06)
+- CTAs unchanged (blue gradient still works)
+
+## Realistic copy
+NEVER use lorem ipsum or "Feature 1 / Feature 2". Write actual realistic landing-page copy that reads like it shipped: real-sounding feature names, real benefit-led headlines, real-sounding company names in the social proof row (e.g. "Northwind", "Linearise", "Cobalt", "Helix Labs", "Forma", "Outreach", "Ridgeline"), real testimonial attribution ("Maya Chen, Founder · Cobalt Studio"), real pricing numbers ($29 / $79 / $199 mo or similar).
+
+## Output
+Return ONE complete <!doctype html> document. The root .canvas div has exactly the requested width and height — DO NOT use multiple slides, DO NOT use the SLIDE-BREAK delimiter. The body of the canvas is the stacked sections.`
+    : "";
+
   const userContent = [
     `Canvas size: ${aspect} pixels (width × height). The root container MUST be exactly these dimensions.`,
     "",
     designBrief.text,
     "",
     creativeBlock,
+    landingPageBlock,
     sceneBlock,
     subjectBlock,
     slideBlock,
@@ -714,7 +767,9 @@ Forbidden in BOLD mode:
     const client = new Anthropic({ baseURL: baseUrl, apiKey });
     const message = await client.messages.create({
       model,
-      max_tokens: slideCount > 1 ? Math.min(32000, 4500 * slideCount + 4000) : 8192,
+      max_tokens: pageMode === "landing-page"
+        ? 32000
+        : slideCount > 1 ? Math.min(32000, 4500 * slideCount + 4000) : 8192,
       system: HIGHLEVEL_BRAND_SYSTEM,
       messages: [
         { role: "user", content: userContent },

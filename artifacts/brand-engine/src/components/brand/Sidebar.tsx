@@ -16,7 +16,8 @@ import {
   Clock,
   MessageSquarePlus,
   Mail,
-  RefreshCw
+  RefreshCw,
+  Globe
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -88,6 +89,28 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             </span>
             <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">
               Craft Magic
+            </span>
+          </button>
+
+          <button
+            onClick={() => handleSetMode('landing-page')}
+            className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[10px] mt-[2px] rounded-[12px] cursor-pointer border-none transition-all duration-250 ${
+              currentMode === 'landing-page'
+                ? 'bg-white/[0.05] text-white'
+                : 'text-[#CBD5E1] hover:bg-white/[0.03] hover:text-white hover:translate-x-[2px]'
+            }`}
+          >
+            {currentMode === 'landing-page' && (
+              <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] bg-gradient-to-b from-[#FFC328] to-[#2896FB] rounded-r-[4px]" />
+            )}
+            <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center bg-gradient-to-br from-[#FFC328] via-[#2896FB] to-[#17D94B] shadow-[0_2px_8px_rgba(40,150,251,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0">
+              <Globe className="w-[12px] h-[12px] text-white" />
+            </span>
+            <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">
+              Landing Page
+            </span>
+            <span className="text-[8.5px] font-bold tracking-[0.12em] uppercase text-[#FFC328] bg-[rgba(255,195,40,0.12)] border border-[rgba(255,195,40,0.30)] px-[6px] py-[2px] rounded-[4px]">
+              New
             </span>
           </button>
         </div>

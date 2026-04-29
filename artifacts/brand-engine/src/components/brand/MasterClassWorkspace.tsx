@@ -400,9 +400,9 @@ function HorizontalTemplate({
           left: 0,
           right: 0,
           bottom: 0,
-          height: "20%",
+          height: "38%",
           background:
-            "linear-gradient(to top, rgba(2,5,18,0.92) 0%, rgba(2,5,18,0.7) 30%, rgba(2,5,18,0.35) 60%, transparent 100%)",
+            "linear-gradient(to top, rgba(2,5,18,1) 0%, rgba(2,5,18,0.95) 18%, rgba(2,5,18,0.78) 38%, rgba(2,5,18,0.5) 58%, rgba(2,5,18,0.22) 78%, transparent 100%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -423,13 +423,13 @@ function HorizontalTemplate({
           <div
             style={{
               position: "absolute",
-              left: "8%",
-              right: "8%",
-              top: "-15%",
-              bottom: "-12%",
+              left: "-2%",
+              right: "-2%",
+              top: "-45%",
+              bottom: "-30%",
               background:
-                "radial-gradient(ellipse 55% 75% at 50% 45%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.32) 32%, rgba(0,0,0,0.12) 60%, transparent 88%)",
-              filter: "blur(0.4em)",
+                "radial-gradient(ellipse 60% 65% at 50% 48%, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 28%, rgba(0,0,0,0.32) 52%, rgba(0,0,0,0.12) 72%, transparent 92%)",
+              filter: "blur(0.6em)",
               pointerEvents: "none",
               zIndex: -1,
             }}

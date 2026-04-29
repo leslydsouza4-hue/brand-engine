@@ -1221,7 +1221,7 @@ function StoryTemplate({
             position: "absolute",
             left: "3.5%",
             top: 0,
-            bottom: 0,
+            bottom: "40%",
             writingMode: "vertical-rl",
             transform: "rotate(180deg)",
             transformOrigin: "center center",

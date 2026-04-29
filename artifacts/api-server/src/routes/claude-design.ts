@@ -525,6 +525,16 @@ router.post("/claude-design", async (req, res) => {
   const requestedSections = Array.isArray(req.body?.sections)
     ? (req.body.sections as unknown[]).filter((s): s is string => typeof s === "string").slice(0, 12)
     : [];
+  const ALLOWED_VIBES = new Set([
+    "editorial-bold",
+    "glass-aurora",
+    "brutalist-type",
+    "minimal-swiss",
+    "bento-showcase",
+    "dark-tech",
+  ]);
+  const requestedVibe = typeof req.body?.vibe === "string" ? req.body.vibe : "glass-aurora";
+  const vibe = ALLOWED_VIBES.has(requestedVibe) ? requestedVibe : "glass-aurora";
 
   const assetBlock: string[] = [];
   if (logoUrl) {
@@ -704,49 +714,215 @@ Forbidden in BOLD mode:
 - A centered headline + subhead + button stacked vertically with nothing else going on. Add structural interest.`;
   })();
 
+  const vibeBlock = (() => {
+    if (pageMode !== "landing-page") return "";
+    switch (vibe) {
+      case "editorial-bold":
+        return `## VIBE: EDITORIAL BOLD (think NYT Magazine × Stripe Press × Apple keynote)
+- Hero headline = clamp(72px, 9vw, 140px), font-weight 700, letter-spacing -0.045em, leading 0.92. One word inside the headline gets font-style: italic + a different weight (e.g. weight 300) to create typographic tension. Optional: that word is wrapped in a yellow underline drawn via SVG path.
+- Hero LAYOUT pattern: asymmetric 8-column / 4-column split. Headline LEFT, oversized; product mockup or hero image RIGHT, slightly larger than its container so it bleeds past the right edge.
+- Numbered editorial counters next to section labels: a tiny "01 / 09" mono numeral set in #475569 above each section title.
+- Generous editorial whitespace. Sections are taller than usual (700-900px). Air > density.
+- Use a hairline divider (1px #1F2A44 dark / #E2E8F0 light) between the eyebrow and headline of every section.
+- Pull-quote sections in massive italic serif style — set with font-family: 'Georgia', 'Times New Roman', serif; font-size: clamp(40px, 5vw, 72px); font-style: italic; quote marks rendered as a giant ::before "" character in #FFC328 at 0.5 opacity, positioned behind the text.`;
+      case "glass-aurora":
+        return `## VIBE: GLASS AURORA (think Linear × Arc × stripe.com 2024)
+- Hero background = animated aurora mesh: 4-5 large blurred radial gradients (each ~600-900px) in brand colors (#2896FB, #17D94B, #FFC328, #A855F7) overlapping at low opacity (0.35-0.55) on a #0A0E1F base. Each blob has a slow CSS keyframe drift animation (translate ±60px over 18-26s, ease-in-out, infinite alternate).
+- Glass cards everywhere: background rgba(255,255,255,0.04), backdrop-filter blur(24px) saturate(140%), 1px border with a gradient mask (border: 1px solid transparent; background: linear-gradient(#0a0e1f,#0a0e1f) padding-box, linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.04)) border-box).
+- Subtle gradient text on hero headline: background: linear-gradient(180deg, #FFFFFF 0%, #94A3B8 100%); -webkit-background-clip: text; color: transparent.
+- Soft shadow rings on CTAs: box-shadow: 0 0 0 1px rgba(40,150,251,0.4), 0 12px 40px -12px rgba(40,150,251,0.6), inset 0 1px 0 rgba(255,255,255,0.2).
+- Background should remain dark navy throughout (#0A0E1F → #0F1530 → #0A0E1F). Do NOT switch to light surfaces — the entire page is a single immersive dark glass world.
+- Each section gets one accent orb (200-400px blurred radial) bleeding from a corner.`;
+      case "brutalist-type":
+        return `## VIBE: BRUTALIST TYPE (think Vercel × Plain.com × Mercury)
+- Type-led, raw, confident. Hero headline = clamp(80px, 11vw, 180px), font-weight 800, letter-spacing -0.06em, leading 0.9. The headline IS the design.
+- Mono accent text everywhere — eyebrows, captions, footnotes, numbers all set in 'JetBrains Mono', 'Fira Code', monospace at 11-13px uppercase.
+- Hard shadows (no blur) on cards: box-shadow: 6px 6px 0 #0F172A. Cards are flat with 2px solid borders.
+- Stark high-contrast palette: #FFFFFF text on #0B1426, OR #0B1426 text on #FFC328 yellow surface for one alert section. Brutally minimal use of color.
+- Text-only navigation (no logo lockup needed past the first appearance). Underline-on-hover with a 2px solid line.
+- Bullet chips like [ AI POWERED ] [ NO CODE ] [ 14-DAY FREE ] in mono with square brackets, set as inline text (not pills).
+- One section uses an oversized ASCII / mono divider: a row of dashes or "▓▒░" characters spanning the width.`;
+      case "minimal-swiss":
+        return `## VIBE: MINIMAL SWISS (think notion.so × dieter rams × krea.ai)
+- Generous whitespace, restrained palette, geometric clarity. Sections feel calm, deliberate.
+- Hero headline = clamp(56px, 6.5vw, 88px), font-weight 600, leading 1.05, letter-spacing -0.025em. Subhead is a confident 18-20px in #475569 weight 400.
+- Light-mode-DOMINANT page: ~70% sections on #FAFAFA / #FFFFFF, with one accent dark section. Text colors switch correctly per the light-surface rules.
+- Single accent color per section (just blue, OR just green, OR just yellow) — never multiple accents competing.
+- Tiny dot or line dividers between content groups instead of cards: a 4px circle in #2896FB, or a 32px hairline.
+- Refined micro-typography: small caps eyebrows, footnote-style captions in 11px #94A3B8.
+- Buttons are pill-shaped, single-color (solid #0F172A on light, solid #FFFFFF on dark), no gradients. Subtle 1px border. Confident, not flashy.`;
+      case "bento-showcase":
+        return `## VIBE: BENTO SHOWCASE (think apple.com/iphone × shadcn/ui × magicui)
+- Sections built around BENTO grids — asymmetric tile layouts with mixed sizes (1×1, 2×1, 1×2, 2×2). Each tile is a self-contained mini-feature with a visual demo.
+- The features section MUST be a 6-tile bento (3 columns × 2 rows of mixed sizes), each tile has: background gradient/illustration in the top half + text in the bottom half. Tiles have rounded corners (24px), 1px subtle border, and a hover lift.
+- Tiles are visually rich: tile 1 might show a mini chart (SVG bar chart), tile 2 shows a phone mockup, tile 3 shows a chat bubble, tile 4 shows code, tile 5 shows a calendar grid, tile 6 shows an avatar stack. The tile content is the demo.
+- Use color blocking: each tile gets a different accent (blue, green, yellow, coral, navy, purple) so the bento pops as a wall of color.
+- Hero section also has a mini-bento element — 3 small cards floating around the headline.
+- Cards on dark background use rgba(255,255,255,0.03) bg + 1px rgba(255,255,255,0.08) border + radial gradient overlay in the tile's accent color.`;
+      case "dark-tech":
+        return `## VIBE: DARK TECH (think anthropic.com × a16z × resend.com × ollama)
+- Engineered, technical, calm. Mostly neutral dark with very restrained color use.
+- Palette: #0A0A0A base, #141414 cards, #FAFAFA text, #737373 muted, with ONE accent color used sparingly (#FFC328 OR #2896FB — pick one and stick with it).
+- Mix of geist-style sans + monospace details. Headline in sans, eyebrows + numbers + captions in mono.
+- Hero is text-led with a single subtle visual element (a glowing dot, a small terminal window, or a 1×1 thin gradient line crossing the frame).
+- Code-style accents: inline code chips with 1px border, mono font, slight background tint. Status dots (green pulse) for "shipped" / "live" indicators.
+- Micro-detail rich: small "+" symbols at corners of major elements, dotted leader lines connecting labels to features, monospace timestamps in the footer.
+- Subtle grid background: a 1px dotted grid at 32px spacing in rgba(255,255,255,0.03) on the hero section only.`;
+      default:
+        return "";
+    }
+  })();
+
   const landingPageBlock = pageMode === "landing-page"
-    ? `\n# OUTPUT MODE: LANDING PAGE (CRITICAL — overrides single-canvas defaults)
-You are NOT designing a single marketing graphic. You are designing a complete, production-quality SaaS LANDING PAGE that will render as a tall, scrollable HTML document.
+    ? `\n# OUTPUT MODE: LANDING PAGE — FRAMER-TIER (CRITICAL — overrides single-canvas defaults)
+You are NOT designing a single marketing graphic. You are designing a complete, production-quality SaaS LANDING PAGE that rivals the best of Framer Templates, Linear, Vercel, Stripe, Anthropic, and Apple. This must look like the homepage of a $50M ARR Series B company.
+
+The bar: someone should look at this and think "wait, is this a real website?" If it looks like a generic AI-generated wireframe with three centered stacks of headline-subhead-button, you have failed.
+
+${vibeBlock}
 
 ## Page structure
-The root <div class="canvas"> is a TALL container at exactly the requested width × height. Inside it, stack 6-10 full-width SECTIONS vertically — like a real Stripe / Linear / Vercel / Notion landing page. Each section is full-width (100% of canvas width), variable height (typically 480-960px), and contains a focused design treatment.
+The root <div class="canvas"> is a TALL container at exactly the requested width × height. Inside it, stack 6-10 full-width SECTIONS vertically. Each section is full-width (100% of canvas width), variable height (typically 480-960px), and contains a focused design treatment.
 
 ## Required sections (in order)
 ${requestedSections.length
   ? requestedSections.map((s, i) => `${i + 1}. ${s}`).join("\n")
-  : `1. NAV BAR (slim, sticky-feel: logo left, 4-5 nav links center, "Get Started" CTA right; ~72px tall)
-2. HERO (the headline moment — eyebrow + huge headline + subhead + CTA + secondary action; optional product mockup or illustration on the right; ~720-900px tall)
-3. SOCIAL PROOF (logo wall — 5-7 fictional but realistic SaaS company wordmarks in muted #94A3B8; ~140px tall)
-4. FEATURES (3 or 4 column feature grid — each with an icon, headline, 2-line description; ~520px tall)
-5. PRODUCT SECTION (a "see it in action" mockup — use the HighLevel Product UI Reference Library to render a realistic in-browser frame; ~640px tall)
-6. TESTIMONIAL (single big quote with attribution + small avatar circle + company; or 2-3 quote cards in a row; ~440px tall)
-7. PRICING (2-3 pricing tiers as cards with feature checklists, "Most Popular" badge on middle tier; ~640px tall)
-8. FINAL CTA (centered hook headline + big CTA button + small disclaimer line; ~360px tall)
-9. FOOTER (4-column link grid + copyright line; ~280px tall)`}
+  : `1. NAV BAR
+2. HERO
+3. SOCIAL PROOF
+4. FEATURES
+5. PRODUCT SECTION
+6. TESTIMONIAL
+7. PRICING
+8. FINAL CTA
+9. FOOTER`}
 
-## Section design rules
-- Each section is its own composition zone. Apply the TEXT/VISUAL/CTA zone discipline INSIDE each section just like you would for a single graphic.
-- Alternate surface colors between sections to create visual rhythm: deep navy (#0B1426) → mid navy (#122036) → off-white (#F8FAFC, with text switched to #0F172A / #475569) → mid navy → off-white. About 1 in 3 sections should be the off-white "light" surface so the page breathes.
-- Internal section padding: top/bottom ~80-120px, left/right ~6-8% of canvas width. NEVER let content touch the section edges.
+## SECTION DESIGN RULES (mandatory)
+- Each section is its own composition zone with TEXT/VISUAL/CTA zone discipline.
+- Alternate surface treatments to create visual rhythm. Per the chosen vibe, this could mean alternating dark/light backgrounds, OR varying accent orb positions, OR alternating left-anchored vs right-anchored content.
+- Internal section padding: top/bottom ~96-140px, left/right ~6-8% of canvas width.
 - Max content width inside any section: ~1200px (or 85% of canvas width if smaller). Center horizontally with margin: 0 auto.
-- Section headings (the kicker + section-title pair): eyebrow uppercase #17D94B 0.9rem letter-spacing 0.18em, then 2-3 word headline 48-64px font-weight 700.
-- Each section has a clear visual focal point (a giant headline, a product mockup, a stat, a quote). Never two competing focal points in the same section.
-- Use ONE Editorial pattern as the HERO section's structural skeleton (per CREATIVE INTENSITY). Other sections can be simpler — symmetric grids are fine for features/pricing/footer.
-- Sticky-feel nav at top: position relative inside the canvas (not actual position:sticky since it's a static screenshot), but visually anchored to the top edge with the same surface color as the section beneath it OR a frosted-glass treatment (background rgba(11,20,38,0.7), backdrop-filter blur(20px), 1px bottom border rgba(255,255,255,0.06)).
+- Section eyebrow: uppercase 11px font-weight 700 letter-spacing 0.2em, accent color appropriate to the surface.
+- Section headline: clamp(40px, 5.5vw, 72px), font-weight 700, letter-spacing -0.03em, leading 1.05.
+- Each section has a clear visual focal point. Never two competing focal points in the same section.
 
-## Light-surface section rules (CRITICAL — light sections look bad if text colors aren't switched)
+## LIGHT-SURFACE SECTION RULES (only if the chosen vibe uses light surfaces)
 When a section uses an off-white #F8FAFC or #FFFFFF background:
-- Headlines: #0F172A
-- Body text: #475569
-- Eyebrow: #00B2A9 (mid green) or #2896FB — NOT bright #17D94B (it vibrates on white)
-- Card backgrounds: #FFFFFF with 1px border #E2E8F0 and shadow 0 8px 24px rgba(15,23,42,0.06)
-- CTAs unchanged (blue gradient still works)
+- Headlines: #0F172A. Body text: #475569.
+- Eyebrow: #00B2A9 or #2896FB — NOT bright #17D94B.
+- Card backgrounds: #FFFFFF with 1px border #E2E8F0 and shadow 0 8px 24px rgba(15,23,42,0.06).
 
-## Realistic copy
-NEVER use lorem ipsum or "Feature 1 / Feature 2". Write actual realistic landing-page copy that reads like it shipped: real-sounding feature names, real benefit-led headlines, real-sounding company names in the social proof row (e.g. "Northwind", "Linearise", "Cobalt", "Helix Labs", "Forma", "Outreach", "Ridgeline"), real testimonial attribution ("Maya Chen, Founder · Cobalt Studio"), real pricing numbers ($29 / $79 / $199 mo or similar).
+## TYPOGRAPHY TIER (Framer-level, not template-level)
+- Hero headline must use clamp() for responsive scale and a tight negative letter-spacing (-0.03em to -0.05em).
+- Mix two type weights or styles within the hero headline for visual rhythm (e.g. one accent word in italic, OR one word as a different weight, OR one word with a gradient fill, OR one word underlined with an SVG squiggle).
+- Subhead: 18-22px, weight 400, leading 1.55, max-width 540px, color #94A3B8 (dark) or #475569 (light).
+- Button label: 14-15px, weight 600, letter-spacing -0.005em.
+- Eyebrows: 11-12px, weight 600-700, uppercase, letter-spacing 0.18-0.22em.
+- Use Inter / Geist for sans, JetBrains Mono / Fira Code for mono accents. Load via Google Fonts: <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">.
 
-## Output
-Return ONE complete <!doctype html> document. The root .canvas div has exactly the requested width and height — DO NOT use multiple slides, DO NOT use the SLIDE-BREAK delimiter. The body of the canvas is the stacked sections.`
+## REQUIRED PREMIUM COMPONENTS (use at least 4 of these on every page)
+1. **Frosted-glass nav bar** — position relative at top of canvas, background rgba(10,14,31,0.7) (or rgba(255,255,255,0.7) on light), backdrop-filter: blur(24px) saturate(160%), 1px bottom border. Logo left, links center (12-14px weight 500), CTA pill right.
+2. **Marquee logo strip** — for the social proof section, set up a scrolling strip of company wordmarks. Markup: <div class="marquee"><div class="marquee-track">[logos × 2]</div></div>. CSS: .marquee { overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); } .marquee-track { display: flex; gap: 80px; animation: marquee 38s linear infinite; width: max-content; } @keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }. Render each "logo" as a wordmark (text in 18-22px weight 600 color #94A3B8) — invent 8-12 realistic SaaS company names.
+3. **Bento grid** — at least one section uses an asymmetric grid: grid-template-columns: repeat(3, 1fr); grid-auto-rows: 280px; with some tiles spanning grid-column: span 2 or grid-row: span 2. Tiles have border-radius: 24px, 1px subtle border, and contain visual demos (SVG charts, fake UI mockups, icon clusters), not just text.
+4. **Working pricing toggle** — pricing section has a real monthly/annual toggle that swaps prices via JS. Markup: a pill with two buttons "Monthly" and "Annual" that toggle a class on a parent. Prices have data-monthly and data-annual attributes; JS swaps textContent on click.
+5. **Working FAQ accordion** — FAQ items are <details><summary> elements (native, no JS needed for basic open/close). Style summary list-style: none, custom chevron via ::after that rotates 180deg when [open]. Add transition: transform 0.3s ease.
+6. **Animated stat counters** — stats band has 4 huge numbers (clamp 56px to 96px, weight 700) that animate from 0 to their target value when scrolled into view (Intersection Observer + JS animating textContent).
+7. **Gradient mesh hero background** — for the hero, layer 3-5 absolutely-positioned blurred radial gradients (each filter: blur(80px); opacity: 0.4-0.6) in brand colors at varied positions to create depth. They drift via @keyframes.
+8. **Pricing card with "Most Popular" lift** — middle pricing card is visibly lifted (transform: scale(1.04); transform-origin: center; z-index: 2) with a yellow "MOST POPULAR" pill badge floating at the top edge.
+9. **Glow-ring CTA buttons** — primary CTA has multi-layer shadow: box-shadow: 0 0 0 1px rgba(40,150,251,0.5), 0 12px 32px -8px rgba(40,150,251,0.55), inset 0 1px 0 rgba(255,255,255,0.2). On hover, transform: translateY(-2px); shadow boost.
+10. **Scroll progress bar** — fixed at top of viewport, 3px tall, gradient fill from 0% to scroll%, via JS listening to canvas scroll.
+
+## MOTION & MICRO-INTERACTIONS (mandatory — non-negotiable)
+The page MUST feel alive. Add this exact base script and CSS to <head>:
+\`\`\`
+<style>
+  html { scroll-behavior: smooth; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+  .reveal-stagger > * { opacity: 0; transform: translateY(16px); transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+  .reveal-stagger.in > * { opacity: 1; transform: translateY(0); }
+  .reveal-stagger.in > *:nth-child(1) { transition-delay: 0.05s }
+  .reveal-stagger.in > *:nth-child(2) { transition-delay: 0.12s }
+  .reveal-stagger.in > *:nth-child(3) { transition-delay: 0.19s }
+  .reveal-stagger.in > *:nth-child(4) { transition-delay: 0.26s }
+  .reveal-stagger.in > *:nth-child(5) { transition-delay: 0.33s }
+  .reveal-stagger.in > *:nth-child(6) { transition-delay: 0.40s }
+  .lift { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+  .lift:hover { transform: translateY(-3px); }
+</style>
+<script>
+  // Reveal on scroll (Intersection Observer)
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
+  document.querySelectorAll('.reveal, .reveal-stagger').forEach(el => io.observe(el));
+
+  // Animated counters
+  const counterIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const target = parseFloat(el.dataset.count || '0');
+      const suffix = el.dataset.suffix || '';
+      const dur = 1800;
+      const start = performance.now();
+      const tick = (now) => {
+        const t = Math.min(1, (now - start) / dur);
+        const eased = 1 - Math.pow(1 - t, 3);
+        const val = target * eased;
+        el.textContent = (target % 1 === 0 ? Math.round(val).toLocaleString() : val.toFixed(1)) + suffix;
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+      counterIO.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-count]').forEach(el => counterIO.observe(el));
+
+  // Pricing toggle
+  document.querySelectorAll('[data-pricing-toggle]').forEach(toggle => {
+    toggle.addEventListener('click', (ev) => {
+      const btn = ev.target.closest('button');
+      if (!btn) return;
+      toggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      const mode = btn.dataset.mode || 'monthly';
+      document.querySelectorAll('[data-monthly][data-annual]').forEach(p => {
+        p.textContent = mode === 'annual' ? p.dataset.annual : p.dataset.monthly;
+      });
+    });
+  });
+
+  // Scroll progress bar (canvas-scoped — fixed inside canvas)
+  const canvas = document.querySelector('.canvas');
+  const bar = document.querySelector('.scroll-progress');
+  if (canvas && bar) {
+    canvas.addEventListener('scroll', () => {
+      const max = canvas.scrollHeight - canvas.clientHeight;
+      const pct = max > 0 ? (canvas.scrollTop / max) * 100 : 0;
+      bar.style.width = pct + '%';
+    });
+  }
+</script>
+\`\`\`
+
+Then ON the .canvas element add: style="overflow-y: auto;" so the scroll handler works.
+And ALSO add a scroll progress bar element at the top of canvas: <div class="scroll-progress" style="position: sticky; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #2896FB, #17D94B); width: 0%; z-index: 100; transition: width 0.1s linear;"></div>.
+
+Apply .reveal to every section. Apply .reveal-stagger to grids of cards (features grid, bento, pricing tiers, logo wall items). Apply .lift to every card and CTA button. The page should feel like every element is breathing into view as you scroll.
+
+## REALISTIC COPY (HARD RULE)
+NEVER use lorem ipsum or "Feature 1 / Feature 2". Write actual realistic landing-page copy that reads like it shipped:
+- Real benefit-led headlines that make the value prop clear in 4-9 words.
+- Real-sounding company names in the social proof: "Northwind", "Linearise", "Cobalt Studio", "Helix Labs", "Forma", "Outreach", "Ridgeline", "Quill", "Mercury Capital", "Asterisk", "Plinth", "Voltage Park".
+- Real testimonials with attribution: "Maya Chen, Founder · Cobalt Studio", "Daniel Park, Head of Growth · Linearise".
+- Real pricing: $29 / $79 / $199 mo (or whatever fits the product).
+- Real feature names that describe specific capabilities, not vague nouns.
+- Real founder/customer first names (Maya, Daniel, Aisha, Ravi, Priya, Marcus, Elena, Theo, Naomi).
+
+## OUTPUT FORMAT
+Return ONE complete <!doctype html> document. The root .canvas div has exactly the requested width and height — DO NOT use multiple slides, DO NOT use the SLIDE-BREAK delimiter. Include the full <head> with Google Fonts link, the base <style>, and the base <script> from above. The body of the canvas is the stacked sections. Make it ALIVE.`
     : "";
 
   const userContent = [

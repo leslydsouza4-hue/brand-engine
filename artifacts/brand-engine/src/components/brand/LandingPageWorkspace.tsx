@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { FlaskConical, Loader2, Sparkles, Download, Copy, Check, Monitor, Tablet, Smartphone } from "lucide-react";
+import { FlaskConical, Loader2, Sparkles, Download, Copy, Check, Monitor, Tablet, Smartphone, Wand2 } from "lucide-react";
 
 const WIDTH_PRESETS = [
   { id: "desktop", label: "Desktop", w: 1440, icon: Monitor },
@@ -14,6 +14,50 @@ const LENGTH_PRESETS = [
   { id: "long", label: "Long", h: 5200, hint: "Full marketing page" },
   { id: "epic", label: "Epic", h: 7200, hint: "Long-form scroll" },
 ] as const;
+
+type VibeId =
+  | "editorial-bold"
+  | "glass-aurora"
+  | "brutalist-type"
+  | "minimal-swiss"
+  | "bento-showcase"
+  | "dark-tech";
+
+const VIBES: { id: VibeId; label: string; tag: string; tint: string; ring: string; }[] = [
+  { id: "glass-aurora",    label: "Glass Aurora",    tag: "Linear · Arc",         tint: "from-[#2896FB] via-[#A855F7] to-[#17D94B]", ring: "rgba(168,85,247,0.55)" },
+  { id: "editorial-bold",  label: "Editorial Bold",  tag: "NYT × Apple",          tint: "from-[#FFC328] via-[#F25C19] to-[#0B1426]", ring: "rgba(255,195,40,0.55)" },
+  { id: "bento-showcase",  label: "Bento Showcase",  tag: "Apple · shadcn",       tint: "from-[#17D94B] via-[#FFC328] to-[#F25C19]", ring: "rgba(23,217,75,0.55)" },
+  { id: "dark-tech",       label: "Dark Tech",       tag: "Anthropic · a16z",     tint: "from-[#0F172A] via-[#475569] to-[#FFC328]", ring: "rgba(255,195,40,0.45)" },
+  { id: "minimal-swiss",   label: "Minimal Swiss",   tag: "Notion · Krea",        tint: "from-[#FFFFFF] via-[#CBD5E1] to-[#2896FB]", ring: "rgba(40,150,251,0.45)" },
+  { id: "brutalist-type",  label: "Brutalist Type",  tag: "Vercel · Mercury",     tint: "from-[#FFFFFF] via-[#FFC328] to-[#0F172A]", ring: "rgba(255,255,255,0.55)" },
+];
+
+const QUICK_PROMPTS: { label: string; prompt: string; }[] = [
+  {
+    label: "AI Voice Agent",
+    prompt: "Landing page for HighLevel AI Voice Agent — an always-on phone receptionist that books appointments, answers FAQs, and routes hot leads to humans. Hero with a phone-call UI mockup showing a live transcript. Features grid for the 6 capabilities (24/7 answering, calendar booking, lead qualification, CRM sync, multilingual, post-call summaries). Founder testimonial from a med-spa owner. 3-tier pricing.",
+  },
+  {
+    label: "All-in-One CRM",
+    prompt: "Landing page for HighLevel — the all-in-one CRM, marketing automation, and pipeline platform that replaces 8 tools (HubSpot, Calendly, Mailchimp, Twilio, Typeform, etc). Hero shows a stack of competitor logos being replaced by HighLevel. Bento grid for the 6 product modules. Stats band: 70k+ agencies, $X saved monthly. Comparison table vs HubSpot. 3 pricing tiers.",
+  },
+  {
+    label: "Workflow Builder",
+    prompt: "Landing page for HighLevel Workflows — a no-code automation canvas where you wire SMS, email, calls, payments, and AI together. Hero shows the canvas UI with nodes connected by curves. Features grid: triggers, actions, branching, AI steps, integrations. Testimonial from an agency owner who replaced Zapier. Pricing.",
+  },
+  {
+    label: "Email Marketing",
+    prompt: "Landing page for HighLevel Email Marketing — drag-and-drop email builder + audience segmentation + AI subject lines + deliverability monitoring. Hero with a stylized email composer mockup. Bento grid for the 6 features. Marquee logo strip. Pricing comparison vs Mailchimp.",
+  },
+  {
+    label: "AI Employee",
+    prompt: "Landing page for HighLevel AI Employee — a single AI agent that handles SMS, email, voice, chat, and reviews 24/7 across all your client comms. Hero with a chat-style demo of the AI replying to a lead. Stats band: hours saved, deals booked, response time. Testimonial from an agency. Pricing.",
+  },
+  {
+    label: "Reputation",
+    prompt: "Landing page for HighLevel Reputation — automated review requests, 5-star funnel, public review monitoring across Google/Facebook/Yelp, and AI review responses. Hero with a star-rating animation and a sample review feed. 3-tier pricing.",
+  },
+];
 
 const SECTION_LIBRARY = [
   { id: "nav", label: "Nav Bar", default: true },
@@ -52,6 +96,7 @@ export function LandingPageWorkspace() {
   const [height, setHeight] = useState<typeof LENGTH_PRESETS[number]["h"]>(3600);
   const [creativeMode, setCreativeMode] = useState<"safe" | "bold" | "wild">("bold");
   const [model, setModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-opus-4-7");
+  const [vibe, setVibe] = useState<VibeId>("glass-aurora");
   const [prompt, setPrompt] = useState("");
   const [selectedSections, setSelectedSections] = useState<Set<string>>(
     () => new Set(SECTION_LIBRARY.filter(s => s.default).map(s => s.id))
@@ -107,6 +152,7 @@ export function LandingPageWorkspace() {
           model,
           creativeMode,
           pageMode: "landing-page",
+          vibe,
           sections: orderedSections,
           format: "social",
           slideCount: 1,
@@ -252,6 +298,32 @@ export function LandingPageWorkspace() {
           ))}
         </div>
 
+        {/* Vibe */}
+        <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Vibe</div>
+        <div className="grid grid-cols-2 gap-[6px] mb-[14px]">
+          {VIBES.map(v => {
+            const active = vibe === v.id;
+            return (
+              <button
+                key={v.id}
+                onClick={() => setVibe(v.id)}
+                className="relative flex flex-col items-stretch gap-[6px] py-[9px] px-[10px] rounded-[10px] cursor-pointer border text-left transition-all"
+                style={{
+                  background: active ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.025)",
+                  borderColor: active ? v.ring : "rgba(255,255,255,0.10)",
+                  boxShadow: active ? `0 0 0 1px ${v.ring}, 0 8px 24px -6px ${v.ring}` : "none",
+                }}
+              >
+                <div className={`h-[18px] w-full rounded-[5px] bg-gradient-to-r ${v.tint}`} style={{ opacity: active ? 1 : 0.7 }} />
+                <div>
+                  <div className={`text-[11px] font-bold leading-[1.1] ${active ? "text-white" : "text-[#CBD5E1]"}`}>{v.label}</div>
+                  <div className="text-[9px] text-[#64748B] mt-[2px]">{v.tag}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Sections */}
         <div className="flex items-baseline justify-between mb-[6px]">
           <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Sections</div>
@@ -274,6 +346,23 @@ export function LandingPageWorkspace() {
               </button>
             );
           })}
+        </div>
+
+        {/* Quick prompts */}
+        <div className="flex items-center gap-[6px] mb-[6px]">
+          <Wand2 className="w-[10px] h-[10px] text-[#A855F7]" />
+          <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569]">Quick Prompts</div>
+        </div>
+        <div className="flex flex-wrap gap-[5px] mb-[14px]">
+          {QUICK_PROMPTS.map(q => (
+            <button
+              key={q.label}
+              onClick={() => setPrompt(q.prompt)}
+              className="py-[6px] px-[10px] rounded-[999px] text-[10.5px] font-semibold border cursor-pointer transition-all bg-[rgba(168,85,247,0.08)] border-[rgba(168,85,247,0.25)] text-[#C4B5FD] hover:bg-[rgba(168,85,247,0.16)] hover:text-white hover:border-[rgba(168,85,247,0.45)]"
+            >
+              {q.label}
+            </button>
+          ))}
         </div>
 
         {/* Prompt */}

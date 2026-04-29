@@ -420,16 +420,6 @@ function HorizontalTemplate({
             textAlign: "center",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: "-30% -8% -25% -8%",
-              background:
-                "radial-gradient(ellipse 65% 95% at 50% 42%, rgba(2,5,18,0.78) 0%, rgba(2,5,18,0.42) 48%, transparent 80%)",
-              pointerEvents: "none",
-              zIndex: -1,
-            }}
-          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="1em"
@@ -444,7 +434,8 @@ function HorizontalTemplate({
               color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
+              filter:
+                "drop-shadow(0 0.06em 0.18em rgba(0,0,0,0.75)) drop-shadow(0 0 0.55em rgba(0,0,0,0.65)) drop-shadow(0 0 1.1em rgba(0,0,0,0.45))",
             }}
           />
           <div
@@ -737,16 +728,6 @@ function SquareTemplate({
             textAlign: "center",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: "-25% -10% -22% -10%",
-              background:
-                "radial-gradient(ellipse 65% 100% at 50% 42%, rgba(2,5,18,0.78) 0%, rgba(2,5,18,0.42) 48%, transparent 80%)",
-              pointerEvents: "none",
-              zIndex: -1,
-            }}
-          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="0.92em"
@@ -759,7 +740,8 @@ function SquareTemplate({
               color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
+              filter:
+                "drop-shadow(0 0.06em 0.18em rgba(0,0,0,0.75)) drop-shadow(0 0 0.55em rgba(0,0,0,0.65)) drop-shadow(0 0 1.1em rgba(0,0,0,0.45))",
             }}
           />
           <div
@@ -1052,16 +1034,6 @@ function PortraitTemplate({
             textAlign: "center",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: "-25% -10% -22% -10%",
-              background:
-                "radial-gradient(ellipse 65% 100% at 50% 42%, rgba(2,5,18,0.78) 0%, rgba(2,5,18,0.42) 48%, transparent 80%)",
-              pointerEvents: "none",
-              zIndex: -1,
-            }}
-          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="1em"
@@ -1074,7 +1046,8 @@ function PortraitTemplate({
               color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
+              filter:
+                "drop-shadow(0 0.06em 0.18em rgba(0,0,0,0.75)) drop-shadow(0 0 0.55em rgba(0,0,0,0.65)) drop-shadow(0 0 1.1em rgba(0,0,0,0.45))",
             }}
           />
           <div
@@ -1367,16 +1340,6 @@ function StoryTemplate({
             textAlign: "center",
           }}
         >
-          <div
-            style={{
-              position: "absolute",
-              inset: "-25% -10% -22% -10%",
-              background:
-                "radial-gradient(ellipse 65% 100% at 50% 42%, rgba(2,5,18,0.78) 0%, rgba(2,5,18,0.42) 48%, transparent 80%)",
-              pointerEvents: "none",
-              zIndex: -1,
-            }}
-          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="1em"
@@ -1389,7 +1352,8 @@ function StoryTemplate({
               color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
+              filter:
+                "drop-shadow(0 0.06em 0.18em rgba(0,0,0,0.75)) drop-shadow(0 0 0.55em rgba(0,0,0,0.65)) drop-shadow(0 0 1.1em rgba(0,0,0,0.45))",
             }}
           />
           <div

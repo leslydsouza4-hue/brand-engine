@@ -893,11 +893,11 @@ function PortraitTemplate({
         <div
           style={{
             position: "absolute",
-            left: "50%",
+            left: "3.5%",
             top: 0,
             bottom: 0,
             writingMode: "vertical-rl",
-            transform: "translateX(-50%) rotate(180deg)",
+            transform: "rotate(180deg)",
             transformOrigin: "center center",
             fontSize: "1.7em",
             fontWeight: 900,
@@ -1217,11 +1217,11 @@ function StoryTemplate({
         <div
           style={{
             position: "absolute",
-            left: "50%",
+            left: "3.5%",
             top: 0,
             bottom: 0,
             writingMode: "vertical-rl",
-            transform: "translateX(-50%) rotate(180deg)",
+            transform: "rotate(180deg)",
             transformOrigin: "center center",
             fontSize: "1.65em",
             fontWeight: 900,

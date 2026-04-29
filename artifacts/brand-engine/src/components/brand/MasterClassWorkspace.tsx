@@ -267,7 +267,7 @@ function HorizontalTemplate({
           style={{
             position: "absolute",
             right: "4%",
-            bottom: "5.5%",
+            bottom: "10.5%",
             width: "44%",
             zIndex: 5,
             textAlign: "center",

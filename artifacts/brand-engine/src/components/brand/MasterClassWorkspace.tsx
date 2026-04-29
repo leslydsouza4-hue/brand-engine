@@ -420,6 +420,20 @@ function HorizontalTemplate({
             textAlign: "center",
           }}
         >
+          <div
+            style={{
+              position: "absolute",
+              left: "8%",
+              right: "8%",
+              top: "-15%",
+              bottom: "-12%",
+              background:
+                "radial-gradient(ellipse 55% 75% at 50% 45%, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.32) 32%, rgba(0,0,0,0.12) 60%, transparent 88%)",
+              filter: "blur(0.4em)",
+              pointerEvents: "none",
+              zIndex: -1,
+            }}
+          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="1em"

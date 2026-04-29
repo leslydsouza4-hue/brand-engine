@@ -779,6 +779,8 @@ function SquareTemplate({
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="0.92em"
+            fitTarget={0.66}
+            maxScale={1}
             style={{
               fontWeight: 800,
               background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",

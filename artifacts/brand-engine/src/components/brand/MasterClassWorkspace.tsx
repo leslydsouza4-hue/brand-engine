@@ -10,6 +10,7 @@ import { LivePreview } from "./LivePreview";
 const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/masterclass/background.png`;
 const BG_SQUARE = `${BASE}assets/masterclass/background-square.png`;
+const BG_PORTRAIT = `${BASE}assets/masterclass/background-portrait.png`;
 const LOGO_URL = `${BASE}assets/masterclass/logo-light.png`;
 
 interface TemplateConfig {
@@ -19,7 +20,7 @@ interface TemplateConfig {
   width: number;
   height: number;
   variant: "dates" | "no-dates" | "cta";
-  group: "horizontal" | "square";
+  group: "horizontal" | "square" | "portrait";
 }
 
 const TEMPLATES: TemplateConfig[] = [
@@ -29,11 +30,15 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "square-dates", name: "Square - Dates", shortName: "Dates", width: 1080, height: 1080, variant: "dates", group: "square" },
   { id: "square-no-dates", name: "Square - No Dates", shortName: "No Dates", width: 1080, height: 1080, variant: "no-dates", group: "square" },
   { id: "square-cta", name: "Square - CTA", shortName: "CTA", width: 1080, height: 1080, variant: "cta", group: "square" },
+  { id: "portrait-dates", name: "Portrait - Dates", shortName: "Dates", width: 1080, height: 1350, variant: "dates", group: "portrait" },
+  { id: "portrait-no-dates", name: "Portrait - No Dates", shortName: "No Dates", width: 1080, height: 1350, variant: "no-dates", group: "portrait" },
+  { id: "portrait-cta", name: "Portrait - CTA", shortName: "CTA", width: 1080, height: 1350, variant: "cta", group: "portrait" },
 ];
 
 const SIZE_GROUPS = [
   { key: "horizontal" as const, label: "Horizontal", dims: "1920 × 1080", ar: "16/9" },
   { key: "square" as const, label: "Square", dims: "1080 × 1080", ar: "1/1" },
+  { key: "portrait" as const, label: "Portrait", dims: "1080 × 1350", ar: "4/5" },
 ];
 
 interface ImageSettings {
@@ -571,6 +576,265 @@ function SquareTemplate({
   );
 }
 
+function PortraitTemplate({
+  config,
+  headline,
+  dateText,
+  guestName,
+  guestRole,
+  ctaText,
+  personImage,
+  imgSettings,
+}: {
+  config: TemplateConfig;
+  headline: string;
+  dateText: string;
+  guestName: string;
+  guestRole: string;
+  ctaText: string;
+  personImage: string | null;
+  imgSettings: ImageSettings;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  useContainerFontSize(containerRef, 0.052);
+
+  const showCta = config.variant === "cta";
+  const showDate = config.variant === "dates";
+  const fullName = (guestName.trim() || "GUEST").toUpperCase();
+
+  return (
+    <div
+      ref={containerRef}
+      data-template-id={config.id}
+      style={{
+        width: "100%",
+        aspectRatio: "1080/1350",
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: "0.3em",
+        fontFamily: "'Poppins', sans-serif",
+        backgroundColor: "#07213C",
+        fontSize: "16px",
+      }}
+    >
+      {/* Background */}
+      <img
+        src={BG_PORTRAIT}
+        alt=""
+        crossOrigin="anonymous"
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+      />
+
+      {/* Vertical stroked guest full name on LEFT side */}
+      {guestName && (
+        <div
+          style={{
+            position: "absolute",
+            left: "3.5%",
+            top: "5%",
+            bottom: "5%",
+            writingMode: "vertical-rl",
+            transform: "rotate(180deg)",
+            transformOrigin: "center center",
+            fontSize: "1.7em",
+            fontWeight: 900,
+            letterSpacing: "0.22em",
+            color: "transparent",
+            WebkitTextStroke: "0.04em rgba(150, 200, 255, 0.32)",
+            textTransform: "uppercase",
+            lineHeight: 1,
+            zIndex: 1,
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {fullName}
+        </div>
+      )}
+
+      {/* Logo top center */}
+      <img
+        src={LOGO_URL}
+        alt=""
+        crossOrigin="anonymous"
+        style={{
+          position: "absolute",
+          top: "3%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "62%",
+          height: "auto",
+          objectFit: "contain",
+          zIndex: 4,
+        }}
+      />
+
+      {/* Headline + date/cta — center top */}
+      <div
+        style={{
+          position: "absolute",
+          left: "8%",
+          right: "8%",
+          top: "18%",
+          zIndex: 3,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "0.7em",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "1.15em",
+            fontWeight: 800,
+            lineHeight: 1.12,
+            color: "#FFFFFF",
+            letterSpacing: "-0.01em",
+            textAlign: "center",
+          }}
+        >
+          {headline || "Enter Headline"}
+        </div>
+
+        {showDate && dateText && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.55em",
+              padding: "0.6em 1.2em",
+              border: "0.085em solid #2896FB",
+              borderRadius: "0.55em",
+              background: "rgba(40,150,251,0.04)",
+            }}
+          >
+            <svg
+              width="0.95em"
+              height="0.95em"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#2896FB"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            <span
+              style={{
+                fontSize: "0.72em",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              {dateText}
+            </span>
+          </div>
+        )}
+
+        {showCta && ctaText && (
+          <div
+            style={{
+              display: "inline-block",
+              padding: "0.6em 1.6em",
+              fontSize: "0.72em",
+              fontWeight: 800,
+              color: "#0A1628",
+              background: "linear-gradient(135deg, #FFC328 0%, #FFD84D 100%)",
+              borderRadius: "0.5em",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              boxShadow: "0 0.15em 0.6em rgba(255,195,40,0.35)",
+            }}
+          >
+            {ctaText}
+          </div>
+        )}
+      </div>
+
+      {/* Person image bottom-center */}
+      {personImage && (
+        <div
+          style={{
+            position: "absolute",
+            left: "50%",
+            transform: "translateX(-50%)",
+            bottom: 0,
+            width: "70%",
+            height: "60%",
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            overflow: "hidden",
+            zIndex: 2,
+          }}
+        >
+          <img
+            src={personImage}
+            alt=""
+            crossOrigin="anonymous"
+            style={{
+              height: `${100 * imgSettings.scale}%`,
+              transform: `translate(${imgSettings.offsetX}%, ${imgSettings.offsetY}%)`,
+              objectFit: "contain",
+              objectPosition: "bottom center",
+            }}
+          />
+        </div>
+      )}
+
+      {/* Guest name + role under photo */}
+      {guestName && (
+        <div
+          style={{
+            position: "absolute",
+            left: "8%",
+            right: "8%",
+            bottom: "3.5%",
+            zIndex: 5,
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              fontSize: "1em",
+              fontWeight: 800,
+              color: "#FFFFFF",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              lineHeight: 1,
+              textShadow: "0 0.05em 0.4em rgba(0,0,0,0.5)",
+            }}
+          >
+            {guestName.toUpperCase()}
+          </div>
+          <div
+            style={{
+              fontSize: "0.5em",
+              fontWeight: 700,
+              color: "rgba(220,232,255,0.78)",
+              letterSpacing: "0.32em",
+              textTransform: "uppercase",
+              marginTop: "0.55em",
+              lineHeight: 1,
+            }}
+          >
+            {guestRole || "Guest"}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TemplatePreview(props: {
   config: TemplateConfig;
   headline: string;
@@ -582,6 +846,7 @@ function TemplatePreview(props: {
   imgSettings: ImageSettings;
 }) {
   if (props.config.group === "square") return <SquareTemplate {...props} />;
+  if (props.config.group === "portrait") return <PortraitTemplate {...props} />;
   return <HorizontalTemplate {...props} />;
 }
 
@@ -787,7 +1052,7 @@ export function MasterClassWorkspace() {
         <div className="flex flex-col gap-[12px]">
           <div className="flex flex-col">
             <label className={labelCls}>Size</label>
-            <div className="grid grid-cols-2 gap-[6px]">
+            <div className="grid grid-cols-3 gap-[6px]">
               {SIZE_GROUPS.map((g) => {
                 const isActive = currentGroup === g.key;
                 return (
@@ -815,9 +1080,6 @@ export function MasterClassWorkspace() {
                   </button>
                 );
               })}
-            </div>
-            <div className="text-[9.5px] text-[#475569] mt-[6px] leading-snug">
-              Portrait variant coming soon — drop a background at <code className="text-[#2896FB]">/assets/masterclass/background-portrait.png</code>.
             </div>
           </div>
 

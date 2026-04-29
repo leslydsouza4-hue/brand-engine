@@ -149,6 +149,10 @@ C. **Text never touches images.** If a text element shares any horizontal band w
 
 D. **Headline width budget:** in landscape with a right-side visual, headline max-width is 50% of canvas width. In a centered stack, headline max-width is 80% of canvas width. NEVER let a headline run edge-to-edge.
 
+D2. **Hard column boundary (60/40 split):** when a UI mockup card / device / chat panel / image sits on the right, draw an invisible vertical seam at 56% of canvas width. The TEXT column lives entirely to the LEFT of the seam — its right edge is ≤ 52% canvas width. The VISUAL card lives entirely to the RIGHT of the seam — its left edge is ≥ 56% canvas width AND its right extent (left + width) must NOT exceed the inner padding (~94% canvas width). If the visual card naturally wants to be wider than 38% canvas width, either shrink it to 38% max OR push the text column narrower (≤ 44% width) and move the seam to 50%. NEVER let the visual card's bounding box cross into the text column under any circumstance — not even by 1px, not even for a floating chip or speech-bubble overhang. The chat panel covering the headline word is the #1 rejection reason.
+
+D3. **Floating chips / pills attached to a card** (e.g. "REPLIES IN 1.2s" badge above a chat) are part of that card's bounding box. Include them in the card's right-column rectangle. They cannot poke into the text column.
+
 E. **Word-count → font-size sanity check.** Estimate (chars × 0.55 × fontSize) > maxWidth → headline will wrap awkwardly or overflow. Either reduce font-size, increase maxWidth, or shorten copy. A headline must fit in 1-3 lines, never 4+.
 
 F. **Decorative orbs must have z-index 0 and opacity ≤ 0.55, OR sit fully outside the text zone.** A blurred orb directly behind text is OK if opacity ≤ 0.4. A sharp orb behind text is forbidden — move it or blur it.

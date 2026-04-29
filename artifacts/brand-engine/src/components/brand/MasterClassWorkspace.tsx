@@ -68,6 +68,66 @@ function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base:
   }, [ref, base]);
 }
 
+function FitText({
+  text,
+  style,
+  baseFontSize = "1em",
+  fitTarget = 0.96,
+  maxScale = 1.8,
+  minScale = 0.35,
+}: {
+  text: string;
+  style?: React.CSSProperties;
+  baseFontSize?: string;
+  fitTarget?: number;
+  maxScale?: number;
+  minScale?: number;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLSpanElement>(null);
+  const [scale, setScale] = useState(1);
+  const scaleRef = useRef(1);
+  scaleRef.current = scale;
+
+  useLayoutEffect(() => {
+    const c = containerRef.current;
+    const inner = innerRef.current;
+    if (!c || !inner) return;
+    const recalc = () => {
+      const cw = c.clientWidth;
+      const measured = inner.scrollWidth;
+      const cur = scaleRef.current;
+      if (cw <= 0 || measured <= 0 || cur <= 0) return;
+      const naturalW = measured / cur;
+      const target = (cw * fitTarget) / naturalW;
+      const next = Math.min(maxScale, Math.max(minScale, target));
+      if (Math.abs(next - cur) > 0.005) setScale(next);
+    };
+    recalc();
+    const ro = new ResizeObserver(recalc);
+    ro.observe(c);
+    ro.observe(inner);
+    return () => ro.disconnect();
+  }, [text, fitTarget, maxScale, minScale]);
+
+  return (
+    <div ref={containerRef} style={{ width: "100%", overflow: "hidden", textAlign: "center", lineHeight: 0 }}>
+      <span
+        ref={innerRef}
+        style={{
+          ...style,
+          fontSize: `calc(${baseFontSize} * ${scale})`,
+          whiteSpace: "nowrap",
+          display: "inline-block",
+          lineHeight: 1,
+        }}
+      >
+        {text}
+      </span>
+    </div>
+  );
+}
+
 function useFitParent(ref: RefObject<HTMLDivElement | null>, ratio: number) {
   useLayoutEffect(() => {
     const el = ref.current;
@@ -358,9 +418,10 @@ function HorizontalTemplate({
             textAlign: "center",
           }}
         >
-          <div
+          <FitText
+            text={guestName.toUpperCase()}
+            baseFontSize="1em"
             style={{
-              fontSize: "1em",
               fontWeight: 800,
               background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",
               WebkitBackgroundClip: "text",
@@ -369,13 +430,9 @@ function HorizontalTemplate({
               color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              lineHeight: 1,
-              whiteSpace: "nowrap",
               filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
             }}
-          >
-            {guestName.toUpperCase()}
-          </div>
+          />
           <div
             style={{
               fontSize: "0.5em",
@@ -666,9 +723,10 @@ function SquareTemplate({
             textAlign: "center",
           }}
         >
-          <div
+          <FitText
+            text={guestName.toUpperCase()}
+            baseFontSize="0.92em"
             style={{
-              fontSize: "0.92em",
               fontWeight: 800,
               background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",
               WebkitBackgroundClip: "text",
@@ -677,12 +735,9 @@ function SquareTemplate({
               color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              lineHeight: 1,
               filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
             }}
-          >
-            {guestName.toUpperCase()}
-          </div>
+          />
           <div
             style={{
               fontSize: "0.5em",
@@ -973,9 +1028,10 @@ function PortraitTemplate({
             textAlign: "center",
           }}
         >
-          <div
+          <FitText
+            text={guestName.toUpperCase()}
+            baseFontSize="1em"
             style={{
-              fontSize: "1em",
               fontWeight: 800,
               background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",
               WebkitBackgroundClip: "text",
@@ -984,12 +1040,9 @@ function PortraitTemplate({
               color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              lineHeight: 1,
               filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
             }}
-          >
-            {guestName.toUpperCase()}
-          </div>
+          />
           <div
             style={{
               fontSize: "0.5em",
@@ -1280,9 +1333,10 @@ function StoryTemplate({
             textAlign: "center",
           }}
         >
-          <div
+          <FitText
+            text={guestName.toUpperCase()}
+            baseFontSize="1em"
             style={{
-              fontSize: "1em",
               fontWeight: 800,
               background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",
               WebkitBackgroundClip: "text",
@@ -1291,12 +1345,9 @@ function StoryTemplate({
               color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
-              lineHeight: 1,
               filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
             }}
-          >
-            {guestName.toUpperCase()}
-          </div>
+          />
           <div
             style={{
               fontSize: "0.5em",

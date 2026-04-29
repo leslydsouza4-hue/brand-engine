@@ -72,9 +72,9 @@ function FitText({
   text,
   style,
   baseFontSize = "1em",
-  fitTarget = 0.96,
-  maxScale = 1.8,
-  minScale = 0.35,
+  fitTarget = 0.77,
+  maxScale = 1.44,
+  minScale = 0.28,
 }: {
   text: string;
   style?: React.CSSProperties;

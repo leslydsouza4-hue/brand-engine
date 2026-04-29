@@ -17,7 +17,8 @@ import {
   MessageSquarePlus,
   Mail,
   RefreshCw,
-  FlaskConical
+  FlaskConical,
+  GraduationCap
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -160,6 +161,17 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           >
             <Gift className={iconCls(currentMode === 'super-promo')} />
             Super Promo
+          </button>
+
+          <button
+            onClick={() => handleSetMode('master-class')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'master-class' ? activeClass : inactiveClass}`}
+          >
+            <GraduationCap className={iconCls(currentMode === 'master-class')} />
+            Master Class
+            <span className="text-[8.5px] font-bold tracking-[0.12em] uppercase text-[#FFC328] bg-[rgba(255,195,40,0.12)] border border-[rgba(255,195,40,0.30)] px-[6px] py-[2px] rounded-[4px] ml-auto">
+              New
+            </span>
           </button>
         </div>
 

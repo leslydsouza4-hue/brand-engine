@@ -9,6 +9,7 @@ import { SettingsWorkspace } from "@/components/brand/SettingsWorkspace";
 import { MyExportsWorkspace } from "@/components/brand/MyExportsWorkspace";
 import { BizDevWorkspace } from "@/components/brand/BizDevWorkspace";
 import { SuperPromo2Workspace } from "@/components/brand/SuperPromo2Workspace";
+import { MasterClassWorkspace } from "@/components/brand/MasterClassWorkspace";
 import { EventsWorkspace } from "@/components/brand/EventsWorkspace";
 import { ContentArmyWorkspace } from "@/components/brand/ContentArmyWorkspace";
 import { DidYouKnowWorkspace } from "@/components/brand/DidYouKnowWorkspace";
@@ -21,7 +22,7 @@ import { LandingPageWorkspace } from "@/components/brand/LandingPageWorkspace";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
 
 export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel"];
+  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -65,6 +66,7 @@ export default function BrandEngine() {
         
         {currentMode === "bizdev-templates" && <BizDevWorkspace />}
         {currentMode === "super-promo" && <SuperPromo2Workspace />}
+        {currentMode === "master-class" && <MasterClassWorkspace />}
         {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
         {currentMode === "settings" && <SettingsWorkspace />}
 

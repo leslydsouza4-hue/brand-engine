@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect, type RefObject } from "react";
 import {
   UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw, PackageOpen
 } from "lucide-react";
@@ -67,6 +67,36 @@ function useContainerFontSize(ref: React.RefObject<HTMLDivElement | null>, base:
   }, [ref, base]);
 }
 
+function useFitParent(ref: RefObject<HTMLDivElement | null>, ratio: number) {
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const parent = el.parentElement;
+    if (!parent) return;
+    const update = () => {
+      const cs = getComputedStyle(parent);
+      const pw = parent.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      const ph = parent.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+      if (pw <= 0 || ph <= 0) return;
+      let w: number;
+      let h: number;
+      if (pw / ph > ratio) {
+        h = ph;
+        w = ph * ratio;
+      } else {
+        w = pw;
+        h = pw / ratio;
+      }
+      el.style.width = `${w}px`;
+      el.style.height = `${h}px`;
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, [ref, ratio]);
+}
+
 function HorizontalTemplate({
   config,
   headline,
@@ -88,6 +118,7 @@ function HorizontalTemplate({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
+  useFitParent(containerRef, 1920 / 1080);
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
@@ -362,6 +393,7 @@ function SquareTemplate({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.052);
+  useFitParent(containerRef, 1);
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
@@ -621,6 +653,7 @@ function PortraitTemplate({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.052);
+  useFitParent(containerRef, 1080 / 1350);
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
@@ -807,8 +840,8 @@ function PortraitTemplate({
             left: "50%",
             transform: "translateX(-50%)",
             bottom: 0,
-            width: "70%",
-            height: "60%",
+            width: "92%",
+            height: "78%",
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
@@ -895,6 +928,7 @@ function StoryTemplate({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.058);
+  useFitParent(containerRef, 1080 / 1920);
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
@@ -1081,8 +1115,8 @@ function StoryTemplate({
             left: "50%",
             transform: "translateX(-50%)",
             bottom: 0,
-            width: "78%",
-            height: "62%",
+            width: "92%",
+            height: "78%",
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",

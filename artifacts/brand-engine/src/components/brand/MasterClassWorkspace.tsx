@@ -340,7 +340,7 @@ function HorizontalTemplate({
           bottom: 0,
           height: "55%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 18%, rgba(0,0,0,0.22) 38%, transparent 70%)",
+            "linear-gradient(to top, rgba(4,9,28,0.95) 0%, rgba(4,9,28,0.65) 18%, rgba(4,9,28,0.3) 38%, transparent 72%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -362,12 +362,16 @@ function HorizontalTemplate({
             style={{
               fontSize: "1em",
               fontWeight: 800,
-              color: "#FFFFFF",
+              background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
               lineHeight: 1,
               whiteSpace: "nowrap",
-              textShadow: "0 0.05em 0.4em rgba(0,0,0,0.5)",
+              filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
             }}
           >
             {guestName.toUpperCase()}
@@ -375,15 +379,26 @@ function HorizontalTemplate({
           <div
             style={{
               fontSize: "0.5em",
-              fontWeight: 700,
-              color: "rgba(220,232,255,0.78)",
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              marginTop: "0.55em",
-              lineHeight: 1,
+              marginTop: "0.7em",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.9em",
             }}
           >
-            {guestRole || "Guest"}
+            <span style={{ width: "1.8em", height: "0.08em", background: "rgba(220,232,255,0.55)" }} />
+            <span
+              style={{
+                fontWeight: 700,
+                color: "rgba(220,232,255,0.85)",
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              {guestRole || "Guest"}
+            </span>
+            <span style={{ width: "1.8em", height: "0.08em", background: "rgba(220,232,255,0.55)" }} />
           </div>
         </div>
       )}
@@ -633,7 +648,7 @@ function SquareTemplate({
           bottom: 0,
           height: "42%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 18%, rgba(0,0,0,0.22) 38%, transparent 70%)",
+            "linear-gradient(to top, rgba(4,9,28,0.95) 0%, rgba(4,9,28,0.65) 18%, rgba(4,9,28,0.3) 38%, transparent 72%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -655,11 +670,15 @@ function SquareTemplate({
             style={{
               fontSize: "0.92em",
               fontWeight: 800,
-              color: "#FFFFFF",
+              background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
               lineHeight: 1,
-              textShadow: "0 0.05em 0.4em rgba(0,0,0,0.5)",
+              filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
             }}
           >
             {guestName.toUpperCase()}
@@ -667,15 +686,26 @@ function SquareTemplate({
           <div
             style={{
               fontSize: "0.5em",
-              fontWeight: 700,
-              color: "rgba(220,232,255,0.78)",
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              marginTop: "0.55em",
-              lineHeight: 1,
+              marginTop: "0.7em",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.9em",
             }}
           >
-            {guestRole || "Guest"}
+            <span style={{ width: "1.8em", height: "0.08em", background: "rgba(220,232,255,0.55)" }} />
+            <span
+              style={{
+                fontWeight: 700,
+                color: "rgba(220,232,255,0.85)",
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              {guestRole || "Guest"}
+            </span>
+            <span style={{ width: "1.8em", height: "0.08em", background: "rgba(220,232,255,0.55)" }} />
           </div>
         </div>
       )}
@@ -925,7 +955,7 @@ function PortraitTemplate({
           bottom: 0,
           height: "42%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 18%, rgba(0,0,0,0.22) 38%, transparent 70%)",
+            "linear-gradient(to top, rgba(4,9,28,0.95) 0%, rgba(4,9,28,0.65) 18%, rgba(4,9,28,0.3) 38%, transparent 72%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -947,11 +977,15 @@ function PortraitTemplate({
             style={{
               fontSize: "1em",
               fontWeight: 800,
-              color: "#FFFFFF",
+              background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
               lineHeight: 1,
-              textShadow: "0 0.05em 0.4em rgba(0,0,0,0.5)",
+              filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
             }}
           >
             {guestName.toUpperCase()}
@@ -959,15 +993,26 @@ function PortraitTemplate({
           <div
             style={{
               fontSize: "0.5em",
-              fontWeight: 700,
-              color: "rgba(220,232,255,0.78)",
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              marginTop: "0.55em",
-              lineHeight: 1,
+              marginTop: "0.7em",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.9em",
             }}
           >
-            {guestRole || "Guest"}
+            <span style={{ width: "1.8em", height: "0.08em", background: "rgba(220,232,255,0.55)" }} />
+            <span
+              style={{
+                fontWeight: 700,
+                color: "rgba(220,232,255,0.85)",
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              {guestRole || "Guest"}
+            </span>
+            <span style={{ width: "1.8em", height: "0.08em", background: "rgba(220,232,255,0.55)" }} />
           </div>
         </div>
       )}
@@ -1217,7 +1262,7 @@ function StoryTemplate({
           bottom: 0,
           height: "38%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 18%, rgba(0,0,0,0.22) 38%, transparent 70%)",
+            "linear-gradient(to top, rgba(4,9,28,0.95) 0%, rgba(4,9,28,0.65) 18%, rgba(4,9,28,0.3) 38%, transparent 72%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -1239,11 +1284,15 @@ function StoryTemplate({
             style={{
               fontSize: "1em",
               fontWeight: 800,
-              color: "#FFFFFF",
+              background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              color: "transparent",
               letterSpacing: "0.04em",
               textTransform: "uppercase",
               lineHeight: 1,
-              textShadow: "0 0.05em 0.4em rgba(0,0,0,0.5)",
+              filter: "drop-shadow(0 0.04em 0.3em rgba(0,0,0,0.55))",
             }}
           >
             {guestName.toUpperCase()}
@@ -1251,15 +1300,26 @@ function StoryTemplate({
           <div
             style={{
               fontSize: "0.5em",
-              fontWeight: 700,
-              color: "rgba(220,232,255,0.78)",
-              letterSpacing: "0.32em",
-              textTransform: "uppercase",
-              marginTop: "0.55em",
-              lineHeight: 1,
+              marginTop: "0.7em",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.9em",
             }}
           >
-            {guestRole || "Guest"}
+            <span style={{ width: "1.8em", height: "0.08em", background: "rgba(220,232,255,0.55)" }} />
+            <span
+              style={{
+                fontWeight: 700,
+                color: "rgba(220,232,255,0.85)",
+                letterSpacing: "0.32em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              {guestRole || "Guest"}
+            </span>
+            <span style={{ width: "1.8em", height: "0.08em", background: "rgba(220,232,255,0.55)" }} />
           </div>
         </div>
       )}

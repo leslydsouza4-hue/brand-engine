@@ -309,7 +309,7 @@ function HorizontalTemplate({
           left: "4%",
           top: "33%",
           width: "52%",
-          zIndex: 3,
+          zIndex: 5,
           display: "flex",
           flexDirection: "column",
         }}

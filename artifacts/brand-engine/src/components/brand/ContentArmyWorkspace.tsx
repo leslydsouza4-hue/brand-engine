@@ -33,6 +33,24 @@ const TEAM: TeamMember[] = [
     images: [],
   },
   {
+    id: "kylee",
+    name: "Kylee Robinson",
+    folder: "kylee",
+    images: Array.from({ length: 21 }, (_, i) => `Kylee_${String(i + 1).padStart(2, '0')}.jpg`),
+  },
+  {
+    id: "jonah",
+    name: "Jonah Cockshaw",
+    folder: "jonah",
+    images: [],
+  },
+  {
+    id: "vit",
+    name: "Vit Muller",
+    folder: "vit",
+    images: [],
+  },
+  {
     id: "tina",
     name: "Tina Dahmen",
     folder: "tina",

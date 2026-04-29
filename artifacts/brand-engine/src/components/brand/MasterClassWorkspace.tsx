@@ -331,16 +331,16 @@ function HorizontalTemplate({
         )}
       </div>
 
-      {/* Dark radial glow behind guest name for legibility */}
+      {/* Dark gradient floor across full canvas width for legibility */}
       <div
         style={{
           position: "absolute",
+          left: 0,
           right: 0,
           bottom: 0,
-          width: "58%",
           height: "55%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 14%, rgba(0,0,0,0.2) 30%, transparent 55%), radial-gradient(ellipse 70% 100% at center bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 80%)",
+            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 18%, rgba(0,0,0,0.22) 38%, transparent 70%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -633,7 +633,7 @@ function SquareTemplate({
           bottom: 0,
           height: "42%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 14%, rgba(0,0,0,0.2) 30%, transparent 55%), radial-gradient(ellipse 60% 100% at center bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 80%)",
+            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 18%, rgba(0,0,0,0.22) 38%, transparent 70%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -925,7 +925,7 @@ function PortraitTemplate({
           bottom: 0,
           height: "42%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 14%, rgba(0,0,0,0.2) 30%, transparent 55%), radial-gradient(ellipse 60% 100% at center bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 80%)",
+            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 18%, rgba(0,0,0,0.22) 38%, transparent 70%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -1217,7 +1217,7 @@ function StoryTemplate({
           bottom: 0,
           height: "38%",
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 14%, rgba(0,0,0,0.2) 30%, transparent 55%), radial-gradient(ellipse 60% 100% at center bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 80%)",
+            "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 18%, rgba(0,0,0,0.22) 38%, transparent 70%)",
           zIndex: 4,
           pointerEvents: "none",
         }}

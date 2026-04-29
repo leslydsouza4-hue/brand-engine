@@ -228,6 +228,8 @@ function HorizontalTemplate({
             crossOrigin="anonymous"
             style={{
               height: `${100 * imgSettings.scale}%`,
+              maxWidth: "none",
+              width: "auto",
               transform: `translate(${imgSettings.offsetX}%, ${imgSettings.offsetY}%)`,
               objectFit: "contain",
               objectPosition: "bottom center",
@@ -338,7 +340,7 @@ function HorizontalTemplate({
           width: "58%",
           height: "55%",
           background:
-            "radial-gradient(ellipse 65% 100% at center bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 40%, transparent 80%)",
+            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 14%, rgba(0,0,0,0.2) 30%, transparent 55%), radial-gradient(ellipse 70% 100% at center bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 80%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -611,6 +613,8 @@ function SquareTemplate({
             crossOrigin="anonymous"
             style={{
               height: `${100 * imgSettings.scale}%`,
+              maxWidth: "none",
+              width: "auto",
               transform: `translate(${imgSettings.offsetX}%, ${imgSettings.offsetY}%)`,
               objectFit: "contain",
               objectPosition: "bottom center",
@@ -628,7 +632,7 @@ function SquareTemplate({
           bottom: 0,
           height: "42%",
           background:
-            "radial-gradient(ellipse 55% 100% at center bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 40%, transparent 80%)",
+            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 14%, rgba(0,0,0,0.2) 30%, transparent 55%), radial-gradient(ellipse 60% 100% at center bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 80%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -901,6 +905,8 @@ function PortraitTemplate({
             crossOrigin="anonymous"
             style={{
               height: `${100 * imgSettings.scale}%`,
+              maxWidth: "none",
+              width: "auto",
               transform: `translate(${imgSettings.offsetX}%, ${imgSettings.offsetY}%)`,
               objectFit: "contain",
               objectPosition: "bottom center",
@@ -918,7 +924,7 @@ function PortraitTemplate({
           bottom: 0,
           height: "42%",
           background:
-            "radial-gradient(ellipse 55% 100% at center bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 40%, transparent 80%)",
+            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 14%, rgba(0,0,0,0.2) 30%, transparent 55%), radial-gradient(ellipse 60% 100% at center bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 80%)",
           zIndex: 4,
           pointerEvents: "none",
         }}
@@ -1191,6 +1197,8 @@ function StoryTemplate({
             crossOrigin="anonymous"
             style={{
               height: `${100 * imgSettings.scale}%`,
+              maxWidth: "none",
+              width: "auto",
               transform: `translate(${imgSettings.offsetX}%, ${imgSettings.offsetY}%)`,
               objectFit: "contain",
               objectPosition: "bottom center",
@@ -1208,7 +1216,7 @@ function StoryTemplate({
           bottom: 0,
           height: "38%",
           background:
-            "radial-gradient(ellipse 55% 100% at center bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 40%, transparent 80%)",
+            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 14%, rgba(0,0,0,0.2) 30%, transparent 55%), radial-gradient(ellipse 60% 100% at center bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, transparent 80%)",
           zIndex: 4,
           pointerEvents: "none",
         }}

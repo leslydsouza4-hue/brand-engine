@@ -216,6 +216,7 @@ function HorizontalTemplate({
         {showDate && dateText && (
           <div
             style={{
+              fontSize: "0.6em",
               display: "inline-flex",
               alignItems: "center",
               gap: "0.55em",
@@ -447,6 +448,7 @@ function SquareTemplate({
         {showDate && dateText && (
           <div
             style={{
+              fontSize: "0.6em",
               display: "inline-flex",
               alignItems: "center",
               gap: "0.55em",
@@ -706,6 +708,7 @@ function PortraitTemplate({
         {showDate && dateText && (
           <div
             style={{
+              fontSize: "0.6em",
               display: "inline-flex",
               alignItems: "center",
               gap: "0.55em",
@@ -965,6 +968,7 @@ function StoryTemplate({
         {showDate && dateText && (
           <div
             style={{
+              fontSize: "0.6em",
               display: "inline-flex",
               alignItems: "center",
               gap: "0.55em",

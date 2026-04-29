@@ -17,7 +17,7 @@ import {
   MessageSquarePlus,
   Mail,
   RefreshCw,
-  Globe
+  FlaskConical
 } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
@@ -103,11 +103,11 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             {currentMode === 'landing-page' && (
               <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] bg-gradient-to-b from-[#FFC328] to-[#2896FB] rounded-r-[4px]" />
             )}
-            <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center bg-gradient-to-br from-[#FFC328] via-[#2896FB] to-[#17D94B] shadow-[0_2px_8px_rgba(40,150,251,0.3),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0">
-              <Globe className="w-[12px] h-[12px] text-white" />
+            <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center bg-gradient-to-br from-[#17D94B] via-[#2896FB] to-[#A855F7] shadow-[0_2px_8px_rgba(40,150,251,0.35),inset_0_1px_0_rgba(255,255,255,0.25)] shrink-0">
+              <FlaskConical className="w-[13px] h-[13px] text-white" strokeWidth={2.5} />
             </span>
             <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">
-              Landing Page
+              Page Lab
             </span>
             <span className="text-[8.5px] font-bold tracking-[0.12em] uppercase text-[#FFC328] bg-[rgba(255,195,40,0.12)] border border-[rgba(255,195,40,0.30)] px-[6px] py-[2px] rounded-[4px]">
               New

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Globe, Loader2, Sparkles, Download, Copy, Check, Monitor, Tablet, Smartphone } from "lucide-react";
+import { FlaskConical, Loader2, Sparkles, Download, Copy, Check, Monitor, Tablet, Smartphone } from "lucide-react";
 
 const WIDTH_PRESETS = [
   { id: "desktop", label: "Desktop", w: 1440, icon: Monitor },
@@ -153,12 +153,12 @@ export function LandingPageWorkspace() {
       {/* Left rail */}
       <div className="w-full md:w-[400px] md:min-w-[400px] overflow-y-auto overflow-x-hidden py-[22px] px-[20px] md:px-[26px] pb-[36px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.04)] flex flex-col gap-[6px] max-h-[50vh] md:max-h-none">
         <div className="flex items-center gap-[8px] mb-[1px]">
-          <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center bg-gradient-to-br from-[#FFC328] via-[#2896FB] to-[#17D94B] shadow-[0_2px_8px_rgba(40,150,251,0.3)]">
-            <Globe className="w-[12px] h-[12px] text-white" />
+          <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center bg-gradient-to-br from-[#17D94B] via-[#2896FB] to-[#A855F7] shadow-[0_2px_8px_rgba(40,150,251,0.35)]">
+            <FlaskConical className="w-[13px] h-[13px] text-white" strokeWidth={2.5} />
           </span>
-          <div className="text-[14px] font-bold text-white">Landing Page Generator</div>
+          <div className="text-[14px] font-bold text-white">Page Lab</div>
         </div>
-        <div className="text-[11.5px] text-[#475569] mb-[14px]">Full HTML pages — hero, features, pricing, the works.</div>
+        <div className="text-[11.5px] text-[#475569] mb-[14px]">Cook up full HTML landing pages — hero, features, pricing, the works.</div>
 
         {/* Width preset */}
         <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Device Width</div>
@@ -353,12 +353,12 @@ export function LandingPageWorkspace() {
         <div ref={previewWrapRef} className="flex-1 overflow-auto p-[16px]">
           {!html && !loading && (
             <div className="h-full flex flex-col items-center justify-center text-center px-[40px]">
-              <div className="w-[64px] h-[64px] rounded-[16px] bg-gradient-to-br from-[rgba(40,150,251,0.15)] to-[rgba(23,217,75,0.10)] border border-[rgba(40,150,251,0.20)] flex items-center justify-center mb-[18px]">
-                <Globe className="w-[28px] h-[28px] text-[#2896FB]" />
+              <div className="w-[64px] h-[64px] rounded-[16px] bg-gradient-to-br from-[rgba(23,217,75,0.15)] via-[rgba(40,150,251,0.12)] to-[rgba(168,85,247,0.10)] border border-[rgba(40,150,251,0.20)] flex items-center justify-center mb-[18px]">
+                <FlaskConical className="w-[28px] h-[28px] text-[#2896FB]" strokeWidth={2.2} />
               </div>
-              <div className="text-[18px] font-bold text-white mb-[8px]">Generate a Landing Page</div>
+              <div className="text-[18px] font-bold text-white mb-[8px]">Welcome to the Page Lab</div>
               <div className="text-[13px] text-[#94A3B8] max-w-[460px] leading-[1.55]">
-                Pick the sections, write a prompt, and Claude composes a full multi-section landing page in HighLevel brand. Then download the HTML and host it anywhere.
+                Pick the sections, write a prompt, and Claude cooks up a full multi-section landing page in HighLevel brand. Then download the HTML and host it anywhere.
               </div>
             </div>
           )}

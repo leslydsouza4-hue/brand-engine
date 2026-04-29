@@ -423,6 +423,8 @@ function HorizontalTemplate({
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="1em"
+            fitTarget={0.76}
+            maxScale={1.15}
             style={{
               fontWeight: 800,
               background: "linear-gradient(180deg, #7DD8D0 0%, #FFFFFF 65%, #FFFFFF 100%)",

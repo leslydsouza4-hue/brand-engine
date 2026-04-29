@@ -400,9 +400,9 @@ function HorizontalTemplate({
           left: 0,
           right: 0,
           bottom: 0,
-          height: "28%",
+          height: "20%",
           background:
-            "linear-gradient(to top, rgba(2,5,18,1) 0%, rgba(2,5,18,0.95) 22%, rgba(2,5,18,0.65) 45%, rgba(2,5,18,0.25) 65%, transparent 82%)",
+            "linear-gradient(to top, rgba(2,5,18,0.92) 0%, rgba(2,5,18,0.7) 30%, rgba(2,5,18,0.35) 60%, transparent 100%)",
           zIndex: 4,
           pointerEvents: "none",
         }}

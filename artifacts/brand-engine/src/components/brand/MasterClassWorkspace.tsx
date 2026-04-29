@@ -506,7 +506,7 @@ function SquareTemplate({
         crossOrigin="anonymous"
         style={{
           position: "absolute",
-          top: "3%",
+          top: "9%",
           left: "50%",
           transform: "translateX(-50%)",
           width: "52%",
@@ -522,7 +522,7 @@ function SquareTemplate({
           position: "absolute",
           left: "8%",
           right: "8%",
-          top: "21%",
+          top: "32%",
           zIndex: 3,
           display: "flex",
           flexDirection: "column",
@@ -813,7 +813,7 @@ function PortraitTemplate({
         crossOrigin="anonymous"
         style={{
           position: "absolute",
-          top: "3%",
+          top: "9%",
           left: "50%",
           transform: "translateX(-50%)",
           width: "62%",
@@ -829,7 +829,7 @@ function PortraitTemplate({
           position: "absolute",
           left: "8%",
           right: "8%",
-          top: "18%",
+          top: "27%",
           zIndex: 3,
           display: "flex",
           flexDirection: "column",
@@ -1120,7 +1120,7 @@ function StoryTemplate({
         crossOrigin="anonymous"
         style={{
           position: "absolute",
-          top: "4%",
+          top: "10%",
           left: "50%",
           transform: "translateX(-50%)",
           width: "62%",
@@ -1136,7 +1136,7 @@ function StoryTemplate({
           position: "absolute",
           left: "8%",
           right: "8%",
-          top: "16%",
+          top: "23%",
           zIndex: 3,
           display: "flex",
           flexDirection: "column",

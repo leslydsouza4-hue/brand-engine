@@ -884,7 +884,7 @@ function PortraitTemplate({
           position: "absolute",
           left: "8%",
           right: "8%",
-          top: "27%",
+          top: "22%",
           zIndex: 3,
           display: "flex",
           flexDirection: "column",

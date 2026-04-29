@@ -260,7 +260,7 @@ function HorizontalTemplate({
         style={{
           position: "absolute",
           top: "7%",
-          left: "1.5%",
+          left: "2.5%",
           width: "38%",
           height: "auto",
           objectFit: "contain",

@@ -17,12 +17,13 @@ interface TemplateConfig {
   shortName: string;
   width: number;
   height: number;
-  variant: "dates" | "cta";
+  variant: "dates" | "no-dates" | "cta";
   group: "horizontal";
 }
 
 const TEMPLATES: TemplateConfig[] = [
   { id: "horizontal-dates", name: "Horizontal - Dates", shortName: "Dates", width: 1920, height: 1080, variant: "dates", group: "horizontal" },
+  { id: "horizontal-no-dates", name: "Horizontal - No Dates", shortName: "No Dates", width: 1920, height: 1080, variant: "no-dates", group: "horizontal" },
   { id: "horizontal-cta", name: "Horizontal - CTA", shortName: "CTA", width: 1920, height: 1080, variant: "cta", group: "horizontal" },
 ];
 
@@ -71,6 +72,7 @@ function HorizontalTemplate({
   useContainerFontSize(containerRef, 0.045);
 
   const showCta = config.variant === "cta";
+  const showDate = config.variant === "dates";
   const firstName = (guestName.trim().split(/\s+/)[0] || "GUEST").toUpperCase();
 
   return (
@@ -196,7 +198,7 @@ function HorizontalTemplate({
           </span>
         </div>
 
-        {!showCta && dateText && (
+        {showDate && dateText && (
           <div
             style={{
               display: "inline-flex",
@@ -275,7 +277,7 @@ function HorizontalTemplate({
         >
           <div
             style={{
-              fontSize: "0.95em",
+              fontSize: "0.76em",
               fontWeight: 800,
               color: "#FFFFFF",
               letterSpacing: "0.04em",

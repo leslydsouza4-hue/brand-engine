@@ -416,10 +416,20 @@ function HorizontalTemplate({
             right: "0%",
             bottom: "10.5%",
             width: "58%",
-            zIndex: 5,
+            zIndex: 7,
             textAlign: "center",
           }}
         >
+          <div
+            style={{
+              position: "absolute",
+              inset: "-30% -8% -25% -8%",
+              background:
+                "radial-gradient(ellipse 65% 95% at 50% 42%, rgba(2,5,18,0.78) 0%, rgba(2,5,18,0.42) 48%, transparent 80%)",
+              pointerEvents: "none",
+              zIndex: -1,
+            }}
+          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="1em"
@@ -723,10 +733,20 @@ function SquareTemplate({
             left: "8%",
             right: "8%",
             bottom: "4.5%",
-            zIndex: 5,
+            zIndex: 7,
             textAlign: "center",
           }}
         >
+          <div
+            style={{
+              position: "absolute",
+              inset: "-25% -10% -22% -10%",
+              background:
+                "radial-gradient(ellipse 65% 100% at 50% 42%, rgba(2,5,18,0.78) 0%, rgba(2,5,18,0.42) 48%, transparent 80%)",
+              pointerEvents: "none",
+              zIndex: -1,
+            }}
+          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="0.92em"
@@ -1028,10 +1048,20 @@ function PortraitTemplate({
             left: "8%",
             right: "8%",
             bottom: "3.5%",
-            zIndex: 5,
+            zIndex: 7,
             textAlign: "center",
           }}
         >
+          <div
+            style={{
+              position: "absolute",
+              inset: "-25% -10% -22% -10%",
+              background:
+                "radial-gradient(ellipse 65% 100% at 50% 42%, rgba(2,5,18,0.78) 0%, rgba(2,5,18,0.42) 48%, transparent 80%)",
+              pointerEvents: "none",
+              zIndex: -1,
+            }}
+          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="1em"
@@ -1333,10 +1363,20 @@ function StoryTemplate({
             left: "8%",
             right: "8%",
             bottom: "3%",
-            zIndex: 5,
+            zIndex: 7,
             textAlign: "center",
           }}
         >
+          <div
+            style={{
+              position: "absolute",
+              inset: "-25% -10% -22% -10%",
+              background:
+                "radial-gradient(ellipse 65% 100% at 50% 42%, rgba(2,5,18,0.78) 0%, rgba(2,5,18,0.42) 48%, transparent 80%)",
+              pointerEvents: "none",
+              zIndex: -1,
+            }}
+          />
           <FitText
             text={guestName.toUpperCase()}
             baseFontSize="1em"

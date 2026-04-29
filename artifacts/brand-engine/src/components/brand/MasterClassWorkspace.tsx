@@ -259,8 +259,8 @@ function HorizontalTemplate({
         crossOrigin="anonymous"
         style={{
           position: "absolute",
-          top: "5%",
-          left: "3.5%",
+          top: "7%",
+          left: "1.5%",
           width: "38%",
           height: "auto",
           objectFit: "contain",

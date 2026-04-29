@@ -72,9 +72,9 @@ function FitText({
   text,
   style,
   baseFontSize = "1em",
-  fitTarget = 0.77,
+  fitTarget = 0.95,
   maxScale = 1.44,
-  minScale = 0.28,
+  minScale = 0.2,
 }: {
   text: string;
   style?: React.CSSProperties;
@@ -95,23 +95,25 @@ function FitText({
     if (!c || !inner) return;
     const recalc = () => {
       const cw = c.clientWidth;
-      const measured = inner.scrollWidth;
+      const measured = inner.getBoundingClientRect().width;
       const cur = scaleRef.current;
       if (cw <= 0 || measured <= 0 || cur <= 0) return;
       const naturalW = measured / cur;
       const target = (cw * fitTarget) / naturalW;
       const next = Math.min(maxScale, Math.max(minScale, target));
-      if (Math.abs(next - cur) > 0.005) setScale(next);
+      if (Math.abs(next - cur) > 0.003) setScale(next);
     };
     recalc();
+    if ((document as Document & { fonts?: { ready: Promise<unknown> } }).fonts?.ready) {
+      (document as Document & { fonts: { ready: Promise<unknown> } }).fonts.ready.then(recalc);
+    }
     const ro = new ResizeObserver(recalc);
     ro.observe(c);
-    ro.observe(inner);
     return () => ro.disconnect();
   }, [text, fitTarget, maxScale, minScale]);
 
   return (
-    <div ref={containerRef} style={{ width: "100%", overflow: "hidden", textAlign: "center", lineHeight: 0 }}>
+    <div ref={containerRef} style={{ width: "100%", textAlign: "center" }}>
       <span
         ref={innerRef}
         style={{
@@ -119,7 +121,7 @@ function FitText({
           fontSize: `calc(${baseFontSize} * ${scale})`,
           whiteSpace: "nowrap",
           display: "inline-block",
-          lineHeight: 1,
+          lineHeight: 1.05,
         }}
       >
         {text}

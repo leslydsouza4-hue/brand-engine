@@ -303,11 +303,32 @@ INBOX:
 - Drop shadows on cards: 0 24px 60px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.3).
 - Corner radius: 16-28px on cards, 999px on pills/buttons.
 
-## Composition Patterns (use one)
+## Composition Patterns (pick ONE primary, optionally layer ONE secondary)
+
+### Foundational patterns (always safe)
 - **Hero Split (landscape ≥ 1.5 ratio)**: text block left-aligned starting at left:6%, vertically centered, max-width 55%. Visual element (orb / device mock / chip cluster) anchored right. Wordmark top-left, optional small CTA bottom-left.
 - **Centered Stack (square / portrait)**: eyebrow → headline → subhead → CTA, all center-aligned, vertically centered. Decorative orb behind everything, blurred.
 - **Banner (height < 200px)**: Wordmark left, headline center, CTA right. ALL on one row. Vertically centered. NO subhead.
 - **Story (1080×1920)**: Top third: wordmark + eyebrow. Middle third: huge headline. Bottom third: subhead + CTA. Decorative element behind, blurred.
+
+### Editorial / Wild patterns (use when CREATIVE INTENSITY = bold or wild — these are how Linear, Stripe, Vercel, Apple actually look)
+These are NOT decorative add-ons — they are the structural skeleton of the composition. Pick one as the dominant pattern, then dress it with brand colors and content. None of these should feel like a Bootstrap card.
+
+- **MAGAZINE / EDITORIAL DISPLAY**: ONE supersized display headline (font-size 0.20H–0.28H, font-weight 800, line-height 0.92, letter-spacing -0.035em) that occupies 60-70% of the canvas. Headline can break into 2-3 lines with intentional ragged rhythm. ONE accent word inside the headline gets a different color (#17D94B, #FFC328, or #2896FB) and optionally italic Poppins. Tiny eyebrow + tiny CTA + tiny logo orbit it. Negative space is the design.
+- **BROKEN GRID**: 12-column grid where content spans unexpected column ranges (e.g. headline cols 2-7, subhead cols 4-9, CTA cols 8-11, photo cols 6-12). Vertical rhythm is offset between columns — nothing aligns to a uniform baseline. Hairline 1px column-rule dividers in rgba(255,255,255,0.04) optional.
+- **LAYERED DEPTH (3+ z-layers)**: background = full-canvas mesh of 2-3 radial gradients in brand colors at low opacity → middle layer = a large frosted-glass card (background rgba(11,20,38,0.55), backdrop-filter blur(40px), 1px inner border rgba(255,255,255,0.08), border-radius 32px) holding the headline → foreground = 1-2 floating chips/badges/UI fragments hovering over the card edge with their own shadow. Real perceived depth, like a Linear marketing screen.
+- **COLOR-BLOCK ARCHITECTURE**: the LAYOUT itself is made of 2-3 large brand-color rectangles (e.g. 60% navy + 40% Primary Blue, or 55% off-white + 30% green + 15% yellow). Headline lives entirely inside one block; supporting visual entirely inside another. Bauhaus / Pentagram poster energy. Sharp seams, no soft gradients between blocks.
+- **DIAGONAL FLOW**: content axis is rotated. Either (a) the entire text block sits at -4° to -8° rotation, OR (b) a thick diagonal accent stripe (8-14% of shorter edge thick) cuts across the canvas at -12° to -18°, with the headline aligned to it. Implies kinetic energy without literal motion blur.
+- **NUMBERED EDITORIAL**: a HUGE numeric or alphabetic glyph (font-size 0.55H-0.85H, font-weight 800, color rgba(40,150,251,0.18) or rgba(255,195,40,0.16) so it acts as background texture) sits behind/beside the content. Headline overlays it. Useful for stats, "01 / 04" carousels, "100×", "$1M+", anniversary marks.
+- **MESH-GRADIENT ATMOSPHERE**: 3-4 huge soft radial gradients (each 60-90% of canvas, opacity 0.25-0.45, blur 80-120px) layered at corners and centers in different brand colors (#2896FB top-right, #17D94B bottom-left, #FFC328 small accent, deep navy underneath). Cinematic, like Apple WWDC keynote stills. Content sits crisply on top — fonts must NOT be blurred, only the background blooms.
+- **ANNOTATION LAYOUT**: hero visual (orb / mascot / UI mock / photo) center, with 2-4 small caption blocks pointing to specific parts via 1px dotted leader lines (border: 1px dashed rgba(255,255,255,0.18)) ending in a small filled dot in #17D94B. Each caption: tiny eyebrow (uppercase 10px) + 4-8 word label. Apple-product-page energy.
+- **TICKER / TYPE-AS-TEXTURE**: the headline (or product name, or year) is repeated as a background pattern at low opacity (0.04-0.10), running edge-to-edge in 2-3 staggered rows, with the FOCAL headline rendered crisply in the center at full opacity. Skate / streetwear / Off-White poster energy reigned in for SaaS.
+- **ASYMMETRIC SPLIT**: instead of 50/50, use 35/65 or 70/30. The "main" zone gets the headline at supersized scale (0.18H+) and runs RIGHT UP TO the boundary line (which is a hairline rgba(255,255,255,0.10) divider, NOT a card edge). The narrow zone gets a stack of small details: eyebrow, 2-3 stats, micro-CTA.
+- **DEVICE MOCK FRAME**: hero visual is a tilted laptop or phone frame (3D perspective: transform rotateY(-8deg) rotateX(4deg)) with a HighLevel UI mockup inside it (use the Product UI Reference Library). Headline floats next to it on the opposite side. Heavy soft shadow (0 60px 120px rgba(0,0,0,0.5)) and a brand-color glow behind the device.
+- **OVERSIZED CHIP/CARD CLUSTER**: 4-7 floating UI chips of varied sizes (some 280×80, some 180×180, some 360×120) scattered with intentional asymmetry across the canvas. Each chip = one micro-content (a stat, a feature label, a screenshot fragment, a quote). Headline lives in the largest empty quadrant. Notion / Vercel marketing energy.
+
+### Composition self-check
+After picking a pattern, ask: "Does this look like it shipped from Linear / Stripe / Vercel / Apple?" If it looks like a generic 2-column card with a heading and a button, it has failed. Restart from a wilder pattern.
 
 ## Rendering People / Subjects (when a Subject is described in the request)
 When the user provides a Subject (a person, founder, customer, audience archetype, etc.), you MUST render a stylized inline-SVG illustration of that subject — never <img>, never a placeholder, never an emoji. Treat the subject like a hero illustration in a Linear/Stripe/Vercel hero section.
@@ -491,8 +512,12 @@ router.post("/claude-design", async (req, res) => {
     "claude-opus-4-6",
     "claude-opus-4-7",
   ]);
-  const requestedModel = typeof req.body?.model === "string" ? req.body.model : "claude-sonnet-4-6";
-  const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : "claude-sonnet-4-6";
+  const requestedModel = typeof req.body?.model === "string" ? req.body.model : "claude-opus-4-7";
+  const model = ALLOWED_MODELS.has(requestedModel) ? requestedModel : "claude-opus-4-7";
+
+  const ALLOWED_CREATIVE = new Set(["safe", "bold", "wild"]);
+  const requestedCreative = typeof req.body?.creativeMode === "string" ? req.body.creativeMode : "bold";
+  const creativeMode = ALLOWED_CREATIVE.has(requestedCreative) ? requestedCreative : "bold";
 
   const assetBlock: string[] = [];
   if (logoUrl) {
@@ -633,11 +658,51 @@ Output nothing else — no prose, no explanation, no markdown.`
 
   const format = typeof req.body?.format === "string" ? req.body.format : "social";
   const designBrief = buildCanvasBrief(aspect, format);
+
+  const creativeBlock = (() => {
+    if (creativeMode === "safe") {
+      return `\n# CREATIVE INTENSITY: SAFE
+Stick to the FOUNDATIONAL composition patterns (Hero Split, Centered Stack, Banner, Story). Conservative, predictable, balanced. Use the brand palette in its most expected role (navy bg, white text, blue/green accent). The deliverable should look like a polished but standard SaaS marketing graphic. No experimental typography, no broken grids, no rotated layouts.`;
+    }
+    if (creativeMode === "wild") {
+      return `\n# CREATIVE INTENSITY: WILD
+This brief calls for a STANDOUT graphic that an art director at Linear, Stripe, Apple, or Vercel would proudly ship. Default Hero Split / Centered Stack are FORBIDDEN unless the canvas is genuinely too small (< 600px shortest edge) for anything else.
+
+Mandatory creative moves — your output must combine AT LEAST 2 of the following:
+1. SUPERSIZED DISPLAY TYPE: hero headline at 0.20H–0.28H, line-height 0.92, letter-spacing -0.035em. The headline IS the design.
+2. AN ACCENT WORD inside the headline rendered in a different brand color (#17D94B, #FFC328, or #2896FB) — optionally italic Poppins for editorial energy.
+3. ONE editorial pattern from the "Editorial / Wild" library (Magazine Display, Broken Grid, Layered Depth, Color-Block Architecture, Diagonal Flow, Numbered Editorial, Mesh-Gradient Atmosphere, Annotation Layout, Ticker/Type-as-Texture, Asymmetric Split, Device Mock Frame, Oversized Chip Cluster) used as the structural skeleton — not as a decoration on top of a Hero Split.
+4. LAYERED DEPTH with 3+ z-layers (background mesh gradient → frosted card / color block → floating chip or fragment).
+5. INTENTIONAL ASYMMETRY: 35/65 or 70/30 splits, off-baseline rhythm, content that breaks the bounding box of its container by 10-30px.
+6. AT LEAST ONE PIECE OF "FOUND DETAIL" that signals craft: a tiny editorial caption with a dotted leader line, a column-rule hairline, a subtle noise/grain layer (background-image: radial-gradient noise pattern at 0.04 opacity), a small sticker badge rotated 6°, or a "01 / 04" corner counter.
+
+Forbidden in WILD mode:
+- A centered headline + subhead + button stacked vertically with nothing else going on.
+- A 50/50 hero split with a glow orb on the right.
+- Three identical feature cards in a row with checkmark icons.
+- Anything that could ship as the default template of a "make me a social post" SaaS tool.
+
+The brand palette is still the HARD constraint — but use it boldly. Big color blocks. High contrast. Surprising accent placement. Don't be timid with the yellow (#FFC328) or coral-adjacent (#FFC328 + #17D94B together as a high-energy duo).`;
+    }
+    return `\n# CREATIVE INTENSITY: BOLD
+Default to ONE of the EDITORIAL composition patterns (Magazine Display, Broken Grid, Layered Depth, Color-Block Architecture, Diagonal Flow, Numbered Editorial, Mesh-Gradient Atmosphere, Annotation Layout, Asymmetric Split, Device Mock Frame, Oversized Chip Cluster). Foundational patterns (Hero Split, Centered Stack) are allowed only if the canvas is small or the brief is unusually minimal.
+
+Mandatory:
+- Hero headline scale ≥ 0.16H (display type, not body type).
+- Use the brand palette with intent — at least one bold color block or large gradient bloom in #2896FB / #17D94B / #FFC328, not just a glow orb tucked in a corner.
+- At least one "craft detail": editorial eyebrow with hairline divider, small numeric counter, dotted leader, micro-caption, or a frosted-glass card with floating chip.
+- The composition should feel like it was directed by a designer, not assembled from parts.
+
+Forbidden in BOLD mode:
+- A centered headline + subhead + button stacked vertically with nothing else going on. Add structural interest.`;
+  })();
+
   const userContent = [
     `Canvas size: ${aspect} pixels (width × height). The root container MUST be exactly these dimensions.`,
     "",
     designBrief.text,
     "",
+    creativeBlock,
     sceneBlock,
     subjectBlock,
     slideBlock,

@@ -453,7 +453,8 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
   const [aiSuggestError, setAiSuggestError] = useState<string | null>(null);
   const [aiCategoryId, setAiCategoryId] = useState<typeof AI_FORMATS[number]["id"]>("social");
   const [aiAspect, setAiAspect] = useState("1080x1080");
-  const [aiModel, setAiModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-sonnet-4-6");
+  const [aiModel, setAiModel] = useState<"claude-sonnet-4-6" | "claude-opus-4-6" | "claude-opus-4-7">("claude-opus-4-7");
+  const [aiCreativeMode, setAiCreativeMode] = useState<"safe" | "bold" | "wild">("bold");
   const [aiSlides, setAiSlides] = useState<string[]>([]);
   const [aiGeneratedAspect, setAiGeneratedAspect] = useState<string>("");
   const [aiReflowing, setAiReflowing] = useState(false);
@@ -1301,6 +1302,7 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           prompt,
           aspect: aiAspect,
           model: aiModel,
+          creativeMode: aiCreativeMode,
           logoUrl: aiIncludeLogo ? (() => {
             const variant = LOGO_VARIANTS.find(l => l.id === aiLogoId) ?? LOGO_VARIANTS[0];
             return variant ? `${window.location.origin}${variant.file}` : "";
@@ -1999,6 +2001,32 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
                   </motion.button>
                 );
               })}
+            </div>
+
+            <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#475569] mb-[6px]">Creative Intensity</div>
+            <div className="flex gap-[4px] p-[3px] mb-[14px] bg-[rgba(255,255,255,0.025)] rounded-[10px] border border-[rgba(255,255,255,0.05)]">
+              {([
+                { id: "safe", label: "Safe", hint: "Predictable, balanced layouts" },
+                { id: "bold", label: "Bold", hint: "Editorial layouts, display type, craft details" },
+                { id: "wild", label: "Wild", hint: "Standout art-directed graphic — Linear/Apple energy" },
+              ] as const).map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setAiCreativeMode(c.id)}
+                  title={c.hint}
+                  className={`flex-1 py-[7px] rounded-[7px] text-[10.5px] font-bold transition-all border-none cursor-pointer ${
+                    aiCreativeMode === c.id
+                      ? c.id === "wild"
+                        ? "bg-[rgba(255,195,40,0.18)] text-[#FFC328]"
+                        : c.id === "bold"
+                        ? "bg-[rgba(40,150,251,0.18)] text-[#2896FB]"
+                        : "bg-[rgba(0,178,169,0.18)] text-[#17D94B]"
+                      : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
             </div>
 
             {/* PROMPT FIRST — this is the main thing the user does, no scrolling required */}

@@ -24,7 +24,7 @@ const TEAM: TeamMember[] = [
     id: "starr",
     name: "Starr Codd",
     folder: "starr",
-    images: [],
+    images: Array.from({ length: 78 }, (_, i) => `Starr_${String(i + 1).padStart(2, '0')}.jpg`),
   },
   {
     id: "andrew",

@@ -8,7 +8,8 @@ import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
-const BG_HORIZONTAL = `${BASE}assets/masterclass/background.png`;
+const BG_HORIZONTAL = `${BASE}assets/masterclass/bg-horizontal-clean.jpg`;
+const LINE_HORIZONTAL = `${BASE}assets/masterclass/line-horizontal.png`;
 const BG_SQUARE = `${BASE}assets/masterclass/background-square.png`;
 const BG_PORTRAIT = `${BASE}assets/masterclass/background-portrait.png`;
 const BG_STORY = `${BASE}assets/masterclass/background-story.png`;
@@ -112,9 +113,9 @@ function HorizontalTemplate({
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* Frame overlay - line in front of guest */}
+      {/* Line frame - rendered on top so it crosses in front of guest */}
       <img
-        src={BG_HORIZONTAL}
+        src={LINE_HORIZONTAL}
         alt=""
         crossOrigin="anonymous"
         style={{
@@ -123,7 +124,6 @@ function HorizontalTemplate({
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          mixBlendMode: "screen",
           zIndex: 6,
           pointerEvents: "none",
         }}
@@ -387,23 +387,6 @@ function SquareTemplate({
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* Frame overlay - line in front of guest */}
-      <img
-        src={BG_SQUARE}
-        alt=""
-        crossOrigin="anonymous"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          mixBlendMode: "screen",
-          zIndex: 6,
-          pointerEvents: "none",
-        }}
-      />
-
       {/* Vertical stroked guest full name on LEFT side */}
       {guestName && (
         <div
@@ -663,23 +646,6 @@ function PortraitTemplate({
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* Frame overlay - line in front of guest */}
-      <img
-        src={BG_PORTRAIT}
-        alt=""
-        crossOrigin="anonymous"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          mixBlendMode: "screen",
-          zIndex: 6,
-          pointerEvents: "none",
-        }}
-      />
-
       {/* Vertical stroked guest full name on LEFT side */}
       {guestName && (
         <div
@@ -939,23 +905,6 @@ function StoryTemplate({
         crossOrigin="anonymous"
         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
       />
-      {/* Frame overlay - line in front of guest */}
-      <img
-        src={BG_STORY}
-        alt=""
-        crossOrigin="anonymous"
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          mixBlendMode: "screen",
-          zIndex: 6,
-          pointerEvents: "none",
-        }}
-      />
-
       {/* Vertical stroked guest full name on LEFT side */}
       {guestName && (
         <div

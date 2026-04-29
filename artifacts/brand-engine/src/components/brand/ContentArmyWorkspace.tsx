@@ -24,7 +24,7 @@ const TEAM: TeamMember[] = [
     id: "starr",
     name: "Starr Codd",
     folder: "starr",
-    images: Array.from({ length: 78 }, (_, i) => `Starr_${String(i + 1).padStart(2, '0')}.jpg`),
+    images: Array.from({ length: 78 }, (_, i) => `Starr_${String(i + 1).padStart(2, '0')}.png`),
   },
   {
     id: "andrew",
@@ -36,7 +36,7 @@ const TEAM: TeamMember[] = [
     id: "kylee",
     name: "Kylee Robinson",
     folder: "kylee",
-    images: Array.from({ length: 21 }, (_, i) => `Kylee_${String(i + 1).padStart(2, '0')}.jpg`),
+    images: Array.from({ length: 21 }, (_, i) => `Kylee_${String(i + 1).padStart(2, '0')}.png`),
   },
   {
     id: "jonah",

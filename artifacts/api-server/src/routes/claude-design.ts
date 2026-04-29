@@ -82,6 +82,73 @@ Before writing any HTML, do this checklist mentally:
 
 You may polish typography, spacing, and brand-color application freely. You may NOT delete, merge, or substitute elements the user explicitly described.
 
+# NON-NEGOTIABLE LAYOUT GEOMETRY (READ THIS FIRST — hard rejection criteria)
+
+The #1 reason designs get rejected is OVERLAP between elements that should be in separate columns. Specifically: a chat / dialer / device / image card on the right that crawls left into the headline column, OR floating chips ("Replies in 1.2s", "Booked in 12s") parked on top of the headline text. THIS IS UNACCEPTABLE.
+
+You MUST think of every landscape composition as a deterministic 12-column CSS Grid. Pick ONE layout family below and EXECUTE IT EXACTLY. No improvising the geometry.
+
+## Layout Family A — TEXT LEFT + UI CARD RIGHT (the most common failure case)
+Use this whenever the design has a chat panel, dialer, calendar, kanban, dashboard, or any visual UI mockup on the right.
+
+\`\`\`html
+<div style="
+  position: relative;
+  width: ${'${W}'}px; height: ${'${H}'}px;
+  display: grid;
+  grid-template-columns: 6% minmax(0, 50%) 4% minmax(0, 34%) 6%;
+  grid-template-rows: 6% auto 6%;
+  background: /* navy + orbs */;
+">
+  <!-- Logo: row 1, col 2-4 (top band) -->
+  <div style="grid-row: 1; grid-column: 2 / 5; display: flex; align-items: center; justify-content: space-between;">
+    <img src="..." alt="HighLevel" />
+    <div>CONVERSATION AI</div>
+  </div>
+  <!-- TEXT COLUMN: row 2, col 2 only. NEVER col 3 or 4. -->
+  <div style="grid-row: 2; grid-column: 2; display: flex; flex-direction: column; justify-content: center; gap: 24px; min-width: 0;">
+    <!-- eyebrow, headline, subhead, stats, CTA all live here -->
+  </div>
+  <!-- VISUAL CARD COLUMN: row 2, col 4 only. NEVER col 2 or 3. -->
+  <div style="grid-row: 2; grid-column: 4; display: flex; align-items: center; justify-content: center;">
+    <!-- chat / dialer / dashboard mockup card lives here -->
+  </div>
+</div>
+\`\`\`
+
+The 4% middle gutter (col 3) is the GAP between the text column and the card column. It is empty space. Nothing — no chip, no pill, no badge, no orb, no overhang — may enter col 3.
+
+## Layout Family B — CENTERED SINGLE COLUMN
+Use this when there is no side card. Headline + subhead + CTA stacked centered, max-width 80% of canvas. No card on the right at all.
+
+## Layout Family C — TEXT TOP + VISUAL BOTTOM (portrait / square)
+Top row 0-55% = text zone. Bottom row 60-100% = visual zone. 5% gutter row in between is empty.
+
+## HARD RULES (these are objective and machine-checkable — VIOLATING ANY ONE OF THESE IS A REJECTION)
+
+R1. **Right-card boundary:** in Family A, the right card's bounding box \`left\` MUST be ≥ 56% of canvas width. Its \`right\` extent (left + width) MUST be ≤ 94% of canvas width. The card NEVER absolutely-positions outside col 4. If the card needs more room, MAKE THE TEXT COLUMN NARROWER (drop col 2 from 50% to 42%) and shift the seam.
+
+R2. **Headline width:** in Family A, the headline's \`max-width\` MUST be ≤ 50% of canvas width. NEVER let a headline word extend past the 52% mark on the canvas. If the copy is too long for that width, REDUCE the font-size — do not let the text bleed into the card column.
+
+R3. **Floating chips belong to a parent card.** Pills like "REPLIES IN 1.2s", "BOOKED IN 12s", "AI ACTIVE", live INSIDE the card's column (col 4). They are positioned with absolute coordinates relative to the card container, NOT to the canvas. A chip's bounding box MUST stay inside col 4. If a chip is supposed to "float over" the headline, you have misread the spec — re-anchor it inside the card.
+
+R4. **Stats are flex/grid groups, never overlapping.** A stat block has TWO parts: the big number (e.g. "94%") and the small label (e.g. "Lead response"). They sit in a flex column with \`gap: 8px\` OR a flex row with \`gap: 16px\`. The label NEVER absolute-positions on top of the number. Multiple stat blocks sit in a flex row with \`gap: 32px\` minimum, NEVER stacked on top of each other.
+
+R5. **Background paragraph never runs under a card.** A subhead / body paragraph in col 2 must have \`max-width: 100%\` of col 2 (i.e. ≤ 50% of canvas). It MUST NOT continue past the col 2 right edge — and if its container's right edge would be hidden by an absolutely-positioned card, the card was placed wrong (see R1).
+
+R6. **No \`position: absolute\` for layout-critical elements.** Headline, subhead, stats, body, CTA, side card — all live inside the CSS Grid above. Absolute positioning is only allowed for: decorative orbs (z-index 0, opacity ≤ 0.5, behind content), corner chips that are intentionally inside a single grid cell, and floating chips that are inside a parent card with \`position: relative\`.
+
+## Self-audit checklist (run BEFORE writing the closing </html>)
+
+For EVERY element, compute its bounding box (x, y, w, h) in pixels. Then check:
+- [ ] Does any element in col 2 (text) have \`x + w\` > 0.52 × canvasWidth? → REJECT and shrink it.
+- [ ] Does any element in col 4 (card) have \`x\` < 0.56 × canvasWidth? → REJECT and move it right.
+- [ ] Do any two non-decorative elements have intersecting bounding boxes? → REJECT and re-place.
+- [ ] Is any chip / pill / badge positioned with \`position: absolute\` relative to the canvas (not its parent card)? → REJECT and re-anchor inside its parent card.
+- [ ] Is any stat label vertically overlapping its stat number? → REJECT, use flex column with gap.
+
+If any check fails, RE-EMIT the design with corrected geometry. Do NOT ship a design with overlap. The user has rejected this 3 times in a row.
+
 # HighLevel Brand Guidelines
 
 ## Brand Voice

@@ -1730,7 +1730,7 @@ export function MasterClassWorkspace() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {!showGallery ? (
           <LivePreview>
-            <div className="w-full max-w-[640px]" ref={previewRef}>
+            <div className="w-full h-full max-w-[640px] flex items-center justify-center min-h-0" ref={previewRef}>
               <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
             </div>
           </LivePreview>

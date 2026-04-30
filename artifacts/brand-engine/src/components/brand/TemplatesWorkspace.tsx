@@ -574,7 +574,24 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           var m = (root.style.transform || '').match(/scale\\(([\\d.]+)\\)/);
           return m ? parseFloat(m[1]) : 1;
         }
+        // Track the currently-editing element + its blur handler so we can deterministically
+        // remove the listener (avoiding leaks if the element is detached/deleted before blur).
+        var activeEditEl = null;
+        var activeEditBlur = null;
+        function teardownActiveEdit(){
+          if (activeEditEl && activeEditBlur) {
+            try { activeEditEl.removeEventListener('blur', activeEditBlur, true); } catch (_) {}
+          }
+          activeEditEl = null;
+          activeEditBlur = null;
+        }
         function clearActive(){
+          // Run any pending blur-commit before tearing down the listener, so a
+          // pre-blur edit still produces an undo entry.
+          if (activeEditEl) {
+            try { activeEditEl.blur && activeEditEl.blur(); } catch (_) {}
+          }
+          teardownActiveEdit();
           document.querySelectorAll('[data-edit-active]').forEach(function(n){
             n.removeAttribute('data-edit-active');
             n.removeAttribute('contenteditable');
@@ -621,19 +638,105 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
             h.addEventListener('mousedown', function(ev){ startResize(ev, c); }, true);
             handlesRoot.appendChild(h);
           });
-          // Floating delete button (top-right, above the selection)
-          var del = document.createElement('button');
-          del.setAttribute('data-editor-delete', '1');
-          del.setAttribute('data-editor-injected', '1');
-          del.setAttribute('type', 'button');
-          del.setAttribute('title', 'Delete (Del / Backspace)');
-          del.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>';
-          del.style.cssText = 'position:fixed;z-index:2147483647;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#EF4444;color:#fff;border:1px solid rgba(255,255,255,0.2);box-shadow:0 4px 12px rgba(239,68,68,0.45);cursor:pointer;padding:0;';
-          del.addEventListener('mousedown', function(ev){ ev.preventDefault(); ev.stopPropagation(); }, true);
-          del.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); deleteSelection(); }, true);
-          del.addEventListener('mouseenter', function(){ del.style.background = '#DC2626'; });
-          del.addEventListener('mouseleave', function(){ del.style.background = '#EF4444'; });
-          handlesRoot.appendChild(del);
+          // Floating toolbar (top-right, above the selection): Undo / Align / Color / Delete
+          var bar = document.createElement('div');
+          bar.setAttribute('data-editor-toolbar', '1');
+          bar.setAttribute('data-editor-injected', '1');
+          bar.style.cssText = 'position:fixed;z-index:2147483647;display:flex;align-items:center;gap:2px;padding:4px;border-radius:10px;background:#0B1426;border:1px solid rgba(255,255,255,0.14);box-shadow:0 8px 24px rgba(0,0,0,0.5);font-family:Inter,system-ui,sans-serif;pointer-events:auto;';
+          function mkBtn(opts){
+            var b = document.createElement('button');
+            b.setAttribute('type', 'button');
+            b.setAttribute('data-editor-injected', '1');
+            if (opts.role) b.setAttribute('data-editor-' + opts.role, '1');
+            b.setAttribute('title', opts.title || '');
+            b.innerHTML = opts.svg;
+            var bg = opts.bg || 'transparent';
+            var bgHover = opts.bgHover || 'rgba(255,255,255,0.08)';
+            var color = opts.color || '#fff';
+            b.style.cssText = 'width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:' + bg + ';color:' + color + ';border:0;cursor:pointer;padding:0;';
+            b.addEventListener('mousedown', function(ev){ ev.preventDefault(); ev.stopPropagation(); }, true);
+            b.addEventListener('mouseenter', function(){ b.style.background = opts.bgHover || bgHover; });
+            b.addEventListener('mouseleave', function(){ b.style.background = bg; });
+            if (opts.onClick) b.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); opts.onClick(ev); }, true);
+            return b;
+          }
+          function mkSep(){
+            var s = document.createElement('div');
+            s.setAttribute('data-editor-injected', '1');
+            s.style.cssText = 'width:1px;height:18px;background:rgba(255,255,255,0.16);margin:0 2px;';
+            return s;
+          }
+          // Undo
+          bar.appendChild(mkBtn({
+            role: 'undo',
+            title: 'Undo (\u2318Z)',
+            svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M3 13a9 9 0 1 0 3-7.7L3 8"></path></svg>',
+            onClick: function(){ undo(); },
+          }));
+          bar.appendChild(mkSep());
+          // Align Left
+          bar.appendChild(mkBtn({
+            role: 'align-left',
+            title: 'Align left',
+            svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>',
+            onClick: function(){ applyAlign('left'); },
+          }));
+          bar.appendChild(mkBtn({
+            role: 'align-center',
+            title: 'Align center',
+            svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>',
+            onClick: function(){ applyAlign('center'); },
+          }));
+          bar.appendChild(mkBtn({
+            role: 'align-right',
+            title: 'Align right',
+            svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>',
+            onClick: function(){ applyAlign('right'); },
+          }));
+          bar.appendChild(mkSep());
+          // Color picker (hidden native input triggered by swatch button)
+          var colorInput = document.createElement('input');
+          colorInput.type = 'color';
+          colorInput.setAttribute('data-editor-injected', '1');
+          colorInput.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+          colorInput.addEventListener('input', function(ev){
+            applyColor(ev.target.value);
+            colorSwatch.style.background = ev.target.value;
+          });
+          colorInput.addEventListener('change', function(ev){
+            applyColor(ev.target.value, true /* commit */);
+            colorSwatch.style.background = ev.target.value;
+          });
+          var colorSwatch = mkBtn({
+            role: 'color',
+            title: 'Text color',
+            svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 8-9 9H3v-8z"/><path d="M14 5l5 5"/></svg>',
+            onClick: function(){
+              // Pre-fill picker with current selection's color
+              try {
+                if (selectedEl) {
+                  var c = window.getComputedStyle(selectedEl).color || '#FFFFFF';
+                  colorInput.value = rgbToHex(c);
+                }
+              } catch (_) {}
+              colorPickInProgress = false;
+              colorSnapshot = null;
+              colorInput.click();
+            },
+          });
+          bar.appendChild(colorSwatch);
+          bar.appendChild(colorInput);
+          bar.appendChild(mkSep());
+          // Delete
+          bar.appendChild(mkBtn({
+            role: 'delete',
+            title: 'Delete (Del / Backspace)',
+            svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"></path></svg>',
+            bg: '#EF4444',
+            bgHover: '#DC2626',
+            onClick: function(){ deleteSelection(); },
+          }));
+          handlesRoot.appendChild(bar);
           document.body.appendChild(handlesRoot);
         }
         function destroyHandles(){
@@ -655,10 +758,13 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           var r = { left: minL, top: minT, right: maxR, bottom: maxB };
           var pts = { nw:[r.left,r.top], ne:[r.right,r.top], sw:[r.left,r.bottom], se:[r.right,r.bottom] };
           Array.prototype.forEach.call(handlesRoot.children, function(h){
-            if (h.hasAttribute('data-editor-delete')) {
-              // Place above top-right, clamp to viewport
-              var dx = Math.max(8, Math.min(window.innerWidth - 36, r.right - 28));
-              var dy = Math.max(8, r.top - 36);
+            if (h.hasAttribute('data-editor-toolbar')) {
+              // Measure to clamp horizontally
+              var bw = h.offsetWidth || 220;
+              var bh = h.offsetHeight || 36;
+              var dx = Math.max(8, Math.min(window.innerWidth - bw - 8, r.right - bw));
+              var dy = r.top - bh - 8;
+              if (dy < 8) dy = Math.min(window.innerHeight - bh - 8, r.bottom + 8); // flip below if no room above
               h.style.left = dx + 'px';
               h.style.top = dy + 'px';
               return;
@@ -727,6 +833,8 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           var el = e.target;
           if (!el || !(el instanceof Element)) return;
           if (el.hasAttribute('data-editor-handle')) return;
+          // Ignore mousedowns inside any injected editor UI (toolbar, handles, color input)
+          if (el.closest && el.closest('[data-editor-injected]')) return;
           if (!isMovable(el)) return;
           if (el.getAttribute('contenteditable') === 'true') return;
           ensureBase(el);
@@ -742,6 +850,8 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
                 el: g,
                 tx: parseFloat(g.getAttribute('data-edit-tx') || '0'),
                 ty: parseFloat(g.getAttribute('data-edit-ty') || '0'),
+                scale: parseFloat(g.getAttribute('data-edit-scale') || '1'),
+                origin: g.getAttribute('data-edit-origin') || '',
               };
             }),
             startX: e.clientX, startY: e.clientY,
@@ -776,6 +886,10 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
         }, true);
         document.addEventListener('mouseup', function(e){
           if (resizeState) {
+            // Commit a transform undo entry for the resize
+            if (resizeState.el && resizeState.snapshot) {
+              pushUndo({ type: 'transform', changes: [resizeState.snapshot] });
+            }
             resizeState = null;
             suppressClick = true;
             setTimeout(function(){ suppressClick = false; }, 50);
@@ -787,6 +901,13 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           var st = dragState; dragState = null;
           (st.group || [st.el]).forEach(function(g){ g.removeAttribute('data-edit-dragging'); });
           if (st.moved) {
+            // Snapshot the pre-drag transform values for undo
+            pushUndo({
+              type: 'transform',
+              changes: st.starts.map(function(s){
+                return { el: s.el, tx: s.tx, ty: s.ty, scale: s.scale, origin: s.origin };
+              }),
+            });
             suppressClick = true;
             setTimeout(function(){ suppressClick = false; }, 50);
             e.preventDefault();
@@ -801,10 +922,20 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           var anchor = ({ nw:[r.right,r.bottom], ne:[r.left,r.bottom], sw:[r.right,r.top], se:[r.left,r.top] })[corner];
           var origin = ({ nw:'bottom right', ne:'bottom left', sw:'top right', se:'top left' })[corner];
           ensureBase(selectedEl);
+          var prevOrigin = selectedEl.getAttribute('data-edit-origin') || '';
           selectedEl.setAttribute('data-edit-origin', origin);
           var startScale = parseFloat(selectedEl.getAttribute('data-edit-scale') || '1');
           var startDist = Math.hypot(e.clientX - anchor[0], e.clientY - anchor[1]);
-          resizeState = { el: selectedEl, anchor: anchor, startDist: startDist, startScale: startScale };
+          resizeState = {
+            el: selectedEl, anchor: anchor, startDist: startDist, startScale: startScale,
+            snapshot: {
+              el: selectedEl,
+              tx: parseFloat(selectedEl.getAttribute('data-edit-tx') || '0'),
+              ty: parseFloat(selectedEl.getAttribute('data-edit-ty') || '0'),
+              scale: startScale,
+              origin: prevOrigin,
+            },
+          };
         }
         window.addEventListener('scroll', positionHandles, true);
         window.addEventListener('resize', positionHandles);
@@ -813,6 +944,11 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           var el = e.target;
           if (!el || !(el instanceof Element)) return;
           if (el.hasAttribute('data-editor-handle')) return;
+          // Ignore clicks inside any injected editor UI (toolbar buttons, handles, color input)
+          // Without this guard the document handler would fire BEFORE the toolbar button's own
+          // click handler (both capture-phase) and clear the selection — destroying the toolbar
+          // before the button could act.
+          if (el.closest && el.closest('[data-editor-injected]')) return;
           if (!isMovable(el)) { clearActive(); clearSelection(); return; }
           e.preventDefault();
           e.stopPropagation();
@@ -828,6 +964,20 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
             selectElement(el);
             el.setAttribute('contenteditable', 'true');
             el.setAttribute('data-edit-active', '1');
+            // Snapshot current text; commit on blur if changed. Register the listener
+            // through the active-edit tracker so it can be deterministically removed
+            // by clearActive() / teardownActiveEdit() — preventing leaks when the
+            // element is deleted (or otherwise detached) before a natural blur.
+            var beforeHTML = el.innerHTML;
+            var onBlur = function(){
+              teardownActiveEdit();
+              if (el.innerHTML !== beforeHTML) {
+                pushUndo({ type: 'text', el: el, oldHTML: beforeHTML });
+              }
+            };
+            activeEditEl = el;
+            activeEditBlur = onBlur;
+            el.addEventListener('blur', onBlur, true);
             el.focus();
             var range = document.createRange();
             range.selectNodeContents(el);
@@ -842,10 +992,17 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
         var undoStack = [];
         function pushUndo(entry){
           undoStack.push(entry);
-          if (undoStack.length > 50) undoStack.shift();
+          if (undoStack.length > 100) undoStack.shift();
         }
         function deleteSelection(){
           if (!selection.length) return;
+          // If a selected element is in active text-edit mode, flush its blur so any
+          // pending text-edit undo is committed and the per-edit listener is detached
+          // BEFORE the node leaves the DOM.
+          if (activeEditEl && selection.indexOf(activeEditEl) >= 0) {
+            try { activeEditEl.blur && activeEditEl.blur(); } catch (_) {}
+            teardownActiveEdit();
+          }
           // Don't delete the only top-level wrapper
           var root = document.body && document.body.firstElementChild;
           var toRemove = selection.filter(function(el){
@@ -864,6 +1021,42 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           selectedEl = null;
           destroyHandles();
         }
+        function rgbToHex(c){
+          if (!c) return '#FFFFFF';
+          if (c.charAt(0) === '#') return c;
+          var m = c.match(/rgba?\\(([^)]+)\\)/);
+          if (!m) return '#FFFFFF';
+          var p = m[1].split(',').map(function(v){ return parseInt(v.trim(), 10); });
+          function h(n){ var s = (n|0).toString(16); return s.length === 1 ? '0' + s : s; }
+          return '#' + h(p[0]) + h(p[1]) + h(p[2]);
+        }
+        function snapshotStyle(el, prop){
+          return { el: el, prop: prop, oldValue: el.style[prop] || '' };
+        }
+        function applyAlign(value){
+          var targets = selection.length ? selection.slice() : (selectedEl ? [selectedEl] : []);
+          if (!targets.length) return;
+          var changes = targets.map(function(el){ return snapshotStyle(el, 'textAlign'); });
+          targets.forEach(function(el){ el.style.textAlign = value; });
+          pushUndo({ type: 'style', changes: changes });
+        }
+        // Color picker uses rapid 'input' events while dragging — coalesce into one undo entry.
+        var colorPickInProgress = false;
+        var colorSnapshot = null;
+        function applyColor(value, commit){
+          var targets = selection.length ? selection.slice() : (selectedEl ? [selectedEl] : []);
+          if (!targets.length) return;
+          if (!colorPickInProgress) {
+            colorPickInProgress = true;
+            colorSnapshot = targets.map(function(el){ return snapshotStyle(el, 'color'); });
+          }
+          targets.forEach(function(el){ el.style.color = value; });
+          if (commit) {
+            if (colorSnapshot && colorSnapshot.length) pushUndo({ type: 'style', changes: colorSnapshot });
+            colorPickInProgress = false;
+            colorSnapshot = null;
+          }
+        }
         function undo(){
           var entry = undoStack.pop();
           if (!entry) return;
@@ -876,7 +1069,28 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
                 item.parent.appendChild(item.el);
               }
             });
+          } else if (entry.type === 'style') {
+            entry.changes.forEach(function(c){
+              if (!c.el) return;
+              c.el.style[c.prop] = c.oldValue;
+            });
+          } else if (entry.type === 'transform') {
+            entry.changes.forEach(function(c){
+              if (!c.el) return;
+              c.el.setAttribute('data-edit-tx', String(c.tx));
+              c.el.setAttribute('data-edit-ty', String(c.ty));
+              c.el.setAttribute('data-edit-scale', String(c.scale));
+              // Restore origin precisely — empty snapshot means there was no override,
+              // so remove the attribute to avoid using a stale resize pivot on subsequent edits.
+              if (c.origin) c.el.setAttribute('data-edit-origin', c.origin);
+              else c.el.removeAttribute('data-edit-origin');
+              applyTransform(c.el);
+            });
+          } else if (entry.type === 'text') {
+            if (entry.el) entry.el.innerHTML = entry.oldHTML;
           }
+          // Re-render handles in case geometry changed
+          if (selectedEl) positionHandles();
         }
         document.addEventListener('keydown', function(e){
           var ae = document.activeElement;

@@ -202,13 +202,25 @@ function SwooshComposition({
     touchAction: "none",
   };
 
+  // In the live preview the canvas allows overflow on the TOP so the user
+  // can drag the head above the visible frame without it being chopped by
+  // the canvas edge. During export we re-enable overflow:hidden so the
+  // captured PNG is exactly the 1920×1080 canvas.
+  // The wrapper that holds the human uses a clip-path with a very large
+  // negative top inset to mirror this — the bottom 25% mask is preserved
+  // so the swoosh still occludes the lower body, but the top of the image
+  // can extend far above the canvas top.
+  const canvasOverflow = exporting ? "hidden" : "visible";
+  const humanWrapperClip = exporting
+    ? HUMAN_BOTTOM_CLIP
+    : "inset(-9999px 0% 25% 0%)";
   return (
     <div
       ref={containerRef}
       data-template-id="swoosh-bg"
       style={{
         position: "relative",
-        overflow: "hidden",
+        overflow: canvasOverflow,
         // Transparent — the downloadable PNG is just the swoosh + human with
         // alpha so users can drop it onto any background of their choice.
         backgroundColor: "transparent",
@@ -217,19 +229,20 @@ function SwooshComposition({
       {/* Layer 1: back swoosh — full asset behind the human */}
       <img src={SWOOSH} alt="" draggable={false} style={swooshStyle} crossOrigin="anonymous" />
 
-      {/* Layer 2: human cutout (uploaded, bg-removed). Wrapped in an
-          overflow:hidden div with a canvas-relative clip-path so anything
-          below the swoosh's lower curve is masked out — the person looks
-          like they're rising out of the swoosh. The wrapper allows pointer
-          events through (so the inner image can be grabbed/dragged). */}
+      {/* Layer 2: human cutout (uploaded, bg-removed). Wrapped in a
+          clip-path container that masks anything below the swoosh's lower
+          curve so the person looks like they're rising out of the swoosh.
+          In preview the wrapper allows top overflow via a -9999px top
+          inset, so the head can be dragged above the canvas without
+          being chopped at the top edge. */}
       {personImage && (
         <div
           style={{
             position: "absolute",
             inset: 0,
-            overflow: "hidden",
-            clipPath: HUMAN_BOTTOM_CLIP,
-            WebkitClipPath: HUMAN_BOTTOM_CLIP,
+            overflow: "visible",
+            clipPath: humanWrapperClip,
+            WebkitClipPath: humanWrapperClip,
             pointerEvents: "none",
           }}
         >

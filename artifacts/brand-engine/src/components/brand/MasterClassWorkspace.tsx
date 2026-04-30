@@ -255,6 +255,7 @@ function HorizontalTemplate({
             alignItems: "flex-end",
             justifyContent: "center",
             overflow: "hidden",
+            borderRadius: "0.5em",
             zIndex: 2,
           }}
         >
@@ -338,6 +339,7 @@ function HorizontalTemplate({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
             >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
@@ -617,6 +619,7 @@ function SquareTemplate({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
             >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
@@ -913,6 +916,7 @@ function PortraitTemplate({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
             >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
@@ -1207,6 +1211,7 @@ function StoryTemplate({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
             >
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
@@ -1410,17 +1415,29 @@ export function MasterClassWorkspace() {
   const [guestName, setGuestName] = usePersistedState("guestName", "");
   const [guestRole, setGuestRole] = usePersistedState("guestRole", "Guest");
   const [ctaText, setCtaText] = usePersistedState("ctaText", "");
-  const [personImage, setPersonImage] = usePersistedState<string | null>("personImage", null);
+  // personImage holds a blob: URL from URL.createObjectURL — those URLs are
+  // only valid for the document that created them, so we MUST NOT persist
+  // them. After a refresh the stale blob URL would 404 and break exports.
+  const [personImage, setPersonImage] = useState<string | null>(null);
   const [imgSettingsByGroup, setImgSettingsByGroup] = usePersistedState<Record<string, ImageSettings>>("imgSettingsByGroup", {});
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = usePersistedState("selectedTemplate", "horizontal-dates");
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [isExportingAll, setIsExportingAll] = useState(false);
+  const [zipProgress, setZipProgress] = useState<{ current: number; total: number } | null>(null);
   const [showGallery, setShowGallery] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  const blobToDataUrl = (blob: Blob): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(blob);
+    });
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1432,7 +1449,12 @@ export function MasterClassWorkspace() {
       try {
         const { removeBackground } = await import("@imgly/background-removal");
         const blob = await removeBackground(src, { model: "medium", output: { format: "image/png" } });
-        setPersonImage(URL.createObjectURL(blob));
+        // Store the result as a data URL (NOT a blob: URL). html-to-image's
+        // CORS-anonymous fetch path can't read a blob URL set on an img with
+        // crossOrigin="anonymous" — it ends up trying to fetch the page root
+        // and aborts the export. Data URLs sidestep the whole CORS dance.
+        const dataUrl = await blobToDataUrl(blob);
+        setPersonImage(dataUrl);
       } catch {
         setPersonImage(src);
       } finally {
@@ -1475,32 +1497,36 @@ export function MasterClassWorkspace() {
   }, []);
 
   const triggerDownload = useCallback((blob: Blob, filename: string) => {
+    // Use a programmatic <a download> link — this is the only approach that
+    // reliably triggers a file download inside the Replit preview iframe.
+    // window.open(blobUrl) opens the file inline in a new tab (PNG renders,
+    // ZIP shows binary), and it usually returns a non-null Window so any
+    // "fallback" guard would never fire.
     const blobUrl = URL.createObjectURL(blob);
-    const w = window.open(blobUrl, "_blank");
-    if (!w || w.closed) {
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = filename;
-      link.target = "_blank";
-      link.rel = "noopener";
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => document.body.removeChild(link), 200);
-    }
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    link.rel = "noopener";
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    // 200ms was too aggressive for large ZIP blobs in some browsers (the
+    // download could be cancelled before the binary stream was fully read
+    // off the object URL). 5s gives the browser ample headroom while still
+    // preventing the URL from leaking for the lifetime of the page.
+    setTimeout(() => {
+      if (link.parentNode) document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    }, 5000);
   }, []);
 
   const stripRadii = useCallback((root: HTMLElement) => {
-    const saved: Array<{ el: HTMLElement; orig: string }> = [];
-    const all = [root, ...Array.from(root.querySelectorAll("*"))] as HTMLElement[];
-    for (const el of all) {
-      const cs = getComputedStyle(el);
-      if (cs.borderRadius && cs.borderRadius !== "0px") {
-        saved.push({ el, orig: el.style.borderRadius });
-        el.style.borderRadius = "0";
-      }
-    }
+    // Only flatten the OUTER frame's corners for export (the canvas rectangle
+    // itself must be square in the PNG). Leave nested elements alone so that
+    // intentional rounding — date pill, CTA button, photo container — is
+    // preserved in the exported image.
+    const saved: Array<{ el: HTMLElement; orig: string }> = [{ el: root, orig: root.style.borderRadius }];
+    root.style.borderRadius = "0";
     return saved;
   }, []);
 
@@ -1525,6 +1551,12 @@ export function MasterClassWorkspace() {
         pixelRatio: config.width / el.offsetWidth,
         cacheBust: true,
         skipAutoScale: true,
+        // The Poppins family is already loaded via Vite's <link> in index.html,
+        // so we don't need html-to-image to re-fetch and inline @font-face CSS
+        // (that fetch hits Google Fonts and can throw "tainted SVG" / "Failed
+        // to fetch" errors that abort the whole export). The PNG renders the
+        // text using the document's already-loaded fonts.
+        skipFonts: true,
         style: { borderRadius: "0" },
       });
       const blob = dataUrlToBlob(dataUrl);
@@ -1532,7 +1564,16 @@ export function MasterClassWorkspace() {
       triggerDownload(blob, filename);
       createThumbnail(dataUrl).then((thumb) => addExport({ name: filename, source: "Master Class", format: "png", thumbnail: thumb, dimensions: `${config.width}x${config.height}` }));
     } catch (err) {
-      console.error("exportTemplate error:", err);
+      // html-to-image often throws a raw DOM Event (from a failed <img>
+      // onerror), not an Error. Extract the failing URL when possible so the
+      // root cause is visible in the console instead of an opaque "Event".
+      const anyErr = err as { message?: string; stack?: string; target?: { src?: string }; currentSrc?: string };
+      const failedSrc = anyErr?.target?.src || anyErr?.currentSrc;
+      console.error(
+        "exportTemplate error:",
+        anyErr?.message || (failedSrc ? `failed loading: ${failedSrc}` : String(err)),
+        anyErr?.stack || ""
+      );
     } finally {
       restoreRadii(saved);
       setIsExporting(null);
@@ -1541,9 +1582,11 @@ export function MasterClassWorkspace() {
 
   const exportAllZip = useCallback(async () => {
     setIsExportingAll(true);
+    setZipProgress({ current: 0, total: activeTemplates.length });
     try {
       const container = galleryRef.current || document;
       const zip = new JSZip();
+      let i = 0;
       for (const t of activeTemplates) {
         const el = container.querySelector(`[data-template-id="${t.id}"]`) as HTMLElement;
         if (!el) { console.error("ZIP: element not found for", t.id); continue; }
@@ -1554,20 +1597,30 @@ export function MasterClassWorkspace() {
           pixelRatio: t.width / el.offsetWidth,
           cacheBust: true,
           skipAutoScale: true,
+          // See exportTemplate: skip @font-face fetching to avoid Google
+          // Fonts CORS / "Failed to fetch" failures that previously aborted
+          // the whole ZIP. The page already has Poppins loaded.
+          skipFonts: true,
           style: { borderRadius: "0" },
         });
         restoreRadii(saved);
         const base64 = dataUrl.split(",")[1];
         zip.file(`MasterClass_${t.name.replace(/\s+/g, "_")}_${t.width}x${t.height}.png`, base64, { base64: true });
-        await new Promise((r) => setTimeout(r, 200));
+        i += 1;
+        setZipProgress({ current: i, total: activeTemplates.length });
+        // Yield to the event loop so React can flush the progress UI; no
+        // arbitrary throttling — that just made the export feel broken.
+        await new Promise((r) => setTimeout(r, 0));
       }
       const blob = await zip.generateAsync({ type: "blob" });
       const zipName = `MasterClass_${guestName.trim().replace(/\s+/g, "_") || "export"}.zip`;
       triggerDownload(blob, zipName);
     } catch (err) {
-      console.error("exportAllZip error:", err);
+      const e = err as Error;
+      console.error("exportAllZip error:", e?.message || e, e?.stack || "");
     } finally {
       setIsExportingAll(false);
+      setZipProgress(null);
     }
   }, [activeTemplates, guestName, triggerDownload, stripRadii, restoreRadii]);
 
@@ -1791,7 +1844,11 @@ export function MasterClassWorkspace() {
                   <button onClick={() => setShowGallery(false)} className="h-[32px] px-[14px] rounded-[8px] bg-[rgba(255,255,255,0.06)] border-none text-[#94A3B8] text-[11px] font-medium flex items-center gap-[5px] cursor-pointer hover:bg-[rgba(255,255,255,0.1)] transition-all">Back to Editor</button>
                   <button onClick={exportAllZip} disabled={isExportingAll} className="h-[32px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center gap-[5px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-50">
                     {isExportingAll ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <PackageOpen className="w-[12px] h-[12px]" />}
-                    {isExportingAll ? "Creating ZIP..." : "Download All (ZIP)"}
+                    {isExportingAll
+                      ? zipProgress
+                        ? `Rendering ${zipProgress.current}/${zipProgress.total}…`
+                        : "Creating ZIP..."
+                      : "Download All (ZIP)"}
                   </button>
                 </div>
               </div>

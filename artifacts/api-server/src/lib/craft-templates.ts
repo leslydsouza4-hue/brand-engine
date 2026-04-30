@@ -463,6 +463,52 @@ export function templateForOrientation(id: TemplateId, dims: Dims): boolean {
   return t.supports.includes(orientationOf(dims));
 }
 
+/**
+ * Given an originally-classified template and a target canvas size, pick the best
+ * template id to render the SAME slots into. Used by the "size pack" path so a
+ * single classifier call can fan out to square / portrait / story / landscape.
+ *
+ * Rule: prefer the original template if it supports the target orientation,
+ * otherwise pick the closest sibling. Card-bearing templates fall back to other
+ * card-bearing templates per orientation. Card-less templates preserve their
+ * stylistic intent (stat-hero stays a stat, quote stays a quote, etc.).
+ */
+export function pickTemplateForAspect(
+  originalId: TemplateId,
+  dims: Dims,
+  hasCard: boolean,
+): TemplateId | null {
+  const orient = orientationOf(dims);
+  // 1) Original fits — use it.
+  if (TEMPLATES[originalId]?.supports.includes(orient)) return originalId;
+
+  // 2) Stylistic fallbacks that work in all orientations
+  if (originalId === "stat-hero") return "stat-hero";
+  if (originalId === "quote-card") return "quote-card";
+  if (originalId === "centered-hero") return "centered-hero";
+
+  // 3) Card-bearing fallbacks: swap between text-left-card-right (landscape)
+  // and centered-with-card-below (portrait/square).
+  if (originalId === "text-left-card-right") {
+    return hasCard ? "centered-with-card-below" : "centered-hero";
+  }
+  if (originalId === "centered-with-card-below") {
+    return hasCard ? "text-left-card-right" : "centered-hero";
+  }
+  return "centered-hero";
+}
+
+/**
+ * Standard "size pack" target aspects — square, portrait, story, landscape.
+ * Mirrors the social-size dropdown in TemplatesWorkspace.tsx.
+ */
+export const SIZE_PACK_ASPECTS: { aspect: string; W: number; H: number; label: string }[] = [
+  { aspect: "1080x1080", W: 1080, H: 1080, label: "Square" },
+  { aspect: "1080x1350", W: 1080, H: 1350, label: "Portrait" },
+  { aspect: "1080x1920", W: 1080, H: 1920, label: "Story" },
+  { aspect: "1200x628", W: 1200, H: 628, label: "Landscape" },
+];
+
 export function listTemplatesForClassifier(): string {
   return Object.values(TEMPLATES)
     .map((t) => `- ${t.id} (supports: ${t.supports.join(",")}): ${t.description}`)

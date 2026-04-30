@@ -458,6 +458,16 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
   const [aiSlides, setAiSlides] = useState<string[]>([]);
   const [aiGeneratedAspect, setAiGeneratedAspect] = useState<string>("");
   const [aiReflowing, setAiReflowing] = useState(false);
+  // "Size Pack" — opt-in: when on, server fans the same template-routed slots
+  // out to square / portrait / story / landscape and returns all four. Each
+  // variant uses a deterministic CSS Grid template so nothing overlaps in
+  // any size, and the user can switch between them in the preview without
+  // re-prompting.
+  const [aiSizePack, setAiSizePack] = useState(false);
+  type SizePackVariant = { aspect: string; label: string; html: string; W: number; H: number; templateUsed: string };
+  const [aiSizePackResults, setAiSizePackResults] = useState<SizePackVariant[]>([]);
+  const [aiSizePackIndex, setAiSizePackIndex] = useState(0);
+  const [aiSizePackDownloading, setAiSizePackDownloading] = useState(false);
   const [aiSlideIndex, setAiSlideIndex] = useState(0);
   const [aiSlideCount, setAiSlideCount] = useState(1);
   const [aiSlidePrompts, setAiSlidePrompts] = useState<string[]>([]);
@@ -473,6 +483,12 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
   const [aiLoadingFact, setAiLoadingFact] = useState(0);
   const [aiLoadingElapsed, setAiLoadingElapsed] = useState(0);
   const aiPreviewIframeRef = useRef<HTMLIFrameElement | null>(null);
+  // Monotonic version token for size-pack variant switches. Each call to
+  // handlePickSizePackVariant captures the current version; if the version
+  // changes mid-flight (because a newer click started), the older invocation
+  // bails out before mutating state. This prevents stale-priorIdx commits
+  // that can desync aiSizePackIndex / aiSlides / persisted-html.
+  const sizePackSwitchVersionRef = useRef(0);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiIncludeLogo, setAiIncludeLogo] = useState(true);
@@ -1350,23 +1366,30 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
 
   const handleSaveInlineEdits = useCallback(async () => {
     const iframe = aiPreviewIframeRef.current;
-    if (!iframe || !iframe.contentWindow || aiSavingEdits) return;
+    const iframeWin = iframe?.contentWindow;
+    if (!iframe || !iframeWin || aiSavingEdits) return;
     setAiSavingEdits(true);
     try {
+      // requestId scopes the response so unrelated postMessage traffic from
+      // other iframes/extensions can't be misinterpreted as our reply.
+      const reqId = `editor-html-${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const html: string = await new Promise((resolve, reject) => {
         const timeout = window.setTimeout(() => {
           window.removeEventListener("message", onMsg);
           reject(new Error("Timed out reading edited HTML"));
         }, 4000);
         function onMsg(ev: MessageEvent) {
+          // Only accept messages from OUR iframe and matching our requestId.
+          if (ev.source !== iframeWin) return;
           const d: any = ev.data;
           if (!d || d.type !== "editor:html" || typeof d.html !== "string") return;
+          if (d.requestId && d.requestId !== reqId) return;
           window.clearTimeout(timeout);
           window.removeEventListener("message", onMsg);
           resolve(d.html);
         }
         window.addEventListener("message", onMsg);
-        iframe.contentWindow!.postMessage({ type: "editor:get-html" }, "*");
+        iframeWin.postMessage({ type: "editor:get-html", requestId: reqId }, "*");
       });
       let cleaned = html
         .replace(/<div\s+data-editor-handles[^>]*>[\s\S]*?<\/div>/gi, "")
@@ -1380,13 +1403,21 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
         next[aiSlideIndex] = cleaned;
         return next;
       });
+      // Mirror saved edits into the active size-pack variant so navigating
+      // between sizes preserves what the user changed.
+      setAiSizePackResults((prev) => {
+        if (!prev.length || aiSizePackIndex < 0 || aiSizePackIndex >= prev.length) return prev;
+        const next = prev.slice();
+        next[aiSizePackIndex] = { ...next[aiSizePackIndex]!, html: cleaned };
+        return next;
+      });
       setAiEditMode(false);
     } catch (err) {
       // swallow — leave edit mode active so user can retry
     } finally {
       setAiSavingEdits(false);
     }
-  }, [aiSavingEdits, aiSlideIndex]);
+  }, [aiSavingEdits, aiSlideIndex, aiSizePackIndex]);
 
   const handleRemoveHumanBg = async () => {
     if (aiRemovingBg) return;
@@ -1544,6 +1575,9 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           slideCount: aiSlideCount,
           hasItem: aiCustomItemInclude && !!aiCustomItemImage,
           itemDescription: aiCustomItemDescription,
+          // Size pack only makes sense for single-frame designs; carousels
+          // already produce multiple HTMLs (one per slide).
+          sizePack: aiSizePack && aiSlideCount === 1,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -1552,6 +1586,27 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
         ? data.slides
         : (data.html ? [data.html] : []);
       if (!slides.length) throw new Error("No HTML returned");
+      // If the server returned a size pack, prefer the variant that matches
+      // the user's currently-selected aspect; otherwise fall back to the
+      // first variant. This keeps the preview at the size the user picked.
+      const rawPack: unknown = (data as { sizePack?: unknown }).sizePack;
+      const sizePack: SizePackVariant[] = Array.isArray(rawPack)
+        ? (rawPack as SizePackVariant[]).filter(v =>
+            v && typeof v.html === "string" && typeof v.aspect === "string"
+            && typeof v.W === "number" && typeof v.H === "number")
+        : [];
+      let activeAspect = aiAspect;
+      if (sizePack.length) {
+        const matchIdx = sizePack.findIndex(v => v.aspect === aiAspect);
+        const useIdx = matchIdx >= 0 ? matchIdx : 0;
+        slides = [sizePack[useIdx]!.html];
+        activeAspect = sizePack[useIdx]!.aspect;
+        setAiSizePackResults(sizePack);
+        setAiSizePackIndex(useIdx);
+      } else {
+        setAiSizePackResults([]);
+        setAiSizePackIndex(0);
+      }
       // Swap custom-item placeholder back to its data URL (kept off the wire to save tokens).
       // The human placeholder is swapped server-side because the image is generated there.
       const itemPh = "https://placeholder.brand-engine/custom-item.png";
@@ -1562,7 +1617,10 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
       });
       setAiSlides(slides);
       setAiSlideIndex(0);
-      setAiGeneratedAspect(aiAspect);
+      // If we activated a size-pack variant, the displayed design might be at
+      // a different aspect than the user's original pick — surface that.
+      if (activeAspect !== aiAspect) setAiAspect(activeAspect);
+      setAiGeneratedAspect(activeAspect);
       // Auto-cut the AI human out of its background and swap it in-place. Runs in
       // the browser via @imgly/background-removal — proper alpha channel, no API.
       void (async () => {
@@ -1573,8 +1631,8 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
           // the exact human data URL the server returned. Belt + suspenders so
           // background removal still happens if Claude drops the attribute.
           const findHumanTags = (slide: string): string[] => {
-            const tags = slide.match(/<img\b[^>]*?>/gi) || [];
-            return tags.filter(t => {
+            const tags: string[] = slide.match(/<img\b[^>]*?>/gi) ?? [];
+            return tags.filter((t: string) => {
               if (/\bdata-ai-human\s*=\s*["']true["']/i.test(t)) return true;
               if (humanSrcPrefix) {
                 const m = t.match(srcRe);
@@ -1685,9 +1743,12 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
 
   const [aiExporting, setAiExporting] = useState<null | "png" | "jpeg" | "pdf">(null);
 
-  const renderHtmlToCanvas = async (html: string): Promise<HTMLCanvasElement | null> => {
+  const renderHtmlToCanvas = async (html: string, dimsOverride?: { w: number; h: number }): Promise<HTMLCanvasElement | null> => {
     if (!html) return null;
-    const { w, h } = aiCanvasDims;
+    // Allow callers to pin specific render dims (e.g. size-pack export, where
+    // each variant has its OWN canonical width/height regardless of the
+    // currently-selected aspect). Defaults to the active preview dims.
+    const { w, h } = dimsOverride ?? aiCanvasDims;
 
     // Render the full HTML (head + body) into a host div in the PARENT document
     // so modern-screenshot can capture it. Capturing nodes inside an iframe's
@@ -1887,6 +1948,129 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
     } finally {
       setAiExporting(null);
       setAiExportAllProgress(null);
+    }
+  };
+
+  // Read the iframe's current edited HTML (cleaned of editor-injected nodes)
+  // so we can persist live unsaved inline edits before swapping the preview
+  // to another size-pack variant or before downloading. Returns null if the
+  // iframe isn't ready or doesn't respond in time. Mirrors the cleanup done
+  // in handleSaveInlineEdits to keep the persisted HTML free of editor cruft.
+  const readActiveIframeHtml = useCallback(async (): Promise<string | null> => {
+    const iframe = aiPreviewIframeRef.current;
+    const iframeWin = iframe?.contentWindow;
+    if (!iframe || !iframeWin) return null;
+    try {
+      // Same scoping as handleSaveInlineEdits: source-check + requestId so
+      // unrelated postMessage traffic can't be misread as our reply.
+      const reqId = `editor-html-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const html: string = await new Promise((resolve, reject) => {
+        const timeout = window.setTimeout(() => {
+          window.removeEventListener("message", onMsg);
+          reject(new Error("timeout"));
+        }, 1500);
+        function onMsg(ev: MessageEvent) {
+          if (ev.source !== iframeWin) return;
+          const d: any = ev.data;
+          if (!d || d.type !== "editor:html" || typeof d.html !== "string") return;
+          if (d.requestId && d.requestId !== reqId) return;
+          window.clearTimeout(timeout);
+          window.removeEventListener("message", onMsg);
+          resolve(d.html);
+        }
+        window.addEventListener("message", onMsg);
+        iframeWin.postMessage({ type: "editor:get-html", requestId: reqId }, "*");
+      });
+      return html
+        .replace(/<div\s+data-editor-handles[^>]*>[\s\S]*?<\/div>/gi, "")
+        .replace(/<style\s+data-editor-injected[^>]*>[\s\S]*?<\/style>/gi, "")
+        .replace(/<script\s+data-editor-injected[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/\s+data-edit-(?:hover|active|dragging|moved|selected|base-transform|base-origin|tx|ty|scale|origin)="[^"]*"/gi, "")
+        .replace(/\s+contenteditable="[^"]*"/gi, "");
+    } catch {
+      // iframe not in editor mode (no listener) or didn't respond — fall back
+      // to React state (caller handles).
+      return null;
+    }
+  }, []);
+
+  // Switch the preview to a different size-pack variant. We:
+  //   1. Block while a save is in flight to avoid index/state desync.
+  //   2. Try to read the live iframe HTML so unsaved inline edits are kept.
+  //   3. Snapshot the prior variant's HTML back into the pack BEFORE swapping
+  //      indices, then atomically advance everything.
+  const handlePickSizePackVariant = useCallback(async (idx: number) => {
+    if (idx < 0 || idx >= aiSizePackResults.length) return;
+    if (idx === aiSizePackIndex) return;
+    if (aiSavingEdits) return; // race guard: don't switch mid-save
+    // Bump the version token. Any prior-in-flight invocation will see its
+    // captured version is stale on resume and bail out before mutating state.
+    const myVersion = ++sizePackSwitchVersionRef.current;
+    const target = aiSizePackResults[idx]!;
+    const priorIdx = aiSizePackIndex;
+    // Try to capture live unsaved edits (works whether or not the user clicked
+    // Save — the iframe responds when in edit mode). Falls back to state.
+    const liveHtml = aiEditMode ? await readActiveIframeHtml() : null;
+    // If a newer click superseded us during the await, abort: the newer
+    // invocation will commit its own (more correct) state for the same prior.
+    if (myVersion !== sizePackSwitchVersionRef.current) return;
+    const fallbackHtml = aiSlides[0];
+    const persisted = liveHtml ?? (typeof fallbackHtml === "string" ? fallbackHtml : null);
+    setAiSizePackResults(prev => {
+      if (!persisted || priorIdx < 0 || priorIdx >= prev.length) return prev;
+      const next = prev.slice();
+      next[priorIdx] = { ...next[priorIdx]!, html: persisted };
+      return next;
+    });
+    setAiSizePackIndex(idx);
+    setAiSlides([target.html]);
+    setAiSlideIndex(0);
+    setAiAspect(target.aspect);
+    setAiGeneratedAspect(target.aspect);
+    // Drop edit mode on the new variant so the iframe re-mounts cleanly with
+    // the new size; the user can re-enter edit mode after it loads.
+    setAiEditMode(false);
+  }, [aiSizePackResults, aiSizePackIndex, aiSlides, aiSavingEdits, aiEditMode, readActiveIframeHtml]);
+
+  // Render every size-pack variant as PNG at ITS OWN canonical dims and
+  // package them all into a single ZIP download. We use a ZIP (not N
+  // separate clicks) because browsers throttle/block rapid programmatic
+  // downloads triggered from a single user gesture — only the first one or
+  // two would actually save. One ZIP = one user-visible download = reliable.
+  const handleDownloadAllSizes = async () => {
+    if (!aiSizePackResults.length || aiSizePackDownloading) return;
+    setAiSizePackDownloading(true);
+    try {
+      const stamp = Date.now();
+      const variants = aiSizePackResults.slice();
+      // Try live capture first, fall back to React state for the active variant.
+      const liveHtml = aiEditMode ? await readActiveIframeHtml() : null;
+      const persisted = liveHtml ?? (typeof aiSlides[0] === "string" ? aiSlides[0]! : null);
+      if (persisted && aiSizePackIndex >= 0 && aiSizePackIndex < variants.length) {
+        variants[aiSizePackIndex] = { ...variants[aiSizePackIndex]!, html: persisted };
+      }
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      let added = 0;
+      for (const v of variants) {
+        // CRITICAL: pin renderHtmlToCanvas to the variant's own W/H, not the
+        // currently-active aiCanvasDims (which only matches the visible one).
+        const canvas = await renderHtmlToCanvas(v.html, { w: v.W, h: v.H });
+        if (!canvas) continue;
+        const blob: Blob | null = await new Promise(r => canvas.toBlob(b => r(b), "image/png"));
+        if (!blob) continue;
+        const buf = await blob.arrayBuffer();
+        zip.file(`${v.label.toLowerCase()}-${v.W}x${v.H}.png`, buf);
+        added++;
+      }
+      if (!added) throw new Error("No variants rendered");
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      downloadBlob(zipBlob, `claude-size-pack-${stamp}.zip`);
+    } catch (err) {
+      console.error("[ai-export-size-pack]", err);
+      setAiError(err instanceof Error ? err.message : "Size pack export failed");
+    } finally {
+      setAiSizePackDownloading(false);
     }
   };
 
@@ -2200,6 +2384,11 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
                     onClick={() => {
                       setAiCategoryId(fmt.id);
                       setAiAspect(fmt.sizes[0].value);
+                      // Size Pack only makes sense for the Social format
+                      // (its 4 variants are social-media sizes). Auto-clear
+                      // when switching to ads/email/presentation so the user
+                      // doesn't accidentally generate social sizes for ads.
+                      if (fmt.id !== "social") setAiSizePack(false);
                     }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
@@ -2269,7 +2458,11 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
                 color: "#17D94B",
               }}
             >
-              {aiLoading ? (<><Loader2 className="w-[14px] h-[14px] animate-spin" /><span>Generating…</span></>) : (<><Sparkles className="w-[14px] h-[14px]" /><span>Generate Design</span></>)}
+              {aiLoading ? (
+                <><Loader2 className="w-[14px] h-[14px] animate-spin" /><span>Generating{aiSizePack && aiSlideCount === 1 ? " all sizes" : ""}…</span></>
+              ) : (
+                <><Sparkles className="w-[14px] h-[14px]" /><span>{aiSizePack && aiSlideCount === 1 ? "Generate Size Pack" : "Generate Design"}</span></>
+              )}
             </button>
 
             {/* Prompt helpers — collapsed below the main flow but still above all config */}
@@ -2373,6 +2566,35 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
                 <option key={s.value} value={s.value} className="bg-[#0a1628]">{s.label}</option>
               ))}
             </select>
+
+            {/* Size Pack — opt-in. Only meaningful for single-frame Social
+                designs (the 4 variants are social-media sizes) that route to
+                a deterministic template (no overlaps in any size). Hidden for
+                ads/email/presentation where the sizes wouldn't apply. */}
+            {aiSlideCount === 1 && aiCategoryId === "social" && (
+              <label
+                className={`mb-[10px] flex items-start gap-[10px] p-[10px] rounded-[10px] border cursor-pointer transition-all ${
+                  aiSizePack
+                    ? "bg-[rgba(23,217,75,0.08)] border-[rgba(23,217,75,0.45)]"
+                    : "bg-[rgba(255,255,255,0.025)] border-[rgba(255,255,255,0.06)] hover:bg-[rgba(255,255,255,0.04)]"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={aiSizePack}
+                  onChange={(e) => setAiSizePack(e.target.checked)}
+                  className="mt-[2px] w-[14px] h-[14px] cursor-pointer accent-[#17D94B]"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className={`text-[11.5px] font-bold leading-tight ${aiSizePack ? "text-[#17D94B]" : "text-white"}`}>
+                    Size Pack — all 4 sizes at once
+                  </div>
+                  <div className="text-[10.5px] text-[#94A3B8] leading-snug mt-[2px]">
+                    Square · Portrait · Story · Landscape. Same design, perfect in every size, no overlaps.
+                  </div>
+                </div>
+              </label>
+            )}
             {aiSlides.length > 0 && aiGeneratedAspect && aiGeneratedAspect !== aiAspect && (
               <button
                 onClick={handleReflowToSize}
@@ -2541,6 +2763,66 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
 
             {aiHtml && (
               <div className="mt-[16px] flex flex-col gap-[8px]">
+                {/* Size Pack switcher — only shown when the response carried multiple
+                    aspect variants. Each thumb swaps the preview to that size. */}
+                {aiSizePackResults.length > 1 && (
+                  <div className="py-[10px] px-[10px] rounded-[10px] bg-[rgba(23,217,75,0.06)] border border-[rgba(23,217,75,0.22)]">
+                    <div className="flex items-center justify-between mb-[8px]">
+                      <div className="flex items-center gap-[6px] text-[10px] font-bold uppercase tracking-[1.5px] text-[#17D94B]">
+                        <Sparkles className="w-[11px] h-[11px]" />
+                        Size Pack
+                      </div>
+                      <button
+                        onClick={handleDownloadAllSizes}
+                        disabled={aiSizePackDownloading}
+                        className="flex items-center gap-[5px] py-[5px] px-[10px] rounded-[7px] text-[10.5px] font-bold bg-[rgba(0,178,169,0.14)] border border-[rgba(0,178,169,0.4)] text-[#17D94B] hover:bg-[rgba(0,178,169,0.22)] cursor-pointer transition-all disabled:opacity-50 disabled:cursor-wait"
+                      >
+                        {aiSizePackDownloading ? (
+                          <><Loader2 className="w-[11px] h-[11px] animate-spin" />Zipping…</>
+                        ) : (
+                          <>Download all {aiSizePackResults.length} as ZIP</>
+                        )}
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-4 gap-[6px]">
+                      {aiSizePackResults.map((v, i) => {
+                        const active = i === aiSizePackIndex;
+                        // Tiny visual proxy of the aspect ratio so the user can
+                        // see at a glance what each thumb represents.
+                        const ratio = v.W / v.H;
+                        const previewMaxW = 36;
+                        const previewMaxH = 36;
+                        const pw = ratio >= 1 ? previewMaxW : Math.round(previewMaxH * ratio);
+                        const ph = ratio >= 1 ? Math.round(previewMaxW / ratio) : previewMaxH;
+                        return (
+                          <button
+                            key={v.aspect}
+                            onClick={() => handlePickSizePackVariant(i)}
+                            title={`${v.label} — ${v.W}×${v.H}`}
+                            className={`group flex flex-col items-center gap-[4px] py-[8px] px-[6px] rounded-[8px] border cursor-pointer transition-all ${
+                              active
+                                ? "bg-[rgba(23,217,75,0.18)] border-[#17D94B]"
+                                : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.07)] hover:border-[rgba(23,217,75,0.4)]"
+                            }`}
+                          >
+                            <div className="h-[40px] flex items-center justify-center">
+                              <div
+                                style={{ width: pw, height: ph }}
+                                className={`rounded-[3px] border ${
+                                  active ? "bg-[rgba(23,217,75,0.35)] border-[#17D94B]" : "bg-[rgba(148,163,184,0.18)] border-[rgba(148,163,184,0.35)] group-hover:border-[rgba(23,217,75,0.45)]"
+                                }`}
+                              />
+                            </div>
+                            <div className={`text-[9.5px] font-bold leading-tight ${active ? "text-[#17D94B]" : "text-[#CBD5E1]"}`}>
+                              {v.label}
+                            </div>
+                            <div className="text-[8.5px] text-[#64748B] leading-tight">{v.W}×{v.H}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 {aiSlides.length > 1 && (
                   <div className="flex items-center justify-between py-[8px] px-[10px] rounded-[10px] bg-[rgba(23,217,75,0.06)] border border-[rgba(23,217,75,0.18)]">
                     <button

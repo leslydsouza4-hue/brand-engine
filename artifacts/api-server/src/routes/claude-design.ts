@@ -6,6 +6,8 @@ import {
   templateForOrientation,
   listTemplatesForClassifier,
   renderTemplate,
+  pickTemplateForAspect,
+  SIZE_PACK_ASPECTS,
   type TemplateId,
   type Slots,
 } from "../lib/craft-templates.js";
@@ -758,6 +760,11 @@ router.post("/claude-design", async (req, res) => {
   const slideCount = Number.isFinite(rawSlideCount)
     ? Math.min(10, Math.max(1, Math.round(rawSlideCount)))
     : 1;
+  // "Size pack" mode: when true AND the prompt routes to a template, fan out
+  // and render the SAME slots into every standard social size at once. The
+  // client uses this to give the user perfect square / portrait / story /
+  // landscape variants from a single prompt with zero re-prompting.
+  const wantsSizePack = !!req.body?.sizePack;
 
   const ALLOWED_MODELS = new Set([
     "claude-sonnet-4-6",
@@ -1310,8 +1317,51 @@ Return ONE complete <!doctype html> document. The root .canvas div has exactly t
             },
           });
           if (html) {
+            // Size pack: render the SAME slots into every standard social
+            // aspect using the best-fit template per orientation. Each
+            // variant uses the same deterministic CSS Grid template, so
+            // overlap is mathematically impossible at every size.
+            let sizePack: { aspect: string; label: string; html: string; templateUsed: TemplateId; W: number; H: number }[] | undefined;
+            if (wantsSizePack) {
+              const hasCard = !!classified.slots?.card;
+              const variants: { aspect: string; label: string; html: string; templateUsed: TemplateId; W: number; H: number }[] = [];
+              for (const target of SIZE_PACK_ASPECTS) {
+                const tplId = pickTemplateForAspect(
+                  classified.templateId as TemplateId,
+                  { W: target.W, H: target.H },
+                  hasCard,
+                );
+                if (!tplId) continue;
+                try {
+                  const variantHtml = renderTemplate(tplId, {
+                    slots: classified.slots!,
+                    dims: { W: target.W, H: target.H },
+                    assets: {
+                      logoUrl: logoUrl || undefined,
+                      brandTag: "01 / HIGHLEVEL",
+                    },
+                  });
+                  if (variantHtml) {
+                    variants.push({
+                      aspect: target.aspect,
+                      label: target.label,
+                      html: variantHtml,
+                      templateUsed: tplId,
+                      W: target.W,
+                      H: target.H,
+                    });
+                  }
+                } catch (variantErr) {
+                  req.log?.warn?.(
+                    { err: variantErr, target: target.aspect, tplId },
+                    "[claude-design] size-pack variant render failed; skipping",
+                  );
+                }
+              }
+              if (variants.length) sizePack = variants;
+            }
             req.log?.info?.(
-              { templateId: classified.templateId, aspect },
+              { templateId: classified.templateId, aspect, sizePack: sizePack?.length ?? 0 },
               "[claude-design] served from template",
             );
             return res.json({
@@ -1319,6 +1369,7 @@ Return ONE complete <!doctype html> document. The root .canvas div has exactly t
               slides: [html],
               humanGenerated: false,
               templateUsed: classified.templateId,
+              sizePack,
             });
           }
         } catch (tplErr) {

@@ -1,6 +1,14 @@
 import { Router, type IRouter } from "express";
 import Anthropic from "@anthropic-ai/sdk";
 import { generateImage, editImage } from "@workspace/integrations-gemini-ai/image";
+import {
+  TEMPLATES,
+  templateForOrientation,
+  listTemplatesForClassifier,
+  renderTemplate,
+  type TemplateId,
+  type Slots,
+} from "../lib/craft-templates.js";
 
 const router: IRouter = Router();
 
@@ -593,6 +601,117 @@ If the input HTML has zero overlap problems, return it UNCHANGED.
 - If a text block has no \`max-width\`, add \`max-width: 50%;\` (or use the canvas-width pixel equivalent).
 - Never delete anything. Never reword copy. Never restyle colors. Geometry only.`;
 
+// =====================================================================
+// TEMPLATE ROUTING (deterministic CSS Grid layouts — zero overlap by construction)
+//
+// For the most common graphic patterns we don't ask Claude to generate HTML
+// at all — we ask Sonnet to pick a pre-validated template and extract slot
+// values. The server then renders the template with mathematical certainty
+// that no element overlaps another. Free-form generation only kicks in when
+// the prompt does not fit any template.
+// =====================================================================
+
+const TEMPLATE_CLASSIFIER_SYSTEM = `You are a layout router. Given a marketing-graphic prompt, canvas dimensions, and a list of pre-built templates, you decide which template best fits the prompt and extract the slot values needed to render it.
+
+You DO NOT design. You DO NOT write HTML. You ONLY output a single JSON object.
+
+# Available templates
+${listTemplatesForClassifier()}
+
+# Slot schema (only include the slots you actually need)
+- eyebrow: string (1-4 word kicker, e.g. "AI CONVERSATION FEATURE", "NEW FOR 2026", "LIVE NOW")
+- headline: string (3-9 words, the dominant message)
+- accentWord: string (a substring of the headline that should pop in green italic, e.g. for headline "Close like a real human" the accentWord might be "real human")
+- subhead: string (one sentence, ≤ 18 words)
+- ctaText: string (1-4 words, e.g. "Try free", "Book a demo", "Start now")
+- footnote: string (≤ 6 words, e.g. "No credit card · 5-min setup")
+- kicker: string (use instead of eyebrow when text is centered)
+- statNumber: string (e.g. "94%", "$2.4M", "10,000+")
+- statLabel: string (1-4 word label under a stat, e.g. "Lead response rate")
+- contextHeadline: string (sentence below a big stat, ≤ 14 words)
+- quote: string (12-22 word pullquote)
+- attributionName: string (e.g. "Maya Chen")
+- attributionRole: string (e.g. "Founder · Cobalt Studio")
+- card: object — only for templates that include a card. Shape:
+  { "kind": "chat", "pillText": "LIVE CONVERSATION" | "AI ACTIVE" | etc, "messages": [{"role":"lead","text":"..."},{"role":"ai","text":"..."}] }
+  OR { "kind": "stats", "pillText"?: string, "stats": [{"value":"94%","label":"Close rate"},{"value":"1.2s","label":"Reply time"}] }
+  OR { "kind": "dashboard", "pillText"?: string, "metric": {"value":"$2.4M","label":"Pipeline this month"}, "sparkline"?: [12,18,24,...] }
+
+# Rules
+1. Pick the SINGLE best template. If multiple fit, prefer the most specific.
+2. The chosen template's "supports" list MUST include the canvas orientation. If none of the templates support the orientation, return {"templateId":"freeform","reason":"orientation not supported"}.
+3. If the prompt names a custom uploaded image, a real human photo, a Highly mascot, an SVG mockup, or a complex illustration, return {"templateId":"freeform","reason":"requires custom imagery"}.
+4. If the prompt is for a multi-slide carousel, return {"templateId":"freeform","reason":"carousel"}.
+5. If the prompt explicitly asks for a layout the templates don't cover (e.g. "3 cards staggered diagonally", "broken grid", "magazine spread"), return {"templateId":"freeform","reason":"custom layout"}.
+6. WRITE COPY YOURSELF. Don't just echo the prompt. Turn the user's idea into real, polished marketing copy with realistic content (e.g. "Bryan Adams on AI that actually listens", "Maya Chen, Founder · Cobalt Studio"). The prompt is the brief, you are the copywriter.
+7. For "chat" cards, write 2-3 messages that feel like a real lead-and-AI conversation related to the prompt. Lead messages are casual ("Are you human?", "Can you check pricing?"). AI messages are confident, on-brand, helpful ("Yes, and our team is on standby — want me to book a demo?").
+8. For "stats" cards, pick 2-3 realistic numbers that support the headline.
+9. NEVER invent slot names that aren't in the schema.
+10. Output ONLY the JSON object. No preamble, no markdown fences, no explanation.
+
+# Examples
+
+Prompt: "Square 1080x1080. Hero post showing how our AI conversation feature actually feels real."
+Output: {"templateId":"centered-with-card-below","slots":{"eyebrow":"AI CONVERSATION FEATURE","headline":"The Conversation Felt Completely Real","accentWord":"Completely Real","subhead":"HighLevel AI holds real conversations — your leads can't tell the difference.","card":{"kind":"chat","pillText":"LIVE CONVERSATION","messages":[{"role":"lead","text":"Ask me anything — I'm ready."},{"role":"ai","text":"That's exactly what I was thinking too."}]}}}
+
+Prompt: "Landscape 1200x630. Show that our AI replies in 1.2 seconds and closes deals like a top SDR."
+Output: {"templateId":"text-left-card-right","slots":{"eyebrow":"REPLIES IN 1.2 SECONDS","headline":"Close like a real human, 24/7","accentWord":"real human","subhead":"AI that picks up the moment a lead lands and books the meeting before they cool off.","ctaText":"See it live","card":{"kind":"chat","pillText":"AI ACTIVE","messages":[{"role":"lead","text":"Do you have time to chat tomorrow?"},{"role":"ai","text":"I just put 3 slots on your calendar — pick one and I'll confirm."}]}}}
+
+Prompt: "Square. 94 percent close rate stat post."
+Output: {"templateId":"stat-hero","slots":{"eyebrow":"AGENCIES ON HIGHLEVEL","statNumber":"94%","statLabel":"Lead response rate","contextHeadline":"Faster replies, more booked calls, every single time.","ctaText":"See how"}}
+
+Prompt: "Portrait. Bryan Adams quote about how the AI sounds human."
+Output: {"templateId":"quote-card","slots":{"eyebrow":"CUSTOMER STORY","quote":"Honestly, my leads keep asking if it's me on the other end. That's never happened with any other tool.","attributionName":"Bryan Adams","attributionRole":"Founder · Northwind Agency"}}
+
+Prompt: "Landscape. Three diagonal cards with photo of our founder, broken grid magazine style with neon yellow underlines."
+Output: {"templateId":"freeform","reason":"custom layout (broken grid, photo, multi-card composition)"}`;
+
+type ClassifierResult = {
+  templateId: TemplateId | "freeform";
+  reason?: string;
+  slots?: Slots;
+};
+
+async function classifyAndExtractSlots(
+  client: Anthropic,
+  prompt: string,
+  aspect: string,
+): Promise<ClassifierResult> {
+  try {
+    const m = aspect.match(/^(\d+)\s*x\s*(\d+)$/i);
+    const W = m ? parseInt(m[1], 10) : 1080;
+    const H = m ? parseInt(m[2], 10) : 1080;
+    const r = W / H;
+    const orientation = r > 1.15 ? "landscape" : r < 0.87 ? "portrait" : "square";
+    const msg = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      system: TEMPLATE_CLASSIFIER_SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: `Canvas: ${W}x${H} (${orientation})\n\nPrompt: ${prompt}\n\nReturn the JSON now.`,
+        },
+      ],
+    });
+    const block = msg.content[0];
+    const text = (block && block.type === "text" ? block.text : "").trim();
+    // Tolerate accidental ```json fences
+    const cleaned = text
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```\s*$/i, "")
+      .trim();
+    const parsed = JSON.parse(cleaned) as ClassifierResult;
+    if (!parsed || typeof parsed !== "object" || !parsed.templateId) {
+      return { templateId: "freeform", reason: "invalid classifier output" };
+    }
+    return parsed;
+  } catch (err) {
+    console.error("[claude-design] classifier failed", err);
+    return { templateId: "freeform", reason: "classifier error" };
+  }
+}
+
 router.post("/claude-design", async (req, res) => {
   const baseUrl = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
   const apiKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
@@ -1110,6 +1229,115 @@ Return ONE complete <!doctype html> document. The root .canvas div has exactly t
       res.end();
       return;
     }
+
+    // ---------- TEMPLATE ROUTING (zero-overlap fast path) ----------
+    // Try to route the prompt to a pre-validated CSS Grid template. This is
+    // the only reliable way to guarantee no overlaps — the template's grid
+    // physically can't overlap. If the prompt fits, we render and return
+    // immediately, skipping both the freeform generation AND the overlap-fix
+    // pass. If it doesn't fit, we fall through to the legacy freeform path.
+    //
+    // Skip template routing whenever the request needs free-form HTML:
+    //   - multi-slide carousels (slideCount > 1)
+    //   - custom uploaded item (hasItem)
+    //   - generated human photo (humanDataUrl present)
+    //   - Highly mascot included (highlyUrl)
+    //   - explicit subject SVG illustration requested
+    //   - scene direction (background atmosphere) was provided
+    const eligibleForTemplate =
+      slideCount === 1 &&
+      !hasItem &&
+      !humanDataUrl &&
+      !highlyUrl &&
+      !subject &&
+      !sceneDescription;
+
+    if (eligibleForTemplate) {
+      const classified = await classifyAndExtractSlots(client, prompt, aspect);
+      const tplOk =
+        classified.templateId !== "freeform" &&
+        classified.slots &&
+        TEMPLATES[classified.templateId as TemplateId] &&
+        templateForOrientation(classified.templateId as TemplateId, { W: designBrief.W, H: designBrief.H });
+
+      // Normalize: classifier may emit `kicker` for centered layouts; templates
+      // only read `eyebrow`. Promote kicker -> eyebrow when eyebrow is missing.
+      if (tplOk && classified.slots) {
+        const s = classified.slots as Slots & { kicker?: string };
+        if (!s.eyebrow && s.kicker) s.eyebrow = s.kicker;
+      }
+
+      // Required-slot validation per template. If the classifier returned a
+      // template id but the slots needed to render it well are missing, fall
+      // back to freeform rather than ship a broken-looking design.
+      const slotsValid = (() => {
+        if (!tplOk || !classified.slots) return false;
+        const s = classified.slots;
+        switch (classified.templateId as TemplateId) {
+          case "text-left-card-right":
+            return !!(s.headline && s.card);
+          case "centered-with-card-below":
+            return !!(s.headline && s.card);
+          case "centered-hero":
+            return !!s.headline;
+          case "stat-hero":
+            return !!s.statNumber;
+          case "quote-card":
+            return !!s.quote;
+          default:
+            return false;
+        }
+      })();
+
+      // Card shape sanity (avoid throwing inside render).
+      const cardValid = (() => {
+        const c = classified.slots?.card;
+        if (!c) return true; // no card is fine for templates that don't need one
+        if (c.kind === "chat") return Array.isArray(c.messages) && c.messages.length > 0;
+        if (c.kind === "stats") return Array.isArray(c.stats) && c.stats.length > 0;
+        if (c.kind === "dashboard") return !!(c.metric && c.metric.value);
+        return false;
+      })();
+
+      if (tplOk && slotsValid && cardValid) {
+        try {
+          const html = renderTemplate(classified.templateId as TemplateId, {
+            slots: classified.slots!,
+            dims: { W: designBrief.W, H: designBrief.H },
+            assets: {
+              logoUrl: logoUrl || undefined,
+              brandTag: "01 / HIGHLEVEL",
+            },
+          });
+          if (html) {
+            req.log?.info?.(
+              { templateId: classified.templateId, aspect },
+              "[claude-design] served from template",
+            );
+            return res.json({
+              html,
+              slides: [html],
+              humanGenerated: false,
+              templateUsed: classified.templateId,
+            });
+          }
+        } catch (tplErr) {
+          req.log?.warn?.({ err: tplErr }, "[claude-design] template render failed, falling back to freeform");
+        }
+      } else {
+        req.log?.info?.(
+          {
+            reason: classified.reason,
+            templateId: classified.templateId,
+            slotsValid,
+            cardValid,
+            tplOk,
+          },
+          "[claude-design] classifier chose freeform (or slots invalid)",
+        );
+      }
+    }
+    // ---------- end template routing ----------
 
     const message = await client.messages.create({
       model,

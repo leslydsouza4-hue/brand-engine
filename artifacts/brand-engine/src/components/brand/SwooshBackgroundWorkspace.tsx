@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useLayoutEffect, type RefObject } from "react";
-import { UploadCloud, X, Loader2, Download, Check, ZoomIn, ArrowUpDown, RefreshCw } from "lucide-react";
+import { UploadCloud, X, Loader2, Download, Check, ZoomIn, RefreshCw } from "lucide-react";
 import { toPng } from "html-to-image";
 import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
@@ -137,14 +137,15 @@ function SwooshComposition({
     imageRendering: "auto",
   };
 
-  // Human is TOP-anchored: top is offset from the canvas top by human.y%
-  // (negative pushes up, positive pushes down) and the X axis is centered
-  // via translate. Default y=0 places the head right at the top edge, but
-  // the slider allows full freedom to nudge up or down.
+  // Human is TOP-anchored at top:0 always. After the bg-removal +
+  // auto-trim step the image's top edge is exactly where the head starts,
+  // so anchoring at 0 puts the head flush with the canvas top — no gap,
+  // no crop. Vertical control is intentionally not exposed (Scale + X
+  // are sufficient for composition).
   const humanStyle: React.CSSProperties = {
     position: "absolute",
     left: `${50 + human.x}%`,
-    top: `${human.y}%`,
+    top: "0%",
     height: `${human.scale * 100}%`,
     transform: "translateX(-50%)",
     objectFit: "contain",
@@ -444,12 +445,12 @@ export function SwooshBackgroundWorkspace() {
                 <input type="range" min="-50" max="50" step="1" value={human.x} onChange={(e) => setHuman((s) => ({ ...s, x: parseFloat(e.target.value) }))} className={sliderCls} />
                 <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{human.x > 0 ? "+" : ""}{human.x}</span>
               </div>
-              <div className="flex items-center gap-[8px]">
-                <ArrowUpDown className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
-                <span className="text-[9px] text-[#64748B] w-[34px] shrink-0">Y</span>
-                <input type="range" min="-50" max="50" step="1" value={human.y} onChange={(e) => setHuman((s) => ({ ...s, y: parseFloat(e.target.value) }))} className={sliderCls} />
-                <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{human.y > 0 ? "+" : ""}{human.y}</span>
-              </div>
+              {/* Y slider intentionally removed — pushing the image up
+                  cropped the head off the top, and pushing down created
+                  awkward gaps. The head is auto-anchored to the canvas
+                  top via the auto-trim step, so vertical control isn't
+                  needed: Scale (zoom) + X (slide left/right) cover every
+                  useful composition. */}
             </div>
           </div>
 

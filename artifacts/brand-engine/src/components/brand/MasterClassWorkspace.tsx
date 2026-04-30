@@ -24,26 +24,22 @@ interface TemplateConfig {
   shortName: string;
   width: number;
   height: number;
-  variant: "dates" | "no-dates" | "cta" | "replays";
+  variant: "dates" | "no-dates" | "replays";
   group: "horizontal" | "square" | "portrait" | "story";
 }
 
 const TEMPLATES: TemplateConfig[] = [
   { id: "horizontal-dates", name: "Horizontal - Dates", shortName: "Dates", width: 1920, height: 1080, variant: "dates", group: "horizontal" },
   { id: "horizontal-no-dates", name: "Horizontal - No Dates", shortName: "No Dates", width: 1920, height: 1080, variant: "no-dates", group: "horizontal" },
-  { id: "horizontal-cta", name: "Horizontal - CTA", shortName: "CTA", width: 1920, height: 1080, variant: "cta", group: "horizontal" },
   { id: "horizontal-replays", name: "Horizontal - Replay", shortName: "Replay", width: 1920, height: 1080, variant: "replays", group: "horizontal" },
   { id: "square-dates", name: "Square - Dates", shortName: "Dates", width: 1080, height: 1080, variant: "dates", group: "square" },
   { id: "square-no-dates", name: "Square - No Dates", shortName: "No Dates", width: 1080, height: 1080, variant: "no-dates", group: "square" },
-  { id: "square-cta", name: "Square - CTA", shortName: "CTA", width: 1080, height: 1080, variant: "cta", group: "square" },
   { id: "square-replays", name: "Square - Replay", shortName: "Replay", width: 1080, height: 1080, variant: "replays", group: "square" },
   { id: "portrait-dates", name: "Portrait - Dates", shortName: "Dates", width: 1080, height: 1350, variant: "dates", group: "portrait" },
   { id: "portrait-no-dates", name: "Portrait - No Dates", shortName: "No Dates", width: 1080, height: 1350, variant: "no-dates", group: "portrait" },
-  { id: "portrait-cta", name: "Portrait - CTA", shortName: "CTA", width: 1080, height: 1350, variant: "cta", group: "portrait" },
   { id: "portrait-replays", name: "Portrait - Replay", shortName: "Replay", width: 1080, height: 1350, variant: "replays", group: "portrait" },
   { id: "story-dates", name: "Story - Dates", shortName: "Dates", width: 1080, height: 1920, variant: "dates", group: "story" },
   { id: "story-no-dates", name: "Story - No Dates", shortName: "No Dates", width: 1080, height: 1920, variant: "no-dates", group: "story" },
-  { id: "story-cta", name: "Story - CTA", shortName: "CTA", width: 1080, height: 1920, variant: "cta", group: "story" },
   { id: "story-replays", name: "Story - Replay", shortName: "Replay", width: 1080, height: 1920, variant: "replays", group: "story" },
 ];
 
@@ -171,7 +167,6 @@ function HorizontalTemplate({
   dateText,
   guestName,
   guestRole,
-  ctaText,
   personImage,
   imgSettings,
 }: {
@@ -181,7 +176,6 @@ function HorizontalTemplate({
   dateText: string;
   guestName: string;
   guestRole: string;
-  ctaText: string;
   personImage: string | null;
   imgSettings: ImageSettings;
 }) {
@@ -189,7 +183,6 @@ function HorizontalTemplate({
   useContainerFontSize(containerRef, 0.045);
   useFitParent(containerRef, 1920 / 1080);
 
-  const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
   const showReplays = config.variant === "replays";
 
@@ -280,7 +273,7 @@ function HorizontalTemplate({
         </div>
       )}
 
-      {/* Headline + date/cta — left column */}
+      {/* Headline + date pill — left column */}
       <div
         style={{
           position: "absolute",
@@ -407,27 +400,6 @@ function HorizontalTemplate({
             </span>
           </div>
         )}
-
-        {showCta && ctaText && (
-          <div style={{ alignSelf: "flex-start" }}>
-            <span
-              style={{
-                display: "inline-block",
-                padding: "0.55em 1.4em",
-                fontSize: "0.7em",
-                fontWeight: 800,
-                color: "#0A1628",
-                background: "linear-gradient(135deg, #FFC328 0%, #FFD84D 100%)",
-                borderRadius: "0.5em",
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                boxShadow: "0 0.15em 0.6em rgba(255,195,40,0.35)",
-              }}
-            >
-              {ctaText}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Dark gradient floor across full canvas width for legibility */}
@@ -526,7 +498,6 @@ function SquareTemplate({
   dateText,
   guestName,
   guestRole,
-  ctaText,
   personImage,
   imgSettings,
 }: {
@@ -536,7 +507,6 @@ function SquareTemplate({
   dateText: string;
   guestName: string;
   guestRole: string;
-  ctaText: string;
   personImage: string | null;
   imgSettings: ImageSettings;
 }) {
@@ -544,7 +514,6 @@ function SquareTemplate({
   useContainerFontSize(containerRef, 0.052);
   useFitParent(containerRef, 1);
 
-  const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
   const showReplays = config.variant === "replays";
 
@@ -602,7 +571,7 @@ function SquareTemplate({
         }}
       />
 
-      {/* Headline + date/cta — center top */}
+      {/* Headline + date pill — center top */}
       <div
         style={{
           position: "absolute",
@@ -729,25 +698,6 @@ function SquareTemplate({
             </span>
           </div>
         )}
-
-        {showCta && ctaText && (
-          <div
-            style={{
-              display: "inline-block",
-              padding: "0.6em 1.6em",
-              fontSize: "0.7em",
-              fontWeight: 800,
-              color: "#0A1628",
-              background: "linear-gradient(135deg, #FFC328 0%, #FFD84D 100%)",
-              borderRadius: "0.5em",
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              boxShadow: "0 0.15em 0.6em rgba(255,195,40,0.35)",
-            }}
-          >
-            {ctaText}
-          </div>
-        )}
       </div>
 
       {/* Person image bottom-center */}
@@ -865,7 +815,6 @@ function PortraitTemplate({
   dateText,
   guestName,
   guestRole,
-  ctaText,
   personImage,
   imgSettings,
 }: {
@@ -875,7 +824,6 @@ function PortraitTemplate({
   dateText: string;
   guestName: string;
   guestRole: string;
-  ctaText: string;
   personImage: string | null;
   imgSettings: ImageSettings;
 }) {
@@ -883,7 +831,6 @@ function PortraitTemplate({
   useContainerFontSize(containerRef, 0.052);
   useFitParent(containerRef, 1080 / 1350);
 
-  const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
   const showReplays = config.variant === "replays";
 
@@ -941,7 +888,7 @@ function PortraitTemplate({
         }}
       />
 
-      {/* Headline + date/cta — center top */}
+      {/* Headline + date pill — center top */}
       <div
         style={{
           position: "absolute",
@@ -1068,25 +1015,6 @@ function PortraitTemplate({
             </span>
           </div>
         )}
-
-        {showCta && ctaText && (
-          <div
-            style={{
-              display: "inline-block",
-              padding: "0.6em 1.6em",
-              fontSize: "0.72em",
-              fontWeight: 800,
-              color: "#0A1628",
-              background: "linear-gradient(135deg, #FFC328 0%, #FFD84D 100%)",
-              borderRadius: "0.5em",
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              boxShadow: "0 0.15em 0.6em rgba(255,195,40,0.35)",
-            }}
-          >
-            {ctaText}
-          </div>
-        )}
       </div>
 
       {/* Person image bottom-center */}
@@ -1202,7 +1130,6 @@ function StoryTemplate({
   dateText,
   guestName,
   guestRole,
-  ctaText,
   personImage,
   imgSettings,
 }: {
@@ -1212,7 +1139,6 @@ function StoryTemplate({
   dateText: string;
   guestName: string;
   guestRole: string;
-  ctaText: string;
   personImage: string | null;
   imgSettings: ImageSettings;
 }) {
@@ -1220,7 +1146,6 @@ function StoryTemplate({
   useContainerFontSize(containerRef, 0.058);
   useFitParent(containerRef, 1080 / 1920);
 
-  const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
   const showReplays = config.variant === "replays";
 
@@ -1278,7 +1203,7 @@ function StoryTemplate({
         }}
       />
 
-      {/* Headline + date/cta — center top */}
+      {/* Headline + date pill — center top */}
       <div
         style={{
           position: "absolute",
@@ -1405,25 +1330,6 @@ function StoryTemplate({
             </span>
           </div>
         )}
-
-        {showCta && ctaText && (
-          <div
-            style={{
-              display: "inline-block",
-              padding: "0.6em 1.6em",
-              fontSize: "0.72em",
-              fontWeight: 800,
-              color: "#0A1628",
-              background: "linear-gradient(135deg, #FFC328 0%, #FFD84D 100%)",
-              borderRadius: "0.5em",
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              boxShadow: "0 0.15em 0.6em rgba(255,195,40,0.35)",
-            }}
-          >
-            {ctaText}
-          </div>
-        )}
       </div>
 
       {/* Person image bottom-center */}
@@ -1539,7 +1445,6 @@ function TemplatePreview(props: {
   dateText: string;
   guestName: string;
   guestRole: string;
-  ctaText: string;
   personImage: string | null;
   imgSettings: ImageSettings;
 }) {
@@ -1587,7 +1492,6 @@ export function MasterClassWorkspace() {
   const [dateText, setDateText] = usePersistedState("dateText", "");
   const [guestName, setGuestName] = usePersistedState("guestName", "");
   const [guestRole, setGuestRole] = usePersistedState("guestRole", "Guest");
-  const [ctaText, setCtaText] = usePersistedState("ctaText", "");
   // personImage holds a blob: URL from URL.createObjectURL — those URLs are
   // only valid for the document that created them, so we MUST NOT persist
   // them. After a refresh the stale blob URL would 404 and break exports.
@@ -1599,6 +1503,22 @@ export function MasterClassWorkspace() {
   const [isExportingAll, setIsExportingAll] = useState(false);
   const [zipProgress, setZipProgress] = useState<{ current: number; total: number } | null>(null);
   const [showGallery, setShowGallery] = useState(false);
+  // Per-template selection in the gallery: which templates to include in the
+  // bulk ZIP. Defaults to all templates; user can uncheck any they don't want.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(TEMPLATES.map((t) => t.id)));
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+  const selectAllTemplates = useCallback(() => {
+    setSelectedIds(new Set(TEMPLATES.map((t) => t.id)));
+  }, []);
+  const selectNoTemplates = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
@@ -1696,7 +1616,7 @@ export function MasterClassWorkspace() {
   const stripRadii = useCallback((root: HTMLElement) => {
     // Only flatten the OUTER frame's corners for export (the canvas rectangle
     // itself must be square in the PNG). Leave nested elements alone so that
-    // intentional rounding — date pill, CTA button, photo container — is
+    // intentional rounding — date pill, Replay pill, photo container — is
     // preserved in the exported image.
     const saved: Array<{ el: HTMLElement; orig: string }> = [{ el: root, orig: root.style.borderRadius }];
     root.style.borderRadius = "0";
@@ -1754,13 +1674,16 @@ export function MasterClassWorkspace() {
   }, [dataUrlToBlob, triggerDownload, stripRadii, restoreRadii]);
 
   const exportAllZip = useCallback(async () => {
+    // Only include the templates the user has checked in the gallery.
+    const templatesToExport = activeTemplates.filter((t) => selectedIds.has(t.id));
+    if (templatesToExport.length === 0) return;
     setIsExportingAll(true);
-    setZipProgress({ current: 0, total: activeTemplates.length });
+    setZipProgress({ current: 0, total: templatesToExport.length });
     try {
       const container = galleryRef.current || document;
       const zip = new JSZip();
       let i = 0;
-      for (const t of activeTemplates) {
+      for (const t of templatesToExport) {
         const el = container.querySelector(`[data-template-id="${t.id}"]`) as HTMLElement;
         if (!el) { console.error("ZIP: element not found for", t.id); continue; }
         const saved = stripRadii(el);
@@ -1780,7 +1703,7 @@ export function MasterClassWorkspace() {
         const base64 = dataUrl.split(",")[1];
         zip.file(`MasterClass_${t.name.replace(/\s+/g, "_")}_${t.width}x${t.height}.png`, base64, { base64: true });
         i += 1;
-        setZipProgress({ current: i, total: activeTemplates.length });
+        setZipProgress({ current: i, total: templatesToExport.length });
         // Yield to the event loop so React can flush the progress UI; no
         // arbitrary throttling — that just made the export feel broken.
         await new Promise((r) => setTimeout(r, 0));
@@ -1795,7 +1718,7 @@ export function MasterClassWorkspace() {
       setIsExportingAll(false);
       setZipProgress(null);
     }
-  }, [activeTemplates, guestName, triggerDownload, stripRadii, restoreRadii]);
+  }, [activeTemplates, selectedIds, guestName, triggerDownload, stripRadii, restoreRadii]);
 
   const inputCls = "w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] transition-all";
   const labelCls = "text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[6px]";
@@ -1885,12 +1808,6 @@ export function MasterClassWorkspace() {
             </div>
           )}
 
-          {currentConfig.variant === "cta" && (
-            <div className="flex flex-col">
-              <label className={labelCls}>CTA Text <span className="text-[#FF6B6B]">*</span></label>
-              <input type="text" value={ctaText} onChange={(e) => setCtaText(e.target.value)} placeholder="Reserve My Seat" className={inputCls} />
-            </div>
-          )}
 
           <div className="flex flex-col">
             <label className={labelCls}>Guest Name <span className="text-[#FF6B6B]">*</span></label>
@@ -2002,7 +1919,7 @@ export function MasterClassWorkspace() {
         {!showGallery ? (
           <LivePreview>
             <div className="w-full h-full max-w-[640px] flex items-center justify-center min-h-0" ref={previewRef}>
-              <TemplatePreview config={currentConfig} headline={headline} subheadline={subheadline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={imgSettings} />
+              <TemplatePreview config={currentConfig} headline={headline} subheadline={subheadline} dateText={dateText} guestName={guestName} guestRole={guestRole} personImage={personImage} imgSettings={imgSettings} />
             </div>
           </LivePreview>
         ) : (
@@ -2011,38 +1928,66 @@ export function MasterClassWorkspace() {
               <div className="flex items-center justify-between mb-[20px] flex-wrap gap-[10px]">
                 <div>
                   <h3 className="text-[16px] font-bold text-white mb-[2px]">All Templates</h3>
-                  <p className="text-[11px] text-[#64748B]">{activeTemplates.length} templates ready</p>
+                  <p className="text-[11px] text-[#64748B]">
+                    {selectedIds.size} of {activeTemplates.length} selected
+                  </p>
                 </div>
-                <div className="flex gap-[8px]">
+                <div className="flex gap-[8px] items-center flex-wrap">
+                  <button onClick={selectAllTemplates} className="h-[28px] px-[10px] rounded-[6px] bg-transparent border-none text-[#64748B] text-[10px] font-medium cursor-pointer hover:text-white transition-all">Select all</button>
+                  <button onClick={selectNoTemplates} className="h-[28px] px-[10px] rounded-[6px] bg-transparent border-none text-[#64748B] text-[10px] font-medium cursor-pointer hover:text-white transition-all">Select none</button>
                   <button onClick={() => setShowGallery(false)} className="h-[32px] px-[14px] rounded-[8px] bg-[rgba(255,255,255,0.06)] border-none text-[#94A3B8] text-[11px] font-medium flex items-center gap-[5px] cursor-pointer hover:bg-[rgba(255,255,255,0.1)] transition-all">Back to Editor</button>
-                  <button onClick={exportAllZip} disabled={isExportingAll} className="h-[32px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center gap-[5px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-50">
+                  <button onClick={exportAllZip} disabled={isExportingAll || selectedIds.size === 0} className="h-[32px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center gap-[5px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                     {isExportingAll ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <PackageOpen className="w-[12px] h-[12px]" />}
                     {isExportingAll
                       ? zipProgress
                         ? `Rendering ${zipProgress.current}/${zipProgress.total}…`
                         : "Creating ZIP..."
-                      : "Download All (ZIP)"}
+                      : `Download Selected (${selectedIds.size})`}
                   </button>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
-                {activeTemplates.map((t) => (
-                  <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
-                    <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} subheadline={subheadline} dateText={dateText} guestName={guestName} guestRole={guestRole} ctaText={ctaText} personImage={personImage} imgSettings={getImgSettingsFor(t.group)} />
-                    </div>
-                    <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
-                      <div>
-                        <div className="text-[11px] font-semibold text-white">{t.name}</div>
-                        <div className="text-[9px] text-[#64748B] mt-[1px]">{t.width} × {t.height}</div>
-                      </div>
-                      <button onClick={() => exportTemplate(t.id, galleryRef.current || undefined)} disabled={isExporting === t.id} className="h-[28px] px-[12px] rounded-[6px] bg-[rgba(255,255,255,0.06)] border-none text-[#E2E8F0] text-[10px] font-medium flex items-center gap-[5px] cursor-pointer hover:bg-[rgba(40,150,251,0.15)] hover:text-[#2896FB] transition-all disabled:opacity-50">
-                        {isExporting === t.id ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
-                        Download
+                {activeTemplates.map((t) => {
+                  const isSelected = selectedIds.has(t.id);
+                  return (
+                    <div
+                      key={t.id}
+                      className={`relative rounded-[14px] bg-[rgba(255,255,255,0.02)] overflow-hidden transition-all ${
+                        isSelected
+                          ? "border border-[rgba(40,150,251,0.4)] shadow-[0_0_0_1px_rgba(40,150,251,0.2)]"
+                          : "border border-[rgba(255,255,255,0.06)] opacity-60"
+                      }`}
+                    >
+                      {/* Per-template selection checkbox (top-left of card) */}
+                      <button
+                        type="button"
+                        onClick={() => toggleSelected(t.id)}
+                        aria-pressed={isSelected}
+                        aria-label={`${isSelected ? "Deselect" : "Select"} ${t.name}`}
+                        className={`absolute top-[10px] left-[10px] z-10 w-[22px] h-[22px] rounded-[6px] flex items-center justify-center cursor-pointer transition-all ${
+                          isSelected
+                            ? "bg-[#2896FB] border border-[#2896FB] text-white shadow-[0_2px_8px_rgba(40,150,251,0.4)]"
+                            : "bg-[rgba(10,22,40,0.85)] border border-[rgba(255,255,255,0.25)] text-transparent hover:border-white"
+                        }`}
+                      >
+                        <Check className="w-[14px] h-[14px]" strokeWidth={3} />
                       </button>
+                      <div className="p-[10px]">
+                        <TemplatePreview config={t} headline={headline} subheadline={subheadline} dateText={dateText} guestName={guestName} guestRole={guestRole} personImage={personImage} imgSettings={getImgSettingsFor(t.group)} />
+                      </div>
+                      <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
+                        <div>
+                          <div className="text-[11px] font-semibold text-white">{t.name}</div>
+                          <div className="text-[9px] text-[#64748B] mt-[1px]">{t.width} × {t.height}</div>
+                        </div>
+                        <button onClick={() => exportTemplate(t.id, galleryRef.current || undefined)} disabled={isExporting === t.id} className="h-[28px] px-[12px] rounded-[6px] bg-[rgba(255,255,255,0.06)] border-none text-[#E2E8F0] text-[10px] font-medium flex items-center gap-[5px] cursor-pointer hover:bg-[rgba(40,150,251,0.15)] hover:text-[#2896FB] transition-all disabled:opacity-50">
+                          {isExporting === t.id ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
+                          Download
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

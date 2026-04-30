@@ -24,7 +24,7 @@ interface TemplateConfig {
   shortName: string;
   width: number;
   height: number;
-  variant: "dates" | "no-dates" | "cta";
+  variant: "dates" | "no-dates" | "cta" | "replays";
   group: "horizontal" | "square" | "portrait" | "story";
 }
 
@@ -32,15 +32,19 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "horizontal-dates", name: "Horizontal - Dates", shortName: "Dates", width: 1920, height: 1080, variant: "dates", group: "horizontal" },
   { id: "horizontal-no-dates", name: "Horizontal - No Dates", shortName: "No Dates", width: 1920, height: 1080, variant: "no-dates", group: "horizontal" },
   { id: "horizontal-cta", name: "Horizontal - CTA", shortName: "CTA", width: 1920, height: 1080, variant: "cta", group: "horizontal" },
+  { id: "horizontal-replays", name: "Horizontal - Replays", shortName: "Replays", width: 1920, height: 1080, variant: "replays", group: "horizontal" },
   { id: "square-dates", name: "Square - Dates", shortName: "Dates", width: 1080, height: 1080, variant: "dates", group: "square" },
   { id: "square-no-dates", name: "Square - No Dates", shortName: "No Dates", width: 1080, height: 1080, variant: "no-dates", group: "square" },
   { id: "square-cta", name: "Square - CTA", shortName: "CTA", width: 1080, height: 1080, variant: "cta", group: "square" },
+  { id: "square-replays", name: "Square - Replays", shortName: "Replays", width: 1080, height: 1080, variant: "replays", group: "square" },
   { id: "portrait-dates", name: "Portrait - Dates", shortName: "Dates", width: 1080, height: 1350, variant: "dates", group: "portrait" },
   { id: "portrait-no-dates", name: "Portrait - No Dates", shortName: "No Dates", width: 1080, height: 1350, variant: "no-dates", group: "portrait" },
   { id: "portrait-cta", name: "Portrait - CTA", shortName: "CTA", width: 1080, height: 1350, variant: "cta", group: "portrait" },
+  { id: "portrait-replays", name: "Portrait - Replays", shortName: "Replays", width: 1080, height: 1350, variant: "replays", group: "portrait" },
   { id: "story-dates", name: "Story - Dates", shortName: "Dates", width: 1080, height: 1920, variant: "dates", group: "story" },
   { id: "story-no-dates", name: "Story - No Dates", shortName: "No Dates", width: 1080, height: 1920, variant: "no-dates", group: "story" },
   { id: "story-cta", name: "Story - CTA", shortName: "CTA", width: 1080, height: 1920, variant: "cta", group: "story" },
+  { id: "story-replays", name: "Story - Replays", shortName: "Replays", width: 1080, height: 1920, variant: "replays", group: "story" },
 ];
 
 const SIZE_GROUPS = [
@@ -187,6 +191,7 @@ function HorizontalTemplate({
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
+  const showReplays = config.variant === "replays";
 
   return (
     <div
@@ -361,6 +366,49 @@ function HorizontalTemplate({
           </div>
         )}
 
+        {showReplays && (
+          <div
+            style={{
+              fontSize: "0.6em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.55em",
+              padding: "0.55em 1.1em",
+              border: "0.085em solid #2896FB",
+              borderRadius: "0.55em",
+              alignSelf: "flex-start",
+              background: "rgba(40,150,251,0.04)",
+            }}
+          >
+            <svg
+              width="0.95em"
+              height="0.95em"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#2896FB"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
+            >
+              <path d="M1 4v6h6" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            <span
+              style={{
+                fontSize: "0.7em",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              Replays
+            </span>
+          </div>
+        )}
+
         {showCta && ctaText && (
           <div style={{ alignSelf: "flex-start" }}>
             <span
@@ -499,6 +547,7 @@ function SquareTemplate({
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
+  const showReplays = config.variant === "replays";
 
   return (
     <div
@@ -637,6 +686,48 @@ function SquareTemplate({
               }}
             >
               {dateText}
+            </span>
+          </div>
+        )}
+
+        {showReplays && (
+          <div
+            style={{
+              fontSize: "0.6em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.55em",
+              padding: "0.6em 1.2em",
+              border: "0.085em solid #2896FB",
+              borderRadius: "0.55em",
+              background: "rgba(40,150,251,0.04)",
+            }}
+          >
+            <svg
+              width="0.95em"
+              height="0.95em"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#2896FB"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
+            >
+              <path d="M1 4v6h6" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            <span
+              style={{
+                fontSize: "0.7em",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              Replays
             </span>
           </div>
         )}
@@ -796,6 +887,7 @@ function PortraitTemplate({
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
+  const showReplays = config.variant === "replays";
 
   return (
     <div
@@ -934,6 +1026,48 @@ function PortraitTemplate({
               }}
             >
               {dateText}
+            </span>
+          </div>
+        )}
+
+        {showReplays && (
+          <div
+            style={{
+              fontSize: "0.6em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.55em",
+              padding: "0.6em 1.2em",
+              border: "0.085em solid #2896FB",
+              borderRadius: "0.55em",
+              background: "rgba(40,150,251,0.04)",
+            }}
+          >
+            <svg
+              width="0.95em"
+              height="0.95em"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#2896FB"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
+            >
+              <path d="M1 4v6h6" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            <span
+              style={{
+                fontSize: "0.7em",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              Replays
             </span>
           </div>
         )}
@@ -1091,6 +1225,7 @@ function StoryTemplate({
 
   const showCta = config.variant === "cta";
   const showDate = config.variant === "dates";
+  const showReplays = config.variant === "replays";
 
   return (
     <div
@@ -1229,6 +1364,48 @@ function StoryTemplate({
               }}
             >
               {dateText}
+            </span>
+          </div>
+        )}
+
+        {showReplays && (
+          <div
+            style={{
+              fontSize: "0.6em",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.55em",
+              padding: "0.6em 1.2em",
+              border: "0.085em solid #2896FB",
+              borderRadius: "0.55em",
+              background: "rgba(40,150,251,0.04)",
+            }}
+          >
+            <svg
+              width="0.95em"
+              height="0.95em"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#2896FB"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
+            >
+              <path d="M1 4v6h6" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            <span
+              style={{
+                fontSize: "0.7em",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                lineHeight: 1,
+              }}
+            >
+              Replays
             </span>
           </div>
         )}

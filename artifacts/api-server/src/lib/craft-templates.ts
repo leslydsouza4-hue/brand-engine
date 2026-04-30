@@ -113,9 +113,49 @@ function orientationOf(dims: Dims): "landscape" | "portrait" | "square" {
   return "square";
 }
 
+// Compute a "chrome scale factor" so that pills, CTAs, footnotes, orbs, and
+// other fixed-pixel chrome elements stay proportional on small canvases
+// (e.g. 600×200 email headers) instead of overflowing the design. Original
+// values were calibrated for 1080+ social canvases (scale=1.0).
+function chromeScale(dims: Dims): number {
+  const minDim = Math.min(dims.W, dims.H);
+  // Linearly map 1080 → 1.0, with a floor of 0.35 to keep text legible
+  // and a ceiling of 1.0 (we don't enlarge beyond the original calibration).
+  return Math.max(0.35, Math.min(1.0, minDim / 1080));
+}
+
+// Small px helper: scale a base value, then enforce a minimum (so a 4px
+// font on a 200px canvas doesn't disappear). Use this for all chrome.
+function s(base: number, dims: Dims, minPx = 0): number {
+  return Math.max(minPx, Math.round(base * chromeScale(dims)));
+}
+
 // Common scaffold (head + base styles). All templates share this so they
 // behave identically across browsers and the iframe renderer.
 function pageShell(dims: Dims, body: string): string {
+  // Pre-scale all chrome values once and interpolate them directly into the
+  // class-based rules below. This keeps the template markup unchanged across
+  // canvas sizes — only the dimensions and scaled px values vary.
+  const cs = chromeScale(dims);
+  const orbBlur = Math.max(20, Math.round(80 * cs));
+  const pillFont = s(12, dims, 9);
+  const pillPadY = s(8, dims, 4);
+  const pillPadX = s(16, dims, 8);
+  const ctaFont = s(15, dims, 11);
+  const ctaPadY = s(16, dims, 8);
+  const ctaPadX = s(28, dims, 14);
+  const footnoteFont = s(13, dims, 9);
+  const kickerFont = s(14, dims, 10);
+  const brandTagFont = s(12, dims, 9);
+  const cardRadius = s(22, dims, 10);
+  const cardPad = s(22, dims, 10);
+  const cardGap = s(14, dims, 6);
+  const msgFont = s(14, dims, 10);
+  const msgPadY = s(12, dims, 6);
+  const msgPadX = s(16, dims, 8);
+  const msgRadius = s(16, dims, 8);
+  const statLabelFont = s(12, dims, 9);
+  const logoHeight = s(36, dims, 20);
   return `<!doctype html>
 <html><head>
 <meta charset="utf-8" />
@@ -128,27 +168,27 @@ function pageShell(dims: Dims, body: string): string {
   html, body { background: ${C.bgNavyDeep}; }
   body { font-family: 'Inter Tight','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; color: ${C.white}; -webkit-font-smoothing: antialiased; }
   .canvas { position: relative; width: ${dims.W}px; height: ${dims.H}px; overflow: hidden; background: radial-gradient(120% 100% at 0% 0%, #14274A 0%, ${C.bgNavy} 55%, ${C.bgNavyDeep} 100%); }
-  .orb { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; }
+  .orb { position: absolute; border-radius: 50%; filter: blur(${orbBlur}px); pointer-events: none; z-index: 0; }
   .orb-blue { background: rgba(40,150,251,0.35); }
   .orb-green { background: rgba(23,217,75,0.22); }
   .orb-yellow { background: rgba(255,195,40,0.18); }
-  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; background: ${C.pillBg}; border: 1px solid ${C.pillBorder}; color: ${C.green}; font-weight: 700; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+  .pill { display: inline-flex; align-items: center; gap: ${s(8, dims, 4)}px; padding: ${pillPadY}px ${pillPadX}px; border-radius: 999px; background: ${C.pillBg}; border: 1px solid ${C.pillBorder}; color: ${C.green}; font-weight: 700; font-size: ${pillFont}px; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
   .pill-blue { background: rgba(40,150,251,0.14); border-color: rgba(40,150,251,0.42); color: ${C.blue}; }
   .pill-yellow { background: rgba(255,195,40,0.18); border-color: rgba(255,195,40,0.55); color: ${C.yellow}; }
-  .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
-  .cta { display: inline-flex; align-items: center; gap: 10px; padding: 16px 28px; border-radius: 999px; background: ${C.yellow}; color: ${C.bgNavy}; font-weight: 800; font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 18px 40px -16px rgba(255,195,40,0.55); }
-  .footnote { color: ${C.muted}; font-size: 13px; letter-spacing: 0.02em; }
-  .kicker { color: ${C.blue}; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; }
+  .pill-dot { width: ${s(7, dims, 4)}px; height: ${s(7, dims, 4)}px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+  .cta { display: inline-flex; align-items: center; gap: ${s(10, dims, 5)}px; padding: ${ctaPadY}px ${ctaPadX}px; border-radius: 999px; background: ${C.yellow}; color: ${C.bgNavy}; font-weight: 800; font-size: ${ctaFont}px; letter-spacing: 0.04em; text-transform: uppercase; box-shadow: 0 ${s(18, dims, 4)}px ${s(40, dims, 8)}px -${s(16, dims, 4)}px rgba(255,195,40,0.55); }
+  .footnote { color: ${C.muted}; font-size: ${footnoteFont}px; letter-spacing: 0.02em; }
+  .kicker { color: ${C.blue}; font-weight: 600; font-size: ${kickerFont}px; letter-spacing: 0.02em; }
   .subhead { color: rgba(255,255,255,0.78); font-weight: 400; line-height: 1.45; }
-  .brand-tag { color: ${C.green}; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; }
-  .card { background: ${C.cardBg}; border: 1px solid ${C.cardBorder}; border-radius: 22px; backdrop-filter: blur(14px) saturate(140%); box-shadow: 0 30px 80px -30px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08); padding: 22px; display: flex; flex-direction: column; gap: 14px; }
-  .msg { display: flex; max-width: 86%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.4; }
-  .msg-lead { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); align-self: flex-start; border-bottom-left-radius: 4px; }
-  .msg-ai { background: ${C.blue}; color: ${C.white}; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 600; }
-  .stat-block { display: flex; flex-direction: column; gap: 4px; }
+  .brand-tag { color: ${C.green}; font-weight: 700; font-size: ${brandTagFont}px; letter-spacing: 0.18em; text-transform: uppercase; }
+  .card { background: ${C.cardBg}; border: 1px solid ${C.cardBorder}; border-radius: ${cardRadius}px; backdrop-filter: blur(14px) saturate(140%); box-shadow: 0 ${s(30, dims, 6)}px ${s(80, dims, 16)}px -${s(30, dims, 6)}px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08); padding: ${cardPad}px; display: flex; flex-direction: column; gap: ${cardGap}px; }
+  .msg { display: flex; max-width: 86%; padding: ${msgPadY}px ${msgPadX}px; border-radius: ${msgRadius}px; font-size: ${msgFont}px; line-height: 1.4; }
+  .msg-lead { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.92); align-self: flex-start; border-bottom-left-radius: ${s(4, dims, 2)}px; }
+  .msg-ai { background: ${C.blue}; color: ${C.white}; align-self: flex-end; border-bottom-right-radius: ${s(4, dims, 2)}px; font-weight: 600; }
+  .stat-block { display: flex; flex-direction: column; gap: ${s(4, dims, 2)}px; }
   .stat-value { font-weight: 800; color: ${C.white}; line-height: 1; letter-spacing: -0.02em; }
-  .stat-label { color: ${C.muted}; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
-  .logo-img { display: block; height: 36px; width: auto; }
+  .stat-label { color: ${C.muted}; font-size: ${statLabelFont}px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+  .logo-img { display: block; height: ${logoHeight}px; width: auto; }
 </style>
 </head>
 <body>
@@ -156,18 +196,28 @@ ${body}
 </body></html>`;
 }
 
-// Small helpers for orb placement (decorative, z-index 0, can't overlap content)
-function orbsCorner(): string {
+// Small helpers for orb placement (decorative, z-index 0, can't overlap content).
+// Sizes/offsets scale with canvas so a 600×200 email banner doesn't get
+// painted with three 420px orbs that overflow the entire design.
+function orbsCorner(dims: Dims): string {
+  const blueSize = s(420, dims, 120);
+  const greenSize = s(360, dims, 100);
+  const yellowSize = s(220, dims, 60);
+  const blueOffsetTop = s(120, dims, 40);
+  const blueOffsetRight = s(100, dims, 30);
+  const greenOffsetBottom = s(160, dims, 50);
+  const greenOffsetLeft = s(80, dims, 25);
   return `
-  <div class="orb orb-blue" style="top: -120px; right: -100px; width: 420px; height: 420px;"></div>
-  <div class="orb orb-green" style="bottom: -160px; left: -80px; width: 360px; height: 360px;"></div>
-  <div class="orb orb-yellow" style="top: 40%; left: 35%; width: 220px; height: 220px; opacity: 0.6;"></div>`;
+  <div class="orb orb-blue" style="top: -${blueOffsetTop}px; right: -${blueOffsetRight}px; width: ${blueSize}px; height: ${blueSize}px;"></div>
+  <div class="orb orb-green" style="bottom: -${greenOffsetBottom}px; left: -${greenOffsetLeft}px; width: ${greenSize}px; height: ${greenSize}px;"></div>
+  <div class="orb orb-yellow" style="top: 40%; left: 35%; width: ${yellowSize}px; height: ${yellowSize}px; opacity: 0.6;"></div>`;
 }
 
-function logoCell(assets: Assets, justify: "between" | "left" = "between"): string {
+function logoCell(assets: Assets, dims: Dims, justify: "between" | "left" = "between"): string {
+  const wordmarkSize = s(22, dims, 14);
   const left = assets.logoUrl
     ? `<img class="logo-img" src="${esc(assets.logoUrl)}" alt="HighLevel" />`
-    : `<div style="font-weight:800;font-size:22px;letter-spacing:-0.02em;color:${C.white};">HighLevel</div>`;
+    : `<div style="font-weight:800;font-size:${wordmarkSize}px;letter-spacing:-0.02em;color:${C.white};">HighLevel</div>`;
   const right = assets.logoTagline
     ? `<div class="pill pill-yellow">${esc(assets.logoTagline)}</div>`
     : "";
@@ -176,8 +226,12 @@ function logoCell(assets: Assets, justify: "between" | "left" = "between"): stri
 }
 
 // ----- Card renderers (deterministic geometry; live inside their grid cell) -----
+// All renderers accept `dims` so internal px values (gaps, font sizes, dot
+// sizes) can scale with canvas. Without this, an embedded chat card on a
+// 600×400 email canvas would have 14px message text inside a 22px-padded
+// shell, looking laughably oversized.
 
-function renderChatCard(card: Extract<Card, { kind: "chat" }>): string {
+function renderChatCard(card: Extract<Card, { kind: "chat" }>, dims: Dims): string {
   const messages = (card.messages ?? []).slice(0, 4);
   const msgsHtml = messages
     .map((m) =>
@@ -186,23 +240,25 @@ function renderChatCard(card: Extract<Card, { kind: "chat" }>): string {
         : `<div class="msg msg-lead">${esc(m.text)}</div>`,
     )
     .join("");
+  const dot = s(8, dims, 4);
   const pill = card.pillText
-    ? `<div style="display:flex;align-items:center;justify-content:space-between;"><div class="pill"><span class="pill-dot"></span>${esc(card.pillText)}</div><div style="display:flex;gap:5px;"><span style="width:8px;height:8px;border-radius:50%;background:${C.green};opacity:0.55;"></span><span style="width:8px;height:8px;border-radius:50%;background:${C.green};opacity:0.85;"></span><span style="width:8px;height:8px;border-radius:50%;background:${C.green};"></span></div></div>`
+    ? `<div style="display:flex;align-items:center;justify-content:space-between;"><div class="pill"><span class="pill-dot"></span>${esc(card.pillText)}</div><div style="display:flex;gap:${s(5, dims, 3)}px;"><span style="width:${dot}px;height:${dot}px;border-radius:50%;background:${C.green};opacity:0.55;"></span><span style="width:${dot}px;height:${dot}px;border-radius:50%;background:${C.green};opacity:0.85;"></span><span style="width:${dot}px;height:${dot}px;border-radius:50%;background:${C.green};"></span></div></div>`
     : "";
   return `<div class="card" style="width:100%;">
     ${pill}
-    <div style="display:flex;flex-direction:column;gap:10px;">${msgsHtml}</div>
+    <div style="display:flex;flex-direction:column;gap:${s(10, dims, 5)}px;">${msgsHtml}</div>
   </div>`;
 }
 
-function renderStatsCard(card: Extract<Card, { kind: "stats" }>): string {
+function renderStatsCard(card: Extract<Card, { kind: "stats" }>, dims: Dims): string {
   const stats = (card.stats ?? []).slice(0, 4);
   if (stats.length === 0) return "";
   const cols = stats.length <= 2 ? stats.length : 2;
+  const statValue = s(48, dims, 22);
   const itemsHtml = stats
     .map(
-      (s) =>
-        `<div class="stat-block"><div class="stat-value" style="font-size:48px;">${esc(s.value)}</div><div class="stat-label">${esc(s.label)}</div></div>`,
+      (st) =>
+        `<div class="stat-block"><div class="stat-value" style="font-size:${statValue}px;">${esc(st.value)}</div><div class="stat-label">${esc(st.label)}</div></div>`,
     )
     .join("");
   const pill = card.pillText
@@ -210,11 +266,11 @@ function renderStatsCard(card: Extract<Card, { kind: "stats" }>): string {
     : "";
   return `<div class="card" style="width:100%;">
     ${pill}
-    <div style="display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:24px;">${itemsHtml}</div>
+    <div style="display:grid;grid-template-columns:repeat(${cols},minmax(0,1fr));gap:${s(24, dims, 10)}px;">${itemsHtml}</div>
   </div>`;
 }
 
-function renderDashboardCard(card: Extract<Card, { kind: "dashboard" }>): string {
+function renderDashboardCard(card: Extract<Card, { kind: "dashboard" }>, dims: Dims): string {
   const series = (card.sparkline && card.sparkline.length >= 3 ? card.sparkline : [12, 18, 24, 22, 32, 38, 46, 52, 60, 72, 80, 92]).slice(0, 16);
   const max = Math.max(...series, 1);
   const W = 320;
@@ -224,10 +280,12 @@ function renderDashboardCard(card: Extract<Card, { kind: "dashboard" }>): string
   const pill = card.pillText
     ? `<div class="pill pill-blue"><span class="pill-dot"></span>${esc(card.pillText)}</div>`
     : "";
+  const metricSize = s(64, dims, 28);
+  const sparkH = s(90, dims, 36);
   return `<div class="card" style="width:100%;">
     ${pill}
-    <div class="stat-block"><div class="stat-value" style="font-size:64px;color:${C.green};">${esc(card.metric.value)}</div><div class="stat-label">${esc(card.metric.label)}</div></div>
-    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:90px;display:block;">
+    <div class="stat-block"><div class="stat-value" style="font-size:${metricSize}px;color:${C.green};">${esc(card.metric.value)}</div><div class="stat-label">${esc(card.metric.label)}</div></div>
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${sparkH}px;display:block;">
       <defs>
         <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stop-color="${C.green}" stop-opacity="0.45"/>
@@ -240,11 +298,11 @@ function renderDashboardCard(card: Extract<Card, { kind: "dashboard" }>): string
   </div>`;
 }
 
-function renderCard(card: Card | undefined): string {
+function renderCard(card: Card | undefined, dims: Dims): string {
   if (!card) return "";
-  if (card.kind === "chat") return renderChatCard(card);
-  if (card.kind === "stats") return renderStatsCard(card);
-  if (card.kind === "dashboard") return renderDashboardCard(card);
+  if (card.kind === "chat") return renderChatCard(card, dims);
+  if (card.kind === "stats") return renderStatsCard(card, dims);
+  if (card.kind === "dashboard") return renderDashboardCard(card, dims);
   return "";
 }
 
@@ -257,8 +315,9 @@ const textLeftCardRight: Template = {
   bestFor: "Landscape graphics that pair a value-prop headline with a UI demo card.",
   supports: ["landscape"],
   render: ({ slots, dims, assets }) => {
-    const headlineSize = Math.round(Math.min(dims.W, dims.H) * 0.085);
-    const subheadSize = Math.max(15, Math.round(Math.min(dims.W, dims.H) * 0.025));
+    const headlineSize = Math.max(16, Math.round(Math.min(dims.W, dims.H) * 0.085));
+    const subheadSize = Math.max(11, Math.round(Math.min(dims.W, dims.H) * 0.025));
+    const colGap = s(24, dims, 8);
     const eyebrow = slots.eyebrow ? `<div class="brand-tag" style="color:${C.green};">${esc(slots.eyebrow)}</div>` : "";
     const subhead = slots.subhead ? `<p class="subhead" style="font-size:${subheadSize}px;max-width:42ch;">${esc(slots.subhead)}</p>` : "";
     const cta = slots.ctaText ? `<div><div class="cta">${esc(slots.ctaText)}</div></div>` : "";
@@ -266,10 +325,10 @@ const textLeftCardRight: Template = {
     const headlineHtml = renderHeadline(slots.headline ?? "", slots.accentWord);
     const body = `
 <div class="canvas">
-  ${orbsCorner()}
+  ${orbsCorner(dims)}
   <div style="position:relative;z-index:1;width:100%;height:100%;display:grid;grid-template-columns:6% minmax(0,50%) 4% minmax(0,34%) 6%;grid-template-rows:7% auto 7%;gap:0;">
-    <div style="grid-row:1;grid-column:2 / 5;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets)}</div>
-    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;justify-content:center;gap:24px;min-width:0;">
+    <div style="grid-row:1;grid-column:2 / 5;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets, dims)}</div>
+    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;justify-content:center;gap:${colGap}px;min-width:0;">
       ${eyebrow}
       <h1 style="font-size:${headlineSize}px;font-weight:800;line-height:1.02;letter-spacing:-0.035em;color:${C.white};">${headlineHtml}</h1>
       ${subhead}
@@ -277,7 +336,7 @@ const textLeftCardRight: Template = {
       ${footnote}
     </div>
     <div style="grid-row:2;grid-column:4;display:flex;align-items:center;justify-content:center;min-width:0;">
-      ${renderCard(slots.card)}
+      ${renderCard(slots.card, dims)}
     </div>
     <div style="grid-row:3;grid-column:2;display:flex;align-items:end;">
       ${assets.brandTag ? `<div class="brand-tag" style="color:${C.green};">${esc(assets.brandTag)}</div>` : ""}
@@ -297,8 +356,12 @@ const centeredWithCardBelow: Template = {
   bestFor: "Portrait/square graphics that pair a centered headline with a chat panel, stats card, or dashboard below.",
   supports: ["portrait", "square"],
   render: ({ slots, dims, assets }) => {
-    const headlineSize = Math.round(Math.min(dims.W, dims.H) * 0.082);
-    const subheadSize = Math.max(15, Math.round(Math.min(dims.W, dims.H) * 0.024));
+    const headlineSize = Math.max(16, Math.round(Math.min(dims.W, dims.H) * 0.082));
+    const subheadSize = Math.max(11, Math.round(Math.min(dims.W, dims.H) * 0.024));
+    const headerGap = s(18, dims, 6);
+    const footerGap = s(14, dims, 6);
+    const footerPadTop = s(24, dims, 8);
+    const cardMaxWidth = Math.min(s(620, dims, 200), Math.round(dims.W * 0.92));
     const eyebrow = slots.eyebrow ? `<div class="kicker" style="text-align:center;">${esc(slots.eyebrow)}</div>` : "";
     const subhead = slots.subhead
       ? `<p class="subhead" style="font-size:${subheadSize}px;text-align:center;max-width:36ch;margin:0 auto;">${esc(slots.subhead)}</p>`
@@ -308,19 +371,19 @@ const centeredWithCardBelow: Template = {
     const cta = slots.ctaText ? `<div style="display:flex;justify-content:center;"><div class="cta">${esc(slots.ctaText)}</div></div>` : "";
     const body = `
 <div class="canvas">
-  ${orbsCorner()}
+  ${orbsCorner(dims)}
   <div style="position:relative;z-index:1;width:100%;height:100%;display:grid;grid-template-columns:7% 1fr 7%;grid-template-rows:6% auto 4% auto auto 6%;gap:0;">
-    <div style="grid-row:1;grid-column:2;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets)}</div>
-    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;">
+    <div style="grid-row:1;grid-column:2;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets, dims)}</div>
+    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${headerGap}px;text-align:center;">
       ${eyebrow}
       <h1 style="font-size:${headlineSize}px;font-weight:800;line-height:1.0;letter-spacing:-0.035em;color:${C.white};text-align:center;">${headlineHtml}</h1>
       ${subhead}
     </div>
     <div style="grid-row:3;grid-column:2;"></div>
     <div style="grid-row:4;grid-column:2;display:flex;justify-content:center;">
-      <div style="width:min(620px,100%);">${renderCard(slots.card)}</div>
+      <div style="width:min(${cardMaxWidth}px,100%);">${renderCard(slots.card, dims)}</div>
     </div>
-    <div style="grid-row:5;grid-column:2;display:flex;flex-direction:column;align-items:center;gap:14px;padding-top:24px;">
+    <div style="grid-row:5;grid-column:2;display:flex;flex-direction:column;align-items:center;gap:${footerGap}px;padding-top:${footerPadTop}px;">
       ${cta}
       ${footnote}
     </div>
@@ -342,20 +405,22 @@ const centeredHero: Template = {
   bestFor: "All aspects when the prompt is text-driven and does not call for a UI demo, chat, or stats card.",
   supports: ["landscape", "portrait", "square"],
   render: ({ slots, dims, assets }) => {
-    const headlineSize = Math.round(Math.min(dims.W, dims.H) * 0.105);
-    const subheadSize = Math.max(16, Math.round(Math.min(dims.W, dims.H) * 0.027));
+    const headlineSize = Math.max(18, Math.round(Math.min(dims.W, dims.H) * 0.105));
+    const subheadSize = Math.max(11, Math.round(Math.min(dims.W, dims.H) * 0.027));
+    const stackGap = s(24, dims, 8);
+    const ctaMargin = s(8, dims, 4);
     const eyebrow = slots.eyebrow ? `<div class="kicker" style="text-align:center;">${esc(slots.eyebrow)}</div>` : "";
     const subhead = slots.subhead
       ? `<p class="subhead" style="font-size:${subheadSize}px;text-align:center;max-width:34ch;margin:0 auto;">${esc(slots.subhead)}</p>`
       : "";
-    const cta = slots.ctaText ? `<div style="display:flex;justify-content:center;margin-top:8px;"><div class="cta">${esc(slots.ctaText)}</div></div>` : "";
+    const cta = slots.ctaText ? `<div style="display:flex;justify-content:center;margin-top:${ctaMargin}px;"><div class="cta">${esc(slots.ctaText)}</div></div>` : "";
     const headlineHtml = renderHeadline(slots.headline ?? "", slots.accentWord);
     const body = `
 <div class="canvas">
-  ${orbsCorner()}
+  ${orbsCorner(dims)}
   <div style="position:relative;z-index:1;width:100%;height:100%;display:grid;grid-template-columns:7% 1fr 7%;grid-template-rows:7% 1fr 7%;">
-    <div style="grid-row:1;grid-column:2;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets)}</div>
-    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;text-align:center;">
+    <div style="grid-row:1;grid-column:2;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets, dims)}</div>
+    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${stackGap}px;text-align:center;">
       ${eyebrow}
       <h1 style="font-size:${headlineSize}px;font-weight:800;line-height:0.98;letter-spacing:-0.04em;color:${C.white};text-align:center;max-width:18ch;">${headlineHtml}</h1>
       ${subhead}
@@ -380,8 +445,12 @@ const statHero: Template = {
   bestFor: "Stat-driven posts where one big number is the entire message.",
   supports: ["landscape", "portrait", "square"],
   render: ({ slots, dims, assets }) => {
-    const statSize = Math.round(Math.min(dims.W, dims.H) * 0.32);
-    const ctxSize = Math.max(22, Math.round(Math.min(dims.W, dims.H) * 0.038));
+    const statSize = Math.max(36, Math.round(Math.min(dims.W, dims.H) * 0.32));
+    const ctxSize = Math.max(13, Math.round(Math.min(dims.W, dims.H) * 0.038));
+    const stackGap = s(18, dims, 6);
+    const statLabelSize = s(14, dims, 9);
+    const statShadowY = s(24, dims, 6);
+    const statShadowBlur = s(80, dims, 16);
     const eyebrow = slots.eyebrow ? `<div class="kicker" style="text-align:center;">${esc(slots.eyebrow)}</div>` : "";
     const ctx = slots.contextHeadline
       ? `<p style="font-size:${ctxSize}px;font-weight:600;color:${C.white};line-height:1.18;letter-spacing:-0.015em;text-align:center;max-width:24ch;margin:0 auto;">${esc(slots.contextHeadline)}</p>`
@@ -389,13 +458,13 @@ const statHero: Template = {
     const cta = slots.ctaText ? `<div style="display:flex;justify-content:center;"><div class="cta">${esc(slots.ctaText)}</div></div>` : "";
     const body = `
 <div class="canvas">
-  ${orbsCorner()}
+  ${orbsCorner(dims)}
   <div style="position:relative;z-index:1;width:100%;height:100%;display:grid;grid-template-columns:7% 1fr 7%;grid-template-rows:7% 1fr 7%;">
-    <div style="grid-row:1;grid-column:2;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets)}</div>
-    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;">
+    <div style="grid-row:1;grid-column:2;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets, dims)}</div>
+    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${stackGap}px;text-align:center;">
       ${eyebrow}
-      <div style="font-size:${statSize}px;font-weight:800;color:${C.green};line-height:0.9;letter-spacing:-0.06em;text-shadow:0 24px 80px rgba(23,217,75,0.35);">${esc(slots.statNumber ?? "")}</div>
-      <div class="stat-label" style="font-size:14px;letter-spacing:0.2em;">${esc(slots.statLabel ?? "")}</div>
+      <div style="font-size:${statSize}px;font-weight:800;color:${C.green};line-height:0.9;letter-spacing:-0.06em;text-shadow:0 ${statShadowY}px ${statShadowBlur}px rgba(23,217,75,0.35);">${esc(slots.statNumber ?? "")}</div>
+      <div class="stat-label" style="font-size:${statLabelSize}px;letter-spacing:0.2em;">${esc(slots.statLabel ?? "")}</div>
       ${ctx}
       ${cta}
     </div>
@@ -418,21 +487,25 @@ const quoteCard: Template = {
   bestFor: "Testimonials, customer wins, founder quotes.",
   supports: ["landscape", "portrait", "square"],
   render: ({ slots, dims, assets }) => {
-    const quoteSize = Math.round(Math.min(dims.W, dims.H) * 0.058);
+    const quoteSize = Math.max(13, Math.round(Math.min(dims.W, dims.H) * 0.058));
+    const stackGap = s(28, dims, 10);
+    const attrGap = s(4, dims, 2);
+    const attrFont = s(18, dims, 11);
+    const quoteMarkOffset = s(12, dims, 4);
     const eyebrow = slots.eyebrow ? `<div class="kicker">${esc(slots.eyebrow)}</div>` : "";
     const quote = slots.quote ?? "";
     const attribution = slots.attributionName
-      ? `<div style="display:flex;flex-direction:column;gap:4px;"><div style="font-weight:700;color:${C.white};font-size:18px;">— ${esc(slots.attributionName)}</div>${slots.attributionRole ? `<div class="footnote">${esc(slots.attributionRole)}</div>` : ""}</div>`
+      ? `<div style="display:flex;flex-direction:column;gap:${attrGap}px;"><div style="font-weight:700;color:${C.white};font-size:${attrFont}px;">— ${esc(slots.attributionName)}</div>${slots.attributionRole ? `<div class="footnote">${esc(slots.attributionRole)}</div>` : ""}</div>`
       : "";
     const body = `
 <div class="canvas">
-  ${orbsCorner()}
+  ${orbsCorner(dims)}
   <div style="position:relative;z-index:1;width:100%;height:100%;display:grid;grid-template-columns:8% 1fr 8%;grid-template-rows:7% 1fr 7%;">
-    <div style="grid-row:1;grid-column:2;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets)}</div>
-    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;justify-content:center;gap:28px;">
+    <div style="grid-row:1;grid-column:2;display:flex;align-items:center;justify-content:space-between;">${logoCell(assets, dims)}</div>
+    <div style="grid-row:2;grid-column:2;display:flex;flex-direction:column;justify-content:center;gap:${stackGap}px;">
       ${eyebrow}
       <div style="position:relative;">
-        <div aria-hidden="true" style="position:absolute;left:-12px;top:-${Math.round(quoteSize * 0.7)}px;font-family:'Georgia',serif;font-size:${Math.round(quoteSize * 2.2)}px;line-height:1;color:${C.green};opacity:0.55;">&ldquo;</div>
+        <div aria-hidden="true" style="position:absolute;left:-${quoteMarkOffset}px;top:-${Math.round(quoteSize * 0.7)}px;font-family:'Georgia',serif;font-size:${Math.round(quoteSize * 2.2)}px;line-height:1;color:${C.green};opacity:0.55;">&ldquo;</div>
         <p style="font-size:${quoteSize}px;font-weight:600;line-height:1.18;letter-spacing:-0.015em;color:${C.white};max-width:24ch;">${esc(quote)}</p>
       </div>
       ${attribution}

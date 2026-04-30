@@ -32,19 +32,19 @@ const TEMPLATES: TemplateConfig[] = [
   { id: "horizontal-dates", name: "Horizontal - Dates", shortName: "Dates", width: 1920, height: 1080, variant: "dates", group: "horizontal" },
   { id: "horizontal-no-dates", name: "Horizontal - No Dates", shortName: "No Dates", width: 1920, height: 1080, variant: "no-dates", group: "horizontal" },
   { id: "horizontal-cta", name: "Horizontal - CTA", shortName: "CTA", width: 1920, height: 1080, variant: "cta", group: "horizontal" },
-  { id: "horizontal-replays", name: "Horizontal - Replays", shortName: "Replays", width: 1920, height: 1080, variant: "replays", group: "horizontal" },
+  { id: "horizontal-replays", name: "Horizontal - Replay", shortName: "Replay", width: 1920, height: 1080, variant: "replays", group: "horizontal" },
   { id: "square-dates", name: "Square - Dates", shortName: "Dates", width: 1080, height: 1080, variant: "dates", group: "square" },
   { id: "square-no-dates", name: "Square - No Dates", shortName: "No Dates", width: 1080, height: 1080, variant: "no-dates", group: "square" },
   { id: "square-cta", name: "Square - CTA", shortName: "CTA", width: 1080, height: 1080, variant: "cta", group: "square" },
-  { id: "square-replays", name: "Square - Replays", shortName: "Replays", width: 1080, height: 1080, variant: "replays", group: "square" },
+  { id: "square-replays", name: "Square - Replay", shortName: "Replay", width: 1080, height: 1080, variant: "replays", group: "square" },
   { id: "portrait-dates", name: "Portrait - Dates", shortName: "Dates", width: 1080, height: 1350, variant: "dates", group: "portrait" },
   { id: "portrait-no-dates", name: "Portrait - No Dates", shortName: "No Dates", width: 1080, height: 1350, variant: "no-dates", group: "portrait" },
   { id: "portrait-cta", name: "Portrait - CTA", shortName: "CTA", width: 1080, height: 1350, variant: "cta", group: "portrait" },
-  { id: "portrait-replays", name: "Portrait - Replays", shortName: "Replays", width: 1080, height: 1350, variant: "replays", group: "portrait" },
+  { id: "portrait-replays", name: "Portrait - Replay", shortName: "Replay", width: 1080, height: 1350, variant: "replays", group: "portrait" },
   { id: "story-dates", name: "Story - Dates", shortName: "Dates", width: 1080, height: 1920, variant: "dates", group: "story" },
   { id: "story-no-dates", name: "Story - No Dates", shortName: "No Dates", width: 1080, height: 1920, variant: "no-dates", group: "story" },
   { id: "story-cta", name: "Story - CTA", shortName: "CTA", width: 1080, height: 1920, variant: "cta", group: "story" },
-  { id: "story-replays", name: "Story - Replays", shortName: "Replays", width: 1080, height: 1920, variant: "replays", group: "story" },
+  { id: "story-replays", name: "Story - Replay", shortName: "Replay", width: 1080, height: 1920, variant: "replays", group: "story" },
 ];
 
 const SIZE_GROUPS = [
@@ -373,20 +373,19 @@ function HorizontalTemplate({
               display: "inline-flex",
               alignItems: "center",
               gap: "0.55em",
-              padding: "0.55em 1.1em",
-              border: "0.085em solid #2896FB",
-              borderRadius: "0.55em",
+              padding: "0.6em 1.3em",
+              borderRadius: "0.6em",
               alignSelf: "flex-start",
-              background: "rgba(40,150,251,0.04)",
+              background: "#FFD24A",
             }}
           >
             <svg
-              width="0.95em"
-              height="0.95em"
+              width="1.05em"
+              height="1.05em"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#2896FB"
-              strokeWidth="2.4"
+              stroke="#0A1628"
+              strokeWidth="2.6"
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
@@ -396,15 +395,15 @@ function HorizontalTemplate({
             </svg>
             <span
               style={{
-                fontSize: "0.7em",
-                fontWeight: 700,
-                color: "#FFFFFF",
-                letterSpacing: "0.06em",
+                fontSize: "0.78em",
+                fontWeight: 800,
+                color: "#0A1628",
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 lineHeight: 1,
               }}
             >
-              Replays
+              Replay
             </span>
           </div>
         )}
@@ -697,19 +696,18 @@ function SquareTemplate({
               display: "inline-flex",
               alignItems: "center",
               gap: "0.55em",
-              padding: "0.6em 1.2em",
-              border: "0.085em solid #2896FB",
-              borderRadius: "0.55em",
-              background: "rgba(40,150,251,0.04)",
+              padding: "0.65em 1.4em",
+              borderRadius: "0.6em",
+              background: "#FFD24A",
             }}
           >
             <svg
-              width="0.95em"
-              height="0.95em"
+              width="1.05em"
+              height="1.05em"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#2896FB"
-              strokeWidth="2.4"
+              stroke="#0A1628"
+              strokeWidth="2.6"
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
@@ -719,15 +717,15 @@ function SquareTemplate({
             </svg>
             <span
               style={{
-                fontSize: "0.7em",
-                fontWeight: 700,
-                color: "#FFFFFF",
-                letterSpacing: "0.06em",
+                fontSize: "0.78em",
+                fontWeight: 800,
+                color: "#0A1628",
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 lineHeight: 1,
               }}
             >
-              Replays
+              Replay
             </span>
           </div>
         )}
@@ -1037,19 +1035,18 @@ function PortraitTemplate({
               display: "inline-flex",
               alignItems: "center",
               gap: "0.55em",
-              padding: "0.6em 1.2em",
-              border: "0.085em solid #2896FB",
-              borderRadius: "0.55em",
-              background: "rgba(40,150,251,0.04)",
+              padding: "0.65em 1.4em",
+              borderRadius: "0.6em",
+              background: "#FFD24A",
             }}
           >
             <svg
-              width="0.95em"
-              height="0.95em"
+              width="1.05em"
+              height="1.05em"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#2896FB"
-              strokeWidth="2.4"
+              stroke="#0A1628"
+              strokeWidth="2.6"
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
@@ -1059,15 +1056,15 @@ function PortraitTemplate({
             </svg>
             <span
               style={{
-                fontSize: "0.7em",
-                fontWeight: 700,
-                color: "#FFFFFF",
-                letterSpacing: "0.06em",
+                fontSize: "0.78em",
+                fontWeight: 800,
+                color: "#0A1628",
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 lineHeight: 1,
               }}
             >
-              Replays
+              Replay
             </span>
           </div>
         )}
@@ -1375,19 +1372,18 @@ function StoryTemplate({
               display: "inline-flex",
               alignItems: "center",
               gap: "0.55em",
-              padding: "0.6em 1.2em",
-              border: "0.085em solid #2896FB",
-              borderRadius: "0.55em",
-              background: "rgba(40,150,251,0.04)",
+              padding: "0.65em 1.4em",
+              borderRadius: "0.6em",
+              background: "#FFD24A",
             }}
           >
             <svg
-              width="0.95em"
-              height="0.95em"
+              width="1.05em"
+              height="1.05em"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#2896FB"
-              strokeWidth="2.4"
+              stroke="#0A1628"
+              strokeWidth="2.6"
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{ display: "block", flexShrink: 0, transform: "translateY(-0.06em)" }}
@@ -1397,15 +1393,15 @@ function StoryTemplate({
             </svg>
             <span
               style={{
-                fontSize: "0.7em",
-                fontWeight: 700,
-                color: "#FFFFFF",
-                letterSpacing: "0.06em",
+                fontSize: "0.78em",
+                fontWeight: 800,
+                color: "#0A1628",
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
                 lineHeight: 1,
               }}
             >
-              Replays
+              Replay
             </span>
           </div>
         )}

@@ -19,10 +19,11 @@ import { EmailTemplatesWorkspace } from "@/components/brand/EmailTemplatesWorksp
 import { BrandBrainWorkspace } from "@/components/brand/BrandBrainWorkspace";
 import { GrowthFlywheelWorkspace } from "@/components/brand/GrowthFlywheelWorkspace";
 import { LandingPageWorkspace } from "@/components/brand/LandingPageWorkspace";
+import { SwooshBackgroundWorkspace } from "@/components/brand/SwooshBackgroundWorkspace";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
 
 export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel"];
+  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -63,6 +64,7 @@ export default function BrandEngine() {
         {currentMode === "content-army" && <ContentArmyWorkspace />}
         {currentMode === "did-you-know" && <DidYouKnowWorkspace />}
         {currentMode === "zoom-backgrounds" && <ZoomWorkspace />}
+        {currentMode === "swoosh-backgrounds" && <SwooshBackgroundWorkspace />}
         
         {currentMode === "bizdev-templates" && <BizDevWorkspace />}
         {currentMode === "super-promo" && <SuperPromo2Workspace />}

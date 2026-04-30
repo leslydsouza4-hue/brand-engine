@@ -6,7 +6,6 @@ import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
 const SWOOSH = `${BASE}assets/swoosh/swoosh-highly.png`;
-const SPACE_BG = `${BASE}assets/swoosh/space-bg.png`;
 
 // Canvas is exactly 1920x1080 per spec.
 const CANVAS_W = 1920;
@@ -147,29 +146,12 @@ function SwooshComposition({
       style={{
         position: "relative",
         overflow: "hidden",
-        backgroundColor: "#020615",
+        // Transparent — the downloadable PNG is just the swoosh + human with
+        // alpha so users can drop it onto any background of their choice.
+        backgroundColor: "transparent",
       }}
     >
-      {/* Layer 1: Space background photo (dark navy with the bright atmosphere
-          arc curving through the lower-right of the frame). object-cover so
-          the asset fills the 16:9 canvas at any scale. */}
-      <img
-        src={SPACE_BG}
-        alt=""
-        draggable={false}
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          pointerEvents: "none",
-          userSelect: "none",
-        }}
-        crossOrigin="anonymous"
-      />
-
-      {/* Layer 2: back swoosh — full asset behind the human */}
+      {/* Layer 1: back swoosh — full asset behind the human */}
       <img src={SWOOSH} alt="" draggable={false} style={swooshStyle} crossOrigin="anonymous" />
 
       {/* Layer 3: human cutout (uploaded, bg-removed) */}
@@ -277,7 +259,9 @@ export function SwooshBackgroundWorkspace() {
         // composition, so font CSS is irrelevant and would only risk a
         // CORS-related abort during export.
         skipFonts: true,
-        style: { borderRadius: "0" },
+        // Transparent PNG so the swoosh + human can be dropped onto any bg.
+        backgroundColor: "transparent",
+        style: { borderRadius: "0", backgroundColor: "transparent" },
       });
       const blob = dataUrlToBlob(dataUrl);
       const filename = `Swoosh_Background_${CANVAS_W}x${CANVAS_H}.png`;
@@ -309,7 +293,7 @@ export function SwooshBackgroundWorkspace() {
       <div className="w-full md:w-[340px] md:min-w-[340px] overflow-y-auto pt-[20px] px-[16px] md:px-[24px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.06)] flex flex-col max-h-[50vh] md:max-h-none">
         <div className="mb-[16px]">
           <h2 className="text-[16px] font-bold text-white mb-[4px]">Swoosh Background</h2>
-          <p className="text-[11px] text-[#64748B]">Highly's flight trail wrapped around a featured speaker.</p>
+          <p className="text-[11px] text-[#64748B]">Transparent swoosh + speaker overlay. Drop onto any background.</p>
         </div>
 
         <div className="flex flex-col gap-[16px]">

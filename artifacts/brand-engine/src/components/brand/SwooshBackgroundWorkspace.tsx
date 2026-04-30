@@ -16,7 +16,7 @@ const CANVAS_RATIO = CANVAS_W / CANVAS_H;
 // suffix is bumped whenever defaults change so existing users get the new
 // defaults instead of stale localStorage values.
 function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const STORAGE_KEY = `brandEngine.swooshBackground.v7.${key}`;
+  const STORAGE_KEY = `brandEngine.swooshBackground.v8.${key}`;
   const [v, setV] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -86,7 +86,11 @@ interface HumanSettings {
 // RIGHT (face dominant, top-of-head near top of canvas) and the swoosh forms
 // a tight oval wrapping her LOWER body, with the Highly robot sitting just
 // to the upper-right of her head.
-const DEFAULT_SWOOSH: SwooshSettings = { x: 30, y: 20, scale: 1.3 };
+// Swoosh sized to fully fit inside the 1920×1080 canvas with no cropping.
+// The asset is portrait (~786×1024) and styled by HEIGHT only, so scale 1.0
+// = 100% of canvas height; width then auto-scales to ~830px which fits
+// horizontally with room to spare. x/y both 0 = perfectly centered.
+const DEFAULT_SWOOSH: SwooshSettings = { x: 0, y: 0, scale: 1.0 };
 const DEFAULT_HUMAN: HumanSettings = { x: 28, y: 0, scale: 1.0 };
 const DEFAULT_FRONT_OPACITY = 1;
 

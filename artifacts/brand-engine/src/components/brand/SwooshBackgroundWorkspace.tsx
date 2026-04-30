@@ -17,7 +17,7 @@ const CANVAS_RATIO = CANVAS_W / CANVAS_H;
 // suffix is bumped whenever defaults change so existing users get the new
 // defaults instead of stale localStorage values.
 function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const STORAGE_KEY = `brandEngine.swooshBackground.v5.${key}`;
+  const STORAGE_KEY = `brandEngine.swooshBackground.v6.${key}`;
   const [v, setV] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -87,7 +87,7 @@ interface HumanSettings {
 // RIGHT (face dominant, top-of-head near top of canvas) and the swoosh forms
 // a tight oval wrapping her LOWER body, with the Highly robot sitting just
 // to the upper-right of her head.
-const DEFAULT_SWOOSH: SwooshSettings = { x: 0, y: 20, scale: 1.3 };
+const DEFAULT_SWOOSH: SwooshSettings = { x: 15, y: 20, scale: 1.3 };
 const DEFAULT_HUMAN: HumanSettings = { x: 28, y: 0, scale: 1.0 };
 const DEFAULT_FRONT_OPACITY = 1;
 

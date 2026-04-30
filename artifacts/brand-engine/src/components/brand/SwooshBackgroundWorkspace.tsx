@@ -177,7 +177,8 @@ export function SwooshBackgroundWorkspace() {
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [swoosh, setSwoosh] = usePersistedState<SwooshSettings>("swoosh", DEFAULT_SWOOSH);
+  // Swoosh placement is fixed — only the human + front opacity are tunable.
+  const swoosh: SwooshSettings = DEFAULT_SWOOSH;
   const [human, setHuman] = usePersistedState<HumanSettings>("human", DEFAULT_HUMAN);
   const [frontOpacity, setFrontOpacity] = usePersistedState<number>("frontOpacity", DEFAULT_FRONT_OPACITY);
 
@@ -367,39 +368,21 @@ export function SwooshBackgroundWorkspace() {
             </div>
           </div>
 
-          {/* Swoosh position controls */}
+          {/* Front-swoosh opacity — standalone slider; swoosh placement is
+              fixed (not user-tunable) so the layout stays consistent across
+              every export. */}
           <div className="flex flex-col rounded-[12px] border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] p-[12px]">
-            <div className={sectionLabelCls}>Swoosh Position</div>
-            <div className="flex flex-col gap-[8px]">
-              <div className="flex items-center gap-[8px]">
-                <ZoomIn className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
-                <span className="text-[9px] text-[#64748B] w-[34px] shrink-0">Scale</span>
-                <input type="range" min="0.4" max="1.6" step="0.01" value={swoosh.scale} onChange={(e) => setSwoosh((s) => ({ ...s, scale: parseFloat(e.target.value) }))} className={sliderCls} />
-                <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{Math.round(swoosh.scale * 100)}%</span>
-              </div>
-              <div className="flex items-center gap-[8px]">
-                <svg className="w-[12px] h-[12px] text-[#64748B] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                <span className="text-[9px] text-[#64748B] w-[34px] shrink-0">X</span>
-                <input type="range" min="-50" max="50" step="1" value={swoosh.x} onChange={(e) => setSwoosh((s) => ({ ...s, x: parseFloat(e.target.value) }))} className={sliderCls} />
-                <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{swoosh.x > 0 ? "+" : ""}{swoosh.x}</span>
-              </div>
-              <div className="flex items-center gap-[8px]">
-                <ArrowUpDown className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
-                <span className="text-[9px] text-[#64748B] w-[34px] shrink-0">Y</span>
-                <input type="range" min="-50" max="50" step="1" value={swoosh.y} onChange={(e) => setSwoosh((s) => ({ ...s, y: parseFloat(e.target.value) }))} className={sliderCls} />
-                <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{swoosh.y > 0 ? "+" : ""}{swoosh.y}</span>
-              </div>
-              <div className="flex items-center gap-[8px] pt-[2px] border-t border-[rgba(255,255,255,0.04)] mt-[2px]">
-                <span className="text-[9px] text-[#64748B] w-[46px] shrink-0 pt-[6px]">Front opacity</span>
-                <input type="range" min="0" max="1" step="0.02" value={frontOpacity} onChange={(e) => setFrontOpacity(parseFloat(e.target.value))} className={`${sliderCls} mt-[6px]`} />
-                <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums pt-[6px]">{Math.round(frontOpacity * 100)}%</span>
-              </div>
+            <div className={sectionLabelCls}>Front Swoosh</div>
+            <div className="flex items-center gap-[8px]">
+              <span className="text-[9px] text-[#64748B] w-[46px] shrink-0">Opacity</span>
+              <input type="range" min="0" max="1" step="0.02" value={frontOpacity} onChange={(e) => setFrontOpacity(parseFloat(e.target.value))} className={sliderCls} />
+              <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{Math.round(frontOpacity * 100)}%</span>
             </div>
           </div>
 
-          {/* Reset to defaults */}
+          {/* Reset human positions to defaults */}
           <button
-            onClick={() => { setSwoosh(DEFAULT_SWOOSH); setHuman(DEFAULT_HUMAN); setFrontOpacity(DEFAULT_FRONT_OPACITY); }}
+            onClick={() => { setHuman(DEFAULT_HUMAN); setFrontOpacity(DEFAULT_FRONT_OPACITY); }}
             className="text-[10px] text-[#64748B] hover:text-white self-start cursor-pointer bg-transparent border-none p-0 underline-offset-2 hover:underline transition-all"
           >
             Reset positions

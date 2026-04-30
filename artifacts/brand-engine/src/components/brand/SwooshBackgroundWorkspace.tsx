@@ -6,15 +6,18 @@ import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
 const SWOOSH = `${BASE}assets/swoosh/swoosh-highly.png`;
+const SPACE_BG = `${BASE}assets/swoosh/space-bg.png`;
 
 // Canvas is exactly 1920x1080 per spec.
 const CANVAS_W = 1920;
 const CANVAS_H = 1080;
 const CANVAS_RATIO = CANVAS_W / CANVAS_H;
 
-// Persisted state helper (same pattern as MasterClassWorkspace).
+// Persisted state helper (same pattern as MasterClassWorkspace). The version
+// suffix is bumped whenever defaults change so existing users get the new
+// defaults instead of stale localStorage values.
 function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const STORAGE_KEY = `brandEngine.swooshBackground.${key}`;
+  const STORAGE_KEY = `brandEngine.swooshBackground.v2.${key}`;
   const [v, setV] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -80,11 +83,12 @@ interface HumanSettings {
   scale: number; // height as a fraction of canvas height, 0.3..1.4
 }
 
-// Defaults tuned to roughly match the supplied reference layout (human on the
-// left/center-left, swoosh wrapping around them, robot floating at the upper
-// right corner of the canvas).
-const DEFAULT_SWOOSH: SwooshSettings = { x: 18, y: 5, scale: 1.1 };
-const DEFAULT_HUMAN: HumanSettings = { x: -10, y: 5, scale: 0.95 };
+// Defaults tuned to match the supplied reference: the person is on the FAR
+// RIGHT (face dominant, top-of-head near top of canvas) and the swoosh forms
+// a tight oval wrapping her LOWER body, with the Highly robot sitting just
+// to the upper-right of her head.
+const DEFAULT_SWOOSH: SwooshSettings = { x: 18, y: 12, scale: 0.65 };
+const DEFAULT_HUMAN: HumanSettings = { x: 28, y: 0, scale: 1.0 };
 const DEFAULT_FRONT_OPACITY = 1;
 
 // The asset is a single image containing the swoosh trail AND the Highly
@@ -143,13 +147,28 @@ function SwooshComposition({
       style={{
         position: "relative",
         overflow: "hidden",
-        // Dark space background — radial vignette over a deep navy base, no
-        // hard banding. Matches the reference's gradient look.
-        background:
-          "radial-gradient(ellipse 80% 60% at 35% 85%, rgba(40,90,180,0.35) 0%, rgba(15,40,95,0.1) 45%, rgba(0,0,0,0) 70%), linear-gradient(135deg, #0A1730 0%, #08152C 40%, #050C1E 100%)",
-        boxShadow: "inset 0 0 200px rgba(0,0,0,0.4)",
+        backgroundColor: "#020615",
       }}
     >
+      {/* Layer 1: Space background photo (dark navy with the bright atmosphere
+          arc curving through the lower-right of the frame). object-cover so
+          the asset fills the 16:9 canvas at any scale. */}
+      <img
+        src={SPACE_BG}
+        alt=""
+        draggable={false}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+        crossOrigin="anonymous"
+      />
+
       {/* Layer 2: back swoosh — full asset behind the human */}
       <img src={SWOOSH} alt="" draggable={false} style={swooshStyle} crossOrigin="anonymous" />
 

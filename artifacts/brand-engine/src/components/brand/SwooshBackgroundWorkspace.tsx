@@ -219,6 +219,62 @@ export function SwooshBackgroundWorkspace() {
       r.readAsDataURL(blob);
     });
 
+  // After background removal, the PNG retains the source photo's full
+  // canvas — meaning transparent padding wraps the person on every side.
+  // That padding becomes ugly empty space above the head when we anchor
+  // the image at top:0%. This helper scans the alpha channel, finds the
+  // tight bounding box of visible content, and re-renders the image
+  // cropped to just that region. Result: the head is flush with the top
+  // of the image, and therefore flush with the top of the canvas.
+  const autoTrimTransparent = (dataUrl: string): Promise<string> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(dataUrl);
+        ctx.drawImage(img, 0, 0);
+        let imgData: ImageData;
+        try {
+          imgData = ctx.getImageData(0, 0, w, h);
+        } catch {
+          return resolve(dataUrl);
+        }
+        const data = imgData.data;
+        const ALPHA_THRESHOLD = 10; // pixels with alpha <= this count as empty
+        let minX = w, minY = h, maxX = -1, maxY = -1;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const a = data[(y * w + x) * 4 + 3];
+            if (a > ALPHA_THRESHOLD) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        if (maxX < 0 || maxY < 0) return resolve(dataUrl); // fully transparent
+        const cropW = maxX - minX + 1;
+        const cropH = maxY - minY + 1;
+        if (cropW === w && cropH === h) return resolve(dataUrl); // nothing to trim
+        const out = document.createElement("canvas");
+        out.width = cropW;
+        out.height = cropH;
+        const outCtx = out.getContext("2d");
+        if (!outCtx) return resolve(dataUrl);
+        outCtx.drawImage(img, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+        resolve(out.toDataURL("image/png"));
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -231,8 +287,11 @@ export function SwooshBackgroundWorkspace() {
         const blob = await removeBackground(src, { output: { format: "image/png" } });
         // Store as a data URL (NOT a blob: URL) — html-to-image's CORS path
         // can't read blob URLs cleanly and the export fails.
-        const dataUrl = await blobToDataUrl(blob);
-        setPersonImage(dataUrl);
+        const rawDataUrl = await blobToDataUrl(blob);
+        // Crop away the transparent padding so the person fills the bbox
+        // and the head ends up flush with the image's top edge.
+        const trimmed = await autoTrimTransparent(rawDataUrl);
+        setPersonImage(trimmed);
       } catch {
         setPersonImage(src);
       } finally {

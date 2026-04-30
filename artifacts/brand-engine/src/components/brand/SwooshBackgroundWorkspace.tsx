@@ -113,13 +113,60 @@ function SwooshComposition({
   personImage,
   swoosh,
   human,
+  onHumanChange,
+  exporting,
 }: {
   personImage: string | null;
   swoosh: SwooshSettings;
   human: HumanSettings;
+  onHumanChange?: (next: HumanSettings) => void;
+  // When exporting, suppress the drag UI (cursor, pointer-events) so the
+  // resulting PNG looks identical regardless of hover state.
+  exporting?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   useFitParent(containerRef, CANVAS_RATIO);
+
+  // Drag-to-position state. We capture the pointer on mousedown over the
+  // human image, then translate every pointermove into a delta on
+  // human.x / human.y in canvas-percentage units.
+  const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; pointerId: number } | null>(null);
+
+  const onPointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
+    if (!onHumanChange || !containerRef.current) return;
+    e.preventDefault();
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: human.x,
+      baseY: human.y,
+      pointerId: e.pointerId,
+    };
+  };
+
+  const onPointerMove = (e: React.PointerEvent<HTMLImageElement>) => {
+    if (!dragRef.current || !onHumanChange || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const dxPct = ((e.clientX - dragRef.current.startX) / rect.width) * 100;
+    const dyPct = ((e.clientY - dragRef.current.startY) / rect.height) * 100;
+    onHumanChange({
+      ...human,
+      x: dragRef.current.baseX + dxPct,
+      y: dragRef.current.baseY + dyPct,
+    });
+  };
+
+  const onPointerUp = (e: React.PointerEvent<HTMLImageElement>) => {
+    if (!dragRef.current) return;
+    try {
+      (e.currentTarget as Element).releasePointerCapture(dragRef.current.pointerId);
+    } catch {
+      /* pointer may already be released */
+    }
+    dragRef.current = null;
+  };
 
   // Common positioning style for both swoosh copies. The asset is portrait,
   // so we size it by HEIGHT relative to the canvas (with width auto) — that
@@ -137,20 +184,21 @@ function SwooshComposition({
     imageRendering: "auto",
   };
 
-  // Human is TOP-anchored at top:0 always. After the bg-removal +
-  // auto-trim step the image's top edge is exactly where the head starts,
-  // so anchoring at 0 puts the head flush with the canvas top — no gap,
-  // no crop. Vertical control is intentionally not exposed (Scale + X
-  // are sufficient for composition).
+  // Human position is fully driven by free-hand drag — both X and Y are
+  // user-controlled offsets in canvas-percentage units. Default y=0 anchors
+  // the head to the canvas top; from there the user can drag anywhere.
+  const draggable = !!onHumanChange && !exporting;
   const humanStyle: React.CSSProperties = {
     position: "absolute",
     left: `${50 + human.x}%`,
-    top: "0%",
+    top: `${human.y}%`,
     height: `${human.scale * 100}%`,
     transform: "translateX(-50%)",
     objectFit: "contain",
-    pointerEvents: "none",
     userSelect: "none",
+    pointerEvents: draggable ? "auto" : "none",
+    cursor: draggable ? (dragRef.current ? "grabbing" : "grab") : "default",
+    touchAction: "none",
   };
 
   return (
@@ -171,7 +219,8 @@ function SwooshComposition({
       {/* Layer 2: human cutout (uploaded, bg-removed). Wrapped in an
           overflow:hidden div with a canvas-relative clip-path so anything
           below the swoosh's lower curve is masked out — the person looks
-          like they're rising out of the swoosh. */}
+          like they're rising out of the swoosh. The wrapper allows pointer
+          events through (so the inner image can be grabbed/dragged). */}
       {personImage && (
         <div
           style={{
@@ -183,7 +232,17 @@ function SwooshComposition({
             pointerEvents: "none",
           }}
         >
-          <img src={personImage} alt="" draggable={false} style={humanStyle} crossOrigin="anonymous" />
+          <img
+            src={personImage}
+            alt=""
+            draggable={false}
+            style={humanStyle}
+            crossOrigin="anonymous"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          />
         </div>
       )}
 
@@ -429,9 +488,11 @@ export function SwooshBackgroundWorkspace() {
             )}
           </div>
 
-          {/* Human position controls */}
+          {/* Human controls — Scale slider + free-hand drag in the preview.
+              X/Y are no longer sliders; users drag the photo directly in
+              the live preview to position it anywhere they want. */}
           <div className="flex flex-col rounded-[12px] border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] p-[12px]">
-            <div className={sectionLabelCls}>Human Position</div>
+            <div className={sectionLabelCls}>Human</div>
             <div className="flex flex-col gap-[8px]">
               <div className="flex items-center gap-[8px]">
                 <ZoomIn className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
@@ -439,18 +500,7 @@ export function SwooshBackgroundWorkspace() {
                 <input type="range" min="0.3" max="1.4" step="0.01" value={human.scale} onChange={(e) => setHuman((s) => ({ ...s, scale: parseFloat(e.target.value) }))} className={sliderCls} />
                 <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{Math.round(human.scale * 100)}%</span>
               </div>
-              <div className="flex items-center gap-[8px]">
-                <svg className="w-[12px] h-[12px] text-[#64748B] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                <span className="text-[9px] text-[#64748B] w-[34px] shrink-0">X</span>
-                <input type="range" min="-50" max="50" step="1" value={human.x} onChange={(e) => setHuman((s) => ({ ...s, x: parseFloat(e.target.value) }))} className={sliderCls} />
-                <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{human.x > 0 ? "+" : ""}{human.x}</span>
-              </div>
-              {/* Y slider intentionally removed — pushing the image up
-                  cropped the head off the top, and pushing down created
-                  awkward gaps. The head is auto-anchored to the canvas
-                  top via the auto-trim step, so vertical control isn't
-                  needed: Scale (zoom) + X (slide left/right) cover every
-                  useful composition. */}
+              <div className="text-[9px] text-[#64748B] pt-[2px]">Drag the photo in the preview to position it.</div>
             </div>
           </div>
 
@@ -483,7 +533,13 @@ export function SwooshBackgroundWorkspace() {
       <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
         <LivePreview>
           <div className="w-full h-full max-w-[960px] flex items-center justify-center min-h-0" ref={previewRef}>
-            <SwooshComposition personImage={personImage} swoosh={swoosh} human={human} />
+            <SwooshComposition
+              personImage={personImage}
+              swoosh={swoosh}
+              human={human}
+              onHumanChange={setHuman}
+              exporting={isExporting}
+            />
           </div>
         </LivePreview>
       </div>

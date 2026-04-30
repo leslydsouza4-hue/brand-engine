@@ -16,7 +16,7 @@ const CANVAS_RATIO = CANVAS_W / CANVAS_H;
 // suffix is bumped whenever defaults change so existing users get the new
 // defaults instead of stale localStorage values.
 function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const STORAGE_KEY = `brandEngine.swooshBackground.v8.${key}`;
+  const STORAGE_KEY = `brandEngine.swooshBackground.v9.${key}`;
   const [v, setV] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -91,8 +91,15 @@ interface HumanSettings {
 // = 100% of canvas height; width then auto-scales to ~830px which fits
 // horizontally with room to spare. x/y both 0 = perfectly centered.
 const DEFAULT_SWOOSH: SwooshSettings = { x: 0, y: 0, scale: 1.0 };
+// Human is anchored at the TOP of the canvas (head at top) so a full-body
+// upload always shows head→chest→waist clearly within the visible region.
 const DEFAULT_HUMAN: HumanSettings = { x: 28, y: 0, scale: 1.0 };
-const DEFAULT_FRONT_OPACITY = 1;
+
+// The lower 25% of the canvas is clipped away from the human only — that's
+// the visual line where the swoosh's bottom curve sits, so anything below
+// it (waist→legs) disappears, leaving the person looking like they're
+// emerging from inside the swoosh.
+const HUMAN_BOTTOM_CLIP = "inset(0% 0% 25% 0%)";
 
 // The asset is a single image containing the swoosh trail AND the Highly
 // robot at the top-right end. To make the trail "wrap around" the human, we
@@ -106,12 +113,10 @@ function SwooshComposition({
   personImage,
   swoosh,
   human,
-  frontOpacity,
 }: {
   personImage: string | null;
   swoosh: SwooshSettings;
   human: HumanSettings;
-  frontOpacity: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   useFitParent(containerRef, CANVAS_RATIO);
@@ -132,12 +137,16 @@ function SwooshComposition({
     imageRendering: "auto",
   };
 
+  // Human is TOP-anchored: top:0% pins the head to the top of the canvas
+  // (offsettable by human.y), and only the X axis is centered via translate.
+  // This guarantees that head→chest→waist always render in the visible
+  // upper region regardless of upload aspect ratio.
   const humanStyle: React.CSSProperties = {
     position: "absolute",
     left: `${50 + human.x}%`,
-    top: `${50 + human.y}%`,
+    top: `${human.y}%`,
     height: `${human.scale * 100}%`,
-    transform: "translate(-50%, -50%)",
+    transform: "translateX(-50%)",
     objectFit: "contain",
     pointerEvents: "none",
     userSelect: "none",
@@ -158,19 +167,33 @@ function SwooshComposition({
       {/* Layer 1: back swoosh — full asset behind the human */}
       <img src={SWOOSH} alt="" draggable={false} style={swooshStyle} crossOrigin="anonymous" />
 
-      {/* Layer 3: human cutout (uploaded, bg-removed) */}
+      {/* Layer 2: human cutout (uploaded, bg-removed). Wrapped in an
+          overflow:hidden div with a canvas-relative clip-path so anything
+          below the swoosh's lower curve is masked out — the person looks
+          like they're rising out of the swoosh. */}
       {personImage && (
-        <img src={personImage} alt="" draggable={false} style={humanStyle} crossOrigin="anonymous" />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            overflow: "hidden",
+            clipPath: HUMAN_BOTTOM_CLIP,
+            WebkitClipPath: HUMAN_BOTTOM_CLIP,
+            pointerEvents: "none",
+          }}
+        >
+          <img src={personImage} alt="" draggable={false} style={humanStyle} crossOrigin="anonymous" />
+        </div>
       )}
 
-      {/* Layer 4: front portion of the swoosh — clipped to the lower curve so
+      {/* Layer 3: front portion of the swoosh — clipped to the lower curve so
           only the section that crosses in front of the human is visible. The
           identical position/scale to the back copy ensures perfect alignment. */}
       <img
         src={SWOOSH}
         alt=""
         draggable={false}
-        style={{ ...swooshStyle, clipPath: FRONT_CLIP, WebkitClipPath: FRONT_CLIP, opacity: frontOpacity }}
+        style={{ ...swooshStyle, clipPath: FRONT_CLIP, WebkitClipPath: FRONT_CLIP }}
         crossOrigin="anonymous"
       />
     </div>
@@ -184,7 +207,6 @@ export function SwooshBackgroundWorkspace() {
   // Swoosh placement is fixed — only the human + front opacity are tunable.
   const swoosh: SwooshSettings = DEFAULT_SWOOSH;
   const [human, setHuman] = usePersistedState<HumanSettings>("human", DEFAULT_HUMAN);
-  const [frontOpacity, setFrontOpacity] = usePersistedState<number>("frontOpacity", DEFAULT_FRONT_OPACITY);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -372,21 +394,9 @@ export function SwooshBackgroundWorkspace() {
             </div>
           </div>
 
-          {/* Front-swoosh opacity — standalone slider; swoosh placement is
-              fixed (not user-tunable) so the layout stays consistent across
-              every export. */}
-          <div className="flex flex-col rounded-[12px] border border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] p-[12px]">
-            <div className={sectionLabelCls}>Front Swoosh</div>
-            <div className="flex items-center gap-[8px]">
-              <span className="text-[9px] text-[#64748B] w-[46px] shrink-0">Opacity</span>
-              <input type="range" min="0" max="1" step="0.02" value={frontOpacity} onChange={(e) => setFrontOpacity(parseFloat(e.target.value))} className={sliderCls} />
-              <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{Math.round(frontOpacity * 100)}%</span>
-            </div>
-          </div>
-
           {/* Reset human positions to defaults */}
           <button
-            onClick={() => { setHuman(DEFAULT_HUMAN); setFrontOpacity(DEFAULT_FRONT_OPACITY); }}
+            onClick={() => { setHuman(DEFAULT_HUMAN); }}
             className="text-[10px] text-[#64748B] hover:text-white self-start cursor-pointer bg-transparent border-none p-0 underline-offset-2 hover:underline transition-all"
           >
             Reset positions
@@ -413,7 +423,7 @@ export function SwooshBackgroundWorkspace() {
       <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
         <LivePreview>
           <div className="w-full h-full max-w-[960px] flex items-center justify-center min-h-0" ref={previewRef}>
-            <SwooshComposition personImage={personImage} swoosh={swoosh} human={human} frontOpacity={frontOpacity} />
+            <SwooshComposition personImage={personImage} swoosh={swoosh} human={human} />
           </div>
         </LivePreview>
       </div>

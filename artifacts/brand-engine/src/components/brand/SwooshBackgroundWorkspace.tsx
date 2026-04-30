@@ -137,14 +137,17 @@ function SwooshComposition({
     imageRendering: "auto",
   };
 
-  // Human is TOP-anchored: top:0% pins the head to the top of the canvas
-  // (offsettable by human.y), and only the X axis is centered via translate.
-  // This guarantees that head→chest→waist always render in the visible
-  // upper region regardless of upload aspect ratio.
+  // Human is TOP-anchored: top is pinned to the top of the canvas
+  // (offsettable by human.y >= 0 only — never negative), and only the X
+  // axis is centered via translate. This guarantees the head always
+  // renders inside the canvas at or below the top edge — it can never be
+  // cropped from above. Math.max provides a defensive clamp in case any
+  // persisted state somehow contains a negative Y.
+  const safeY = Math.max(0, human.y);
   const humanStyle: React.CSSProperties = {
     position: "absolute",
     left: `${50 + human.x}%`,
-    top: `${human.y}%`,
+    top: `${safeY}%`,
     height: `${human.scale * 100}%`,
     transform: "translateX(-50%)",
     objectFit: "contain",
@@ -388,7 +391,11 @@ export function SwooshBackgroundWorkspace() {
               <div className="flex items-center gap-[8px]">
                 <ArrowUpDown className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
                 <span className="text-[9px] text-[#64748B] w-[34px] shrink-0">Y</span>
-                <input type="range" min="-50" max="50" step="1" value={human.y} onChange={(e) => setHuman((s) => ({ ...s, y: parseFloat(e.target.value) }))} className={sliderCls} />
+                {/* Y can only push DOWN (0..50). The head must always be
+                    glued to the top of the canvas, so negative Y (which
+                    would lift the head above the canvas top and crop it)
+                    is not allowed. */}
+                <input type="range" min="0" max="50" step="1" value={human.y} onChange={(e) => setHuman((s) => ({ ...s, y: parseFloat(e.target.value) }))} className={sliderCls} />
                 <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{human.y > 0 ? "+" : ""}{human.y}</span>
               </div>
             </div>

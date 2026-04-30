@@ -151,10 +151,14 @@ function SwooshComposition({
     if (rect.width === 0 || rect.height === 0) return;
     const dxPct = ((e.clientX - dragRef.current.startX) / rect.width) * 100;
     const dyPct = ((e.clientY - dragRef.current.startY) / rect.height) * 100;
+    // Y is clamped to >= 0: the head can never be dragged above the canvas
+    // top (would cut it off). Free downward drag is preserved, and the
+    // bottom 25% clip continues to hide the lower body. X stays free.
+    const nextY = Math.max(0, dragRef.current.baseY + dyPct);
     onHumanChange({
       ...human,
       x: dragRef.current.baseX + dxPct,
-      y: dragRef.current.baseY + dyPct,
+      y: nextY,
     });
   };
 
@@ -184,14 +188,15 @@ function SwooshComposition({
     imageRendering: "auto",
   };
 
-  // Human position is fully driven by free-hand drag — both X and Y are
-  // user-controlled offsets in canvas-percentage units. Default y=0 anchors
-  // the head to the canvas top; from there the user can drag anywhere.
+  // Human position is driven by free-hand drag. X is fully free, but Y is
+  // clamped to >= 0 so the head can NEVER be cut off the top of the
+  // canvas. Default y=0 anchors the head to the canvas top.
   const draggable = !!onHumanChange && !exporting;
+  const safeY = Math.max(0, human.y);
   const humanStyle: React.CSSProperties = {
     position: "absolute",
     left: `${50 + human.x}%`,
-    top: `${human.y}%`,
+    top: `${safeY}%`,
     height: `${human.scale * 100}%`,
     transform: "translateX(-50%)",
     objectFit: "contain",

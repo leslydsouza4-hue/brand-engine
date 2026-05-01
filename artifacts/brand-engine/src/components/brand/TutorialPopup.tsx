@@ -4980,8 +4980,12 @@ function Typewriter({ text }: { text: string }) {
 /* ===================== SWOOSH SCENE ===================== */
 
 const SWOOSH_TUT_BG = `${import.meta.env.BASE_URL}assets/swoosh/space-bg.png`;
-const SWOOSH_TUT_SWOOSH = `${import.meta.env.BASE_URL}assets/swoosh/swoosh-highly.png`;
 const SWOOSH_TUT_PERSON = `${import.meta.env.BASE_URL}assets/swoosh/tutorial-person.png`;
+// Pre-composed swoosh + person + Highly used for the Adjust beat. Rendering
+// it as a single flat image (instead of stacking the 3 layers) keeps the
+// composition pixel-perfect at popup scale and exactly matches the in-app
+// look.
+const SWOOSH_TUT_COMP = `${import.meta.env.BASE_URL}assets/swoosh/tutorial-comp.png`;
 
 function SwooshScene() {
   const [beat, setBeat] = useState(0);
@@ -5165,20 +5169,20 @@ function BeatSwooshUpload() {
   );
 }
 
-/* Beat 2 — Mini swoosh comp, bounding box appears, person scales/drags into place */
+/* Beat 2 — Mini swoosh comp using the pre-composed reference image so the
+   person is properly tucked into the swoosh (matches the real in-app look).
+   We layer a bounding box + cursor + hint pill on top to communicate the
+   "tap → resize → adjust" gesture. Subtle parallax/scale on the comp
+   itself sells the "live editing" feel without trying to recreate the
+   layered swoosh-over-person stack at popup scale. */
 function BeatSwooshAdjust() {
   const [stage, setStage] = useState(0);
   useEffect(() => {
     const t1 = setTimeout(() => setStage(1), 500);
-    const t2 = setTimeout(() => setStage(2), 1500);
-    const t3 = setTimeout(() => setStage(3), 2500);
+    const t2 = setTimeout(() => setStage(2), 1600);
+    const t3 = setTimeout(() => setStage(3), 2700);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
-
-  // Person target = scaled up + nudged into the swoosh pocket on stage 2/3
-  const personScale = stage >= 2 ? 1.08 : 0.82;
-  const personX = stage >= 2 ? 0 : -8;
-  const personY = stage >= 2 ? 2 : 8;
 
   return (
     <motion.div
@@ -5191,7 +5195,7 @@ function BeatSwooshAdjust() {
         justifyContent: "center",
       }}
     >
-      {/* 16:9 mini canvas */}
+      {/* 16:9 mini canvas with the space background */}
       <div
         style={{
           width: "100%",
@@ -5206,127 +5210,95 @@ function BeatSwooshAdjust() {
           boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
         }}
       >
-        {/* Portrait swoosh comp pinned to right (mirrors real workspace) */}
-        <div
+        {/* Pre-composed swoosh + person + Highly. Using a single flat image
+            guarantees the composition reads exactly like it does in the
+            real workspace — the person is wrapped by the swoosh, Highly
+            sits on the shoulder, no positioning math needed.
+            We constrain by both width and height so it never clips, then
+            pin to the right side of the mini canvas. */}
+        <motion.img
+          src={SWOOSH_TUT_COMP}
+          alt=""
+          initial={false}
+          animate={{
+            scale: stage >= 2 ? 1.05 : 1,
+          }}
+          transition={{ type: "spring", stiffness: 160, damping: 22 }}
           style={{
             position: "absolute",
-            top: "50%",
-            right: "-2%",
-            height: "108%",
-            aspectRatio: "1080 / 1350",
-            transform: "translateY(-50%)",
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: "62%",
+            height: "100%",
+            objectFit: "contain",
+            objectPosition: "right center",
+            filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.45))",
             pointerEvents: "none",
+            transformOrigin: "right center",
           }}
-        >
-          {/* Swoosh trail (back) */}
-          <img
-            src={SWOOSH_TUT_SWOOSH}
-            alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              objectPosition: "center",
-            }}
-          />
-          {/* Person — animates scale + position */}
-          <motion.img
-            src={SWOOSH_TUT_PERSON}
-            alt=""
-            initial={false}
-            animate={{
-              scale: personScale,
-              x: personX,
-              y: personY,
-            }}
-            transition={{ type: "spring", stiffness: 180, damping: 22 }}
-            style={{
-              position: "absolute",
-              left: "12%",
-              top: "10%",
-              width: "70%",
-              height: "82%",
-              objectFit: "contain",
-              objectPosition: "bottom center",
-              transformOrigin: "center bottom",
-              filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))",
-            }}
-          />
-          {/* Front swoosh slice over the person (visual depth) */}
-          <img
-            src={SWOOSH_TUT_SWOOSH}
-            alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              objectPosition: "center",
-              clipPath: "inset(0 0 0 55%)",
-            }}
-          />
+        />
 
-          {/* Bounding box — appears stage>=1 */}
-          <AnimatePresence>
-            {stage >= 1 && stage < 3 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                style={{
-                  position: "absolute",
-                  left: "16%",
-                  top: "12%",
-                  width: "62%",
-                  height: "78%",
-                  border: "1.2px dashed #00B2A9",
-                  borderRadius: 4,
-                  boxShadow: "0 0 0 1px rgba(0,178,169,0.18)",
-                }}
-              >
-                {/* Corner handles */}
-                {[
-                  { top: -3, left: -3 },
-                  { top: -3, right: -3 },
-                  { bottom: -3, left: -3 },
-                  { bottom: -3, right: -3 },
-                ].map((pos, i) => (
-                  <motion.div
-                    key={i}
-                    animate={i === 1 && stage === 1 ? { scale: [1, 1.5, 1] } : {}}
-                    transition={{ duration: 0.8, repeat: Infinity }}
-                    style={{
-                      position: "absolute",
-                      width: 7,
-                      height: 7,
-                      background: "#00B2A9",
-                      borderRadius: 1.5,
-                      border: "1.5px solid #0B1426",
-                      ...pos,
-                    }}
-                  />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        {/* Bounding box — wraps the person area on the right. Visible
+            stage 1-2, fades out on stage 3 to signify the user "let go". */}
+        <AnimatePresence>
+          {stage >= 1 && stage < 3 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              style={{
+                position: "absolute",
+                top: "10%",
+                right: "6%",
+                width: "44%",
+                height: "82%",
+                border: "1.2px dashed #00B2A9",
+                borderRadius: 4,
+                boxShadow: "0 0 0 1px rgba(0,178,169,0.18)",
+                pointerEvents: "none",
+              }}
+            >
+              {[
+                { top: -3.5, left: -3.5 },
+                { top: -3.5, right: -3.5 },
+                { bottom: -3.5, left: -3.5 },
+                { bottom: -3.5, right: -3.5 },
+              ].map((pos, i) => (
+                <motion.div
+                  key={i}
+                  animate={i === 1 && stage === 1 ? { scale: [1, 1.5, 1] } : {}}
+                  transition={{ duration: 0.8, repeat: Infinity }}
+                  style={{
+                    position: "absolute",
+                    width: 7,
+                    height: 7,
+                    background: "#00B2A9",
+                    borderRadius: 1.5,
+                    border: "1.5px solid #0B1426",
+                    ...pos,
+                  }}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Cursor — moves to top-right corner handle, then settles */}
+        {/* Cursor — slides to the top-right corner handle, presses, then
+            releases. Pixel offsets are tuned for the popup's ~324px-wide
+            mini canvas. */}
         <motion.div
-          initial={{ x: 60, y: 80, opacity: 0 }}
+          initial={{ x: 40, y: 100, opacity: 0 }}
           animate={{
-            x: stage >= 2 ? 175 : stage >= 1 ? 168 : 60,
-            y: stage >= 2 ? 22 : stage >= 1 ? 28 : 80,
+            x: stage >= 1 ? 296 : 40,
+            y: stage >= 1 ? 12 : 100,
             opacity: stage >= 3 ? 0 : 1,
-            scale: stage === 1 ? [1, 0.85, 1] : 1,
+            scale: stage === 1 ? [1, 0.82, 1] : 1,
           }}
           transition={{
-            x: { type: "spring", stiffness: 120, damping: 18 },
-            y: { type: "spring", stiffness: 120, damping: 18 },
+            x: { type: "spring", stiffness: 130, damping: 18 },
+            y: { type: "spring", stiffness: 130, damping: 18 },
             opacity: { duration: 0.3 },
             scale: { duration: 0.45 },
           }}
@@ -5360,6 +5332,7 @@ function BeatSwooshAdjust() {
             border: "1px solid rgba(0,178,169,0.35)",
             padding: "3px 7px",
             borderRadius: 4,
+            pointerEvents: "none",
           }}
         >
           DRAG · RESIZE

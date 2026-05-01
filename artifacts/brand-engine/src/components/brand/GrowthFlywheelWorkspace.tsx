@@ -1068,14 +1068,13 @@ function InfoCard({
       {/* Inner content box — constrained when aligned */}
       <div className="relative" style={contentBoxStyle}>
 
-      {/* Header row — when right-aligned, the icon chip moves to the
-          right edge and the title/tagline text right-aligns next to it,
-          mirroring the left card's layout. */}
+      {/* Header row — icon chip on the LEFT, title to its right.
+          All side cards (left and right) use this same internal
+          layout; the right-side cards just have their content box
+          pinned to the outer edge of the slide so the text doesn't
+          overlap the flywheel. */}
       <div
         className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]"
-        style={
-          align === "right" ? { flexDirection: "row-reverse" } : undefined
-        }
       >
         {/* Icon chip */}
         <div
@@ -1098,7 +1097,6 @@ function InfoCard({
             content-box width and stay on a single line. */}
         <div
           className="flex-1 min-w-0 pt-[6px]"
-          style={align === "right" ? { textAlign: "right" } : undefined}
         >
           <div
             className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
@@ -1117,16 +1115,15 @@ function InfoCard({
         className="pl-[28px] pr-[26px] mt-[2px] text-[14px] leading-[1.4]"
         style={{
           color: "var(--card-text-muted)",
-          textAlign: align === "right" ? "right" : "left",
+          textAlign: "left",
           whiteSpace: "nowrap",
         }}
       >
         {stage.tagline}
       </p>
 
-      {/* Bullet list — right-aligned cards flip each bullet row so the
-          coloured dot sits on the right and the label reads in toward
-          the wheel. */}
+      {/* Bullet list — coloured dot on the LEFT, label to its right
+          (same layout for every card). */}
       <div className="pl-[28px] pr-[26px] pt-[12px] pb-[14px]">
         <div
           className={
@@ -1139,12 +1136,7 @@ function InfoCard({
             <div
               key={`${stage.id}-${idx}`}
               className="flex items-start gap-[12px] text-[19px] leading-[1.4] font-medium"
-              style={{
-                color: "var(--card-bullet-text)",
-                ...(align === "right"
-                  ? { flexDirection: "row-reverse", textAlign: "right" }
-                  : null),
-              }}
+              style={{ color: "var(--card-bullet-text)" }}
             >
               <div
                 className="w-[9px] h-[9px] rounded-full mt-[8px] shrink-0"

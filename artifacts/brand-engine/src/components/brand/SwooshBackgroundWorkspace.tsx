@@ -1028,17 +1028,21 @@ export function SwooshBackgroundWorkspace() {
                       containerType: "inline-size",
                     }}
                   >
+                    {/* Logo pinned TOP-LEFT (matches the Shaun thumbnail
+                        anchor), with the speaker name stacked underneath
+                        styled like the Zoom background's name treatment
+                        (cyan #20EDF1, uppercase, Poppins extrabold,
+                        tight tracking). */}
                     <div
                       style={{
                         position: "absolute",
-                        left: "5%",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        width: "40%",
+                        left: "4%",
+                        top: "6%",
+                        width: "45%",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "flex-start",
-                        gap: "2.5cqw",
+                        gap: "2cqw",
                       }}
                     >
                       <img
@@ -1057,14 +1061,15 @@ export function SwooshBackgroundWorkspace() {
                       {speakerName && (
                         <div
                           style={{
-                            color: "white",
+                            color: "#20EDF1",
                             fontFamily:
                               "Poppins, ui-sans-serif, system-ui, sans-serif",
-                            fontWeight: 700,
+                            fontWeight: 800,
                             fontSize: "5cqw",
                             lineHeight: 1.05,
                             letterSpacing: "-0.02em",
-                            textShadow: "0 6px 24px rgba(0,0,0,0.45)",
+                            textTransform: "uppercase",
+                            textShadow: "0 2px 12px rgba(0,0,0,0.5)",
                             maxWidth: "100%",
                             wordBreak: "break-word",
                             userSelect: "none",

@@ -238,7 +238,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             className={`${btnBase} cursor-pointer ${currentMode === 'swoosh-backgrounds' ? activeClass : inactiveClass}`}
           >
             <Video className={`w-[18px] h-[18px] shrink-0 ${iconCls(currentMode === 'swoosh-backgrounds')}`} />
-            Swoosh Backgrounds
+            Swoosh
           </button>
         </div>
 

@@ -6,17 +6,26 @@ import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
 const SWOOSH = `${BASE}assets/swoosh/swoosh-highly.png`;
+const SPACE_BG = `${BASE}assets/swoosh/space-bg.png`;
 
-// Canvas is exactly 1920x1080 per spec.
-const CANVAS_W = 1920;
-const CANVAS_H = 1080;
-const CANVAS_RATIO = CANVAS_W / CANVAS_H;
+// Two surfaces:
+//  - DOWNLOAD: 1080×1350 portrait — transparent PNG of swoosh + human +
+//    robot. This is the only exportable asset.
+//  - PREVIEW : 1920×1080 landscape — the same composition placed onto the
+//    Highly space background on the right-hand side. Display only; not
+//    downloadable. Lets users see how the artwork will look in context.
+const DOWNLOAD_W = 1080;
+const DOWNLOAD_H = 1350;
+const DOWNLOAD_RATIO = DOWNLOAD_W / DOWNLOAD_H;
+const PREVIEW_W = 1920;
+const PREVIEW_H = 1080;
+const PREVIEW_RATIO = PREVIEW_W / PREVIEW_H;
 
 // Persisted state helper (same pattern as MasterClassWorkspace). The version
 // suffix is bumped whenever defaults change so existing users get the new
 // defaults instead of stale localStorage values.
 function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const STORAGE_KEY = `brandEngine.swooshBackground.v9.${key}`;
+  const STORAGE_KEY = `brandEngine.swooshBackground.v10.${key}`;
   const [v, setV] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -82,18 +91,15 @@ interface HumanSettings {
   scale: number; // height as a fraction of canvas height, 0.3..1.4
 }
 
-// Defaults tuned to match the supplied reference: the person is on the FAR
-// RIGHT (face dominant, top-of-head near top of canvas) and the swoosh forms
-// a tight oval wrapping her LOWER body, with the Highly robot sitting just
-// to the upper-right of her head.
-// Swoosh sized to fully fit inside the 1920×1080 canvas with no cropping.
-// The asset is portrait (~786×1024) and styled by HEIGHT only, so scale 1.0
-// = 100% of canvas height; width then auto-scales to ~830px which fits
-// horizontally with room to spare. x/y both 0 = perfectly centered.
+// Defaults tuned for the 1080×1350 portrait download canvas:
+//  - Swoosh: centered, height = 100% of canvas. The asset is portrait
+//    (~786×1024); at scale 1.0 it renders 1350px tall × ~1036px wide,
+//    fitting inside the 1080-wide canvas with a few px to spare on each
+//    side. x/y = 0 = perfectly centered.
+//  - Human: centered horizontally with head anchored at the top edge.
+//    User can drag freely from there.
 const DEFAULT_SWOOSH: SwooshSettings = { x: 0, y: 0, scale: 1.0 };
-// Human is anchored at the TOP of the canvas (head at top) so a full-body
-// upload always shows head→chest→waist clearly within the visible region.
-const DEFAULT_HUMAN: HumanSettings = { x: 28, y: 0, scale: 1.0 };
+const DEFAULT_HUMAN: HumanSettings = { x: 0, y: 0, scale: 1.0 };
 
 // The lower 25% of the canvas is clipped away from the human only — that's
 // the visual line where the swoosh's bottom curve sits, so anything below
@@ -108,6 +114,18 @@ const HUMAN_BOTTOM_CLIP = "inset(0% 0% 25% 0%)";
 // (the front-of-curve sweep) so the woman's face/upper body stay clean.
 // Inset(top right bottom left) — keep the bottom 48% only.
 const FRONT_CLIP = "inset(52% 0% 0% 0%)";
+
+// A sized frame that fits inside its parent at the given aspect ratio.
+// Children fill it absolutely.
+function CanvasFrame({ ratio, children, style }: { ratio: number; children: React.ReactNode; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useFitParent(ref, ratio);
+  return (
+    <div ref={ref} style={{ position: "relative", overflow: "visible", ...style }}>
+      {children}
+    </div>
+  );
+}
 
 function SwooshComposition({
   personImage,
@@ -125,7 +143,9 @@ function SwooshComposition({
   exporting?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  useFitParent(containerRef, CANVAS_RATIO);
+  // No internal sizing — the composition fills its parent absolutely. The
+  // parent (CanvasFrame or a portrait wrapper inside the bg preview) is
+  // responsible for setting width/height and aspect ratio.
 
   // Drag-to-position state. We capture the pointer on mousedown over the
   // human image, then translate every pointermove into a delta on
@@ -219,7 +239,8 @@ function SwooshComposition({
       ref={containerRef}
       data-template-id="swoosh-bg"
       style={{
-        position: "relative",
+        position: "absolute",
+        inset: 0,
         overflow: canvasOverflow,
         // Transparent — the downloadable PNG is just the swoosh + human with
         // alpha so users can drop it onto any background of their choice.
@@ -274,10 +295,13 @@ function SwooshComposition({
   );
 }
 
+type PreviewMode = "download" | "preview";
+
 export function SwooshBackgroundWorkspace() {
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("download");
   // Swoosh placement is fixed — only the human + front opacity are tunable.
   const swoosh: SwooshSettings = DEFAULT_SWOOSH;
   const [human, setHuman] = usePersistedState<HumanSettings>("human", DEFAULT_HUMAN);
@@ -412,7 +436,7 @@ export function SwooshBackgroundWorkspace() {
       const dataUrl = await toPng(el, {
         width: el.offsetWidth,
         height: el.offsetHeight,
-        pixelRatio: CANVAS_W / el.offsetWidth,
+        pixelRatio: DOWNLOAD_W / el.offsetWidth,
         cacheBust: true,
         skipAutoScale: true,
         // Skip @font-face fetching — we don't render any text in this
@@ -424,10 +448,10 @@ export function SwooshBackgroundWorkspace() {
         style: { borderRadius: "0", backgroundColor: "transparent" },
       });
       const blob = dataUrlToBlob(dataUrl);
-      const filename = `Swoosh_Background_${CANVAS_W}x${CANVAS_H}.png`;
+      const filename = `Swoosh_Background_${DOWNLOAD_W}x${DOWNLOAD_H}.png`;
       triggerDownload(blob, filename);
       createThumbnail(dataUrl).then((thumb) =>
-        addExport({ name: filename, source: "Swoosh Background", format: "png", thumbnail: thumb, dimensions: `${CANVAS_W}x${CANVAS_H}` }),
+        addExport({ name: filename, source: "Swoosh Background", format: "png", thumbnail: thumb, dimensions: `${DOWNLOAD_W}x${DOWNLOAD_H}` }),
       );
     } catch (err) {
       const anyErr = err as { message?: string; stack?: string; target?: { src?: string } };
@@ -535,7 +559,7 @@ export function SwooshBackgroundWorkspace() {
             className="w-full py-[12px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isExporting ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
-            {isExporting ? "Exporting..." : `Download PNG (${CANVAS_W}×${CANVAS_H})`}
+            {isExporting ? "Exporting..." : `Download PNG (${DOWNLOAD_W}×${DOWNLOAD_H})`}
           </button>
           {!personImage && (
             <div className="text-[10px] text-[#64748B] text-center">Upload a photo to enable download.</div>
@@ -546,14 +570,98 @@ export function SwooshBackgroundWorkspace() {
       {/* Live preview */}
       <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
         <LivePreview>
-          <div className="w-full h-full max-w-[960px] flex items-center justify-center min-h-0" ref={previewRef}>
-            <SwooshComposition
-              personImage={personImage}
-              swoosh={swoosh}
-              human={human}
-              onHumanChange={setHuman}
-              exporting={isExporting}
-            />
+          <div className="w-full h-full flex flex-col items-center min-h-0 gap-[12px]" ref={previewRef}>
+            {/* Preview-type toggle: Download (1080×1350) is the actual
+                exportable artwork; Preview (1920×1080) shows the same
+                artwork dropped onto the Highly space background so users
+                can see how it'll look in context. */}
+            <div className="flex items-center gap-[4px] p-[4px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)]">
+              <button
+                onClick={() => setPreviewMode("download")}
+                className={`px-[12px] py-[6px] rounded-[7px] text-[10px] font-semibold transition-all border-none cursor-pointer ${
+                  previewMode === "download"
+                    ? "bg-[#2896FB] text-white shadow-[0_2px_8px_rgba(40,150,251,0.3)]"
+                    : "bg-transparent text-[#94A3B8] hover:text-white"
+                }`}
+              >
+                Download · 1080×1350
+              </button>
+              <button
+                onClick={() => setPreviewMode("preview")}
+                className={`px-[12px] py-[6px] rounded-[7px] text-[10px] font-semibold transition-all border-none cursor-pointer ${
+                  previewMode === "preview"
+                    ? "bg-[#2896FB] text-white shadow-[0_2px_8px_rgba(40,150,251,0.3)]"
+                    : "bg-transparent text-[#94A3B8] hover:text-white"
+                }`}
+              >
+                Preview · 1920×1080
+              </button>
+            </div>
+
+            <div className="flex-1 w-full min-h-0 flex items-center justify-center">
+              {previewMode === "download" ? (
+                <CanvasFrame
+                  ratio={DOWNLOAD_RATIO}
+                  style={{
+                    maxWidth: "min(100%, 540px)",
+                    // Faint dashed outline so users can see the canvas
+                    // bounds (the artwork is transparent, so without an
+                    // outline the frame would be invisible). Hidden during
+                    // export.
+                    outline: isExporting ? "none" : "1px dashed rgba(255,255,255,0.12)",
+                    outlineOffset: "0px",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <SwooshComposition
+                    personImage={personImage}
+                    swoosh={swoosh}
+                    human={human}
+                    onHumanChange={setHuman}
+                    exporting={isExporting}
+                  />
+                </CanvasFrame>
+              ) : (
+                <CanvasFrame ratio={PREVIEW_RATIO} style={{ maxWidth: "100%", overflow: "hidden", borderRadius: "8px" }}>
+                  {/* Space background fills the 1920×1080 preview frame */}
+                  <img
+                    src={SPACE_BG}
+                    alt=""
+                    draggable={false}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
+                    crossOrigin="anonymous"
+                  />
+                  {/* Portrait swoosh composition placed on the right side
+                      of the 1920×1080 frame. Height fills the frame, width
+                      auto from the 1080/1350 aspect ratio, anchored right. */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      right: 0,
+                      bottom: 0,
+                      aspectRatio: `${DOWNLOAD_W} / ${DOWNLOAD_H}`,
+                    }}
+                  >
+                    <SwooshComposition
+                      personImage={personImage}
+                      swoosh={swoosh}
+                      human={human}
+                      onHumanChange={setHuman}
+                      exporting={isExporting}
+                    />
+                  </div>
+                </CanvasFrame>
+              )}
+            </div>
           </div>
         </LivePreview>
       </div>

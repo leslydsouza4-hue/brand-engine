@@ -16,7 +16,6 @@ const SPACE_BG = `${BASE}assets/swoosh/space-bg.png`;
 //    downloadable. Lets users see how the artwork will look in context.
 const DOWNLOAD_W = 1080;
 const DOWNLOAD_H = 1350;
-const DOWNLOAD_RATIO = DOWNLOAD_W / DOWNLOAD_H;
 const PREVIEW_W = 1920;
 const PREVIEW_H = 1080;
 const PREVIEW_RATIO = PREVIEW_W / PREVIEW_H;
@@ -630,13 +629,15 @@ function SwooshComposition({
   );
 }
 
-type PreviewMode = "download" | "preview";
+type ExportKind = "complete" | "swoosh";
 
 export function SwooshBackgroundWorkspace() {
   const [personImage, setPersonImage] = useState<string | null>(null);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [previewMode, setPreviewMode] = useState<PreviewMode>("download");
+  // We track *which* export is in flight so the right button shows a
+  // spinner while leaving the other one usable. `null` = idle.
+  const [exportKind, setExportKind] = useState<ExportKind | null>(null);
+  const isExporting = exportKind !== null;
   // Swoosh placement is fixed — only the human + front opacity are tunable.
   const swoosh: SwooshSettings = DEFAULT_SWOOSH;
   const [human, setHuman] = usePersistedState<HumanSettings>("human", DEFAULT_HUMAN);
@@ -758,35 +759,66 @@ export function SwooshBackgroundWorkspace() {
     }, 5000);
   }, []);
 
-  const exportPNG = useCallback(async () => {
+  // Single export pipeline for both downloads. The `kind` selects:
+  //   • "complete" → captures the full 1920×1080 preview frame (space bg
+  //     + portrait swoosh comp on the right). Solid (non-transparent)
+  //     because the space background is already opaque.
+  //   • "swoosh"   → captures only the 1080×1350 portrait swoosh comp
+  //     (transparent PNG of the swoosh + human cutout, ready to drop
+  //     onto any background).
+  // Both target distinct DOM nodes via data-template-id and use the
+  // matching natural canvas dimensions for pixelRatio + filename.
+  const exportPNG = useCallback(async (kind: ExportKind) => {
     const root = previewRef.current;
     if (!root) return;
-    const el = root.querySelector(`[data-template-id="swoosh-bg"]`) as HTMLElement | null;
+    const isComplete = kind === "complete";
+    const selector = isComplete
+      ? `[data-template-id="swoosh-complete"]`
+      : `[data-template-id="swoosh-bg"]`;
+    const targetW = isComplete ? PREVIEW_W : DOWNLOAD_W;
+    const targetH = isComplete ? PREVIEW_H : DOWNLOAD_H;
+    const filenamePrefix = isComplete ? "Swoosh_Complete" : "Swoosh_Only";
+    const el = root.querySelector(selector) as HTMLElement | null;
     if (!el) return;
-    setIsExporting(true);
+    setExportKind(kind);
     // Strip the outer frame's border-radius for a clean rectangular PNG.
     const origRadius = el.style.borderRadius;
     el.style.borderRadius = "0";
     try {
+      // Wait one frame so the `exporting` prop propagates and the
+      // SwooshComposition switches to its export-mode rendering
+      // (handles hidden, overflow clipped) before html-to-image
+      // snapshots the DOM.
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
       const dataUrl = await toPng(el, {
         width: el.offsetWidth,
         height: el.offsetHeight,
-        pixelRatio: DOWNLOAD_W / el.offsetWidth,
+        pixelRatio: targetW / el.offsetWidth,
         cacheBust: true,
         skipAutoScale: true,
         // Skip @font-face fetching — we don't render any text in this
         // composition, so font CSS is irrelevant and would only risk a
         // CORS-related abort during export.
         skipFonts: true,
-        // Transparent PNG so the swoosh + human can be dropped onto any bg.
+        // "swoosh" must stay transparent so it can be dropped onto any
+        // bg. "complete" already paints the space background image, so
+        // we leave it transparent here too — anything outside the
+        // visible content (none, since space-bg fills the frame) just
+        // stays transparent harmlessly.
         backgroundColor: "transparent",
         style: { borderRadius: "0", backgroundColor: "transparent" },
       });
       const blob = dataUrlToBlob(dataUrl);
-      const filename = `Swoosh_Background_${DOWNLOAD_W}x${DOWNLOAD_H}.png`;
+      const filename = `${filenamePrefix}_${targetW}x${targetH}.png`;
       triggerDownload(blob, filename);
       createThumbnail(dataUrl).then((thumb) =>
-        addExport({ name: filename, source: "Swoosh Background", format: "png", thumbnail: thumb, dimensions: `${DOWNLOAD_W}x${DOWNLOAD_H}` }),
+        addExport({
+          name: filename,
+          source: "Swoosh Background",
+          format: "png",
+          thumbnail: thumb,
+          dimensions: `${targetW}x${targetH}`,
+        }),
       );
     } catch (err) {
       const anyErr = err as { message?: string; stack?: string; target?: { src?: string } };
@@ -798,7 +830,7 @@ export function SwooshBackgroundWorkspace() {
       );
     } finally {
       el.style.borderRadius = origRadius;
-      setIsExporting(false);
+      setExportKind(null);
     }
   }, [dataUrlToBlob, triggerDownload]);
 
@@ -887,77 +919,51 @@ export function SwooshBackgroundWorkspace() {
 
           <div className="h-[1px] bg-[rgba(255,255,255,0.04)]" />
 
-          {/* Download */}
-          <button
-            onClick={exportPNG}
-            disabled={!personImage || isExporting}
-            className="w-full py-[12px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isExporting ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
-            {isExporting ? "Exporting..." : `Download PNG (${DOWNLOAD_W}×${DOWNLOAD_H})`}
-          </button>
+          {/* Two download options:
+              • Complete — full 1920×1080 preview (space bg + swoosh comp)
+              • Swoosh Only — transparent 1080×1350 portrait swoosh comp */}
+          <div className="flex flex-col gap-[8px]">
+            <button
+              onClick={() => exportPNG("complete")}
+              disabled={!personImage || isExporting}
+              className="w-full py-[12px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {exportKind === "complete" ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
+              {exportKind === "complete" ? "Exporting..." : `Download Complete (${PREVIEW_W}×${PREVIEW_H})`}
+            </button>
+            <button
+              onClick={() => exportPNG("swoosh")}
+              disabled={!personImage || isExporting}
+              className="w-full py-[12px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(0,178,169,0.25)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {exportKind === "swoosh" ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
+              {exportKind === "swoosh" ? "Exporting..." : `Download Swoosh Only (${DOWNLOAD_W}×${DOWNLOAD_H})`}
+            </button>
+          </div>
           {!personImage && (
             <div className="text-[10px] text-[#64748B] text-center">Upload a photo to enable download.</div>
           )}
         </div>
       </div>
 
-      {/* Live preview */}
+      {/* Live preview — always the 1920×1080 composition (space bg +
+          portrait swoosh comp on the right). The portrait swoosh element
+          is still independently exportable as a transparent 1080×1350
+          PNG via its data-template-id="swoosh-bg". */}
       <div className="flex-1 flex flex-col overflow-hidden min-h-0 min-w-0">
         <LivePreview>
           <div className="w-full h-full flex flex-col items-center min-h-0 gap-[12px]" ref={previewRef}>
-            {/* Preview-type toggle: Download (1080×1350) is the actual
-                exportable artwork; Preview (1920×1080) shows the same
-                artwork dropped onto the Highly space background so users
-                can see how it'll look in context. */}
-            <div className="flex items-center gap-[4px] p-[4px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)]">
-              <button
-                onClick={() => setPreviewMode("download")}
-                className={`px-[12px] py-[6px] rounded-[7px] text-[10px] font-semibold transition-all border-none cursor-pointer ${
-                  previewMode === "download"
-                    ? "bg-[#2896FB] text-white shadow-[0_2px_8px_rgba(40,150,251,0.3)]"
-                    : "bg-transparent text-[#94A3B8] hover:text-white"
-                }`}
-              >
-                Download · 1080×1350
-              </button>
-              <button
-                onClick={() => setPreviewMode("preview")}
-                className={`px-[12px] py-[6px] rounded-[7px] text-[10px] font-semibold transition-all border-none cursor-pointer ${
-                  previewMode === "preview"
-                    ? "bg-[#2896FB] text-white shadow-[0_2px_8px_rgba(40,150,251,0.3)]"
-                    : "bg-transparent text-[#94A3B8] hover:text-white"
-                }`}
-              >
-                Preview · 1920×1080
-              </button>
+            <div className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#94A3B8]">
+              Preview · {PREVIEW_W}×{PREVIEW_H}
             </div>
-
             <div className="flex-1 w-full min-h-0 flex items-center justify-center">
-              {previewMode === "download" ? (
-                <CanvasFrame
-                  ratio={DOWNLOAD_RATIO}
-                  style={{
-                    maxWidth: "min(100%, 540px)",
-                    // Faint dashed outline so users can see the canvas
-                    // bounds (the artwork is transparent, so without an
-                    // outline the frame would be invisible). Hidden during
-                    // export.
-                    outline: isExporting ? "none" : "1px dashed rgba(255,255,255,0.12)",
-                    outlineOffset: "0px",
-                    borderRadius: "4px",
-                  }}
+              <CanvasFrame ratio={PREVIEW_RATIO} style={{ maxWidth: "100%", overflow: "hidden", borderRadius: "8px" }}>
+                {/* Wrapper that fills the 1920×1080 frame and is the
+                    capture target for the "Complete" download. */}
+                <div
+                  data-template-id="swoosh-complete"
+                  style={{ position: "absolute", inset: 0 }}
                 >
-                  <SwooshComposition
-                    personImage={personImage}
-                    swoosh={swoosh}
-                    human={human}
-                    onHumanChange={setHuman}
-                    exporting={isExporting}
-                  />
-                </CanvasFrame>
-              ) : (
-                <CanvasFrame ratio={PREVIEW_RATIO} style={{ maxWidth: "100%", overflow: "hidden", borderRadius: "8px" }}>
                   {/* Space background fills the 1920×1080 preview frame */}
                   <img
                     src={SPACE_BG}
@@ -980,8 +986,8 @@ export function SwooshBackgroundWorkspace() {
                         • height = 150% of canvas height so the swoosh asset
                           renders large enough to fill the right half (loop
                           starts near canvas center, extends past right edge)
-                        • right = -10% of canvas width pushes the comp's right
-                          edge ~192px past the canvas right edge, placing the
+                        • right = -12% of canvas width pushes the comp's right
+                          edge ~230px past the canvas right edge, placing the
                           Highly robot at the very top-right corner with the
                           rest of the swoosh's right side cleanly cut off
                         • top = 68% / translateY(-50%) shifts the comp center
@@ -1006,8 +1012,8 @@ export function SwooshBackgroundWorkspace() {
                       exporting={isExporting}
                     />
                   </div>
-                </CanvasFrame>
-              )}
+                </div>
+              </CanvasFrame>
             </div>
           </div>
         </LivePreview>

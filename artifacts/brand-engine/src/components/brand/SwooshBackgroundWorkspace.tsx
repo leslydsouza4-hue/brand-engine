@@ -958,15 +958,27 @@ export function SwooshBackgroundWorkspace() {
                     crossOrigin="anonymous"
                   />
                   {/* Portrait swoosh composition placed on the right side
-                      of the 1920×1080 frame. Height fills the frame, width
-                      auto from the 1080/1350 aspect ratio, anchored right. */}
+                      of the 1920×1080 frame. To match the reference layout
+                      EXACTLY:
+                        • height = 150% of canvas height so the swoosh asset
+                          renders large enough to fill the right half (loop
+                          starts near canvas center, extends past right edge)
+                        • right = -10% of canvas width pushes the comp's right
+                          edge ~192px past the canvas right edge, placing the
+                          Highly robot at the very top-right corner with the
+                          rest of the swoosh's right side cleanly cut off
+                        • top = 68% / translateY(-50%) shifts the comp center
+                          down so the robot lands at ~y=170 (matching the
+                          reference's top-right anchor) instead of being
+                          clipped above the canvas top */}
                   <div
                     style={{
                       position: "absolute",
-                      top: 0,
-                      right: 0,
-                      bottom: 0,
+                      top: "68%",
+                      right: "-10%",
+                      height: "150%",
                       aspectRatio: `${DOWNLOAD_W} / ${DOWNLOAD_H}`,
+                      transform: "translateY(-50%)",
                     }}
                   >
                     <SwooshComposition

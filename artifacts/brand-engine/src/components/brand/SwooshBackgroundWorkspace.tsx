@@ -1033,6 +1033,11 @@ export function SwooshBackgroundWorkspace() {
           </div>
         </LivePreview>
       </div>
+
+      {/* "How it works" tutorial — auto-cycling 3-stage walkthrough
+          (Upload → Adjust → Download). Triggered by the (i) button next
+          to the workspace title. */}
+      <SwooshTutorial open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </div>
   );
 }

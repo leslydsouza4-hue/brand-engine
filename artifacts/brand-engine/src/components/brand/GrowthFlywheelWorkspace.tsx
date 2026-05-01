@@ -1068,11 +1068,9 @@ function InfoCard({
       {/* Inner content box — constrained when aligned */}
       <div className="relative" style={contentBoxStyle}>
 
-      {/* Header row — icon chip on the LEFT, title to its right.
-          All side cards (left and right) use this same internal
-          layout; the right-side cards just have their content box
-          pinned to the outer edge of the slide so the text doesn't
-          overlap the flywheel. */}
+      {/* Header row — icon chip on the LEFT, title + tagline stacked
+          to its right. Tagline now sits directly under the title
+          (aligned to the title's start), not under the icon. */}
       <div
         className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]"
       >
@@ -1092,12 +1090,10 @@ function InfoCard({
           />
         </div>
 
-        {/* Title sits next to the icon. Tagline is rendered BELOW the
-            header row (outside this flex) so it can use the full
-            content-box width and stay on a single line. */}
-        <div
-          className="flex-1 min-w-0 pt-[6px]"
-        >
+        {/* Title + tagline column. Both align to the title's left
+            edge (i.e. right of the icon), so the tagline never sits
+            under the icon chip. */}
+        <div className="flex-1 min-w-0 pt-[6px]">
           <div
             className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{
@@ -1107,20 +1103,18 @@ function InfoCard({
           >
             {stage.title}
           </div>
+          <p
+            className="mt-[2px] text-[14px] leading-[1.4]"
+            style={{
+              color: "var(--card-text-muted)",
+              textAlign: "left",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {stage.tagline}
+          </p>
         </div>
       </div>
-
-      {/* Tagline — full content-box width, single line. */}
-      <p
-        className="pl-[28px] pr-[26px] mt-[2px] text-[14px] leading-[1.4]"
-        style={{
-          color: "var(--card-text-muted)",
-          textAlign: "left",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {stage.tagline}
-      </p>
 
       {/* Bullet list — coloured dot on the LEFT, label to its right
           (same layout for every card). */}

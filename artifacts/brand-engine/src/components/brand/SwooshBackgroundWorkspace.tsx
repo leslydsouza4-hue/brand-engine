@@ -919,25 +919,26 @@ export function SwooshBackgroundWorkspace() {
 
           <div className="h-[1px] bg-[rgba(255,255,255,0.04)]" />
 
-          {/* Two download options:
-              • Complete — full 1920×1080 preview (space bg + swoosh comp)
-              • Swoosh Only — transparent 1080×1350 portrait swoosh comp */}
+          {/* Two download options. Swoosh is the headline deliverable
+              (transparent PNG users drop into their own designs) so it's
+              the primary blue-gradient button. The Slide preview is a
+              secondary/contextual export. */}
           <div className="flex flex-col gap-[8px]">
-            <button
-              onClick={() => exportPNG("complete")}
-              disabled={!personImage || isExporting}
-              className="w-full py-[12px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {exportKind === "complete" ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
-              {exportKind === "complete" ? "Exporting..." : `Download Complete (${PREVIEW_W}×${PREVIEW_H})`}
-            </button>
             <button
               onClick={() => exportPNG("swoosh")}
               disabled={!personImage || isExporting}
-              className="w-full py-[12px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(0,178,169,0.25)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-[12px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {exportKind === "swoosh" ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
-              {exportKind === "swoosh" ? "Exporting..." : `Download Swoosh Only (${DOWNLOAD_W}×${DOWNLOAD_H})`}
+              {exportKind === "swoosh" ? "Exporting..." : `Download Swoosh (${DOWNLOAD_W}×${DOWNLOAD_H})`}
+            </button>
+            <button
+              onClick={() => exportPNG("complete")}
+              disabled={!personImage || isExporting}
+              className="w-full py-[12px] rounded-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-white text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer hover:bg-[rgba(255,255,255,0.08)] hover:border-[rgba(0,178,169,0.25)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {exportKind === "complete" ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
+              {exportKind === "complete" ? "Exporting..." : `Download Slide (${PREVIEW_W}×${PREVIEW_H})`}
             </button>
           </div>
           {!personImage && (

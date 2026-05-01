@@ -1023,12 +1023,17 @@ function InfoCard({
   // Auto Call Connect") on a single line so the Nurture card doesn't
   // overflow its row.
   const contentMax = 500;
+  // The four side cards (Evangelize, Capture, Close, Nurture) get a
+  // small top nudge so their content sits a touch lower in the card
+  // — visually balances them against the centered flywheel halo.
+  const sideTopNudge = "2%";
   const contentBoxStyle: React.CSSProperties =
     align === "left"
       ? {
           maxWidth: contentMax,
           marginLeft: "auto",
           marginRight: wheelBuffer + outwardNudge,
+          paddingTop: sideTopNudge,
         }
       : align === "right"
         ? {
@@ -1039,6 +1044,7 @@ function InfoCard({
             maxWidth: contentMax,
             marginLeft: "auto",
             marginRight: 0,
+            paddingTop: sideTopNudge,
           }
         : {};
   const glowCorner = align === "right" ? "100% 0%" : "0% 0%";

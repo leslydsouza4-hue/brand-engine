@@ -992,7 +992,7 @@ export function SwooshBackgroundWorkspace() {
                     style={{
                       position: "absolute",
                       top: "68%",
-                      right: "-15%",
+                      right: "-12%",
                       height: "150%",
                       aspectRatio: `${DOWNLOAD_W} / ${DOWNLOAD_H}`,
                       transform: "translateY(-50%)",

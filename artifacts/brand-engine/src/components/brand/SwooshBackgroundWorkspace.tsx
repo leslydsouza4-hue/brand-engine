@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useLayoutEffect, type RefObject } from "react";
+import { useState, useRef, useEffect, useCallback, useLayoutEffect, type RefObject } from "react";
 import { UploadCloud, X, Loader2, Download, Check, ZoomIn, RefreshCw } from "lucide-react";
 import { toPng } from "html-to-image";
 import { addExport, createThumbnail } from "./exportStore";
@@ -25,7 +25,7 @@ const PREVIEW_RATIO = PREVIEW_W / PREVIEW_H;
 // suffix is bumped whenever defaults change so existing users get the new
 // defaults instead of stale localStorage values.
 function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const STORAGE_KEY = `brandEngine.swooshBackground.v11.${key}`;
+  const STORAGE_KEY = `brandEngine.swooshBackground.v12.${key}`;
   const [v, setV] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -89,6 +89,13 @@ interface HumanSettings {
   x: number; // % offset from center, -50..+50
   y: number; // % offset from center, -50..+50
   scale: number; // height as a fraction of canvas height, 0.3..1.4
+  // Crop insets — fractions of the IMAGE's own dims (0..0.95). Each side
+  // independently hides that portion of the image. Used together with the
+  // bounding box's edge handles for true cropping (vs. corner-handle scale).
+  cropTop: number;
+  cropRight: number;
+  cropBottom: number;
+  cropLeft: number;
 }
 
 // Defaults tuned for the 1080×1350 portrait download canvas:
@@ -101,7 +108,15 @@ interface HumanSettings {
 //    sized to roughly match the swoosh so the face naturally falls
 //    inside the swoosh's loop. User can drag freely from there.
 const DEFAULT_SWOOSH: SwooshSettings = { x: 0, y: 0, scale: 0.7 };
-const DEFAULT_HUMAN: HumanSettings = { x: 0, y: 0, scale: 0.7 };
+const DEFAULT_HUMAN: HumanSettings = {
+  x: 0,
+  y: 0,
+  scale: 0.7,
+  cropTop: 0,
+  cropRight: 0,
+  cropBottom: 0,
+  cropLeft: 0,
+};
 
 // The lower 25% of the canvas is clipped away from the human only — that's
 // the visual line where the swoosh's bottom curve sits, so anything below
@@ -226,6 +241,90 @@ function SwooshComposition({
     resizeRef.current = null;
   };
 
+  // Track the canvas's actual pixel size so we can position the bounding box
+  // (and compute crop deltas) in pixel space — needed because the box's
+  // position/size depends on both human.x/y/scale AND the asymmetric crop
+  // insets, which can't be expressed cleanly in pure CSS percentages alone.
+  const [canvasPx, setCanvasPx] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) setCanvasPx({ w: r.width, h: r.height });
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // Crop state — driven by the FOUR EDGE handles on the bounding box. Each
+  // edge drags inward to add crop on that side, outward to release crop.
+  const cropRef = useRef<{
+    side: "top" | "right" | "bottom" | "left";
+    startX: number;
+    startY: number;
+    baseTop: number;
+    baseRight: number;
+    baseBottom: number;
+    baseLeft: number;
+    pointerId: number;
+  } | null>(null);
+
+  const startCropDrag = (
+    side: "top" | "right" | "bottom" | "left",
+    e: React.PointerEvent<HTMLDivElement>,
+  ) => {
+    if (!onHumanChange) return;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    cropRef.current = {
+      side,
+      startX: e.clientX,
+      startY: e.clientY,
+      baseTop: human.cropTop,
+      baseRight: human.cropRight,
+      baseBottom: human.cropBottom,
+      baseLeft: human.cropLeft,
+      pointerId: e.pointerId,
+    };
+  };
+
+  const onCropPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!cropRef.current || !onHumanChange) return;
+    const { side, startX, startY, baseTop, baseRight, baseBottom, baseLeft } = cropRef.current;
+    const imgH = canvasPx.h * human.scale;
+    const imgW = imgH * humanAspect;
+    if (imgH <= 0 || imgW <= 0) return;
+    let next: HumanSettings = { ...human };
+    if (side === "top") {
+      const deltaCrop = (e.clientY - startY) / imgH;
+      next.cropTop = Math.max(0, Math.min(0.95 - human.cropBottom, baseTop + deltaCrop));
+    } else if (side === "bottom") {
+      const deltaCrop = -(e.clientY - startY) / imgH;
+      next.cropBottom = Math.max(0, Math.min(0.95 - human.cropTop, baseBottom + deltaCrop));
+    } else if (side === "left") {
+      const deltaCrop = (e.clientX - startX) / imgW;
+      next.cropLeft = Math.max(0, Math.min(0.95 - human.cropRight, baseLeft + deltaCrop));
+    } else if (side === "right") {
+      const deltaCrop = -(e.clientX - startX) / imgW;
+      next.cropRight = Math.max(0, Math.min(0.95 - human.cropLeft, baseRight + deltaCrop));
+    }
+    onHumanChange(next);
+  };
+
+  const onCropPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!cropRef.current) return;
+    try {
+      (e.currentTarget as Element).releasePointerCapture(cropRef.current.pointerId);
+    } catch {
+      /* may already be released */
+    }
+    cropRef.current = null;
+  };
+
   const onPointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
     if (!onHumanChange || !containerRef.current) return;
     e.preventDefault();
@@ -283,6 +382,10 @@ function SwooshComposition({
   // free, no clamps. Default y=0 anchors the head to the canvas top; from
   // there the user can drag anywhere they want.
   const draggable = !!onHumanChange && !exporting;
+  // The image's own clip-path applies the user-defined crop insets in image
+  // space (each value is a fraction of the image's own dims). This is
+  // independent of and combines with the wrapper's bottom-curve clip.
+  const humanCropClip = `inset(${human.cropTop * 100}% ${human.cropRight * 100}% ${human.cropBottom * 100}% ${human.cropLeft * 100}%)`;
   const humanStyle: React.CSSProperties = {
     position: "absolute",
     left: `${50 + human.x}%`,
@@ -294,6 +397,8 @@ function SwooshComposition({
     pointerEvents: draggable ? "auto" : "none",
     cursor: draggable ? (dragRef.current ? "grabbing" : "grab") : "default",
     touchAction: "none",
+    clipPath: humanCropClip,
+    WebkitClipPath: humanCropClip,
   };
 
   // In the live preview the canvas allows overflow on the TOP so the user
@@ -367,55 +472,143 @@ function SwooshComposition({
         crossOrigin="anonymous"
       />
 
-      {/* Layer 4 (preview only, never exported): bounding box overlay with
-          four corner handles. The box sits exactly over the human image's
-          rendered footprint (height = scale × canvas height, width derived
-          from the image's natural aspect ratio). Handles drive proportional
-          resize via pointer events; the box itself is pointer-transparent so
-          the inner image's drag-to-position still works. */}
-      {personImage && draggable && (
-        <div
-          style={{
-            position: "absolute",
-            left: `${50 + human.x}%`,
-            top: `${human.y}%`,
-            height: `${human.scale * 100}%`,
-            aspectRatio: `${humanAspect}`,
-            transform: "translateX(-50%)",
-            border: "1.5px dashed rgba(40, 150, 251, 0.85)",
-            boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.25)",
-            pointerEvents: "none",
-            boxSizing: "border-box",
-            zIndex: 5,
-          }}
-        >
-          {([
-            { top: -7, left: -7, cursor: "nwse-resize" },
-            { top: -7, right: -7, cursor: "nesw-resize" },
-            { bottom: -7, left: -7, cursor: "nesw-resize" },
-            { bottom: -7, right: -7, cursor: "nwse-resize" },
-          ] as const).map((pos, i) => (
+      {/* Layer 4 (preview only, never exported): bounding box overlay
+          positioned over the CROPPED visible area of the human image. The
+          box itself is pointer-transparent so the inner image's drag still
+          works through it. It hosts two kinds of handles:
+            • CORNERS (square): proportional resize via human.scale
+            • EDGES (rounded bars): true cropping via clip-path inset on
+              each side of the image
+          Both are hidden during export so they never end up in the PNG. */}
+      {personImage && draggable && canvasPx.w > 0 && canvasPx.h > 0 && (() => {
+        const imgH = canvasPx.h * human.scale;
+        const imgW = imgH * humanAspect;
+        const imgLeft = (canvasPx.w * (50 + human.x)) / 100 - imgW / 2;
+        const imgTop = (canvasPx.h * human.y) / 100;
+        const vLeft = imgLeft + imgW * human.cropLeft;
+        const vTop = imgTop + imgH * human.cropTop;
+        const vWidth = imgW * (1 - human.cropLeft - human.cropRight);
+        const vHeight = imgH * (1 - human.cropTop - human.cropBottom);
+        const handleSquare: React.CSSProperties = {
+          position: "absolute",
+          width: 14,
+          height: 14,
+          background: "white",
+          border: "2px solid #2896FB",
+          borderRadius: 3,
+          pointerEvents: "auto",
+          touchAction: "none",
+        };
+        const edgeBar: React.CSSProperties = {
+          position: "absolute",
+          background: "white",
+          border: "2px solid #2896FB",
+          borderRadius: 3,
+          pointerEvents: "auto",
+          touchAction: "none",
+        };
+        return (
+          <div
+            style={{
+              position: "absolute",
+              left: `${vLeft}px`,
+              top: `${vTop}px`,
+              width: `${vWidth}px`,
+              height: `${vHeight}px`,
+              border: "1.5px dashed rgba(40, 150, 251, 0.9)",
+              boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.25)",
+              pointerEvents: "none",
+              boxSizing: "border-box",
+              zIndex: 5,
+            }}
+          >
+            {/* CORNER handles — proportional resize via scale */}
+            {([
+              { top: -7, left: -7, cursor: "nwse-resize" },
+              { top: -7, right: -7, cursor: "nesw-resize" },
+              { bottom: -7, left: -7, cursor: "nesw-resize" },
+              { bottom: -7, right: -7, cursor: "nwse-resize" },
+            ] as const).map((pos, i) => (
+              <div
+                key={`corner-${i}`}
+                style={{ ...handleSquare, ...pos }}
+                onPointerDown={onResizePointerDown}
+                onPointerMove={onResizePointerMove}
+                onPointerUp={onResizePointerUp}
+                onPointerCancel={onResizePointerUp}
+              />
+            ))}
+
+            {/* EDGE handles — true crop on each side. Bars are visually
+                distinct (longer/thinner) so users can tell them apart from
+                the corner resize handles. */}
+            {/* TOP */}
             <div
-              key={i}
               style={{
-                position: "absolute",
-                width: "14px",
-                height: "14px",
-                background: "white",
-                border: "2px solid #2896FB",
-                borderRadius: "3px",
-                pointerEvents: "auto",
-                touchAction: "none",
-                ...pos,
+                ...edgeBar,
+                top: -6,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 28,
+                height: 10,
+                cursor: "ns-resize",
               }}
-              onPointerDown={onResizePointerDown}
-              onPointerMove={onResizePointerMove}
-              onPointerUp={onResizePointerUp}
-              onPointerCancel={onResizePointerUp}
+              onPointerDown={(e) => startCropDrag("top", e)}
+              onPointerMove={onCropPointerMove}
+              onPointerUp={onCropPointerUp}
+              onPointerCancel={onCropPointerUp}
             />
-          ))}
-        </div>
-      )}
+            {/* BOTTOM */}
+            <div
+              style={{
+                ...edgeBar,
+                bottom: -6,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 28,
+                height: 10,
+                cursor: "ns-resize",
+              }}
+              onPointerDown={(e) => startCropDrag("bottom", e)}
+              onPointerMove={onCropPointerMove}
+              onPointerUp={onCropPointerUp}
+              onPointerCancel={onCropPointerUp}
+            />
+            {/* LEFT */}
+            <div
+              style={{
+                ...edgeBar,
+                left: -6,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 10,
+                height: 28,
+                cursor: "ew-resize",
+              }}
+              onPointerDown={(e) => startCropDrag("left", e)}
+              onPointerMove={onCropPointerMove}
+              onPointerUp={onCropPointerUp}
+              onPointerCancel={onCropPointerUp}
+            />
+            {/* RIGHT */}
+            <div
+              style={{
+                ...edgeBar,
+                right: -6,
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 10,
+                height: 28,
+                cursor: "ew-resize",
+              }}
+              onPointerDown={(e) => startCropDrag("right", e)}
+              onPointerMove={onCropPointerMove}
+              onPointerUp={onCropPointerUp}
+              onPointerCancel={onCropPointerUp}
+            />
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -663,7 +856,7 @@ export function SwooshBackgroundWorkspace() {
                 <input type="range" min="0.1" max="4" step="0.01" value={human.scale} onChange={(e) => setHuman((s) => ({ ...s, scale: parseFloat(e.target.value) }))} className={sliderCls} />
                 <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{Math.round(human.scale * 100)}%</span>
               </div>
-              <div className="text-[9px] text-[#64748B] pt-[2px]">Drag the photo to move it. Drag the corner handles to resize / crop.</div>
+              <div className="text-[9px] text-[#64748B] pt-[2px]">Drag photo to move. Corners = resize. Edge bars = crop each side.</div>
             </div>
           </div>
 

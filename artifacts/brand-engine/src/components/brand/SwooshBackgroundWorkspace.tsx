@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect, type RefObject } from "react";
-import { UploadCloud, X, Loader2, Download, Check, ZoomIn, RefreshCw } from "lucide-react";
+import { UploadCloud, X, Loader2, Download, Check, ZoomIn, RefreshCw, User } from "lucide-react";
 import { toPng } from "html-to-image";
 import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
@@ -7,6 +7,10 @@ import { LivePreview } from "./LivePreview";
 const BASE = import.meta.env.BASE_URL;
 const SWOOSH = `${BASE}assets/swoosh/swoosh-highly.png`;
 const SPACE_BG = `${BASE}assets/swoosh/space-bg.png`;
+// Vite's dev middleware mis-routes path segments containing `%3D` (encoded
+// `=`) to the SPA HTML fallback, so we encode only what the URL parser
+// strictly requires (spaces + commas) and leave the `=` literal.
+const HL_LOGO = `${BASE}assets/logos/Lockup=Full%20Horizontal,%20Color=AllWhite.png`;
 
 // Two surfaces:
 //  - DOWNLOAD: 1080×1350 portrait — transparent PNG of swoosh + human +
@@ -641,6 +645,11 @@ export function SwooshBackgroundWorkspace() {
   // Swoosh placement is fixed — only the human + front opacity are tunable.
   const swoosh: SwooshSettings = DEFAULT_SWOOSH;
   const [human, setHuman] = usePersistedState<HumanSettings>("human", DEFAULT_HUMAN);
+  // Speaker name shown on the LEFT side of the Slide preview, paired with
+  // the HighLevel logo. Only appears in the "Complete" download — the
+  // transparent Swoosh PNG stays branding-free so it can be dropped onto
+  // any background.
+  const [speakerName, setSpeakerName] = usePersistedState<string>("speakerName", "");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -796,10 +805,11 @@ export function SwooshBackgroundWorkspace() {
         pixelRatio: targetW / el.offsetWidth,
         cacheBust: true,
         skipAutoScale: true,
-        // Skip @font-face fetching — we don't render any text in this
-        // composition, so font CSS is irrelevant and would only risk a
-        // CORS-related abort during export.
-        skipFonts: true,
+        // The "complete" download renders the speaker-name overlay using
+        // Poppins, so it needs @font-face fetching to embed the correct
+        // typeface. The "swoosh" download is image-only and can safely
+        // skip font fetching to avoid CORS-related aborts.
+        skipFonts: !isComplete,
         // "swoosh" must stay transparent so it can be dropped onto any
         // bg. "complete" already paints the space background image, so
         // we leave it transparent here too — anything outside the
@@ -893,6 +903,25 @@ export function SwooshBackgroundWorkspace() {
             )}
           </div>
 
+          {/* Speaker name — appears on the LEFT side of the Slide preview
+              alongside the HighLevel logo. Optional; leave blank for a
+              logo-only banner. */}
+          <div className="flex flex-col">
+            <label className={labelCls}>Speaker Name</label>
+            <div className="relative">
+              <User className="w-[12px] h-[12px] text-[#64748B] absolute left-[10px] top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={speakerName}
+                onChange={(e) => setSpeakerName(e.target.value)}
+                placeholder="e.g. Shaun Clark"
+                maxLength={40}
+                className="w-full pl-[28px] pr-[10px] py-[8px] rounded-[8px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] text-[12px] text-white placeholder:text-[#475569] outline-none focus:border-[rgba(0,178,169,0.4)] transition-all"
+              />
+            </div>
+            <div className="text-[9px] text-[#64748B] mt-[6px]">Shown on the left of the Slide preview with the HighLevel logo. Not included in the transparent Swoosh PNG.</div>
+          </div>
+
           {/* Human controls — Scale slider + free-hand drag in the preview.
               X/Y are no longer sliders; users drag the photo directly in
               the live preview to position it anywhere they want. */}
@@ -981,6 +1010,71 @@ export function SwooshBackgroundWorkspace() {
                     }}
                     crossOrigin="anonymous"
                   />
+                  {/* Left-side branding overlay — HighLevel logo + optional
+                      speaker name. Sits on the empty LEFT half of the
+                      1920×1080 frame (the swoosh + person occupy the
+                      RIGHT half). Wrapped in an inline-size container so
+                      cqw units scale crisply with the frame at any
+                      preview/export size. Captured ONLY by the "Complete"
+                      download because it lives outside the swoosh-bg
+                      portrait — the transparent Swoosh PNG stays
+                      branding-free for drop-in use. */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      pointerEvents: "none",
+                      zIndex: 1,
+                      containerType: "inline-size",
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: "5%",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: "40%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        gap: "2.5cqw",
+                      }}
+                    >
+                      <img
+                        src={HL_LOGO}
+                        alt="HighLevel"
+                        crossOrigin="anonymous"
+                        draggable={false}
+                        style={{
+                          width: "16cqw",
+                          height: "auto",
+                          display: "block",
+                          filter: "drop-shadow(0 4px 16px rgba(0,0,0,0.35))",
+                          userSelect: "none",
+                        }}
+                      />
+                      {speakerName && (
+                        <div
+                          style={{
+                            color: "white",
+                            fontFamily:
+                              "Poppins, ui-sans-serif, system-ui, sans-serif",
+                            fontWeight: 700,
+                            fontSize: "5cqw",
+                            lineHeight: 1.05,
+                            letterSpacing: "-0.02em",
+                            textShadow: "0 6px 24px rgba(0,0,0,0.45)",
+                            maxWidth: "100%",
+                            wordBreak: "break-word",
+                            userSelect: "none",
+                          }}
+                        >
+                          {speakerName}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   {/* Portrait swoosh composition placed on the right side
                       of the 1920×1080 frame. To match the reference layout
                       EXACTLY:

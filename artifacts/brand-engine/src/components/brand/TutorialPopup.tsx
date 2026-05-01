@@ -7,7 +7,7 @@ type TutorialConfig = {
   title: string;
   body: string;
   cta: string;
-  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev" | "superpromo" | "zoom" | "craft";
+  scene: "email" | "shaun" | "army" | "didyouknow" | "bizdev" | "superpromo" | "zoom" | "craft" | "swoosh";
 };
 
 const TUTORIALS: Record<string, TutorialConfig> = {
@@ -59,6 +59,13 @@ const TUTORIALS: Record<string, TutorialConfig> = {
     body: "Pick a branded background, drop in your name and title, and download a ready-to-use Zoom virtual background.",
     cta: "Make my background",
     scene: "zoom",
+  },
+  "swoosh-backgrounds": {
+    badge: "NEW",
+    title: "Swoosh backgrounds",
+    body: "Drop a photo, we'll cut out the background and tuck them into the swoosh. Drag, scale, then export.",
+    cta: "Make a swoosh",
+    scene: "swoosh",
   },
   templates: {
     badge: "NEW",
@@ -217,6 +224,7 @@ export function TutorialPopup({ currentMode }: { currentMode: string }) {
               {config.scene === "superpromo" && <SuperPromoScene />}
               {config.scene === "zoom" && <ZoomScene />}
               {config.scene === "craft" && <CraftScene />}
+              {config.scene === "swoosh" && <SwooshScene />}
             </div>
 
             <div style={{ padding: "16px 18px 18px" }}>
@@ -4968,3 +4976,546 @@ function Typewriter({ text }: { text: string }) {
     </span>
   );
 }
+
+/* ===================== SWOOSH SCENE ===================== */
+
+const SWOOSH_TUT_BG = `${import.meta.env.BASE_URL}assets/swoosh/space-bg.png`;
+const SWOOSH_TUT_SWOOSH = `${import.meta.env.BASE_URL}assets/swoosh/swoosh-highly.png`;
+const SWOOSH_TUT_PERSON = `${import.meta.env.BASE_URL}assets/swoosh/tutorial-person.png`;
+
+function SwooshScene() {
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    const durations = [3000, 3400, 3000];
+    const id = setTimeout(() => setBeat((b) => (b + 1) % 3), durations[beat]);
+    return () => clearTimeout(id);
+  }, [beat]);
+  return (
+    <div style={{ position: "absolute", inset: 0, padding: 18 }}>
+      <AnimatePresence mode="wait">
+        {beat === 0 && <BeatSwooshUpload key="upload" />}
+        {beat === 1 && <BeatSwooshAdjust key="adjust" />}
+        {beat === 2 && <BeatSwooshDownload key="download" />}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* Beat 1 — drop-zone receives a photo, BG removal pill confirms */
+function BeatSwooshUpload() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 700);
+    const t2 = setTimeout(() => setStage(2), 1700);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          borderRadius: 12,
+          padding: "14px 16px",
+          background: PANEL_BG,
+          border: stage >= 1
+            ? "1.5px solid rgba(0,178,169,0.55)"
+            : "1.5px dashed rgba(255,255,255,0.18)",
+          boxShadow: stage >= 1
+            ? "0 0 0 4px rgba(0,178,169,0.14)"
+            : "none",
+          transition: "border-color 0.3s, box-shadow 0.3s",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          position: "relative",
+          minHeight: 76,
+        }}
+      >
+        {stage === 0 ? (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+            <motion.div
+              animate={{ y: [0, -3, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <ImageIcon size={20} color="#94A3B8" strokeWidth={2} />
+            </motion.div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(248,250,252,0.7)" }}>
+              Upload person photo
+            </div>
+            <div style={{ fontSize: 8.5, color: "rgba(248,250,252,0.45)" }}>
+              BG will be auto-removed
+            </div>
+          </div>
+        ) : (
+          <>
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                overflow: "hidden",
+                background: stage >= 2
+                  ? "transparent"
+                  : "linear-gradient(135deg, rgba(40,150,251,0.25), rgba(11,20,38,0.6))",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <img
+                src={SWOOSH_TUT_PERSON}
+                alt=""
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  filter: stage >= 2 ? "none" : "saturate(0.6) brightness(0.85)",
+                  transition: "filter 0.35s",
+                }}
+              />
+              {stage === 1 && (
+                <motion.div
+                  animate={{ y: ["-100%", "100%"] }}
+                  transition={{ duration: 0.9, ease: "easeInOut" }}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background:
+                      "linear-gradient(180deg, transparent, rgba(0,178,169,0.55), transparent)",
+                    pointerEvents: "none",
+                  }}
+                />
+              )}
+            </motion.div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 800, color: "#F8FAFC", marginBottom: 3 }}>
+                speaker.png
+              </div>
+              <AnimatePresence mode="wait">
+                {stage === 1 ? (
+                  <motion.div
+                    key="removing"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 5,
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: "rgba(40,150,251,0.95)",
+                      background: "rgba(40,150,251,0.12)",
+                      padding: "2px 7px",
+                      borderRadius: 4,
+                    }}
+                  >
+                    <motion.span
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      style={{ display: "inline-flex" }}
+                    >
+                      <Sparkles size={9} strokeWidth={2.5} />
+                    </motion.span>
+                    Removing background…
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="ready"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 9,
+                      fontWeight: 800,
+                      color: "#17D94B",
+                      background: "rgba(23,217,75,0.14)",
+                      padding: "2px 7px",
+                      borderRadius: 4,
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    <Check size={9} strokeWidth={3.5} />
+                    BG REMOVED
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 2 — Mini swoosh comp, bounding box appears, person scales/drags into place */
+function BeatSwooshAdjust() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 500);
+    const t2 = setTimeout(() => setStage(2), 1500);
+    const t3 = setTimeout(() => setStage(3), 2500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
+  // Person target = scaled up + nudged into the swoosh pocket on stage 2/3
+  const personScale = stage >= 2 ? 1.08 : 0.82;
+  const personX = stage >= 2 ? 0 : -8;
+  const personY = stage >= 2 ? 2 : 8;
+
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* 16:9 mini canvas */}
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "16 / 9",
+          borderRadius: 10,
+          overflow: "hidden",
+          position: "relative",
+          backgroundImage: `url(${SWOOSH_TUT_BG})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          border: "1.5px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+        }}
+      >
+        {/* Portrait swoosh comp pinned to right (mirrors real workspace) */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: "-2%",
+            height: "108%",
+            aspectRatio: "1080 / 1350",
+            transform: "translateY(-50%)",
+            pointerEvents: "none",
+          }}
+        >
+          {/* Swoosh trail (back) */}
+          <img
+            src={SWOOSH_TUT_SWOOSH}
+            alt=""
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              objectPosition: "center",
+            }}
+          />
+          {/* Person — animates scale + position */}
+          <motion.img
+            src={SWOOSH_TUT_PERSON}
+            alt=""
+            initial={false}
+            animate={{
+              scale: personScale,
+              x: personX,
+              y: personY,
+            }}
+            transition={{ type: "spring", stiffness: 180, damping: 22 }}
+            style={{
+              position: "absolute",
+              left: "12%",
+              top: "10%",
+              width: "70%",
+              height: "82%",
+              objectFit: "contain",
+              objectPosition: "bottom center",
+              transformOrigin: "center bottom",
+              filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.5))",
+            }}
+          />
+          {/* Front swoosh slice over the person (visual depth) */}
+          <img
+            src={SWOOSH_TUT_SWOOSH}
+            alt=""
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              objectPosition: "center",
+              clipPath: "inset(0 0 0 55%)",
+            }}
+          />
+
+          {/* Bounding box — appears stage>=1 */}
+          <AnimatePresence>
+            {stage >= 1 && stage < 3 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                style={{
+                  position: "absolute",
+                  left: "16%",
+                  top: "12%",
+                  width: "62%",
+                  height: "78%",
+                  border: "1.2px dashed #00B2A9",
+                  borderRadius: 4,
+                  boxShadow: "0 0 0 1px rgba(0,178,169,0.18)",
+                }}
+              >
+                {/* Corner handles */}
+                {[
+                  { top: -3, left: -3 },
+                  { top: -3, right: -3 },
+                  { bottom: -3, left: -3 },
+                  { bottom: -3, right: -3 },
+                ].map((pos, i) => (
+                  <motion.div
+                    key={i}
+                    animate={i === 1 && stage === 1 ? { scale: [1, 1.5, 1] } : {}}
+                    transition={{ duration: 0.8, repeat: Infinity }}
+                    style={{
+                      position: "absolute",
+                      width: 7,
+                      height: 7,
+                      background: "#00B2A9",
+                      borderRadius: 1.5,
+                      border: "1.5px solid #0B1426",
+                      ...pos,
+                    }}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Cursor — moves to top-right corner handle, then settles */}
+        <motion.div
+          initial={{ x: 60, y: 80, opacity: 0 }}
+          animate={{
+            x: stage >= 2 ? 175 : stage >= 1 ? 168 : 60,
+            y: stage >= 2 ? 22 : stage >= 1 ? 28 : 80,
+            opacity: stage >= 3 ? 0 : 1,
+            scale: stage === 1 ? [1, 0.85, 1] : 1,
+          }}
+          transition={{
+            x: { type: "spring", stiffness: 120, damping: 18 },
+            y: { type: "spring", stiffness: 120, damping: 18 },
+            opacity: { duration: 0.3 },
+            scale: { duration: 0.45 },
+          }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            color: "#F8FAFC",
+            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.7))",
+            pointerEvents: "none",
+            zIndex: 5,
+          }}
+        >
+          <MousePointer2 size={16} fill="#F8FAFC" strokeWidth={1.2} />
+        </motion.div>
+
+        {/* "Drag · Resize" hint pill, bottom-left */}
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: stage >= 1 ? 1 : 0, y: 0 }}
+          transition={{ duration: 0.3 }}
+          style={{
+            position: "absolute",
+            bottom: 8,
+            left: 10,
+            fontSize: 8.5,
+            fontWeight: 800,
+            letterSpacing: "0.08em",
+            color: "#20EDF1",
+            background: "rgba(0,178,169,0.18)",
+            border: "1px solid rgba(0,178,169,0.35)",
+            padding: "3px 7px",
+            borderRadius: 4,
+          }}
+        >
+          DRAG · RESIZE
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* Beat 3 — Two stacked download buttons; cursor clicks the primary */
+function BeatSwooshDownload() {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 800);
+    const t2 = setTimeout(() => setStage(2), 1500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+  return (
+    <motion.div
+      {...sceneAnim}
+      style={{
+        position: "absolute",
+        inset: 18,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "stretch",
+        justifyContent: "center",
+        gap: 10,
+      }}
+    >
+      {/* Primary — Download Swoosh */}
+      <motion.div
+        animate={{
+          scale: stage === 1 ? 0.96 : 1,
+          boxShadow: stage === 1
+            ? "0 0 0 4px rgba(0,178,169,0.35), 0 6px 16px rgba(0,178,169,0.45)"
+            : "0 4px 14px rgba(0,178,169,0.3)",
+        }}
+        transition={{ duration: 0.18 }}
+        style={{
+          background: "linear-gradient(135deg, #00B2A9 0%, #2896FB 100%)",
+          color: "#F8FAFC",
+          padding: "11px 14px",
+          borderRadius: 10,
+          fontSize: 12,
+          fontWeight: 800,
+          letterSpacing: "0.02em",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          position: "relative",
+        }}
+      >
+        <AnimatePresence mode="wait">
+          {stage < 2 ? (
+            <motion.div
+              key="dl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{ display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <Download size={13} strokeWidth={2.6} />
+              Download Swoosh · 1080×1350
+            </motion.div>
+          ) : (
+            <motion.div
+              key="ok"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              style={{ display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <Check size={14} strokeWidth={3} />
+              Saved to your Mac
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Secondary — Download Slide */}
+      <div
+        style={{
+          background: "transparent",
+          color: "rgba(248,250,252,0.85)",
+          padding: "10px 14px",
+          borderRadius: 10,
+          fontSize: 11.5,
+          fontWeight: 700,
+          letterSpacing: "0.02em",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          border: "1px solid rgba(255,255,255,0.14)",
+        }}
+      >
+        <Download size={12} strokeWidth={2.4} />
+        Download Slide · 1920×1080
+      </div>
+
+      {/* Cursor — flies in to click the primary */}
+      <motion.div
+        initial={{ x: 220, y: 60, opacity: 0 }}
+        animate={{
+          x: stage >= 1 ? 178 : 220,
+          y: stage >= 1 ? -2 : 60,
+          opacity: stage >= 2 ? 0 : 1,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 140,
+          damping: 18,
+          opacity: { duration: 0.3 },
+        }}
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: 0,
+          marginTop: -28,
+          color: "#F8FAFC",
+          filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.7))",
+          pointerEvents: "none",
+          zIndex: 5,
+        }}
+      >
+        <MousePointer2 size={16} fill="#F8FAFC" strokeWidth={1.2} />
+      </motion.div>
+
+      {/* Tap ripple under the cursor on click */}
+      <AnimatePresence>
+        {stage === 1 && (
+          <motion.div
+            initial={{ scale: 0.4, opacity: 0.6 }}
+            animate={{ scale: 1.6, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: 0,
+              marginTop: -18,
+              transform: "translateX(170px)",
+              width: 38,
+              height: 38,
+              borderRadius: 999,
+              border: "2px solid rgba(0,178,169,0.7)",
+              pointerEvents: "none",
+              zIndex: 4,
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+/* ===================== END SWOOSH SCENE ===================== */

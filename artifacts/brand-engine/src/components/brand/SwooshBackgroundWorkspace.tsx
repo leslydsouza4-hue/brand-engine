@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect, type RefObject } from "react";
-import { UploadCloud, X, Loader2, Download, Check, ZoomIn, RefreshCw, Info } from "lucide-react";
-import { SwooshTutorial } from "./SwooshTutorial";
+import { UploadCloud, X, Loader2, Download, Check, ZoomIn, RefreshCw } from "lucide-react";
 import { toPng } from "html-to-image";
 import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
@@ -639,9 +638,6 @@ export function SwooshBackgroundWorkspace() {
   // spinner while leaving the other one usable. `null` = idle.
   const [exportKind, setExportKind] = useState<ExportKind | null>(null);
   const isExporting = exportKind !== null;
-  // Inline tutorial modal — opened by the (i) info button next to the
-  // workspace title. Walks new users through Upload → Adjust → Download.
-  const [tutorialOpen, setTutorialOpen] = useState(false);
   // Swoosh placement is fixed — only the human + front opacity are tunable.
   const swoosh: SwooshSettings = DEFAULT_SWOOSH;
   const [human, setHuman] = usePersistedState<HumanSettings>("human", DEFAULT_HUMAN);
@@ -847,17 +843,7 @@ export function SwooshBackgroundWorkspace() {
       {/* Form panel */}
       <div className="w-full md:w-[340px] md:min-w-[340px] overflow-y-auto pt-[20px] px-[16px] md:px-[24px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.06)] flex flex-col max-h-[50vh] md:max-h-none">
         <div className="mb-[16px]">
-          <div className="flex items-center gap-[6px] mb-[4px]">
-            <h2 className="text-[16px] font-bold text-white">Swoosh Background</h2>
-            <button
-              onClick={() => setTutorialOpen(true)}
-              className="w-[20px] h-[20px] rounded-full flex items-center justify-center bg-white/[0.04] hover:bg-[rgba(0,178,169,0.15)] border border-white/[0.06] hover:border-[rgba(0,178,169,0.3)] text-[#94A3B8] hover:text-[#00B2A9] transition-all cursor-pointer"
-              title="How it works"
-              aria-label="How Swoosh Background works"
-            >
-              <Info className="w-[11px] h-[11px]" />
-            </button>
-          </div>
+          <h2 className="text-[16px] font-bold text-white mb-[4px]">Swoosh Background</h2>
           <p className="text-[11px] text-[#64748B]">Transparent swoosh + speaker overlay. Drop onto any background.</p>
         </div>
 
@@ -1033,11 +1019,6 @@ export function SwooshBackgroundWorkspace() {
           </div>
         </LivePreview>
       </div>
-
-      {/* "How it works" tutorial — auto-cycling 3-stage walkthrough
-          (Upload → Adjust → Download). Triggered by the (i) button next
-          to the workspace title. */}
-      <SwooshTutorial open={tutorialOpen} onClose={() => setTutorialOpen(false)} />
     </div>
   );
 }

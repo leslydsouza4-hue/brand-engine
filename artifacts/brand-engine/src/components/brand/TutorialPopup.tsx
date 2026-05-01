@@ -5190,19 +5190,19 @@ function BeatSwooshAdjust() {
       style={{
         position: "absolute",
         inset: 18,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
       }}
     >
-      {/* 16:9 mini canvas with the space background */}
+      {/* Mini canvas with the space background. Sized to fill the
+          available beat area (~268×128 inside the popup body) — we
+          intentionally do NOT use aspectRatio because the popup body
+          is fixed at 200px tall and a 16:9 of full width would overflow
+          and cause the image inside to render at the wrong scale. */}
       <div
         style={{
-          width: "100%",
-          aspectRatio: "16 / 9",
+          position: "absolute",
+          inset: 0,
           borderRadius: 10,
           overflow: "hidden",
-          position: "relative",
           backgroundImage: `url(${SWOOSH_TUT_BG})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
@@ -5210,15 +5210,13 @@ function BeatSwooshAdjust() {
           boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
         }}
       >
-        {/* Pre-composed swoosh + person + Highly. Using a single flat image
-            guarantees the composition reads exactly like it does in the
-            real workspace — the person is wrapped by the swoosh, Highly
-            sits on the shoulder, no positioning math needed.
-            We constrain by both width and height so it never clips, then
-            pin to the right side of the mini canvas. */}
-        <motion.img
-          src={SWOOSH_TUT_COMP}
-          alt=""
+        {/* Pre-composed swoosh + person + Highly (transparent PNG).
+            Wrapped in a sized container — placing the <img> directly with
+            `width: auto, height: %` causes browsers to fall back to the
+            natural pixel width (1080px) which blows out of the popup.
+            The wrapper gives the image a guaranteed % box, and objectFit
+            handles the natural 0.8 aspect ratio cleanly. */}
+        <motion.div
           initial={false}
           animate={{
             scale: stage >= 2 ? 1.05 : 1,
@@ -5226,18 +5224,27 @@ function BeatSwooshAdjust() {
           transition={{ type: "spring", stiffness: 160, damping: 22 }}
           style={{
             position: "absolute",
-            top: 0,
-            right: 0,
-            bottom: 0,
-            width: "62%",
-            height: "100%",
-            objectFit: "contain",
-            objectPosition: "right center",
-            filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.45))",
-            pointerEvents: "none",
+            top: "3%",
+            right: "6%",
+            width: "55%",
+            height: "94%",
             transformOrigin: "right center",
+            pointerEvents: "none",
           }}
-        />
+        >
+          <img
+            src={SWOOSH_TUT_COMP}
+            alt=""
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              objectPosition: "right center",
+              filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.4))",
+              display: "block",
+            }}
+          />
+        </motion.div>
 
         {/* Bounding box — wraps the person area on the right. Visible
             stage 1-2, fades out on stage 3 to signify the user "let go". */}
@@ -5250,10 +5257,10 @@ function BeatSwooshAdjust() {
               transition={{ duration: 0.25 }}
               style={{
                 position: "absolute",
-                top: "10%",
+                top: "3%",
                 right: "6%",
-                width: "44%",
-                height: "82%",
+                width: "50%",
+                height: "94%",
                 border: "1.2px dashed #00B2A9",
                 borderRadius: 4,
                 boxShadow: "0 0 0 1px rgba(0,178,169,0.18)",
@@ -5291,8 +5298,8 @@ function BeatSwooshAdjust() {
         <motion.div
           initial={{ x: 40, y: 100, opacity: 0 }}
           animate={{
-            x: stage >= 1 ? 296 : 40,
-            y: stage >= 1 ? 12 : 100,
+            x: stage >= 1 ? 302 : 40,
+            y: stage >= 1 ? 5 : 100,
             opacity: stage >= 3 ? 0 : 1,
             scale: stage === 1 ? [1, 0.82, 1] : 1,
           }}

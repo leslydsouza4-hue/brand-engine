@@ -679,10 +679,10 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
   // is rendered in user-space along the petal's mid radial so the lit
   // edge always reads as the rim of the wheel (matches the reference).
   const PETAL_GRADIENT: Record<StageId, [string, string]> = {
-    capture:    ["#FFD54F", "#E65100"], // bright amber → deep orange
-    nurture:    ["#29B6F6", "#01579B"], // vivid cyan-blue → deep blue
-    close:      ["#43A047", "#1B5E20"], // bright green → forest
-    evangelize: ["#FF7043", "#BF360C"], // vivid coral → burnt orange
+    capture:    ["#8EFB3B", "#579126"], // bright lime → forest green
+    nurture:    ["#F2D231", "#DC4726"], // golden yellow → red-orange
+    close:      ["#4774FA", "#74CCF8"], // royal blue → sky blue
+    evangelize: ["#EAAB35", "#FFFF44"], // amber → bright yellow
     reactivate: ["#1E40AF", "#0B1A3A"], // (only used for icon tint, not petal)
   };
 
@@ -847,7 +847,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               key={`label-${id}`}
               fontSize={19}
               fontWeight={800}
-              fill="white"
+              fill="#223365"
               style={{
                 letterSpacing: "2.5px",
                 fontFamily:
@@ -1032,9 +1032,13 @@ function InfoCard({
         }
       : align === "right"
         ? {
+            // Push right-side cards (Capture / Nurture) all the way to
+            // the OUTER (right) edge of their card box so the content
+            // sits as far from the flywheel as possible. Avoids the
+            // text overlapping the wheel halo.
             maxWidth: contentMax,
-            marginRight: "auto",
-            marginLeft: wheelBuffer + outwardNudge,
+            marginLeft: "auto",
+            marginRight: 0,
           }
         : {};
   const glowCorner = align === "right" ? "100% 0%" : "0% 0%";

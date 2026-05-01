@@ -46,32 +46,32 @@ const STAGE_THEME: Record<StageId, {
   badge: string;
 }> = {
   capture: {
-    color: "#FFC107",          // HL Capture Yellow — bolder
-    rgb: "255,193,7",
+    color: "#10B838",          // GREEN — matches the green capture petal
+    rgb: "16,184,56",
     Icon: Filter,
     iconSrc: `${ICON_BASE}/capture.svg`,
     stageNum: "01",
     badge: "STAGE 01",
   },
   nurture: {
-    color: "#1B96E0",          // HL Nurture Blue — bolder
-    rgb: "27,150,224",
+    color: "#F25C19",          // ORANGE — matches the orange nurture petal
+    rgb: "242,92,25",
     Icon: MessagesSquare,
     iconSrc: `${ICON_BASE}/nurture.svg`,
     stageNum: "02",
     badge: "STAGE 02",
   },
   close: {
-    color: "#10B838",          // HL Close Green — bolder
-    rgb: "16,184,56",
+    color: "#1B96E0",          // BLUE — matches the blue close petal
+    rgb: "27,150,224",
     Icon: DollarSign,
     iconSrc: `${ICON_BASE}/close.svg`,
     stageNum: "03",
     badge: "STAGE 03",
   },
   evangelize: {
-    color: "#F25C19",          // HL-styled celebration coral — bolder
-    rgb: "242,92,25",
+    color: "#FFC107",          // YELLOW — matches the yellow evangelize petal
+    rgb: "255,193,7",
     Icon: Trophy,
     iconSrc: `${ICON_BASE}/evangelize.svg`,
     stageNum: "04",

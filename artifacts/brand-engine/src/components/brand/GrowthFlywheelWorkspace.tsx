@@ -1037,13 +1037,15 @@ function InfoCard({
         }
       : align === "right"
         ? {
-            // Push right-side cards (Capture / Nurture) all the way to
-            // the OUTER (right) edge of their card box so the content
-            // sits as far from the flywheel as possible. Avoids the
-            // text overlapping the wheel halo.
+            // Push right-side cards (Capture / Nurture) toward the
+            // OUTER edge so the content sits as far from the flywheel
+            // as possible — but keep a ~3% slide-width buffer on the
+            // right so the longer Nurture subline ("Turn leads into
+            // conversations & booked appointments…") doesn't get
+            // clipped by the card edge.
             maxWidth: contentMax,
             marginLeft: "auto",
-            marginRight: 0,
+            marginRight: SLIDE_W * 0.03,
             paddingTop: sideTopNudge,
           }
         : {};

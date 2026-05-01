@@ -25,7 +25,7 @@ const PREVIEW_RATIO = PREVIEW_W / PREVIEW_H;
 // suffix is bumped whenever defaults change so existing users get the new
 // defaults instead of stale localStorage values.
 function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const STORAGE_KEY = `brandEngine.swooshBackground.v10.${key}`;
+  const STORAGE_KEY = `brandEngine.swooshBackground.v11.${key}`;
   const [v, setV] = useState<T>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -92,14 +92,16 @@ interface HumanSettings {
 }
 
 // Defaults tuned for the 1080×1350 portrait download canvas:
-//  - Swoosh: centered, height = 100% of canvas. The asset is portrait
-//    (~786×1024); at scale 1.0 it renders 1350px tall × ~1036px wide,
-//    fitting inside the 1080-wide canvas with a few px to spare on each
-//    side. x/y = 0 = perfectly centered.
-//  - Human: centered horizontally with head anchored at the top edge.
-//    User can drag freely from there.
-const DEFAULT_SWOOSH: SwooshSettings = { x: 0, y: 0, scale: 1.0 };
-const DEFAULT_HUMAN: HumanSettings = { x: 0, y: 0, scale: 1.0 };
+//  - Swoosh: centered, sized to ~70% of canvas height so it leaves
+//    comfortable breathing room on all sides instead of filling the
+//    entire portrait frame (which felt visually too heavy). At scale
+//    0.7 the swoosh renders ~945px tall × ~740px wide inside the
+//    1080×1350 canvas.
+//  - Human: centered horizontally with head anchored at the top edge,
+//    sized to roughly match the swoosh so the face naturally falls
+//    inside the swoosh's loop. User can drag freely from there.
+const DEFAULT_SWOOSH: SwooshSettings = { x: 0, y: 0, scale: 0.7 };
+const DEFAULT_HUMAN: HumanSettings = { x: 0, y: 0, scale: 0.7 };
 
 // The lower 25% of the canvas is clipped away from the human only — that's
 // the visual line where the swoosh's bottom curve sits, so anything below

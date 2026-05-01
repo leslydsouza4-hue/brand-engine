@@ -179,6 +179,28 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         </div>
 
         <div className="px-[12px] mb-[10px] relative">
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Backgrounds</div>
+
+          <button 
+            onClick={() => handleSetMode('zoom-backgrounds')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'zoom-backgrounds' ? activeClass : inactiveClass}`}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className={`w-[18px] h-[18px] shrink-0 ${iconCls(currentMode === 'zoom-backgrounds')}`}>
+              <path d="M5.5 7.5C4.12 7.5 3 8.62 3 10v4c0 1.38 1.12 2.5 2.5 2.5h7c1.38 0 2.5-1.12 2.5-2.5v-4c0-1.38-1.12-2.5-2.5-2.5h-7zm12.5 1l3.15-1.9A.5.5 0 0 1 21.9 7v10a.5.5 0 0 1-.75.4L18 15.5V8.5z"/>
+            </svg>
+            Zoom Backgrounds
+          </button>
+
+          <button
+            onClick={() => handleSetMode('swoosh-backgrounds')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'swoosh-backgrounds' ? activeClass : inactiveClass}`}
+          >
+            <Video className={`w-[18px] h-[18px] shrink-0 ${iconCls(currentMode === 'swoosh-backgrounds')}`} />
+            Swoosh
+          </button>
+        </div>
+
+        <div className="px-[12px] mb-[10px] relative">
           <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Events</div>
 
           <button 
@@ -218,28 +240,6 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             Event Flyer
             <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
           </div>
-        </div>
-
-        <div className="px-[12px] mb-[10px] relative">
-          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Backgrounds</div>
-
-          <button 
-            onClick={() => handleSetMode('zoom-backgrounds')}
-            className={`${btnBase} cursor-pointer ${currentMode === 'zoom-backgrounds' ? activeClass : inactiveClass}`}
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" className={`w-[18px] h-[18px] shrink-0 ${iconCls(currentMode === 'zoom-backgrounds')}`}>
-              <path d="M5.5 7.5C4.12 7.5 3 8.62 3 10v4c0 1.38 1.12 2.5 2.5 2.5h7c1.38 0 2.5-1.12 2.5-2.5v-4c0-1.38-1.12-2.5-2.5-2.5h-7zm12.5 1l3.15-1.9A.5.5 0 0 1 21.9 7v10a.5.5 0 0 1-.75.4L18 15.5V8.5z"/>
-            </svg>
-            Zoom Backgrounds
-          </button>
-
-          <button
-            onClick={() => handleSetMode('swoosh-backgrounds')}
-            className={`${btnBase} cursor-pointer ${currentMode === 'swoosh-backgrounds' ? activeClass : inactiveClass}`}
-          >
-            <Video className={`w-[18px] h-[18px] shrink-0 ${iconCls(currentMode === 'swoosh-backgrounds')}`} />
-            Swoosh
-          </button>
         </div>
 
         </div>

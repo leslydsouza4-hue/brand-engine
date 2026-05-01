@@ -149,10 +149,82 @@ function SwooshComposition({
   // parent (CanvasFrame or a portrait wrapper inside the bg preview) is
   // responsible for setting width/height and aspect ratio.
 
+  // Track the loaded human image's natural aspect ratio so we can draw a
+  // bounding box that exactly matches its rendered footprint. Defaults to a
+  // sensible portrait until the image loads.
+  const [humanAspect, setHumanAspect] = useState<number>(0.75);
+  const onHumanImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.naturalHeight > 0) {
+      const ar = img.naturalWidth / img.naturalHeight;
+      if (Number.isFinite(ar) && ar > 0) setHumanAspect(ar);
+    }
+  };
+
   // Drag-to-position state. We capture the pointer on mousedown over the
   // human image, then translate every pointermove into a delta on
   // human.x / human.y in canvas-percentage units.
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; pointerId: number } | null>(null);
+
+  // Resize state — driven by the corner handles on the bounding box. We
+  // compute the pointer's distance from the box center at pointerdown and
+  // scale the human proportionally as the pointer moves further/closer.
+  const resizeRef = useRef<{
+    centerX: number;
+    centerY: number;
+    baseScale: number;
+    startDist: number;
+    pointerId: number;
+  } | null>(null);
+
+  const onResizePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!onHumanChange || !containerRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    const cr = containerRef.current.getBoundingClientRect();
+    const boxHeightPx = cr.height * human.scale;
+    const boxWidthPx = boxHeightPx * humanAspect;
+    // Box's screen-space top-left:
+    const boxLeft = cr.left + cr.width * (50 + human.x) / 100 - boxWidthPx / 2;
+    const boxTop = cr.top + cr.height * (human.y / 100);
+    const cx = boxLeft + boxWidthPx / 2;
+    const cy = boxTop + boxHeightPx / 2;
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    const startDist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+    resizeRef.current = {
+      centerX: cx,
+      centerY: cy,
+      baseScale: human.scale,
+      startDist,
+      pointerId: e.pointerId,
+    };
+  };
+
+  const onResizePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!resizeRef.current || !onHumanChange) return;
+    const { centerX, centerY, baseScale, startDist } = resizeRef.current;
+    const dx = e.clientX - centerX;
+    const dy = e.clientY - centerY;
+    const newDist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+    const ratio = newDist / startDist;
+    // Clamp so the user can shrink to a tiny crop or grow well beyond the
+    // canvas (for tight head-only crops you may want to scale way up then
+    // drag down).
+    const next = Math.max(0.1, Math.min(4, baseScale * ratio));
+    onHumanChange({ ...human, scale: next });
+  };
+
+  const onResizePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!resizeRef.current) return;
+    try {
+      (e.currentTarget as Element).releasePointerCapture(resizeRef.current.pointerId);
+    } catch {
+      /* may already be released */
+    }
+    resizeRef.current = null;
+  };
 
   const onPointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
     if (!onHumanChange || !containerRef.current) return;
@@ -275,6 +347,7 @@ function SwooshComposition({
             draggable={false}
             style={humanStyle}
             crossOrigin="anonymous"
+            onLoad={onHumanImgLoad}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -293,6 +366,56 @@ function SwooshComposition({
         style={{ ...swooshStyle, clipPath: FRONT_CLIP, WebkitClipPath: FRONT_CLIP }}
         crossOrigin="anonymous"
       />
+
+      {/* Layer 4 (preview only, never exported): bounding box overlay with
+          four corner handles. The box sits exactly over the human image's
+          rendered footprint (height = scale × canvas height, width derived
+          from the image's natural aspect ratio). Handles drive proportional
+          resize via pointer events; the box itself is pointer-transparent so
+          the inner image's drag-to-position still works. */}
+      {personImage && draggable && (
+        <div
+          style={{
+            position: "absolute",
+            left: `${50 + human.x}%`,
+            top: `${human.y}%`,
+            height: `${human.scale * 100}%`,
+            aspectRatio: `${humanAspect}`,
+            transform: "translateX(-50%)",
+            border: "1.5px dashed rgba(40, 150, 251, 0.85)",
+            boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.25)",
+            pointerEvents: "none",
+            boxSizing: "border-box",
+            zIndex: 5,
+          }}
+        >
+          {([
+            { top: -7, left: -7, cursor: "nwse-resize" },
+            { top: -7, right: -7, cursor: "nesw-resize" },
+            { bottom: -7, left: -7, cursor: "nesw-resize" },
+            { bottom: -7, right: -7, cursor: "nwse-resize" },
+          ] as const).map((pos, i) => (
+            <div
+              key={i}
+              style={{
+                position: "absolute",
+                width: "14px",
+                height: "14px",
+                background: "white",
+                border: "2px solid #2896FB",
+                borderRadius: "3px",
+                pointerEvents: "auto",
+                touchAction: "none",
+                ...pos,
+              }}
+              onPointerDown={onResizePointerDown}
+              onPointerMove={onResizePointerMove}
+              onPointerUp={onResizePointerUp}
+              onPointerCancel={onResizePointerUp}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -537,10 +660,10 @@ export function SwooshBackgroundWorkspace() {
               <div className="flex items-center gap-[8px]">
                 <ZoomIn className="w-[12px] h-[12px] text-[#64748B] shrink-0" />
                 <span className="text-[9px] text-[#64748B] w-[34px] shrink-0">Scale</span>
-                <input type="range" min="0.3" max="1.4" step="0.01" value={human.scale} onChange={(e) => setHuman((s) => ({ ...s, scale: parseFloat(e.target.value) }))} className={sliderCls} />
+                <input type="range" min="0.1" max="4" step="0.01" value={human.scale} onChange={(e) => setHuman((s) => ({ ...s, scale: parseFloat(e.target.value) }))} className={sliderCls} />
                 <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{Math.round(human.scale * 100)}%</span>
               </div>
-              <div className="text-[9px] text-[#64748B] pt-[2px]">Drag the photo in the preview to position it.</div>
+              <div className="text-[9px] text-[#64748B] pt-[2px]">Drag the photo to move it. Drag the corner handles to resize / crop.</div>
             </div>
           </div>
 

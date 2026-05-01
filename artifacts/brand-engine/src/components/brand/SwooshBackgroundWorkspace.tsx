@@ -10,7 +10,10 @@ const SPACE_BG = `${BASE}assets/swoosh/space-bg.png`;
 // Vite's dev middleware mis-routes path segments containing `%3D` (encoded
 // `=`) to the SPA HTML fallback, so we encode only what the URL parser
 // strictly requires (spaces + commas) and leave the `=` literal.
-const HL_LOGO = `${BASE}assets/logos/Lockup=Full%20Horizontal,%20Color=AllWhite.png`;
+// Use the "Light" lockup — colored icon (the four arrows) with WHITE
+// "HighLevel" wordmark — same treatment as the Shaun thumbnail and
+// MasterClass surfaces.
+const HL_LOGO = `${BASE}assets/logos/Lockup=Full%20Horizontal,%20Color=Light.png`;
 
 // Two surfaces:
 //  - DOWNLOAD: 1080×1350 portrait — transparent PNG of swoosh + human +
@@ -1042,7 +1045,10 @@ export function SwooshBackgroundWorkspace() {
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "flex-start",
-                        gap: "2cqw",
+                        // Wider gap pushes the speaker name well below
+                        // the logo so the two read as separate elements
+                        // rather than a tight stack.
+                        gap: "7cqw",
                       }}
                     >
                       <img

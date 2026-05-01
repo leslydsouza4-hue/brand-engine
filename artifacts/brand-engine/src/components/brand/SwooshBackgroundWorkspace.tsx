@@ -168,6 +168,12 @@ function SwooshComposition({
   // bounding box that exactly matches its rendered footprint. Defaults to a
   // sensible portrait until the image loads.
   const [humanAspect, setHumanAspect] = useState<number>(0.75);
+  // Selection state — the bounding box + handles only appear once the user
+  // taps/clicks the human image. Tapping anywhere else on the canvas
+  // (background, swoosh, transparent area) deselects and hides the box. This
+  // keeps the preview clean by default and only shows editing UI when the
+  // user is actively working on the image.
+  const [selected, setSelected] = useState(false);
   const onHumanImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     if (img.naturalHeight > 0) {
@@ -328,6 +334,10 @@ function SwooshComposition({
   const onPointerDown = (e: React.PointerEvent<HTMLImageElement>) => {
     if (!onHumanChange || !containerRef.current) return;
     e.preventDefault();
+    // Select the image and prevent the canvas's deselect handler from
+    // firing on the same gesture (React events bubble up by default).
+    e.stopPropagation();
+    setSelected(true);
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     dragRef.current = {
       startX: e.clientX,
@@ -413,10 +423,17 @@ function SwooshComposition({
   const humanWrapperClip = exporting
     ? HUMAN_BOTTOM_CLIP
     : "inset(-9999px 0% 25% 0%)";
+  // Tapping anywhere on the canvas that ISN'T the image (or one of its
+  // handles, which stop propagation) hides the bounding box. We only react
+  // when there's actually something to deselect to avoid spurious renders.
+  const onCanvasPointerDown = () => {
+    if (selected) setSelected(false);
+  };
   return (
     <div
       ref={containerRef}
       data-template-id="swoosh-bg"
+      onPointerDown={draggable ? onCanvasPointerDown : undefined}
       style={{
         position: "absolute",
         inset: 0,
@@ -480,7 +497,7 @@ function SwooshComposition({
             • EDGES (rounded bars): true cropping via clip-path inset on
               each side of the image
           Both are hidden during export so they never end up in the PNG. */}
-      {personImage && draggable && canvasPx.w > 0 && canvasPx.h > 0 && (() => {
+      {personImage && draggable && selected && canvasPx.w > 0 && canvasPx.h > 0 && (() => {
         const imgH = canvasPx.h * human.scale;
         const imgW = imgH * humanAspect;
         const imgLeft = (canvasPx.w * (50 + human.x)) / 100 - imgW / 2;
@@ -856,7 +873,7 @@ export function SwooshBackgroundWorkspace() {
                 <input type="range" min="0.1" max="4" step="0.01" value={human.scale} onChange={(e) => setHuman((s) => ({ ...s, scale: parseFloat(e.target.value) }))} className={sliderCls} />
                 <span className="text-[9px] text-[#94A3B8] w-[36px] text-right tabular-nums">{Math.round(human.scale * 100)}%</span>
               </div>
-              <div className="text-[9px] text-[#64748B] pt-[2px]">Drag photo to move. Corners = resize. Edge bars = crop each side.</div>
+              <div className="text-[9px] text-[#64748B] pt-[2px]">Tap the photo to show handles. Corners = resize. Edge bars = crop.</div>
             </div>
           </div>
 

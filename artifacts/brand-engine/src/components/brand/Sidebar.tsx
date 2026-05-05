@@ -116,8 +116,8 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
               <span
                 className="relative w-[26px] h-[26px] rounded-full shrink-0 overflow-hidden flex items-center justify-center"
                 style={{
-                  background: brandGradient(brandMode),
-                  boxShadow: `0 4px 14px ${brandGlowRgba(brandMode)}, inset 0 1px 0 rgba(255,255,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.12)`,
+                  background: "linear-gradient(135deg, #0B1530 0%, #0A1024 100%)",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(255,255,255,0.06)",
                 }}
               >
                 <img src={theme.logoIconUrl} alt="" className="relative z-10 w-[16px] h-[16px] object-contain" />
@@ -159,8 +159,8 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
                       <span
                         className="relative w-[22px] h-[22px] rounded-full shrink-0 overflow-hidden flex items-center justify-center"
                         style={{
-                          background: brandGradient(m),
-                          boxShadow: `0 3px 10px ${brandGlowRgba(m)}, inset 0 1px 0 rgba(255,255,255,0.3), inset 0 0 0 1px rgba(255,255,255,0.1)`,
+                          background: "linear-gradient(135deg, #0B1530 0%, #0A1024 100%)",
+                          boxShadow: "0 3px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 0 0 1px rgba(255,255,255,0.06)",
                         }}
                       >
                         <img src={t.logoIconUrl} alt="" className="relative z-10 w-[14px] h-[14px] object-contain" />

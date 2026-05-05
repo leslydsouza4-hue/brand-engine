@@ -75,39 +75,71 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
 
         <div className="px-[14px] pb-[14px] shrink-0">
           <div
-            className="relative grid grid-cols-2 p-[3px] rounded-[10px] border overflow-hidden"
+            className="relative grid grid-cols-2 p-[4px] rounded-full border overflow-hidden backdrop-blur-[8px]"
             style={{
-              background: "rgba(255,255,255,0.035)",
-              borderColor: "rgba(255,255,255,0.07)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+              background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+              borderColor: "rgba(255,255,255,0.09)",
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.25), 0 6px 18px rgba(0,0,0,0.35)",
             }}
           >
+            {/* Sliding indicator with shimmer */}
             <span
               aria-hidden
-              className="absolute top-[3px] bottom-[3px] w-[calc(50%-3px)] rounded-[8px] transition-all duration-300 ease-out"
+              className="absolute top-[4px] bottom-[4px] w-[calc(50%-4px)] rounded-full transition-all duration-[420ms] ease-[cubic-bezier(.45,1.4,.4,1)] overflow-hidden"
               style={{
-                left: isLU ? "50%" : "3px",
+                left: isLU ? "50%" : "4px",
                 background: isLU
-                  ? "linear-gradient(135deg, #7C3AED, #22D3EE)"
-                  : "linear-gradient(135deg, #00B2A9, #2896FB)",
+                  ? "linear-gradient(135deg, #7C3AED 0%, #A855F7 45%, #22D3EE 100%)"
+                  : "linear-gradient(135deg, #00B2A9 0%, #1FC9E0 45%, #2896FB 100%)",
                 boxShadow: isLU
-                  ? "0 4px 14px rgba(124,58,237,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
-                  : "0 4px 14px rgba(0,178,169,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                  ? "0 6px 18px rgba(124,58,237,0.5), 0 0 0 1px rgba(255,255,255,0.12) inset, 0 1px 0 rgba(255,255,255,0.35) inset"
+                  : "0 6px 18px rgba(0,178,169,0.5), 0 0 0 1px rgba(255,255,255,0.12) inset, 0 1px 0 rgba(255,255,255,0.35) inset",
               }}
-            />
+            >
+              <span
+                aria-hidden
+                className="absolute inset-0 opacity-70"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)",
+                }}
+              />
+            </span>
+
             <button
               onClick={() => setBrandMode("highlevel")}
-              className="relative z-10 text-[12px] font-bold tracking-[-0.1px] py-[10px] cursor-pointer transition-colors duration-200"
-              style={{ color: !isLU ? "#FFFFFF" : "#94A3B8" }}
+              className="relative z-10 flex items-center justify-center gap-[6px] py-[9px] cursor-pointer transition-all duration-200"
+              style={{
+                color: !isLU ? "#FFFFFF" : "#94A3B8",
+                textShadow: !isLU ? "0 1px 2px rgba(0,0,0,0.25)" : "none",
+              }}
             >
-              HighLevel
+              <span
+                className="w-[6px] h-[6px] rounded-full transition-all duration-300"
+                style={{
+                  background: !isLU ? "#FFFFFF" : "#00B2A9",
+                  boxShadow: !isLU ? "0 0 6px rgba(255,255,255,0.7)" : "0 0 4px rgba(0,178,169,0.5)",
+                }}
+              />
+              <span className="text-[11.5px] font-bold tracking-[-0.05px]">HighLevel</span>
             </button>
             <button
               onClick={() => setBrandMode("levelup26")}
-              className="relative z-10 text-[12px] font-bold tracking-[-0.1px] py-[10px] cursor-pointer transition-colors duration-200"
-              style={{ color: isLU ? "#FFFFFF" : "#94A3B8" }}
+              className="relative z-10 flex items-center justify-center gap-[6px] py-[9px] cursor-pointer transition-all duration-200"
+              style={{
+                color: isLU ? "#FFFFFF" : "#94A3B8",
+                textShadow: isLU ? "0 1px 2px rgba(0,0,0,0.25)" : "none",
+              }}
             >
-              LevelUp 26
+              <span
+                className="w-[6px] h-[6px] rounded-full transition-all duration-300"
+                style={{
+                  background: isLU ? "#FFFFFF" : "#A855F7",
+                  boxShadow: isLU ? "0 0 6px rgba(255,255,255,0.7)" : "0 0 4px rgba(168,85,247,0.5)",
+                }}
+              />
+              <span className="text-[11.5px] font-bold tracking-[-0.05px]">LevelUp 26</span>
             </button>
           </div>
         </div>

@@ -6,6 +6,12 @@ export interface ExportRecord {
   thumbnail: string;
   timestamp: number;
   dimensions?: string;
+  // Brand mode this export belongs to. Lets the History/Exports view filter
+  // and group exports per brand world (HighLevel vs LevelUp 26).
+  mode?: "highlevel" | "levelup26";
+  // Template id used for the render (when applicable). Useful for
+  // "show me everything I've ever made with this template".
+  templateId?: string;
 }
 
 const STORAGE_KEY = "brand-engine-exports";

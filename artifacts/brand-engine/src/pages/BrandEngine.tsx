@@ -20,10 +20,13 @@ import { BrandBrainWorkspace } from "@/components/brand/BrandBrainWorkspace";
 import { GrowthFlywheelWorkspace } from "@/components/brand/GrowthFlywheelWorkspace";
 import { LandingPageWorkspace } from "@/components/brand/LandingPageWorkspace";
 import { SwooshBackgroundWorkspace } from "@/components/brand/SwooshBackgroundWorkspace";
+import { LevelUpImageLibraryWorkspace } from "@/components/brand/LevelUpImageLibraryWorkspace";
+import { LevelUpComposerWorkspace } from "@/components/brand/LevelUpComposerWorkspace";
+import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
 
 export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel"];
+  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel", "image-library", "social-composer"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -40,14 +43,42 @@ export default function BrandEngine() {
   }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [craftSeedPrompt, setCraftSeedPrompt] = useState<string | null>(null);
+  const [brandMode] = useBrandMode();
+
+  // When the user toggles to LU26 mode while sitting on a HighLevel-only
+  // workspace (or vice versa), bounce them to a sensible default for that
+  // mode so they aren't staring at an empty surface.
+  useEffect(() => {
+    const luOnly = ["image-library", "social-composer"];
+    const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "growth-flywheel"];
+    if (brandMode === "levelup26" && hlOnly.includes(currentMode)) setCurrentMode("image-library");
+    if (brandMode === "highlevel" && luOnly.includes(currentMode)) setCurrentMode("templates");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brandMode]);
 
   const sendToCraft = (prompt: string) => {
     setCraftSeedPrompt(prompt);
     setCurrentMode("templates");
   };
 
+  const activeTheme = BRAND_THEMES[brandMode];
+  // Expose the active brand theme as CSS variables on the root container so
+  // every surface (sidebar chips, focus rings, accents in shared components)
+  // can opt into the live brand palette via var(--brand-*) without each
+  // component having to import the theme object.
+  const themeVars: React.CSSProperties = {
+    background: activeTheme.bgDeep,
+    ['--brand-primary' as never]: activeTheme.primary,
+    ['--brand-accent' as never]: activeTheme.accent,
+    ['--brand-cta' as never]: activeTheme.cta,
+    ['--brand-bg-deep' as never]: activeTheme.bgDeep,
+    ['--brand-bg-panel' as never]: activeTheme.bgPanel,
+    ['--brand-font-heading' as never]: activeTheme.fontHeading,
+    ['--brand-font-body' as never]: activeTheme.fontBody,
+  };
+
   return (
-    <div className="flex h-screen w-screen relative bg-[#060B16] brand-app-bg">
+    <div data-brand-mode={brandMode} className="flex h-screen w-screen relative brand-app-bg" style={themeVars}>
       <div className="absolute inset-0 brand-app-noise pointer-events-none z-0"></div>
       
       <div className="w-0 md:w-[220px] shrink-0 overflow-visible">
@@ -76,6 +107,9 @@ export default function BrandEngine() {
         {currentMode === "email-templates" && <EmailTemplatesWorkspace />}
         {currentMode === "feature-requests" && <FeatureRequestsWorkspace />}
         {currentMode === "growth-flywheel" && <GrowthFlywheelWorkspace />}
+
+        {currentMode === "image-library" && <LevelUpImageLibraryWorkspace />}
+        {currentMode === "social-composer" && <LevelUpComposerWorkspace />}
       </div>
       <FeatureRequestBubble />
       <TutorialPopup currentMode={currentMode} />

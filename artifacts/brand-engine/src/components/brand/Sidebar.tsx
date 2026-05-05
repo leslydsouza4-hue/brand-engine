@@ -17,8 +17,11 @@ import {
   MessageSquarePlus,
   Mail,
   RefreshCw,
-  GraduationCap
+  GraduationCap,
+  Folder,
+  Wand2
 } from "lucide-react";
+import { useBrandMode, BRAND_THEMES } from "./brandModeStore";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -39,10 +42,13 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarProps) {
+  const [brandMode, setBrandMode] = useBrandMode();
+  const theme = BRAND_THEMES[brandMode];
   const handleSetMode = (mode: string) => {
     setMode(mode);
     onClose?.();
   };
+  const isLU = brandMode === "levelup26";
 
   return (
     <>
@@ -57,17 +63,86 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
         md:relative md:translate-x-0 md:w-[220px] md:h-screen
       `}>
-        <div className="pt-[26px] px-[20px] pb-[20px] flex items-center gap-[11px] relative shrink-0">
+        <div className="pt-[22px] px-[20px] pb-[12px] flex items-center gap-[11px] relative shrink-0">
           <div className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center shrink-0 relative bg-white/[0.04] backdrop-blur-[12px] border border-white/[0.08]">
-            <img src={`${BASE}assets/logos/Lockup=Icon, Color=Full.png`} alt="HighLevel" className="w-[18px] h-[18px] object-contain" />
+            <img src={theme.logoIconUrl} alt={theme.name} className="w-[18px] h-[18px] object-contain" />
           </div>
           <div className="text-[17px] font-bold text-white tracking-[-0.4px] flex-1">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
           <button onClick={onClose} className="md:hidden w-[28px] h-[28px] flex items-center justify-center rounded-[8px] text-[#94A3B8] hover:text-white hover:bg-white/10 transition-all cursor-pointer">
             <X className="w-[18px] h-[18px]" />
           </button>
         </div>
+
+        <div className="px-[16px] pb-[14px] shrink-0">
+          <div className="flex p-[3px] rounded-[10px] bg-white/[0.04] border border-white/[0.06] gap-[2px]">
+            <button
+              onClick={() => setBrandMode("highlevel")}
+              className="flex-1 text-[11px] font-bold uppercase tracking-[0.08em] py-[7px] rounded-[7px] cursor-pointer transition-all"
+              style={{
+                background: brandMode === "highlevel" ? "linear-gradient(135deg,#00B2A9,#2896FB)" : "transparent",
+                color: brandMode === "highlevel" ? "#fff" : "#94A3B8",
+              }}
+            >
+              HighLevel
+            </button>
+            <button
+              onClick={() => setBrandMode("levelup26")}
+              className="flex-1 text-[11px] font-bold uppercase tracking-[0.08em] py-[7px] rounded-[7px] cursor-pointer transition-all"
+              style={{
+                background: brandMode === "levelup26" ? "linear-gradient(135deg,#7C3AED,#22D3EE)" : "transparent",
+                color: brandMode === "levelup26" ? "#fff" : "#94A3B8",
+              }}
+            >
+              LevelUp 26
+            </button>
+          </div>
+        </div>
         
         <div className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
+        {isLU && (
+          <div className="px-[12px] mb-[10px] relative">
+            <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">LevelUp 26</div>
+            <button
+              onClick={() => handleSetMode('image-library')}
+              className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[10px] rounded-[12px] cursor-pointer border-none transition-all duration-250 ${
+                currentMode === 'image-library'
+                  ? 'bg-white/[0.05] text-white'
+                  : 'text-[#CBD5E1] hover:bg-white/[0.03] hover:text-white hover:translate-x-[2px]'
+              }`}
+            >
+              {currentMode === 'image-library' && (
+                <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-[4px]" style={{ background: `linear-gradient(180deg, ${theme.primary}, ${theme.accent})` }} />
+              )}
+              <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center shrink-0" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}>
+                <Folder className="w-[12px] h-[12px] text-white" />
+              </span>
+              <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">Image Library</span>
+            </button>
+            <button
+              onClick={() => handleSetMode('social-composer')}
+              className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[10px] rounded-[12px] cursor-pointer border-none transition-all duration-250 mt-[2px] ${
+                currentMode === 'social-composer'
+                  ? 'bg-white/[0.05] text-white'
+                  : 'text-[#CBD5E1] hover:bg-white/[0.03] hover:text-white hover:translate-x-[2px]'
+              }`}
+            >
+              {currentMode === 'social-composer' && (
+                <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-[4px]" style={{ background: `linear-gradient(180deg, ${theme.accent}, ${theme.cta})` }} />
+              )}
+              <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center shrink-0" style={{ background: `linear-gradient(135deg, ${theme.accent}, ${theme.cta})` }}>
+                <Wand2 className="w-[12px] h-[12px] text-white" />
+              </span>
+              <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">Social Composer</span>
+              <span className="text-[8.5px] font-bold tracking-[0.12em] uppercase px-[6px] py-[2px] rounded-[4px]" style={{ color: theme.cta, background: `${theme.cta}1f`, border: `1px solid ${theme.cta}4d` }}>New</span>
+            </button>
+            <div className="px-[14px] py-[14px] mt-[8px] rounded-[12px] bg-white/[0.02] border border-white/[0.06]">
+              <div className="text-[11px] text-[#94A3B8] leading-[1.5]">
+                A separate brand world for the LevelUp 26 summit. Templates here use the LU26 colors and ingest from your event photo library.
+              </div>
+            </div>
+          </div>
+        )}
+        {!isLU && <>
         <div className="px-[12px] mb-[10px] relative">
           <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Create</div>
 
@@ -241,6 +316,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
           </div>
         </div>
+        </>}
 
         </div>
 

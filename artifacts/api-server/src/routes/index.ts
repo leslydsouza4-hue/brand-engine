@@ -7,6 +7,8 @@ import featureRequestRouter from "./feature-request";
 import importDocRouter from "./import-doc";
 import claudeDesignRouter from "./claude-design";
 import brandBrainRouter from "./brand-brain";
+import levelupDriveRouter from "./levelup/drive";
+import levelupVisionRouter from "./levelup/vision";
 const router: IRouter = Router();
 
 router.use(healthRouter);
@@ -17,5 +19,7 @@ router.use(featureRequestRouter);
 router.use(importDocRouter);
 router.use(claudeDesignRouter);
 router.use(brandBrainRouter);
+router.use(levelupDriveRouter);
+router.use(levelupVisionRouter);
 
 export default router;

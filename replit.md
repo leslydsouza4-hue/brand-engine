@@ -21,8 +21,12 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ### Brand Engine (`artifacts/brand-engine`)
 - **Type**: React + Vite web app
 - **Route**: `/`
-- **Description**: HighLevel-branded creative tool for generating marketing assets
-- **Workspaces**:
+- **Description**: Multi-brand creative tool. Sidebar pill toggles between HighLevel mode (default) and LevelUp 26 mode (`brandModeStore.ts`, persisted to localStorage). Each mode shows its own workspace list; switching modes auto-bounces the user to a sensible default workspace and changes the app background.
+- **LevelUp 26 mode**:
+  - **Image Library** (`LevelUpImageLibraryWorkspace.tsx`): Ingests public Google Drive folders via `/api/levelup/drive/list` (embeddedfolderview scrape) and proxies thumbnails through `/api/levelup/drive/image`. Auto-tags each image with Gemini 2.5 Flash vision (`/api/levelup/vision/tag`) in batches of 3, returning `{people, scene, mood, colors, objects, peopleCount}`. Manual edit modal for retag/delete. Smart NL search via `/api/levelup/vision/parse-query` + tag-scored `searchLibrary` in `levelUpStore.ts` (people-count match boosts heavily). Library persists in localStorage.
+  - **Social Composer** (`LevelUpComposerWorkspace.tsx`): Brief input (headline/subtext/vibe/desired people count) → `pickTemplateForBrief` selects from 15 LU26 templates (`levelUpTemplates.tsx`: hero-photo-overlay, split-photo-text, duo-portrait, trio-grid, quote-card, stat-card, etc.) → matches photos from library by tag overlap → renders 4 social sizes (Square/Portrait/Story/Landscape) using `LevelUpCanvas` + `chromeScale` factor. Individual PNG and ZIP export via `html-to-image` `toPng({skipFonts:true})` + JSZip.
+  - **Brand kit**: Placeholder SVG logos in `public/assets/levelup26/`. Real palette/fonts to be supplied later.
+- **HighLevel mode workspaces**:
   - **Brand Brain**: Claude Opus 4.7-powered chat assistant. Users paste brand notes / Google Doc content, ask anything, and request designs. When the assistant produces a `<design_brief>` block, the UI renders a "Send to Craft Magic" button that hands the prompt off to the Craft Magic workspace (auto-switches tab + pre-fills prompt).
   - **Templates (Craft Magic)**: Category-based template picker (Social/Ads/Presentation/Email) with live preview. Accepts `seedPrompt` prop to receive prompts handed off from Brand Brain. **Size Pack** (Social format only, single-frame): one prompt → 4 social-media sizes (Square 1080×1080, Portrait 1080×1350, Story 1080×1920, Landscape 1200×628), each rendered through the best-fit deterministic template per orientation, downloaded together as one ZIP. **Email format** uses tiny canvases (600×200 header, 600×300 banner, 600×400 hero, 600×600 square); the deterministic templates (`craft-templates.ts`) auto-scale all chrome (orbs, pills, CTA, footnote, brand-tag, stat-label, logo, card padding/radius/font, message bubbles, stat values) via a `chromeScale(dims) = clamp(minDim/1080, 0.35, 1.0)` factor, with per-element minPx floors to keep small canvases readable.
   - **Shaun Thumbnails**: YouTube thumbnail creator with Shaun Clark poses, positioning, headline/subtext
@@ -51,6 +55,10 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - `POST /api/gemini/generate-image` — Gemini image generation (prompt, aspectRatio, style); supports Nano Banana 2 and Pro models
   - `POST /api/descript/fetch-meta` — Fetch OG metadata (title, thumbnail as base64) from a Descript share URL; frontend opens crop modal for manual UI area selection
   - `POST /api/convert-cmyk` — Convert RGB PNG to CMYK PDF using Sharp (toColorspace cmyk → JPEG → pdf-lib embedJpg with DeviceCMYK); 40MB limit; 300 DPI print-ready
+  - `POST /api/levelup/drive/list` — Scrape a public Google Drive folder via embeddedfolderview and return file ids/names
+  - `GET  /api/levelup/drive/image?id=...&size=w800` — Stream a Drive image through Drive's thumbnail endpoint (CORS-safe proxy)
+  - `POST /api/levelup/vision/tag` — Gemini 2.5 Flash JSON image tagging (people/scene/mood/colors/objects/peopleCount)
+  - `POST /api/levelup/vision/parse-query` — Turn an NL search string into structured tag criteria for the library
 - **Dependencies**: `@workspace/integrations-openai-ai-server` for OpenAI, `@workspace/integrations-gemini-ai` for Gemini
 
 ## Key Commands

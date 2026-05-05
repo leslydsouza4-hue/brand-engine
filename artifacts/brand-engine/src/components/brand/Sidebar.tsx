@@ -19,9 +19,12 @@ import {
   RefreshCw,
   GraduationCap,
   Folder,
-  Wand2
+  Wand2,
+  ChevronDown,
+  Check
 } from "lucide-react";
-import { useBrandMode, BRAND_THEMES } from "./brandModeStore";
+import { useEffect, useRef, useState } from "react";
+import { useBrandMode, BRAND_THEMES, type BrandMode } from "./brandModeStore";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -50,6 +53,29 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
   };
   const isLU = brandMode === "levelup26";
 
+  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
+  const brandMenuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!brandMenuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!brandMenuRef.current?.contains(e.target as Node)) setBrandMenuOpen(false);
+    };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setBrandMenuOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [brandMenuOpen]);
+
+  const brandGradient = (m: BrandMode) =>
+    m === "levelup26"
+      ? "linear-gradient(135deg, #7C3AED 0%, #A855F7 50%, #22D3EE 100%)"
+      : "linear-gradient(135deg, #00B2A9 0%, #1FC9E0 50%, #2896FB 100%)";
+  const brandGlowRgba = (m: BrandMode) =>
+    m === "levelup26" ? "rgba(124,58,237,0.45)" : "rgba(0,178,169,0.45)";
+
   return (
     <>
       {mobileOpen && (
@@ -74,73 +100,91 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         </div>
 
         <div className="px-[14px] pb-[14px] shrink-0">
-          <div
-            className="relative grid grid-cols-2 p-[4px] rounded-full border overflow-hidden backdrop-blur-[8px]"
-            style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
-              borderColor: "rgba(255,255,255,0.09)",
-              boxShadow:
-                "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.25), 0 6px 18px rgba(0,0,0,0.35)",
-            }}
-          >
-            {/* Sliding indicator with shimmer */}
-            <span
-              aria-hidden
-              className="absolute top-[4px] bottom-[4px] w-[calc(50%-4px)] rounded-full transition-all duration-[420ms] ease-[cubic-bezier(.45,1.4,.4,1)] overflow-hidden"
+          <div ref={brandMenuRef} className="relative">
+            {/* Trigger — stylish rounded pill */}
+            <button
+              onClick={() => setBrandMenuOpen((v) => !v)}
+              className="w-full flex items-center gap-[10px] pl-[8px] pr-[12px] py-[7px] rounded-full border cursor-pointer transition-all duration-200 hover:brightness-[1.08]"
               style={{
-                left: isLU ? "50%" : "4px",
-                background: isLU
-                  ? "linear-gradient(135deg, #7C3AED 0%, #A855F7 45%, #22D3EE 100%)"
-                  : "linear-gradient(135deg, #00B2A9 0%, #1FC9E0 45%, #2896FB 100%)",
-                boxShadow: isLU
-                  ? "0 6px 18px rgba(124,58,237,0.5), 0 0 0 1px rgba(255,255,255,0.12) inset, 0 1px 0 rgba(255,255,255,0.35) inset"
-                  : "0 6px 18px rgba(0,178,169,0.5), 0 0 0 1px rgba(255,255,255,0.12) inset, 0 1px 0 rgba(255,255,255,0.35) inset",
+                background: "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015))",
+                borderColor: brandMenuOpen ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.08)",
+                boxShadow:
+                  "inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -1px 0 rgba(0,0,0,0.25), 0 6px 18px rgba(0,0,0,0.3)",
               }}
             >
+              {/* Brand swatch — round, glossy, glowing */}
               <span
-                aria-hidden
-                className="absolute inset-0 opacity-70"
+                className="relative w-[26px] h-[26px] rounded-full shrink-0 overflow-hidden"
                 style={{
-                  background:
-                    "linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0) 55%)",
+                  background: brandGradient(brandMode),
+                  boxShadow: `0 4px 14px ${brandGlowRgba(brandMode)}, inset 0 1px 0 rgba(255,255,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.12)`,
                 }}
+              >
+                <span
+                  aria-hidden
+                  className="absolute inset-0 opacity-70"
+                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 55%)" }}
+                />
+              </span>
+              <span className="flex-1 text-left">
+                <span className="block text-[9px] font-semibold uppercase tracking-[1.4px] text-[#94a3b8a0] leading-none mb-[3px]">
+                  Brand
+                </span>
+                <span className="block text-[12px] font-bold text-white tracking-[-0.1px] leading-none" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.25)" }}>
+                  {theme.name}
+                </span>
+              </span>
+              <ChevronDown
+                className="w-[14px] h-[14px] text-[#94A3B8] transition-transform duration-200 shrink-0"
+                style={{ transform: brandMenuOpen ? "rotate(180deg)" : "rotate(0deg)" }}
               />
-            </span>
+            </button>
 
-            <button
-              onClick={() => setBrandMode("highlevel")}
-              className="relative z-10 flex items-center justify-center gap-[6px] py-[9px] cursor-pointer transition-all duration-200"
-              style={{
-                color: !isLU ? "#FFFFFF" : "#94A3B8",
-                textShadow: !isLU ? "0 1px 2px rgba(0,0,0,0.25)" : "none",
-              }}
-            >
-              <span
-                className="w-[6px] h-[6px] rounded-full transition-all duration-300"
+            {/* Menu */}
+            {brandMenuOpen && (
+              <div
+                className="absolute left-0 right-0 top-[calc(100%+6px)] z-[60] p-[5px] rounded-[14px] border backdrop-blur-[20px]"
                 style={{
-                  background: !isLU ? "#FFFFFF" : "#00B2A9",
-                  boxShadow: !isLU ? "0 0 6px rgba(255,255,255,0.7)" : "0 0 4px rgba(0,178,169,0.5)",
+                  background: "rgba(8,12,22,0.96)",
+                  borderColor: "rgba(255,255,255,0.09)",
+                  boxShadow: "0 16px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)",
                 }}
-              />
-              <span className="text-[11.5px] font-bold tracking-[-0.05px]">HighLevel</span>
-            </button>
-            <button
-              onClick={() => setBrandMode("levelup26")}
-              className="relative z-10 flex items-center justify-center gap-[6px] py-[9px] cursor-pointer transition-all duration-200"
-              style={{
-                color: isLU ? "#FFFFFF" : "#94A3B8",
-                textShadow: isLU ? "0 1px 2px rgba(0,0,0,0.25)" : "none",
-              }}
-            >
-              <span
-                className="w-[6px] h-[6px] rounded-full transition-all duration-300"
-                style={{
-                  background: isLU ? "#FFFFFF" : "#A855F7",
-                  boxShadow: isLU ? "0 0 6px rgba(255,255,255,0.7)" : "0 0 4px rgba(168,85,247,0.5)",
-                }}
-              />
-              <span className="text-[11.5px] font-bold tracking-[-0.05px]">LevelUp 26</span>
-            </button>
+              >
+                {(Object.keys(BRAND_THEMES) as BrandMode[]).map((m) => {
+                  const t = BRAND_THEMES[m];
+                  const active = brandMode === m;
+                  return (
+                    <button
+                      key={m}
+                      onClick={() => { setBrandMode(m); setBrandMenuOpen(false); }}
+                      className="w-full flex items-center gap-[10px] pl-[7px] pr-[10px] py-[7px] rounded-[10px] cursor-pointer transition-colors duration-150 hover:bg-white/[0.06]"
+                      style={{ background: active ? "rgba(255,255,255,0.04)" : "transparent" }}
+                    >
+                      <span
+                        className="relative w-[22px] h-[22px] rounded-full shrink-0 overflow-hidden"
+                        style={{
+                          background: brandGradient(m),
+                          boxShadow: `0 3px 10px ${brandGlowRgba(m)}, inset 0 1px 0 rgba(255,255,255,0.3), inset 0 0 0 1px rgba(255,255,255,0.1)`,
+                        }}
+                      >
+                        <span
+                          aria-hidden
+                          className="absolute inset-0 opacity-70"
+                          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 55%)" }}
+                        />
+                      </span>
+                      <span
+                        className="flex-1 text-left text-[12px] font-bold tracking-[-0.1px] whitespace-nowrap"
+                        style={{ color: active ? "#FFFFFF" : "#CBD5E1" }}
+                      >
+                        {t.name}
+                      </span>
+                      {active && <Check className="w-[13px] h-[13px] shrink-0" style={{ color: "#FFFFFF" }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
         

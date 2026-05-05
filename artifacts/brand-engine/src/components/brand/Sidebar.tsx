@@ -112,27 +112,23 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
                   "inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -1px 0 rgba(0,0,0,0.25), 0 6px 18px rgba(0,0,0,0.3)",
               }}
             >
-              {/* Brand swatch — round, glossy, glowing */}
+              {/* Brand icon — round, glossy, glowing */}
               <span
-                className="relative w-[26px] h-[26px] rounded-full shrink-0 overflow-hidden"
+                className="relative w-[26px] h-[26px] rounded-full shrink-0 overflow-hidden flex items-center justify-center"
                 style={{
                   background: brandGradient(brandMode),
                   boxShadow: `0 4px 14px ${brandGlowRgba(brandMode)}, inset 0 1px 0 rgba(255,255,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.12)`,
                 }}
               >
+                <img src={theme.logoIconUrl} alt="" className="relative z-10 w-[16px] h-[16px] object-contain" />
                 <span
                   aria-hidden
-                  className="absolute inset-0 opacity-70"
+                  className="absolute inset-0 opacity-70 pointer-events-none"
                   style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 55%)" }}
                 />
               </span>
-              <span className="flex-1 text-left">
-                <span className="block text-[9px] font-semibold uppercase tracking-[1.4px] text-[#94a3b8a0] leading-none mb-[3px]">
-                  Brand
-                </span>
-                <span className="block text-[12px] font-bold text-white tracking-[-0.1px] leading-none" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.25)" }}>
-                  {theme.name}
-                </span>
+              <span className="flex-1 text-left text-[13px] font-bold text-white tracking-[-0.1px]" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.25)" }}>
+                {theme.name}
               </span>
               <ChevronDown
                 className="w-[14px] h-[14px] text-[#94A3B8] transition-transform duration-200 shrink-0"
@@ -161,15 +157,16 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
                       style={{ background: active ? "rgba(255,255,255,0.04)" : "transparent" }}
                     >
                       <span
-                        className="relative w-[22px] h-[22px] rounded-full shrink-0 overflow-hidden"
+                        className="relative w-[22px] h-[22px] rounded-full shrink-0 overflow-hidden flex items-center justify-center"
                         style={{
                           background: brandGradient(m),
                           boxShadow: `0 3px 10px ${brandGlowRgba(m)}, inset 0 1px 0 rgba(255,255,255,0.3), inset 0 0 0 1px rgba(255,255,255,0.1)`,
                         }}
                       >
+                        <img src={t.logoIconUrl} alt="" className="relative z-10 w-[14px] h-[14px] object-contain" />
                         <span
                           aria-hidden
-                          className="absolute inset-0 opacity-70"
+                          className="absolute inset-0 opacity-70 pointer-events-none"
                           style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 55%)" }}
                         />
                       </span>

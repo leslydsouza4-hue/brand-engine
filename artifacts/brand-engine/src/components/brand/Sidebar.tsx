@@ -112,21 +112,30 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
                   "inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -1px 0 rgba(0,0,0,0.25), 0 6px 18px rgba(0,0,0,0.3)",
               }}
             >
-              {/* Brand icon — round, glossy, glowing */}
-              <span
-                className="relative w-[26px] h-[26px] rounded-full shrink-0 overflow-hidden flex items-center justify-center"
-                style={{
-                  background: "linear-gradient(135deg, #0B1530 0%, #0A1024 100%)",
-                  boxShadow: "0 4px 14px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(255,255,255,0.06)",
-                }}
-              >
-                <img src={theme.logoIconUrl} alt="" className="relative z-10 w-[16px] h-[16px] object-contain" />
-                <span
-                  aria-hidden
-                  className="absolute inset-0 opacity-70 pointer-events-none"
-                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 55%)" }}
+              {/* Brand icon */}
+              {isLU ? (
+                <img
+                  src={`${BASE}assets/levelup26/logo-pill.png`}
+                  alt=""
+                  className="w-[28px] h-[28px] rounded-[7px] shrink-0 object-cover"
+                  style={{ boxShadow: "0 4px 14px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08)" }}
                 />
-              </span>
+              ) : (
+                <span
+                  className="relative w-[26px] h-[26px] rounded-full shrink-0 overflow-hidden flex items-center justify-center"
+                  style={{
+                    background: "linear-gradient(135deg, #0B1530 0%, #0A1024 100%)",
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <img src={theme.logoIconUrl} alt="" className="relative z-10 w-[16px] h-[16px] object-contain" />
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 opacity-70 pointer-events-none"
+                    style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 55%)" }}
+                  />
+                </span>
+              )}
               <span className="flex-1 text-left text-[13px] font-bold text-white tracking-[-0.1px]" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.25)" }}>
                 {theme.name}
               </span>
@@ -156,20 +165,29 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
                       className="w-full flex items-center gap-[10px] pl-[7px] pr-[10px] py-[7px] rounded-[10px] cursor-pointer transition-colors duration-150 hover:bg-white/[0.06]"
                       style={{ background: active ? "rgba(255,255,255,0.04)" : "transparent" }}
                     >
-                      <span
-                        className="relative w-[22px] h-[22px] rounded-full shrink-0 overflow-hidden flex items-center justify-center"
-                        style={{
-                          background: "linear-gradient(135deg, #0B1530 0%, #0A1024 100%)",
-                          boxShadow: "0 3px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 0 0 1px rgba(255,255,255,0.06)",
-                        }}
-                      >
-                        <img src={t.logoIconUrl} alt="" className="relative z-10 w-[14px] h-[14px] object-contain" />
-                        <span
-                          aria-hidden
-                          className="absolute inset-0 opacity-70 pointer-events-none"
-                          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 55%)" }}
+                      {m === "levelup26" ? (
+                        <img
+                          src={`${BASE}assets/levelup26/logo-pill.png`}
+                          alt=""
+                          className="w-[24px] h-[24px] rounded-[6px] shrink-0 object-cover"
+                          style={{ boxShadow: "0 3px 10px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.08)" }}
                         />
-                      </span>
+                      ) : (
+                        <span
+                          className="relative w-[22px] h-[22px] rounded-full shrink-0 overflow-hidden flex items-center justify-center"
+                          style={{
+                            background: "linear-gradient(135deg, #0B1530 0%, #0A1024 100%)",
+                            boxShadow: "0 3px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 0 0 1px rgba(255,255,255,0.06)",
+                          }}
+                        >
+                          <img src={t.logoIconUrl} alt="" className="relative z-10 w-[14px] h-[14px] object-contain" />
+                          <span
+                            aria-hidden
+                            className="absolute inset-0 opacity-70 pointer-events-none"
+                            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 55%)" }}
+                          />
+                        </span>
+                      )}
                       <span
                         className="flex-1 text-left text-[12px] font-bold tracking-[-0.1px] whitespace-nowrap"
                         style={{ color: active ? "#FFFFFF" : "#CBD5E1" }}

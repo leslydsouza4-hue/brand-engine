@@ -97,36 +97,36 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           </button>
         </div>
 
-        <div className="px-[16px] pb-[12px] shrink-0">
-          <div ref={brandMenuRef} className="relative">
+        <div className="px-[16px] pb-[10px] shrink-0">
+          <div ref={brandMenuRef} className="relative inline-block">
             <button
               onClick={() => setBrandMenuOpen((v) => !v)}
-              className="w-full flex items-center gap-[8px] px-[10px] py-[7px] rounded-[8px] border cursor-pointer transition-all duration-200 hover:bg-white/[0.05]"
+              className="flex items-center gap-[5px] pl-[6px] pr-[5px] py-[3px] rounded-[6px] border cursor-pointer transition-all duration-200 hover:bg-white/[0.05]"
               style={{
-                background: "rgba(255,255,255,0.03)",
+                background: "rgba(255,255,255,0.025)",
                 borderColor: brandMenuOpen ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.06)",
               }}
             >
               <span
-                className="w-[14px] h-[14px] rounded-[4px] shrink-0"
-                style={{ background: brandGradient(brandMode), boxShadow: `0 0 8px ${theme.primary}55` }}
+                className="w-[8px] h-[8px] rounded-full shrink-0"
+                style={{ background: brandGradient(brandMode), boxShadow: `0 0 6px ${theme.primary}66` }}
               />
-              <span className="flex-1 text-left text-[11.5px] font-semibold text-white tracking-[-0.1px]">
+              <span className="text-[10px] font-semibold text-white tracking-[-0.1px] leading-none">
                 {theme.name}
               </span>
               <ChevronDown
-                className="w-[12px] h-[12px] text-[#94A3B8] transition-transform duration-200"
+                className="w-[9px] h-[9px] text-[#94A3B8] transition-transform duration-200"
                 style={{ transform: brandMenuOpen ? "rotate(180deg)" : "rotate(0deg)" }}
               />
             </button>
 
             {brandMenuOpen && (
               <div
-                className="absolute left-0 right-0 top-[calc(100%+4px)] z-[60] p-[4px] rounded-[10px] border backdrop-blur-[20px]"
+                className="absolute left-0 top-[calc(100%+3px)] z-[60] min-w-[120px] p-[3px] rounded-[7px] border backdrop-blur-[20px]"
                 style={{
                   background: "rgba(8,12,22,0.96)",
                   borderColor: "rgba(255,255,255,0.08)",
-                  boxShadow: "0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02)",
+                  boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
                 }}
               >
                 {(Object.keys(BRAND_THEMES) as BrandMode[]).map((m) => {
@@ -136,20 +136,17 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
                     <button
                       key={m}
                       onClick={() => { setBrandMode(m); setBrandMenuOpen(false); }}
-                      className="w-full flex items-center gap-[8px] px-[8px] py-[7px] rounded-[7px] cursor-pointer transition-colors duration-150 hover:bg-white/[0.06]"
+                      className="w-full flex items-center gap-[6px] px-[6px] py-[5px] rounded-[5px] cursor-pointer transition-colors duration-150 hover:bg-white/[0.06]"
                       style={{ background: active ? "rgba(255,255,255,0.04)" : "transparent" }}
                     >
+                      <span className="w-[8px] h-[8px] rounded-full shrink-0" style={{ background: brandGradient(m) }} />
                       <span
-                        className="w-[14px] h-[14px] rounded-[4px] shrink-0"
-                        style={{ background: brandGradient(m) }}
-                      />
-                      <span
-                        className="flex-1 text-left text-[11.5px] font-semibold tracking-[-0.1px]"
+                        className="flex-1 text-left text-[10px] font-semibold tracking-[-0.1px] whitespace-nowrap"
                         style={{ color: active ? "#FFFFFF" : "#CBD5E1" }}
                       >
                         {t.name}
                       </span>
-                      {active && <Check className="w-[12px] h-[12px]" style={{ color: t.primary }} />}
+                      {active && <Check className="w-[10px] h-[10px]" style={{ color: t.primary }} />}
                     </button>
                   );
                 })}

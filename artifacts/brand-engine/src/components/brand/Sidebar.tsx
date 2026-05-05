@@ -19,9 +19,12 @@ import {
   RefreshCw,
   GraduationCap,
   Folder,
-  Wand2
+  Wand2,
+  ChevronDown,
+  Check
 } from "lucide-react";
-import { useBrandMode, BRAND_THEMES } from "./brandModeStore";
+import { useEffect, useRef, useState } from "react";
+import { useBrandMode, BRAND_THEMES, type BrandMode } from "./brandModeStore";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -50,6 +53,27 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
   };
   const isLU = brandMode === "levelup26";
 
+  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
+  const brandMenuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!brandMenuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!brandMenuRef.current?.contains(e.target as Node)) setBrandMenuOpen(false);
+    };
+    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setBrandMenuOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [brandMenuOpen]);
+
+  const brandGradient = (m: BrandMode) =>
+    m === "levelup26"
+      ? "linear-gradient(135deg, #7C3AED, #22D3EE)"
+      : "linear-gradient(135deg, #00B2A9, #2896FB)";
+
   return (
     <>
       {mobileOpen && (
@@ -74,37 +98,63 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         </div>
 
         <div className="px-[16px] pb-[12px] shrink-0">
-          <div
-            className="relative grid grid-cols-2 p-[2px] rounded-[8px] border overflow-hidden"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              borderColor: "rgba(255,255,255,0.06)",
-            }}
-          >
-            <span
-              aria-hidden
-              className="absolute top-[2px] bottom-[2px] w-[calc(50%-2px)] rounded-[6px] transition-all duration-300 ease-out"
+          <div ref={brandMenuRef} className="relative">
+            <button
+              onClick={() => setBrandMenuOpen((v) => !v)}
+              className="w-full flex items-center gap-[8px] px-[10px] py-[7px] rounded-[8px] border cursor-pointer transition-all duration-200 hover:bg-white/[0.05]"
               style={{
-                left: isLU ? "50%" : "2px",
-                background: isLU
-                  ? "linear-gradient(135deg, #7C3AED, #22D3EE)"
-                  : "linear-gradient(135deg, #00B2A9, #2896FB)",
+                background: "rgba(255,255,255,0.03)",
+                borderColor: brandMenuOpen ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.06)",
               }}
-            />
-            <button
-              onClick={() => setBrandMode("highlevel")}
-              className="relative z-10 text-[10px] font-bold uppercase tracking-[0.08em] py-[6px] cursor-pointer transition-colors duration-200"
-              style={{ color: !isLU ? "#FFFFFF" : "#94A3B8" }}
             >
-              HighLevel
+              <span
+                className="w-[14px] h-[14px] rounded-[4px] shrink-0"
+                style={{ background: brandGradient(brandMode), boxShadow: `0 0 8px ${theme.primary}55` }}
+              />
+              <span className="flex-1 text-left text-[11.5px] font-semibold text-white tracking-[-0.1px]">
+                {theme.name}
+              </span>
+              <ChevronDown
+                className="w-[12px] h-[12px] text-[#94A3B8] transition-transform duration-200"
+                style={{ transform: brandMenuOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+              />
             </button>
-            <button
-              onClick={() => setBrandMode("levelup26")}
-              className="relative z-10 text-[10px] font-bold uppercase tracking-[0.08em] py-[6px] cursor-pointer transition-colors duration-200"
-              style={{ color: isLU ? "#FFFFFF" : "#94A3B8" }}
-            >
-              LevelUp 26
-            </button>
+
+            {brandMenuOpen && (
+              <div
+                className="absolute left-0 right-0 top-[calc(100%+4px)] z-[60] p-[4px] rounded-[10px] border backdrop-blur-[20px]"
+                style={{
+                  background: "rgba(8,12,22,0.96)",
+                  borderColor: "rgba(255,255,255,0.08)",
+                  boxShadow: "0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02)",
+                }}
+              >
+                {(Object.keys(BRAND_THEMES) as BrandMode[]).map((m) => {
+                  const t = BRAND_THEMES[m];
+                  const active = brandMode === m;
+                  return (
+                    <button
+                      key={m}
+                      onClick={() => { setBrandMode(m); setBrandMenuOpen(false); }}
+                      className="w-full flex items-center gap-[8px] px-[8px] py-[7px] rounded-[7px] cursor-pointer transition-colors duration-150 hover:bg-white/[0.06]"
+                      style={{ background: active ? "rgba(255,255,255,0.04)" : "transparent" }}
+                    >
+                      <span
+                        className="w-[14px] h-[14px] rounded-[4px] shrink-0"
+                        style={{ background: brandGradient(m) }}
+                      />
+                      <span
+                        className="flex-1 text-left text-[11.5px] font-semibold tracking-[-0.1px]"
+                        style={{ color: active ? "#FFFFFF" : "#CBD5E1" }}
+                      >
+                        {t.name}
+                      </span>
+                      {active && <Check className="w-[12px] h-[12px]" style={{ color: t.primary }} />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
         

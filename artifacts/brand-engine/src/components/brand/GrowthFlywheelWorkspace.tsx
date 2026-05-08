@@ -1183,7 +1183,7 @@ function InfoCard({
           className="min-w-0 pt-[6px]"
           style={{
             flex: wide ? "0 0 auto" : "1 1 0%",
-            textAlign: wide ? "center" : mirror ? "right" : "left",
+            textAlign: wide ? "left" : mirror ? "right" : "left",
           }}
         >
           <div

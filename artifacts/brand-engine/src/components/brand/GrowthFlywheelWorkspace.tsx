@@ -1227,7 +1227,7 @@ function InfoCard({
                     paddingBottom: 2,
                     borderBottom: isLast
                       ? "none"
-                      : `1px solid rgba(${t.rgb}, 0.27)`,
+                      : `1px solid rgba(${t.rgb}, ${stage.id === "reactivate" ? 0.16 : 0.27})`,
                   }}
                 >
                   {item}

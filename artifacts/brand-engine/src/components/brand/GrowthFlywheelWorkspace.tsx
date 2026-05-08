@@ -1155,58 +1155,85 @@ function InfoCard({
           is on, the icon flips to the RIGHT and the text right-aligns
           (used by Variant 2 for Evangelize / Close so content pulls
           toward the wheel and outer edge breathes). */}
-      <div
-        className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]"
-        style={{
-          flexDirection: mirror ? "row-reverse" : "row",
-          justifyContent: wide ? "center" : undefined,
-        }}
-      >
-        {/* Icon chip */}
-        <div
-          className="w-[50px] h-[50px] shrink-0 rounded-[13px] flex items-center justify-center"
-          style={{
-            background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.80) 100%)`,
-            boxShadow: `0 8px 18px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
-          }}
-        >
-          <img
-            src={t.iconSrc}
-            alt=""
-            aria-hidden
-            style={{ width: 28, height: 28, filter: "brightness(0) invert(1)" }}
-          />
-        </div>
-
-        {/* Title + tagline column. */}
-        <div
-          className="min-w-0 pt-[6px]"
-          style={{
-            flex: wide ? "0 0 auto" : "1 1 0%",
-            textAlign: wide ? "left" : mirror ? "right" : "left",
-          }}
-        >
-          <div
-            className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
-            style={{
-              fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
-              color: "var(--card-text)",
-            }}
-          >
-            {stage.title}
+      {wide ? (
+        <div className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex flex-col items-center gap-[4px]">
+          <div className="flex items-center gap-[14px]">
+            <div
+              className="w-[50px] h-[50px] shrink-0 rounded-[13px] flex items-center justify-center"
+              style={{
+                background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.80) 100%)`,
+                boxShadow: `0 8px 18px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
+              }}
+            >
+              <img
+                src={t.iconSrc}
+                alt=""
+                aria-hidden
+                style={{ width: 28, height: 28, filter: "brightness(0) invert(1)" }}
+              />
+            </div>
+            <div
+              className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
+              style={{
+                fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
+                color: "var(--card-text)",
+              }}
+            >
+              {stage.title}
+            </div>
           </div>
           <p
-            className="mt-[2px] text-[14px] leading-[1.4]"
-            style={{
-              color: "var(--card-text-muted)",
-              textAlign: mirror ? "right" : "left",
-              whiteSpace: "nowrap",
-            }}
+            className="mt-[2px] text-[14px] leading-[1.4] text-center"
+            style={{ color: "var(--card-text-muted)" }}
           >
             {stage.tagline}
           </p>
         </div>
-      </div>
+      ) : (
+        <div
+          className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]"
+          style={{ flexDirection: mirror ? "row-reverse" : "row" }}
+        >
+          {/* Icon chip */}
+          <div
+            className="w-[50px] h-[50px] shrink-0 rounded-[13px] flex items-center justify-center"
+            style={{
+              background: `linear-gradient(135deg, ${t.color} 0%, rgba(${t.rgb}, 0.80) 100%)`,
+              boxShadow: `0 8px 18px -5px rgba(${t.rgb}, 0.55), inset 0 1px 0 rgba(255,255,255,0.30)`,
+            }}
+          >
+            <img
+              src={t.iconSrc}
+              alt=""
+              aria-hidden
+              style={{ width: 28, height: 28, filter: "brightness(0) invert(1)" }}
+            />
+          </div>
+
+          {/* Title + tagline column. */}
+          <div className="flex-1 min-w-0 pt-[6px]" style={{ textAlign: mirror ? "right" : "left" }}>
+            <div
+              className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
+              style={{
+                fontFamily: "Poppins, ui-sans-serif, system-ui, sans-serif",
+                color: "var(--card-text)",
+              }}
+            >
+              {stage.title}
+            </div>
+            <p
+              className="mt-[2px] text-[14px] leading-[1.4]"
+              style={{
+                color: "var(--card-text-muted)",
+                textAlign: mirror ? "right" : "left",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {stage.tagline}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Bullet list. Two modes:
           - default: coloured dot on the LEFT, label to its right
@@ -1218,9 +1245,10 @@ function InfoCard({
         <div
           className={
             wide
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[24px] gap-y-[6px]"
+              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[24px] gap-y-[6px] mx-auto"
               : "flex flex-col gap-[6px]"
           }
+          style={wide ? { maxWidth: 760 } : undefined}
         >
           {cols.flat().map((item, idx) => {
             if (useDividers) {

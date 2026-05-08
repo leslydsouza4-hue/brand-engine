@@ -46,41 +46,44 @@ type StageThemeMap = Record<StageId, {
   badge: string;
 }>;
 
+// Official HighLevel CMYK palette mapping:
+// Capture = Yellow #FFD000 · Nurture = Blue #2896FB · Close = Green #17D94B
+// Evangelize = warm orange. Reactivate keeps its deep navy.
 const STAGE_THEME: StageThemeMap = {
   capture: {
-    color: "#10B838",          // GREEN — matches the green capture petal
-    rgb: "16,184,56",
+    color: "#FFD000",
+    rgb: "255,208,0",
     Icon: Filter,
     iconSrc: `${ICON_BASE}/capture.svg`,
     stageNum: "01",
     badge: "STAGE 01",
   },
   nurture: {
-    color: "#F25C19",          // ORANGE — matches the orange nurture petal
-    rgb: "242,92,25",
+    color: "#2896FB",
+    rgb: "40,150,251",
     Icon: MessagesSquare,
     iconSrc: `${ICON_BASE}/nurture.svg`,
     stageNum: "02",
     badge: "STAGE 02",
   },
   close: {
-    color: "#1B96E0",          // BLUE — matches the blue close petal
-    rgb: "27,150,224",
+    color: "#17D94B",
+    rgb: "23,217,75",
     Icon: DollarSign,
     iconSrc: `${ICON_BASE}/close.svg`,
     stageNum: "03",
     badge: "STAGE 03",
   },
   evangelize: {
-    color: "#FFC107",          // YELLOW — matches the yellow evangelize petal
-    rgb: "255,193,7",
+    color: "#FB923C",
+    rgb: "251,146,60",
     Icon: Trophy,
     iconSrc: `${ICON_BASE}/evangelize.svg`,
     stageNum: "04",
     badge: "STAGE 04",
   },
   reactivate: {
-    color: "#13235A",          // HL Navy — deeper
+    color: "#13235A",
     rgb: "19,35,90",
     Icon: RefreshCw,
     iconSrc: `${ICON_BASE}/reactivate.svg`,
@@ -89,36 +92,14 @@ const STAGE_THEME: StageThemeMap = {
   },
 };
 
-// Variant 2 — official HighLevel CMYK palette mapping requested by the team:
-// Capture = Yellow #FFD000 · Nurture = Blue #2896FB · Close = Green #17D94B
-// Evangelize = warm orange (acts as the bonus 4th color, complements the trio).
-// Reactivate keeps its deep navy.
-const STAGE_THEME_V2: StageThemeMap = {
-  capture:    { ...STAGE_THEME.capture,    color: "#FFD000", rgb: "255,208,0"   },
-  nurture:    { ...STAGE_THEME.nurture,    color: "#2896FB", rgb: "40,150,251"  },
-  close:      { ...STAGE_THEME.close,      color: "#17D94B", rgb: "23,217,75"   },
-  evangelize: { ...STAGE_THEME.evangelize, color: "#FB923C", rgb: "251,146,60"  },
-  reactivate: { ...STAGE_THEME.reactivate                                       },
-};
-
-// Petal gradients per layout. V2 mirrors the new color mapping with the
-// same "lit edge → shaded core" treatment.
-const PETAL_GRADIENT_V1: Record<StageId, [string, string]> = {
-  capture:    ["#8EFB3B", "#579126"],
-  nurture:    ["#F2D231", "#DC4726"],
-  close:      ["#4774FA", "#74CCF8"],
-  evangelize: ["#EAAB35", "#FFFF44"],
-  reactivate: ["#1E40AF", "#0B1A3A"],
-};
-const PETAL_GRADIENT_V2: Record<StageId, [string, string]> = {
+// Petal gradients — "lit edge → shaded core" treatment per stage.
+const PETAL_GRADIENT: Record<StageId, [string, string]> = {
   capture:    ["#FFE066", "#E0A700"], // bright yellow → deep gold
   nurture:    ["#74B9FF", "#1E6FD9"], // sky blue → royal blue
   close:      ["#7BE89A", "#0FA63B"], // mint → forest green
   evangelize: ["#FED39A", "#E25822"], // peach → burnt orange
   reactivate: ["#1E40AF", "#0B1A3A"],
 };
-
-type LayoutVariant = 1 | 2;
 
 const INITIAL_STAGES: Stage[] = [
   {
@@ -267,11 +248,10 @@ export function GrowthFlywheelWorkspace() {
   const [exportFormat, setExportFormat] = useState<"pdf" | "png">("pdf");
   const [exportScope, setExportScope] = useState<ExportScope>("slide");
   const [theme, setTheme] = useState<SlideTheme>("light");
-  const [layoutVariant, setLayoutVariant] = useState<LayoutVariant>(1);
   const [isExporting, setIsExporting] = useState(false);
 
-  const activeThemeMap = layoutVariant === 2 ? STAGE_THEME_V2 : STAGE_THEME;
-  const activePetalGradient = layoutVariant === 2 ? PETAL_GRADIENT_V2 : PETAL_GRADIENT_V1;
+  const activeThemeMap = STAGE_THEME;
+  const activePetalGradient = PETAL_GRADIENT;
 
   const previewRef = useRef<HTMLDivElement>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
@@ -481,8 +461,6 @@ export function GrowthFlywheelWorkspace() {
         onExportScopeChange={setExportScope}
         theme={theme}
         onThemeChange={setTheme}
-        layoutVariant={layoutVariant}
-        onLayoutVariantChange={setLayoutVariant}
         onExport={handleExport}
         isExporting={isExporting}
       />
@@ -593,8 +571,8 @@ export function GrowthFlywheelWorkspace() {
                       stage={getStage("evangelize")}
                       align="left"
                       themeMap={activeThemeMap}
-                      mirror={layoutVariant === 2}
-                      useDividers={layoutVariant === 2}
+                      mirror
+                      useDividers
                     />
                   </div>
                   <div style={{ paddingRight: 110, height: "100%" }}>
@@ -602,7 +580,7 @@ export function GrowthFlywheelWorkspace() {
                       stage={getStage("capture")}
                       align="right"
                       themeMap={activeThemeMap}
-                      useDividers={layoutVariant === 2}
+                      useDividers
                     />
                   </div>
                 </div>
@@ -624,8 +602,8 @@ export function GrowthFlywheelWorkspace() {
                       stage={getStage("close")}
                       align="left"
                       themeMap={activeThemeMap}
-                      mirror={layoutVariant === 2}
-                      useDividers={layoutVariant === 2}
+                      mirror
+                      useDividers
                     />
                   </div>
                   <div style={{ paddingRight: 110, height: "100%" }}>
@@ -633,7 +611,7 @@ export function GrowthFlywheelWorkspace() {
                       stage={getStage("nurture")}
                       align="right"
                       themeMap={activeThemeMap}
-                      useDividers={layoutVariant === 2}
+                      useDividers
                     />
                   </div>
                 </div>
@@ -687,7 +665,7 @@ export function GrowthFlywheelWorkspace() {
                   stage={getStage("reactivate")}
                   wide
                   themeMap={activeThemeMap}
-                  useDividers={layoutVariant === 2}
+                  useDividers
                 />
               </div>
             </div>
@@ -704,7 +682,7 @@ export function GrowthFlywheelWorkspace() {
 function Flywheel({
   theme = "light",
   themeMap = STAGE_THEME,
-  petalGradient = PETAL_GRADIENT_V1,
+  petalGradient = PETAL_GRADIENT,
 }: {
   theme?: SlideTheme;
   themeMap?: StageThemeMap;
@@ -1490,8 +1468,6 @@ function LeftSidebar({
   onExportScopeChange,
   theme,
   onThemeChange,
-  layoutVariant,
-  onLayoutVariantChange,
   onExport,
   isExporting,
 }: {
@@ -1509,8 +1485,6 @@ function LeftSidebar({
   onExportScopeChange: (s: ExportScope) => void;
   theme: SlideTheme;
   onThemeChange: (t: SlideTheme) => void;
-  layoutVariant: LayoutVariant;
-  onLayoutVariantChange: (v: LayoutVariant) => void;
   onExport: () => void;
   isExporting: boolean;
 }) {
@@ -1607,32 +1581,6 @@ function LeftSidebar({
 
       {/* BOTTOM — fixed */}
       <div className="p-[14px] pt-[12px] border-t border-white/5 bg-[rgba(0,0,0,0.25)] flex flex-col gap-[8px]">
-        {/* Layout variant — V1 keeps original brand colors; V2 swaps in
-            new color mapping AND mirrors the left-side cards (icon on
-            right, text right-aligned) so content pulls toward the
-            wheel and outer edge breathes. */}
-        <div>
-          <div className="text-[9.5px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[4px]">
-            Layout
-          </div>
-          <div className="flex gap-[3px]">
-            {([1, 2] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                onClick={() => onLayoutVariantChange(v)}
-                className={`flex-1 py-[6px] rounded-[7px] text-[10.5px] font-bold border cursor-pointer transition-all uppercase ${
-                  layoutVariant === v
-                    ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
-                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
-                }`}
-              >
-                Variant {v}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Theme + Format — side-by-side to save vertical room */}
         <div className="grid grid-cols-2 gap-[8px]">
           <div>

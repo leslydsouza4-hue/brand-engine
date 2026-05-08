@@ -1123,13 +1123,7 @@ function InfoCard({
             marginRight: 24,
             paddingTop: sideTopNudge,
           }
-        : wide
-          ? {
-              maxWidth: 980,
-              marginLeft: "auto",
-              marginRight: "auto",
-            }
-          : {};
+        : {};
   const glowCorner = align === "right" ? "100% 0%" : "0% 0%";
 
   return (

@@ -1223,11 +1223,11 @@ function InfoCard({
                   style={{
                     color: "var(--card-bullet-text)",
                     textAlign: mirror ? "right" : "left",
-                    paddingTop: idx === 0 ? 0 : 5,
-                    paddingBottom: 5,
+                    paddingTop: idx === 0 ? 0 : 2,
+                    paddingBottom: 2,
                     borderBottom: isLast
                       ? "none"
-                      : `0.5px solid rgba(${t.rgb}, 0.22)`,
+                      : `1px solid rgba(${t.rgb}, 0.45)`,
                   }}
                 >
                   {item}

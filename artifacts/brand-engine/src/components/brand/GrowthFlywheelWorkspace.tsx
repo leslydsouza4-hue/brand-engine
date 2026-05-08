@@ -1215,15 +1215,19 @@ function InfoCard({
         >
           {cols.flat().map((item, idx) => {
             if (useDividers) {
+              const isLast = idx === cols.flat().length - 1;
               return (
                 <div
                   key={`${stage.id}-${idx}`}
-                  className="text-[19px] leading-[1.4] font-medium"
+                  className="text-[17px] leading-[1.35] font-medium"
                   style={{
                     color: "var(--card-bullet-text)",
                     textAlign: mirror ? "right" : "left",
-                    paddingTop: idx === 0 ? 0 : 4,
-                    paddingBottom: 4,
+                    paddingTop: idx === 0 ? 0 : 5,
+                    paddingBottom: 5,
+                    borderBottom: isLast
+                      ? "none"
+                      : `0.5px solid rgba(${t.rgb}, 0.22)`,
                   }}
                 >
                   {item}

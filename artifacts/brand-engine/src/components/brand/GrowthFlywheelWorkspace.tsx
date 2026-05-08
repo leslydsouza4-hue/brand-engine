@@ -1245,14 +1245,31 @@ function InfoCard({
         <div
           className={
             wide
-              ? "grid grid-cols-1 sm:grid-cols-2 gap-x-[24px] gap-y-[6px] mx-auto"
+              ? "flex flex-row flex-wrap items-center justify-center gap-x-[18px] gap-y-[6px] mx-auto"
               : "flex flex-col gap-[6px]"
           }
-          style={wide ? { maxWidth: 760 } : undefined}
+          style={wide ? { maxWidth: 1400 } : undefined}
         >
           {cols.flat().map((item, idx) => {
             if (useDividers) {
               const isLast = idx === cols.flat().length - 1;
+              if (wide) {
+                return (
+                  <div
+                    key={`${stage.id}-${idx}`}
+                    className="text-[17px] leading-[1.35] font-medium whitespace-nowrap"
+                    style={{
+                      color: "var(--card-bullet-text)",
+                      paddingRight: isLast ? 0 : 18,
+                      borderRight: isLast
+                        ? "none"
+                        : `1px solid rgba(${t.rgb}, ${stage.id === "reactivate" ? 0.16 : 0.27})`,
+                    }}
+                  >
+                    {item}
+                  </div>
+                );
+              }
               return (
                 <div
                   key={`${stage.id}-${idx}`}

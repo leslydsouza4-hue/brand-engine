@@ -594,6 +594,7 @@ export function GrowthFlywheelWorkspace() {
                       align="left"
                       themeMap={activeThemeMap}
                       mirror={layoutVariant === 2}
+                      useDividers={layoutVariant === 2}
                     />
                   </div>
                   <div style={{ paddingRight: 110, height: "100%" }}>
@@ -601,6 +602,7 @@ export function GrowthFlywheelWorkspace() {
                       stage={getStage("capture")}
                       align="right"
                       themeMap={activeThemeMap}
+                      useDividers={layoutVariant === 2}
                     />
                   </div>
                 </div>
@@ -623,6 +625,7 @@ export function GrowthFlywheelWorkspace() {
                       align="left"
                       themeMap={activeThemeMap}
                       mirror={layoutVariant === 2}
+                      useDividers={layoutVariant === 2}
                     />
                   </div>
                   <div style={{ paddingRight: 110, height: "100%" }}>
@@ -630,6 +633,7 @@ export function GrowthFlywheelWorkspace() {
                       stage={getStage("nurture")}
                       align="right"
                       themeMap={activeThemeMap}
+                      useDividers={layoutVariant === 2}
                     />
                   </div>
                 </div>
@@ -683,6 +687,7 @@ export function GrowthFlywheelWorkspace() {
                   stage={getStage("reactivate")}
                   wide
                   themeMap={activeThemeMap}
+                  useDividers={layoutVariant === 2}
                 />
               </div>
             </div>
@@ -1059,12 +1064,14 @@ function InfoCard({
   align = "full",
   themeMap = STAGE_THEME,
   mirror = false,
+  useDividers = false,
 }: {
   stage: Stage;
   wide?: boolean;
   align?: "left" | "right" | "full";
   themeMap?: StageThemeMap;
   mirror?: boolean;
+  useDividers?: boolean;
 }) {
   const t = themeMap[stage.id];
 
@@ -1192,7 +1199,12 @@ function InfoCard({
         </div>
       </div>
 
-      {/* Bullet list — dot on LEFT (or RIGHT when mirrored). */}
+      {/* Bullet list. Two modes:
+          - default: coloured dot on the LEFT, label to its right
+          - useDividers (Variant 2): no dot; thin coloured divider line
+            BETWEEN items (in stage color, low opacity). When mirrored
+            the text right-aligns but the bullet/divider does not flip
+            sides — there is no dot to "be on the right" anymore. */}
       <div className="pl-[28px] pr-[26px] pt-[12px] pb-[14px]">
         <div
           className={
@@ -1201,23 +1213,45 @@ function InfoCard({
               : "flex flex-col gap-[6px]"
           }
         >
-          {cols.flat().map((item, idx) => (
-            <div
-              key={`${stage.id}-${idx}`}
-              className="flex items-start gap-[12px] text-[19px] leading-[1.4] font-medium"
-              style={{
-                color: "var(--card-bullet-text)",
-                flexDirection: mirror ? "row-reverse" : "row",
-                textAlign: mirror ? "right" : "left",
-              }}
-            >
+          {cols.flat().map((item, idx, arr) => {
+            const isLast = idx === arr.length - 1;
+            if (useDividers) {
+              return (
+                <div
+                  key={`${stage.id}-${idx}`}
+                  className="text-[19px] leading-[1.4] font-medium"
+                  style={{
+                    color: "var(--card-bullet-text)",
+                    textAlign: mirror ? "right" : "left",
+                    paddingTop: idx === 0 ? 0 : 8,
+                    paddingBottom: 8,
+                    borderBottom: isLast
+                      ? "none"
+                      : `1px solid rgba(${t.rgb}, 0.35)`,
+                  }}
+                >
+                  {item}
+                </div>
+              );
+            }
+            return (
               <div
-                className="w-[9px] h-[9px] rounded-full mt-[8px] shrink-0"
-                style={{ background: t.color }}
-              />
-              <span>{item}</span>
-            </div>
-          ))}
+                key={`${stage.id}-${idx}`}
+                className="flex items-start gap-[12px] text-[19px] leading-[1.4] font-medium"
+                style={{
+                  color: "var(--card-bullet-text)",
+                  flexDirection: mirror ? "row-reverse" : "row",
+                  textAlign: mirror ? "right" : "left",
+                }}
+              >
+                <div
+                  className="w-[9px] h-[9px] rounded-full mt-[8px] shrink-0"
+                  style={{ background: t.color }}
+                />
+                <span>{item}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 

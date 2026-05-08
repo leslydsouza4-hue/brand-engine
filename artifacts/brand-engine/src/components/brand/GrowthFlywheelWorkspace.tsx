@@ -1091,9 +1091,9 @@ function InfoCard({
   // Wide (Reactivate) and full cards keep their natural full-width
   // layout.
   const wheelBuffer = 180; // px of breathing room next to the wheel
-  // Each side card gets an additional ~5% outward nudge so content
+  // Each side card gets an additional ~3% outward nudge so content
   // sits a bit further from the wheel — symmetric on both sides.
-  const outwardNudge = 96; // ~5% of card width
+  const outwardNudge = 60;
   // 500px is enough to keep the longest bullet ("Ringless Voicemail &
   // Auto Call Connect") on a single line so the Nurture card doesn't
   // overflow its row.
@@ -1120,7 +1120,7 @@ function InfoCard({
             // clipped by the card edge.
             maxWidth: contentMax,
             marginLeft: "auto",
-            marginRight: 24,
+            marginRight: 103,
             paddingTop: sideTopNudge,
           }
         : {};
@@ -1157,7 +1157,10 @@ function InfoCard({
           toward the wheel and outer edge breathes). */}
       <div
         className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]"
-        style={{ flexDirection: mirror ? "row-reverse" : "row" }}
+        style={{
+          flexDirection: mirror ? "row-reverse" : "row",
+          justifyContent: wide ? "center" : undefined,
+        }}
       >
         {/* Icon chip */}
         <div
@@ -1176,7 +1179,13 @@ function InfoCard({
         </div>
 
         {/* Title + tagline column. */}
-        <div className="flex-1 min-w-0 pt-[6px]" style={{ textAlign: mirror ? "right" : "left" }}>
+        <div
+          className="min-w-0 pt-[6px]"
+          style={{
+            flex: wide ? "0 0 auto" : "1 1 0%",
+            textAlign: wide ? "center" : mirror ? "right" : "left",
+          }}
+        >
           <div
             className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{

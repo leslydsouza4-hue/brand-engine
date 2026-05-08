@@ -1213,8 +1213,7 @@ function InfoCard({
               : "flex flex-col gap-[6px]"
           }
         >
-          {cols.flat().map((item, idx, arr) => {
-            const isLast = idx === arr.length - 1;
+          {cols.flat().map((item, idx) => {
             if (useDividers) {
               return (
                 <div
@@ -1223,11 +1222,8 @@ function InfoCard({
                   style={{
                     color: "var(--card-bullet-text)",
                     textAlign: mirror ? "right" : "left",
-                    paddingTop: idx === 0 ? 0 : 8,
-                    paddingBottom: 8,
-                    borderBottom: isLast
-                      ? "none"
-                      : `1px solid rgba(${t.rgb}, 0.35)`,
+                    paddingTop: idx === 0 ? 0 : 4,
+                    paddingBottom: 4,
                   }}
                 >
                   {item}

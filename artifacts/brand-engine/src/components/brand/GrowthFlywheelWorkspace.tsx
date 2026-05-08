@@ -1120,7 +1120,7 @@ function InfoCard({
             // clipped by the card edge.
             maxWidth: contentMax,
             marginLeft: "auto",
-            marginRight: 103,
+            marginRight: 83,
             paddingTop: sideTopNudge,
           }
         : {};

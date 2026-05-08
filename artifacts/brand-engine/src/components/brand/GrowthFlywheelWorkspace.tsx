@@ -37,14 +37,16 @@ interface Stage {
 // (HL only ships 3 named bundle colors, so this complements without colliding).
 const ICON_BASE = `${BASE}assets/hl-icons`;
 
-const STAGE_THEME: Record<StageId, {
+type StageThemeMap = Record<StageId, {
   color: string;
   rgb: string;
   Icon: LucideIcon;
   iconSrc: string;
   stageNum: string;
   badge: string;
-}> = {
+}>;
+
+const STAGE_THEME: StageThemeMap = {
   capture: {
     color: "#10B838",          // GREEN — matches the green capture petal
     rgb: "16,184,56",
@@ -86,6 +88,37 @@ const STAGE_THEME: Record<StageId, {
     badge: "STAGE 05 · THE LOOP",
   },
 };
+
+// Variant 2 — official HighLevel CMYK palette mapping requested by the team:
+// Capture = Yellow #FFD000 · Nurture = Blue #2896FB · Close = Green #17D94B
+// Evangelize = warm orange (acts as the bonus 4th color, complements the trio).
+// Reactivate keeps its deep navy.
+const STAGE_THEME_V2: StageThemeMap = {
+  capture:    { ...STAGE_THEME.capture,    color: "#FFD000", rgb: "255,208,0"   },
+  nurture:    { ...STAGE_THEME.nurture,    color: "#2896FB", rgb: "40,150,251"  },
+  close:      { ...STAGE_THEME.close,      color: "#17D94B", rgb: "23,217,75"   },
+  evangelize: { ...STAGE_THEME.evangelize, color: "#FB923C", rgb: "251,146,60"  },
+  reactivate: { ...STAGE_THEME.reactivate                                       },
+};
+
+// Petal gradients per layout. V2 mirrors the new color mapping with the
+// same "lit edge → shaded core" treatment.
+const PETAL_GRADIENT_V1: Record<StageId, [string, string]> = {
+  capture:    ["#8EFB3B", "#579126"],
+  nurture:    ["#F2D231", "#DC4726"],
+  close:      ["#4774FA", "#74CCF8"],
+  evangelize: ["#EAAB35", "#FFFF44"],
+  reactivate: ["#1E40AF", "#0B1A3A"],
+};
+const PETAL_GRADIENT_V2: Record<StageId, [string, string]> = {
+  capture:    ["#FFE066", "#E0A700"], // bright yellow → deep gold
+  nurture:    ["#74B9FF", "#1E6FD9"], // sky blue → royal blue
+  close:      ["#7BE89A", "#0FA63B"], // mint → forest green
+  evangelize: ["#FED39A", "#E25822"], // peach → burnt orange
+  reactivate: ["#1E40AF", "#0B1A3A"],
+};
+
+type LayoutVariant = 1 | 2;
 
 const INITIAL_STAGES: Stage[] = [
   {
@@ -234,7 +267,11 @@ export function GrowthFlywheelWorkspace() {
   const [exportFormat, setExportFormat] = useState<"pdf" | "png">("pdf");
   const [exportScope, setExportScope] = useState<ExportScope>("slide");
   const [theme, setTheme] = useState<SlideTheme>("light");
+  const [layoutVariant, setLayoutVariant] = useState<LayoutVariant>(1);
   const [isExporting, setIsExporting] = useState(false);
+
+  const activeThemeMap = layoutVariant === 2 ? STAGE_THEME_V2 : STAGE_THEME;
+  const activePetalGradient = layoutVariant === 2 ? PETAL_GRADIENT_V2 : PETAL_GRADIENT_V1;
 
   const previewRef = useRef<HTMLDivElement>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
@@ -444,6 +481,8 @@ export function GrowthFlywheelWorkspace() {
         onExportScopeChange={setExportScope}
         theme={theme}
         onThemeChange={setTheme}
+        layoutVariant={layoutVariant}
+        onLayoutVariantChange={setLayoutVariant}
         onExport={handleExport}
         isExporting={isExporting}
       />
@@ -550,10 +589,19 @@ export function GrowthFlywheelWorkspace() {
                       shrinks toward the content (no more dead white slab
                       on the far left). */}
                   <div style={{ paddingLeft: 110, height: "100%" }}>
-                    <InfoCard stage={getStage("evangelize")} align="left" />
+                    <InfoCard
+                      stage={getStage("evangelize")}
+                      align="left"
+                      themeMap={activeThemeMap}
+                      mirror={layoutVariant === 2}
+                    />
                   </div>
                   <div style={{ paddingRight: 110, height: "100%" }}>
-                    <InfoCard stage={getStage("capture")} align="right" />
+                    <InfoCard
+                      stage={getStage("capture")}
+                      align="right"
+                      themeMap={activeThemeMap}
+                    />
                   </div>
                 </div>
 
@@ -570,10 +618,19 @@ export function GrowthFlywheelWorkspace() {
                   }}
                 >
                   <div style={{ paddingLeft: 110, height: "100%" }}>
-                    <InfoCard stage={getStage("close")} align="left" />
+                    <InfoCard
+                      stage={getStage("close")}
+                      align="left"
+                      themeMap={activeThemeMap}
+                      mirror={layoutVariant === 2}
+                    />
                   </div>
                   <div style={{ paddingRight: 110, height: "100%" }}>
-                    <InfoCard stage={getStage("nurture")} align="right" />
+                    <InfoCard
+                      stage={getStage("nurture")}
+                      align="right"
+                      themeMap={activeThemeMap}
+                    />
                   </div>
                 </div>
 
@@ -603,7 +660,11 @@ export function GrowthFlywheelWorkspace() {
                     justifyContent: "center",
                   }}
                 >
-                  <Flywheel theme={theme} />
+                  <Flywheel
+                    theme={theme}
+                    themeMap={activeThemeMap}
+                    petalGradient={activePetalGradient}
+                  />
                 </div>
               </div>
 
@@ -618,7 +679,11 @@ export function GrowthFlywheelWorkspace() {
                   paddingRight: 110,
                 }}
               >
-                <InfoCard stage={getStage("reactivate")} wide />
+                <InfoCard
+                  stage={getStage("reactivate")}
+                  wide
+                  themeMap={activeThemeMap}
+                />
               </div>
             </div>
           </div>
@@ -631,7 +696,15 @@ export function GrowthFlywheelWorkspace() {
 
 // Flywheel SVG — clean donut + external corner callouts with connector lines
 
-function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
+function Flywheel({
+  theme = "light",
+  themeMap = STAGE_THEME,
+  petalGradient = PETAL_GRADIENT_V1,
+}: {
+  theme?: SlideTheme;
+  themeMap?: StageThemeMap;
+  petalGradient?: Record<StageId, [string, string]>;
+}) {
   const SIZE = 600;
   const CENTER = SIZE / 2;
   const OUTER_R = 240;
@@ -674,17 +747,8 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
     return { x: CENTER + r * Math.cos(rad), y: CENTER + r * Math.sin(rad) };
   };
 
-  // Per-stage gradient stops — saturated highlight at the OUTER edge of
-  // each petal fading to a deep, punchy shade near the hub. Each gradient
-  // is rendered in user-space along the petal's mid radial so the lit
-  // edge always reads as the rim of the wheel (matches the reference).
-  const PETAL_GRADIENT: Record<StageId, [string, string]> = {
-    capture:    ["#8EFB3B", "#579126"], // bright lime → forest green
-    nurture:    ["#F2D231", "#DC4726"], // golden yellow → red-orange
-    close:      ["#4774FA", "#74CCF8"], // royal blue → sky blue
-    evangelize: ["#EAAB35", "#FFFF44"], // amber → bright yellow
-    reactivate: ["#1E40AF", "#0B1A3A"], // (only used for icon tint, not petal)
-  };
+  // Per-stage gradient stops sourced from the active layout variant.
+  const PETAL_GRADIENT = petalGradient;
 
   // Pinwheel petal. Each petal fills a 90° sweep around the wheel, but the
   // two boundaries between adjacent petals are S-curves (semicircles) of
@@ -898,9 +962,9 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                     backgroundColor:
                       theme === "dark"
                         ? "#93C5FD"
-                        : STAGE_THEME.reactivate.color,
-                    WebkitMaskImage: `url(${STAGE_THEME.reactivate.iconSrc})`,
-                    maskImage: `url(${STAGE_THEME.reactivate.iconSrc})`,
+                        : themeMap.reactivate.color,
+                    WebkitMaskImage: `url(${themeMap.reactivate.iconSrc})`,
+                    maskImage: `url(${themeMap.reactivate.iconSrc})`,
                     WebkitMaskSize: "contain",
                     maskSize: "contain",
                     WebkitMaskRepeat: "no-repeat",
@@ -920,7 +984,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
               fill={
                 theme === "dark"
                   ? "#93C5FD"
-                  : STAGE_THEME.reactivate.color
+                  : themeMap.reactivate.color
               }
               style={{
                 letterSpacing: "1.6px",
@@ -938,7 +1002,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
             layout. Rendered LAST so they paint cleanly on top of the
             colored petals and the hub disc. */}
         {segmentMeta.map(({ id }) => {
-          const t = STAGE_THEME[id];
+          const t = themeMap[id];
           const pos = { x: ICON_LAYOUT[id].cx, y: ICON_LAYOUT[id].cy };
           const ICON_PX = 34;
           // Reference style: pure white disc + deep navy icon glyph.
@@ -966,7 +1030,7 @@ function Flywheel({ theme = "light" }: { theme?: SlideTheme }) {
                   style={{
                     width: ICON_PX,
                     height: ICON_PX,
-                    backgroundColor: STAGE_THEME.reactivate.color,
+                    backgroundColor: themeMap.reactivate.color,
                     WebkitMaskImage: `url(${t.iconSrc})`,
                     maskImage: `url(${t.iconSrc})`,
                     WebkitMaskSize: "contain",
@@ -993,12 +1057,16 @@ function InfoCard({
   stage,
   wide,
   align = "full",
+  themeMap = STAGE_THEME,
+  mirror = false,
 }: {
   stage: Stage;
   wide?: boolean;
   align?: "left" | "right" | "full";
+  themeMap?: StageThemeMap;
+  mirror?: boolean;
 }) {
-  const t = STAGE_THEME[stage.id];
+  const t = themeMap[stage.id];
 
   // Split items into 2 columns when wide (Reactivate)
   const cols = wide
@@ -1076,11 +1144,13 @@ function InfoCard({
       {/* Inner content box — constrained when aligned */}
       <div className="relative" style={contentBoxStyle}>
 
-      {/* Header row — icon chip on the LEFT, title + tagline stacked
-          to its right. Tagline now sits directly under the title
-          (aligned to the title's start), not under the icon. */}
+      {/* Header row — icon chip + title/tagline column. When `mirror`
+          is on, the icon flips to the RIGHT and the text right-aligns
+          (used by Variant 2 for Evangelize / Close so content pulls
+          toward the wheel and outer edge breathes). */}
       <div
         className="relative pl-[28px] pr-[26px] pt-[14px] pb-[6px] flex items-start gap-[14px]"
+        style={{ flexDirection: mirror ? "row-reverse" : "row" }}
       >
         {/* Icon chip */}
         <div
@@ -1098,10 +1168,8 @@ function InfoCard({
           />
         </div>
 
-        {/* Title + tagline column. Both align to the title's left
-            edge (i.e. right of the icon), so the tagline never sits
-            under the icon chip. */}
-        <div className="flex-1 min-w-0 pt-[6px]">
+        {/* Title + tagline column. */}
+        <div className="flex-1 min-w-0 pt-[6px]" style={{ textAlign: mirror ? "right" : "left" }}>
           <div
             className="text-[26px] font-bold tracking-[-0.4px] leading-[1.15]"
             style={{
@@ -1115,7 +1183,7 @@ function InfoCard({
             className="mt-[2px] text-[14px] leading-[1.4]"
             style={{
               color: "var(--card-text-muted)",
-              textAlign: "left",
+              textAlign: mirror ? "right" : "left",
               whiteSpace: "nowrap",
             }}
           >
@@ -1124,8 +1192,7 @@ function InfoCard({
         </div>
       </div>
 
-      {/* Bullet list — coloured dot on the LEFT, label to its right
-          (same layout for every card). */}
+      {/* Bullet list — dot on LEFT (or RIGHT when mirrored). */}
       <div className="pl-[28px] pr-[26px] pt-[12px] pb-[14px]">
         <div
           className={
@@ -1138,7 +1205,11 @@ function InfoCard({
             <div
               key={`${stage.id}-${idx}`}
               className="flex items-start gap-[12px] text-[19px] leading-[1.4] font-medium"
-              style={{ color: "var(--card-bullet-text)" }}
+              style={{
+                color: "var(--card-bullet-text)",
+                flexDirection: mirror ? "row-reverse" : "row",
+                textAlign: mirror ? "right" : "left",
+              }}
             >
               <div
                 className="w-[9px] h-[9px] rounded-full mt-[8px] shrink-0"
@@ -1331,6 +1402,8 @@ function LeftSidebar({
   onExportScopeChange,
   theme,
   onThemeChange,
+  layoutVariant,
+  onLayoutVariantChange,
   onExport,
   isExporting,
 }: {
@@ -1348,6 +1421,8 @@ function LeftSidebar({
   onExportScopeChange: (s: ExportScope) => void;
   theme: SlideTheme;
   onThemeChange: (t: SlideTheme) => void;
+  layoutVariant: LayoutVariant;
+  onLayoutVariantChange: (v: LayoutVariant) => void;
   onExport: () => void;
   isExporting: boolean;
 }) {
@@ -1444,6 +1519,32 @@ function LeftSidebar({
 
       {/* BOTTOM — fixed */}
       <div className="p-[14px] pt-[12px] border-t border-white/5 bg-[rgba(0,0,0,0.25)] flex flex-col gap-[8px]">
+        {/* Layout variant — V1 keeps original brand colors; V2 swaps in
+            new color mapping AND mirrors the left-side cards (icon on
+            right, text right-aligned) so content pulls toward the
+            wheel and outer edge breathes. */}
+        <div>
+          <div className="text-[9.5px] font-semibold uppercase tracking-[1.2px] text-[#94a3b880] mb-[4px]">
+            Layout
+          </div>
+          <div className="flex gap-[3px]">
+            {([1, 2] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => onLayoutVariantChange(v)}
+                className={`flex-1 py-[6px] rounded-[7px] text-[10.5px] font-bold border cursor-pointer transition-all uppercase ${
+                  layoutVariant === v
+                    ? "bg-[rgba(40,150,251,0.15)] border-[rgba(40,150,251,0.3)] text-[#2896FB]"
+                    : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.06)] text-[#64748B] hover:text-[#94A3B8]"
+                }`}
+              >
+                Variant {v}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Theme + Format — side-by-side to save vertical room */}
         <div className="grid grid-cols-2 gap-[8px]">
           <div>

@@ -1120,10 +1120,16 @@ function InfoCard({
             // clipped by the card edge.
             maxWidth: contentMax,
             marginLeft: "auto",
-            marginRight: SLIDE_W * 0.03,
+            marginRight: 24,
             paddingTop: sideTopNudge,
           }
-        : {};
+        : wide
+          ? {
+              maxWidth: 980,
+              marginLeft: "auto",
+              marginRight: "auto",
+            }
+          : {};
   const glowCorner = align === "right" ? "100% 0%" : "0% 0%";
 
   return (

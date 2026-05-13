@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect, useLayoutEffect } from "react";
 import { Check, Image as ImageIcon, UploadCloud, X, Monitor, Move, RotateCcw, Link2, Loader2, Sparkles, Crop, FileText, ChevronDown, LayoutGrid } from "lucide-react";
 import { CropModal } from "./CropModal";
 import { LivePreview } from "./LivePreview";
@@ -84,6 +84,8 @@ export function ContentArmyWorkspace() {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [activeImage, setActiveImage] = useState<string | null>(null);
   const [headline, setHeadline] = useState("");
+  const [headlineMaxLines, setHeadlineMaxLines] = useState<"auto" | 1 | 2 | 3>("auto");
+  const [headlineFontPx, setHeadlineFontPx] = useState<number | null>(null);
   const [subtext, setSubtext] = useState("");
   const [stripText, setStripText] = useState("");
 
@@ -116,7 +118,36 @@ export function ContentArmyWorkspace() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const el = headlineRef.current;
+    if (!el || !headline) { setHeadlineFontPx(null); return; }
+    if (headlineMaxLines === "auto") { setHeadlineFontPx(null); el.style.fontSize = ""; el.style.whiteSpace = ""; return; }
+    const target = headlineMaxLines;
+    const MAX = 44, MIN = 8;
+    let lo = MIN, hi = MAX, best = MIN;
+    const lineHeightFactor = 0.95;
+    const measureLines = (size: number): number => {
+      el.style.fontSize = `${size}px`;
+      el.style.whiteSpace = target === 1 ? "nowrap" : "normal";
+      if (target === 1) {
+        const fits = el.scrollWidth <= el.clientWidth + 1;
+        return fits ? 1 : 2;
+      }
+      const lh = size * lineHeightFactor;
+      return Math.max(1, Math.round(el.scrollHeight / lh));
+    };
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      const lines = measureLines(mid);
+      if (lines <= target) { best = mid; lo = mid + 1; } else { hi = mid - 1; }
+    }
+    el.style.fontSize = "";
+    el.style.whiteSpace = target === 1 ? "nowrap" : "";
+    setHeadlineFontPx(best);
+  }, [headline, headlineMaxLines, layout]);
 
   const currentMember = TEAM.find(m => m.id === selectedMember);
 
@@ -509,6 +540,24 @@ export function ContentArmyWorkspace() {
               maxLength={60}
               className="w-full py-[14px] px-[18px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[18px] font-bold text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569]"
             />
+            <div className="flex items-center gap-[6px] mt-[8px]">
+              <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#475569]">Lines:</span>
+              <div className="flex gap-[3px] p-[2px] bg-[rgba(255,255,255,0.04)] rounded-[8px] border border-[rgba(255,255,255,0.06)] flex-1">
+                {(["auto", 1, 2, 3] as const).map(opt => (
+                  <button
+                    key={String(opt)}
+                    onClick={() => setHeadlineMaxLines(opt)}
+                    className={`flex-1 py-[5px] px-[8px] rounded-[6px] text-[11px] font-bold cursor-pointer transition-all border-none ${
+                      headlineMaxLines === opt
+                        ? "bg-[rgba(40,150,251,0.18)] text-[#7CC8FF]"
+                        : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                    }`}
+                  >
+                    {opt === "auto" ? "Auto" : opt}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="flex flex-col">
             <label className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[8px]">
@@ -821,9 +870,13 @@ export function ContentArmyWorkspace() {
                   style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 50%, transparent 100%)" }}
                 />
                 <div className="absolute z-[4] text-center w-[80%] left-1/2 bottom-[6%] -translate-x-1/2">
-                  <div className="font-black text-[clamp(16px,2.5vw,31px)] leading-[0.95] uppercase text-white"
+                  <div
+                    ref={headlineRef}
+                    className={`font-black ${headlineFontPx ? "" : "text-[clamp(16px,2.5vw,31px)]"} leading-[0.95] uppercase text-white`}
                     style={{
                       filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.9)) drop-shadow(0 4px 12px rgba(0,0,0,0.7)) drop-shadow(0 0 20px rgba(0,0,0,0.5))",
+                      ...(headlineFontPx ? { fontSize: `${headlineFontPx}px` } : {}),
+                      ...(headlineMaxLines === 1 ? { whiteSpace: "nowrap" as const } : {}),
                     }}
                   >
                     {headline}
@@ -835,11 +888,15 @@ export function ContentArmyWorkspace() {
               </>
             ) : layout === "person-left" ? (
               <div className="absolute z-[4] top-[15%] right-[8%] w-[55%] text-left">
-                <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
+                <div
+                  ref={headlineRef}
+                  className={`font-black ${headlineFontPx ? "" : "text-[clamp(18px,3vw,36px)]"} leading-[0.92] uppercase`}
                   style={{
                     color: '#7CC8FF',
                     textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
                     WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
+                    ...(headlineFontPx ? { fontSize: `${headlineFontPx}px` } : {}),
+                    ...(headlineMaxLines === 1 ? { whiteSpace: "nowrap" as const } : {}),
                   }}
                 >
                   {headline}
@@ -852,11 +909,15 @@ export function ContentArmyWorkspace() {
               </div>
             ) : (
               <div className="absolute z-[4] top-[18%] left-[4%] w-[55%] text-left">
-                <div className="font-black text-[clamp(18px,3vw,36px)] leading-[0.92] uppercase"
+                <div
+                  ref={headlineRef}
+                  className={`font-black ${headlineFontPx ? "" : "text-[clamp(18px,3vw,36px)]"} leading-[0.92] uppercase`}
                   style={{
                     color: '#7CC8FF',
                     textShadow: '0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(40,150,251,0.3)',
                     WebkitTextStroke: '0.5px rgba(255,255,255,0.15)',
+                    ...(headlineFontPx ? { fontSize: `${headlineFontPx}px` } : {}),
+                    ...(headlineMaxLines === 1 ? { whiteSpace: "nowrap" as const } : {}),
                   }}
                 >
                   {headline}

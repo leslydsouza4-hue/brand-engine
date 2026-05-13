@@ -179,6 +179,7 @@ export function DidYouKnowWorkspace() {
 
   const textRef = useRef<HTMLDivElement>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(30);
+  const [headlineMaxLines, setHeadlineMaxLines] = useState<"auto" | 1 | 2 | 3 | 4>("auto");
 
   useEffect(() => {
     const el = textRef.current;
@@ -191,12 +192,19 @@ export function DidYouKnowWorkspace() {
     const maxTextH = maxBottom - textTop;
     if (maxTextH <= 0) return;
 
+    const lineHeightFactor = 0.95;
+    const gap = headlineWhite && headlineHighlight ? 4 : 0;
+
     let lo = 10, hi = 38, best = 10;
     const origSize = el.style.fontSize;
-    for (let iter = 0; iter < 12; iter++) {
+    for (let iter = 0; iter < 14; iter++) {
       const mid = (lo + hi) / 2;
       el.style.fontSize = `${mid}px`;
-      if (el.scrollHeight <= maxTextH) {
+      const fitsHeight = el.scrollHeight <= maxTextH;
+      const fitsLines = headlineMaxLines === "auto"
+        ? true
+        : el.scrollHeight <= headlineMaxLines * mid * lineHeightFactor + gap + 1;
+      if (fitsHeight && fitsLines) {
         best = mid;
         lo = mid + 0.5;
       } else {
@@ -205,7 +213,7 @@ export function DidYouKnowWorkspace() {
     }
     el.style.fontSize = origSize;
     setHeadlineFontPx(Math.floor(best));
-  }, [headlineWhite, headlineHighlight, layout]);
+  }, [headlineWhite, headlineHighlight, layout, headlineMaxLines]);
 
   const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -459,6 +467,24 @@ export function DidYouKnowWorkspace() {
               rows={2}
               className="w-full py-[12px] px-[16px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[14px] font-bold text-[#7CC8FF] outline-none focus:border-[rgba(40,150,251,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[rgba(124,200,255,0.35)] resize-none"
             />
+          </div>
+          <div className="flex items-center gap-[6px]">
+            <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#475569]">Lines:</span>
+            <div className="flex gap-[3px] p-[2px] bg-[rgba(255,255,255,0.04)] rounded-[8px] border border-[rgba(255,255,255,0.06)] flex-1">
+              {(["auto", 1, 2, 3, 4] as const).map(opt => (
+                <button
+                  key={String(opt)}
+                  onClick={() => setHeadlineMaxLines(opt)}
+                  className={`flex-1 py-[5px] px-[8px] rounded-[6px] text-[11px] font-bold cursor-pointer transition-all border-none ${
+                    headlineMaxLines === opt
+                      ? "bg-[rgba(40,150,251,0.18)] text-[#7CC8FF]"
+                      : "bg-transparent text-[#64748B] hover:text-[#94A3B8]"
+                  }`}
+                >
+                  {opt === "auto" ? "Auto" : opt}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import { LOGO_VARIANTS, DESIGN_SCENES } from "./aiPickers";
 import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
 import { useExport } from "./useExport";
+import { PhotoroomLink } from "./PhotoroomLink";
 
 const BASE = import.meta.env.BASE_URL;
 const bg = (name: string) => `${BASE}assets/backgrounds-dark/${name}`;
@@ -3161,6 +3162,7 @@ export function TemplatesWorkspace({ seedPrompt, onConsumeSeed }: { seedPrompt?:
                     )}
                   </motion.button>
                 </div>
+                <PhotoroomLink />
               </div>
             ) : (
               <motion.button

@@ -3,6 +3,7 @@ import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles,
 import JSZip from "jszip";
 import { useExport } from "./useExport";
 import { HIGHLY_POSES, BUNDLE_ASSETS } from "./highlyData";
+import { PhotoroomLink } from "./PhotoroomLink";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/email-templates/BG_BLUE.jpg`;
@@ -1053,6 +1054,7 @@ export function EmailTemplatesWorkspace() {
                   <div className="text-[10px] text-[#475569] mt-[6px] text-center leading-[1.4]">
                     Runs in your browser • First use downloads the AI model (~25MB)
                   </div>
+                  <PhotoroomLink />
                 </>
               ) : (
                 <button

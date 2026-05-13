@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import JSZip from "jszip";
 import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
+import { PhotoroomLink } from "./PhotoroomLink";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/masterclass/bg-horizontal-clean.jpg`;
@@ -1900,6 +1901,7 @@ export function MasterClassWorkspace() {
                 </div>
               </div>
             )}
+            <PhotoroomLink />
           </div>
 
           <div className="flex flex-col gap-[6px]">

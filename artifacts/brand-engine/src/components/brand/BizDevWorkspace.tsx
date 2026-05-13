@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import JSZip from "jszip";
 import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
+import { PhotoroomLink } from "./PhotoroomLink";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/bizdev/background.png`;
@@ -782,6 +783,7 @@ export function BizDevWorkspace() {
                 </div>
               </div>
             )}
+            <PhotoroomLink />
           </div>
 
           <div className="flex items-center justify-between py-[8px] px-[12px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)]">

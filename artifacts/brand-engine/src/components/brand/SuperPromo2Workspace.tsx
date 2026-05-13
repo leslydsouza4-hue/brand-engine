@@ -6,6 +6,7 @@ import { toPng } from "html-to-image";
 import JSZip from "jszip";
 import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
+import { PhotoroomLink } from "./PhotoroomLink";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/superpromo2/background.png`;
@@ -977,6 +978,7 @@ export function SuperPromo2Workspace() {
           </div>
         </div>
       )}
+      <PhotoroomLink />
     </div>
   );
 

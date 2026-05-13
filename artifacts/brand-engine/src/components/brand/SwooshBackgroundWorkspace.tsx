@@ -5,7 +5,11 @@ import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
 
 const BASE = import.meta.env.BASE_URL;
-const SWOOSH = `${BASE}assets/swoosh/swoosh-highly.png`;
+type SwooshVariant = "gradient" | "turquoise";
+const SWOOSH_VARIANTS: Record<SwooshVariant, { src: string; label: string }> = {
+  gradient: { src: `${BASE}assets/swoosh/swoosh-highly.png`, label: "Gradient" },
+  turquoise: { src: `${BASE}assets/swoosh/swoosh-turquoise.png`, label: "Turquoise" },
+};
 const SPACE_BG = `${BASE}assets/swoosh/space-bg.png`;
 // Vite's dev middleware mis-routes path segments containing `%3D` (encoded
 // `=`) to the SPA HTML fallback, so we encode only what the URL parser
@@ -153,12 +157,14 @@ function CanvasFrame({ ratio, children, style }: { ratio: number; children: Reac
 function SwooshComposition({
   personImage,
   swoosh,
+  swooshSrc,
   human,
   onHumanChange,
   exporting,
 }: {
   personImage: string | null;
   swoosh: SwooshSettings;
+  swooshSrc: string;
   human: HumanSettings;
   onHumanChange?: (next: HumanSettings) => void;
   // When exporting, suppress the drag UI (cursor, pointer-events) so the
@@ -450,7 +456,7 @@ function SwooshComposition({
       }}
     >
       {/* Layer 1: back swoosh — full asset behind the human */}
-      <img src={SWOOSH} alt="" draggable={false} style={swooshStyle} crossOrigin="anonymous" />
+      <img src={swooshSrc} alt="" draggable={false} style={swooshStyle} crossOrigin="anonymous" />
 
       {/* Layer 2: human cutout (uploaded, bg-removed). Wrapped in a
           clip-path container that masks anything below the swoosh's lower
@@ -488,7 +494,7 @@ function SwooshComposition({
           only the section that crosses in front of the human is visible. The
           identical position/scale to the back copy ensures perfect alignment. */}
       <img
-        src={SWOOSH}
+        src={swooshSrc}
         alt=""
         draggable={false}
         style={{ ...swooshStyle, clipPath: FRONT_CLIP, WebkitClipPath: FRONT_CLIP }}
@@ -647,6 +653,8 @@ export function SwooshBackgroundWorkspace() {
   const isExporting = exportKind !== null;
   // Swoosh placement is fixed — only the human + front opacity are tunable.
   const swoosh: SwooshSettings = DEFAULT_SWOOSH;
+  const [swooshVariant, setSwooshVariant] = usePersistedState<SwooshVariant>("swooshVariant", "gradient");
+  const swooshSrc = SWOOSH_VARIANTS[swooshVariant]?.src ?? SWOOSH_VARIANTS.gradient.src;
   const [human, setHuman] = usePersistedState<HumanSettings>("human", DEFAULT_HUMAN);
   // Speaker name shown on the LEFT side of the Slide preview, paired with
   // the HighLevel logo. Only appears in the "Complete" download — the
@@ -906,6 +914,30 @@ export function SwooshBackgroundWorkspace() {
             )}
           </div>
 
+          {/* Swoosh style selector — Gradient (original) vs Turquoise (flat). */}
+          <div className="flex flex-col">
+            <label className={labelCls}>Swoosh Style</label>
+            <div className="grid grid-cols-2 gap-[6px]">
+              {(Object.keys(SWOOSH_VARIANTS) as SwooshVariant[]).map((key) => {
+                const active = swooshVariant === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSwooshVariant(key)}
+                    className={`flex items-center justify-center gap-[6px] py-[8px] px-[10px] rounded-[8px] border text-[11px] font-semibold transition-all cursor-pointer ${
+                      active
+                        ? "bg-[rgba(0,178,169,0.12)] border-[rgba(0,178,169,0.45)] text-white"
+                        : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.08)] text-[#94A3B8] hover:text-white hover:border-[rgba(255,255,255,0.16)]"
+                    }`}
+                  >
+                    <img src={SWOOSH_VARIANTS[key].src} alt="" className="w-[18px] h-[18px] object-contain" />
+                    {SWOOSH_VARIANTS[key].label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Speaker name — appears on the LEFT side of the Slide preview
               alongside the HighLevel logo. Optional; leave blank for a
               logo-only banner. */}
@@ -1113,6 +1145,7 @@ export function SwooshBackgroundWorkspace() {
                     <SwooshComposition
                       personImage={personImage}
                       swoosh={swoosh}
+                      swooshSrc={swooshSrc}
                       human={human}
                       onHumanChange={setHuman}
                       exporting={isExporting}

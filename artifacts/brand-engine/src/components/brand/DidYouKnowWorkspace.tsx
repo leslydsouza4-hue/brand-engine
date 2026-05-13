@@ -19,16 +19,8 @@ const TEAM: TeamMember[] = [
   {
     id: "andrew",
     name: "Andrew George",
-    assetBase: `${BASE}assets/did-you-know/andrew/`,
-    images: [
-      "andrew-pose-1.png",
-      "andrew-pose-2.png",
-      "andrew-pose-3.png",
-      "andrew-pose-4.png",
-      "andrew-pose-5.png",
-      "andrew-pose-6.png",
-      "andrew-pose-7.png",
-    ],
+    assetBase: `${BASE}assets/content-army/andrew/`,
+    images: Array.from({ length: 77 }, (_, i) => `Andrew_${String(i + 1).padStart(2, '0')}.png`),
   },
   {
     id: "ben",

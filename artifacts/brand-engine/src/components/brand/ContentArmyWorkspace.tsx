@@ -30,7 +30,7 @@ const TEAM: TeamMember[] = [
     id: "andrew",
     name: "Andrew George",
     folder: "andrew",
-    images: [],
+    images: Array.from({ length: 77 }, (_, i) => `Andrew_${String(i + 1).padStart(2, '0')}.png`),
   },
   {
     id: "kylee",
@@ -61,12 +61,6 @@ const TEAM: TeamMember[] = [
     name: "Usma",
     folder: "usma",
     images: Array.from({ length: 8 }, (_, i) => `Usma_${String(i + 1).padStart(2, '0')}.png`),
-  },
-  {
-    id: "andrew",
-    name: "Andrew",
-    folder: "andrew",
-    images: Array.from({ length: 77 }, (_, i) => `Andrew_${String(i + 1).padStart(2, '0')}.png`),
   },
 ];
 

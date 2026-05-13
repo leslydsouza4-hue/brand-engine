@@ -5,6 +5,7 @@ import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
 import { BatchExportQueue } from "./BatchExportQueue";
 import { useExport, type QueuedThumbnail } from "./useExport";
+import { PhotoroomLink } from "./PhotoroomLink";
 
 interface TeamMember {
   id: string;
@@ -511,8 +512,10 @@ export function DidYouKnowWorkspace() {
             )}
           </div>
 
+          <PhotoroomLink />
+
           {screenshotImage && (
-            <div className="flex flex-col gap-[14px] animate-in fade-in duration-300">
+            <div className="flex flex-col gap-[14px] animate-in fade-in duration-300 mt-[14px]">
               <div>
                 <div className="text-[11px] font-medium text-[#64748B] mb-[6px]">Style</div>
                 <div className="grid grid-cols-4 gap-[4px]">

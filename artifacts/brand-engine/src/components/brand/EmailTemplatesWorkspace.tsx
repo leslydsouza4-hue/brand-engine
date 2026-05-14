@@ -1291,44 +1291,23 @@ export function EmailTemplatesWorkspace() {
             placeholder="Type or paste your headline..."
             className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
-          <div className="flex items-center gap-[8px] mt-[8px]">
-            <div className="flex items-center gap-[6px] flex-1">
-              <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#475569]">Size</span>
-              <input
-                type="range"
-                min={16}
-                max={96}
-                step={1}
-                value={activeEmail.headlineSizeOverride ?? 0}
-                onChange={e => {
-                  const v = Number(e.target.value);
-                  patchActive({ headlineSizeOverride: v < 16 ? null : v });
-                }}
-                className="flex-1 accent-[#2896FB]"
-                title={activeEmail.headlineSizeOverride ? `${activeEmail.headlineSizeOverride}px` : "Auto"}
-              />
-              <span className="text-[10px] font-bold text-[#7CC8FF] w-[36px] text-right">
-                {activeEmail.headlineSizeOverride ? `${activeEmail.headlineSizeOverride}px` : "Auto"}
-              </span>
-            </div>
-            <div className="flex items-center gap-[4px]">
-              <input
-                type="color"
-                value={activeEmail.headlineColor || "#7CC8FF"}
-                onChange={e => patchActive({ headlineColor: e.target.value })}
-                className="w-[24px] h-[24px] rounded-[6px] bg-transparent border border-[rgba(255,255,255,0.1)] cursor-pointer p-0"
-                title="Headline color"
-              />
-              {(activeEmail.headlineColor || activeEmail.headlineSizeOverride) && (
-                <button
-                  onClick={() => patchActive({ headlineColor: null, headlineSizeOverride: null, headlineOffset: { x: 0, y: 0 } })}
-                  title="Reset to auto"
-                  className="text-[9px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[6px] rounded-[5px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] cursor-pointer transition-colors"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
+          <div className="flex items-center justify-end gap-[4px] mt-[8px]">
+            <input
+              type="color"
+              value={activeEmail.headlineColor || "#7CC8FF"}
+              onChange={e => patchActive({ headlineColor: e.target.value })}
+              className="w-[24px] h-[24px] rounded-[6px] bg-transparent border border-[rgba(255,255,255,0.1)] cursor-pointer p-0"
+              title="Headline color"
+            />
+            {(activeEmail.headlineColor || activeEmail.headlineSizeOverride) && (
+              <button
+                onClick={() => patchActive({ headlineColor: null, headlineSizeOverride: null, headlineOffset: { x: 0, y: 0 } })}
+                title="Reset to auto"
+                className="text-[9px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[6px] rounded-[5px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] cursor-pointer transition-colors"
+              >
+                Reset
+              </button>
+            )}
           </div>
         </div>
 
@@ -1345,44 +1324,23 @@ export function EmailTemplatesWorkspace() {
             placeholder="Type or paste your subheadline..."
             className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
-          <div className="flex items-center gap-[8px] mt-[8px]">
-            <div className="flex items-center gap-[6px] flex-1">
-              <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#475569]">Size</span>
-              <input
-                type="range"
-                min={10}
-                max={56}
-                step={1}
-                value={activeEmail.subheadSizeOverride ?? 0}
-                onChange={e => {
-                  const v = Number(e.target.value);
-                  patchActive({ subheadSizeOverride: v < 10 ? null : v });
-                }}
-                className="flex-1 accent-[#2896FB]"
-                title={activeEmail.subheadSizeOverride ? `${activeEmail.subheadSizeOverride}px` : "Auto"}
-              />
-              <span className="text-[10px] font-bold text-[#7CC8FF] w-[36px] text-right">
-                {activeEmail.subheadSizeOverride ? `${activeEmail.subheadSizeOverride}px` : "Auto"}
-              </span>
-            </div>
-            <div className="flex items-center gap-[4px]">
-              <input
-                type="color"
-                value={activeEmail.subheadColor || "#FFFFFF"}
-                onChange={e => patchActive({ subheadColor: e.target.value })}
-                className="w-[24px] h-[24px] rounded-[6px] bg-transparent border border-[rgba(255,255,255,0.1)] cursor-pointer p-0"
-                title="Subheadline color"
-              />
-              {(activeEmail.subheadColor || activeEmail.subheadSizeOverride) && (
-                <button
-                  onClick={() => patchActive({ subheadColor: null, subheadSizeOverride: null, subheadOffset: { x: 0, y: 0 } })}
-                  title="Reset to auto"
-                  className="text-[9px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[6px] rounded-[5px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] cursor-pointer transition-colors"
-                >
-                  Reset
-                </button>
-              )}
-            </div>
+          <div className="flex items-center justify-end gap-[4px] mt-[8px]">
+            <input
+              type="color"
+              value={activeEmail.subheadColor || "#FFFFFF"}
+              onChange={e => patchActive({ subheadColor: e.target.value })}
+              className="w-[24px] h-[24px] rounded-[6px] bg-transparent border border-[rgba(255,255,255,0.1)] cursor-pointer p-0"
+              title="Subheadline color"
+            />
+            {(activeEmail.subheadColor || activeEmail.subheadSizeOverride) && (
+              <button
+                onClick={() => patchActive({ subheadColor: null, subheadSizeOverride: null, subheadOffset: { x: 0, y: 0 } })}
+                title="Reset to auto"
+                className="text-[9px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[6px] rounded-[5px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] cursor-pointer transition-colors"
+              >
+                Reset
+              </button>
+            )}
           </div>
         </div>
 

@@ -163,6 +163,111 @@ interface EmailPreviewProps {
   registerRef: (id: string, el: HTMLDivElement | null) => void;
 }
 
+function InlineTextToolbar({
+  kind,
+  email,
+  onPatch,
+}: {
+  kind: "headline" | "subhead";
+  email: EmailItem;
+  onPatch: (patch: Partial<EmailItem>) => void;
+}) {
+  const isHead = kind === "headline";
+  const sizeKey = isHead ? "headlineSizeOverride" : "subheadSizeOverride";
+  const colorKey = isHead ? "headlineColor" : "subheadColor";
+  const size = (email[sizeKey] as number | null | undefined) ?? null;
+  const color = (email[colorKey] as string | null | undefined) ?? null;
+  const min = isHead ? 16 : 10;
+  const max = isHead ? 96 : 56;
+  const step = 2;
+  const swatches = isHead
+    ? ["#7CC8FF", "#FFFFFF", "#FFD000", "#2896FB", "#FCA5A5", "#A7F3D0"]
+    : ["#FFFFFF", "#7CC8FF", "#FFD000", "#94A3B8", "#FCA5A5", "#A7F3D0"];
+
+  // Don't let mousedown on the toolbar steal focus from the contentEditable.
+  const keepFocus = (e: React.MouseEvent) => e.preventDefault();
+
+  return (
+    <div
+      onMouseDown={keepFocus}
+      className="absolute z-[20] flex items-center gap-[4px] bg-[rgba(15,23,42,0.96)] backdrop-blur-md border border-[rgba(124,200,255,0.35)] shadow-[0_8px_24px_rgba(0,0,0,0.5)] rounded-[10px] px-[6px] py-[5px]"
+      style={{
+        left: 0,
+        bottom: "calc(100% + 12px)",
+        whiteSpace: "nowrap",
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
+      <span className="text-[9px] font-bold uppercase tracking-[1px] text-[#64748B] px-[4px]">
+        {isHead ? "Headline" : "Sub"}
+      </span>
+      <div className="w-px h-[18px] bg-[rgba(255,255,255,0.08)]" />
+      <button
+        onClick={() => onPatch({ [sizeKey]: Math.max(min, (size ?? min) - step) } as Partial<EmailItem>)}
+        className="w-[22px] h-[22px] rounded-[5px] bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(40,150,251,0.18)] text-white text-[13px] font-bold border-none cursor-pointer leading-none"
+        title="Smaller"
+      >−</button>
+      <input
+        type="number"
+        value={size ?? ""}
+        placeholder="Auto"
+        min={min}
+        max={max}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === "") { onPatch({ [sizeKey]: null } as Partial<EmailItem>); return; }
+          const n = Math.max(min, Math.min(max, Number(v)));
+          if (!Number.isNaN(n)) onPatch({ [sizeKey]: n } as Partial<EmailItem>);
+        }}
+        className="w-[44px] h-[22px] rounded-[5px] bg-[rgba(0,0,0,0.4)] border border-[rgba(255,255,255,0.08)] text-white text-[11px] font-bold text-center outline-none focus:border-[rgba(124,200,255,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      />
+      <button
+        onClick={() => onPatch({ [sizeKey]: Math.min(max, (size ?? min) + step) } as Partial<EmailItem>)}
+        className="w-[22px] h-[22px] rounded-[5px] bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(40,150,251,0.18)] text-white text-[13px] font-bold border-none cursor-pointer leading-none"
+        title="Larger"
+      >+</button>
+
+      <div className="w-px h-[18px] bg-[rgba(255,255,255,0.08)] mx-[2px]" />
+
+      {swatches.map(c => (
+        <button
+          key={c}
+          onClick={() => onPatch({ [colorKey]: c } as Partial<EmailItem>)}
+          title={c}
+          className="w-[18px] h-[18px] rounded-full border cursor-pointer p-0"
+          style={{
+            background: c,
+            borderColor: color?.toLowerCase() === c.toLowerCase() ? "#7CC8FF" : "rgba(255,255,255,0.15)",
+            boxShadow: color?.toLowerCase() === c.toLowerCase() ? "0 0 0 2px rgba(124,200,255,0.35)" : "none",
+          }}
+        />
+      ))}
+      <label
+        className="w-[22px] h-[22px] rounded-[5px] flex items-center justify-center cursor-pointer border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(40,150,251,0.18)] relative overflow-hidden"
+        title="Custom color"
+      >
+        <span className="text-[10px]">🎨</span>
+        <input
+          type="color"
+          value={color || (isHead ? "#7CC8FF" : "#FFFFFF")}
+          onChange={(e) => onPatch({ [colorKey]: e.target.value } as Partial<EmailItem>)}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+        />
+      </label>
+
+      <div className="w-px h-[18px] bg-[rgba(255,255,255,0.08)] mx-[2px]" />
+
+      <button
+        onClick={() => onPatch({ [sizeKey]: null, [colorKey]: null } as Partial<EmailItem>)}
+        className="text-[10px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[8px] rounded-[5px] bg-transparent hover:bg-[rgba(40,150,251,0.12)] border border-[rgba(255,255,255,0.06)] cursor-pointer"
+        title="Reset to auto"
+      >
+        Reset
+      </button>
+    </div>
+  );
+}
+
 function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, onDuplicate, onRemove, onDownload, registerRef }: EmailPreviewProps) {
   const previewRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLDivElement>(null);
@@ -171,6 +276,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const bundleDragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(34);
+  const [focusedField, setFocusedField] = useState<"headline" | "subhead" | null>(null);
 
   const selectedHighly = HIGHLY_POSES.find(h => h.id === email.selectedHighlyId);
   const selectedBundle = BUNDLE_ASSETS.find(b => b.id === email.selectedBundleId);
@@ -422,15 +528,33 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
               maxHeight: "68%",
             }}
           >
-            <div className="relative">
+            <div
+              className="relative"
+              style={{
+                outline: focusedField === "headline" ? "1.5px dashed rgba(124,200,255,0.85)" : "none",
+                outlineOffset: focusedField === "headline" ? "6px" : "0",
+                borderRadius: "4px",
+                transition: "outline-color 120ms ease",
+              }}
+            >
+              {focusedField === "headline" && (
+                <InlineTextToolbar
+                  kind="headline"
+                  email={email}
+                  onPatch={onPatch}
+                />
+              )}
               <div
                 ref={headlineRef}
                 contentEditable={isActive ? ("plaintext-only" as any) : false}
                 suppressContentEditableWarning
                 spellCheck={false}
-                onFocus={onSelect}
+                onFocus={() => { onSelect(); setFocusedField("headline"); }}
+                onBlur={(e) => {
+                  onPatch({ headline: (e.currentTarget as HTMLDivElement).innerText });
+                  setFocusedField(prev => (prev === "headline" ? null : prev));
+                }}
                 onInput={(e) => onPatch({ headline: (e.currentTarget as HTMLDivElement).innerText })}
-                onBlur={(e) => onPatch({ headline: (e.currentTarget as HTMLDivElement).innerText })}
                 className="font-['Poppins'] font-black leading-[1.05] outline-none"
                 style={{
                   fontSize: `${headlineFontPx}px`,
@@ -463,15 +587,33 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 </div>
               )}
             </div>
-            <div className="relative mt-[14px]">
+            <div
+              className="relative mt-[14px]"
+              style={{
+                outline: focusedField === "subhead" ? "1.5px dashed rgba(124,200,255,0.85)" : "none",
+                outlineOffset: focusedField === "subhead" ? "6px" : "0",
+                borderRadius: "4px",
+                transition: "outline-color 120ms ease",
+              }}
+            >
+              {focusedField === "subhead" && (
+                <InlineTextToolbar
+                  kind="subhead"
+                  email={email}
+                  onPatch={onPatch}
+                />
+              )}
               <div
                 ref={subheadRef}
                 contentEditable={isActive ? ("plaintext-only" as any) : false}
                 suppressContentEditableWarning
                 spellCheck={false}
-                onFocus={onSelect}
+                onFocus={() => { onSelect(); setFocusedField("subhead"); }}
+                onBlur={(e) => {
+                  onPatch({ subhead: (e.currentTarget as HTMLDivElement).innerText });
+                  setFocusedField(prev => (prev === "subhead" ? null : prev));
+                }}
                 onInput={(e) => onPatch({ subhead: (e.currentTarget as HTMLDivElement).innerText })}
-                onBlur={(e) => onPatch({ subhead: (e.currentTarget as HTMLDivElement).innerText })}
                 className="font-['Poppins'] font-semibold leading-[1.35] outline-none"
                 style={{
                   fontSize: `${subheadFontPx}px`,

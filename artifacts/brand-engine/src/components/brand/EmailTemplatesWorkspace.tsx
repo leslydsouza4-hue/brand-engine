@@ -24,6 +24,10 @@ interface EmailItem {
   imgScale: number;
   bundleOffset: { x: number; y: number };
   bundleScale: number;
+  headlineSizeOverride?: number | null;
+  subheadSizeOverride?: number | null;
+  headlineColor?: string | null;
+  subheadColor?: string | null;
 }
 
 const newEmail = (): EmailItem => ({
@@ -39,6 +43,10 @@ const newEmail = (): EmailItem => ({
   imgScale: 1,
   bundleOffset: { x: 0, y: 0 },
   bundleScale: 1,
+  headlineSizeOverride: null,
+  subheadSizeOverride: null,
+  headlineColor: null,
+  subheadColor: null,
 });
 
 interface ParsedSection {
@@ -191,6 +199,12 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     if (!el) return;
     if (!email.headline && !email.subhead) { setHeadlineFontPx(34); return; }
 
+    // If user manually overrode the headline size, just use it as-is.
+    if (email.headlineSizeOverride && email.headlineSizeOverride > 0) {
+      setHeadlineFontPx(email.headlineSizeOverride);
+      return;
+    }
+
     const cta = ctaRef.current;
     const containerWidth = el.parentElement?.clientWidth || 600;
     const previewH = previewRef.current?.clientHeight || 540;
@@ -204,15 +218,17 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     const HEADLINE_MIN = 22;
     const HEADLINE_MAX = 88;
     let lo = HEADLINE_MIN, hi = HEADLINE_MAX, best = HEADLINE_MIN;
+    const subSizeFor = (size: number) =>
+      email.subheadSizeOverride && email.subheadSizeOverride > 0
+        ? email.subheadSizeOverride
+        : Math.max(14, Math.min(42, Math.round(size * 0.55)));
     const measure = (size: number) => {
       el.style.fontSize = `${size}px`;
       const headlineH = email.headline ? el.scrollHeight : 0;
       const headlineW = email.headline ? el.scrollWidth : 0;
       let subH = 0, subW = 0;
       if (sub && email.subhead) {
-        // Subhead scales with headline (~half its size), generous range
-        const subSize = Math.max(14, Math.min(42, Math.round(size * 0.55)));
-        sub.style.fontSize = `${subSize}px`;
+        sub.style.fontSize = `${subSizeFor(size)}px`;
         subH = sub.scrollHeight;
         subW = sub.scrollWidth;
       }
@@ -245,7 +261,26 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     // Force-apply at min so subhead/CTA inline styles match the rendered headline
     measure(best);
     setHeadlineFontPx(best);
-  }, [email.headline, email.subhead, email.cta, email.imageSource]);
+  }, [email.headline, email.subhead, email.cta, email.imageSource, email.headlineSizeOverride, email.subheadSizeOverride]);
+
+  // Sync contentEditable DOM when headline/subhead change from the outside
+  // (e.g., switching active email, sidebar typing) but never while focused, to avoid caret jumps.
+  useEffect(() => {
+    const el = headlineRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    if (el.innerText !== email.headline) el.innerText = email.headline;
+  }, [email.id, email.headline]);
+  useEffect(() => {
+    const el = subheadRef.current;
+    if (!el) return;
+    if (document.activeElement === el) return;
+    if (el.innerText !== email.subhead) el.innerText = email.subhead;
+  }, [email.id, email.subhead]);
+
+  const subheadFontPx = email.subheadSizeOverride && email.subheadSizeOverride > 0
+    ? email.subheadSizeOverride
+    : Math.max(14, Math.min(42, Math.round(headlineFontPx * 0.55)));
 
   const handleImgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!previewRef.current) return;
@@ -387,34 +422,75 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
               maxHeight: "68%",
             }}
           >
-            <div
-              ref={headlineRef}
-              className="font-['Poppins'] font-black leading-[1.05]"
-              style={{
-                fontSize: `${headlineFontPx}px`,
-                letterSpacing: "-0.5px",
-                backgroundImage: "linear-gradient(180deg, #DCEEFF 0%, #7CC8FF 55%, #2896FB 100%)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                color: "transparent",
-                filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",
-              }}
-            >
-              {email.headline || <span style={{ WebkitTextFillColor: "rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.25)" }}>Your headline here</span>}
+            <div className="relative">
+              <div
+                ref={headlineRef}
+                contentEditable={isActive ? ("plaintext-only" as any) : false}
+                suppressContentEditableWarning
+                spellCheck={false}
+                onFocus={onSelect}
+                onInput={(e) => onPatch({ headline: (e.currentTarget as HTMLDivElement).innerText })}
+                onBlur={(e) => onPatch({ headline: (e.currentTarget as HTMLDivElement).innerText })}
+                className="font-['Poppins'] font-black leading-[1.05] outline-none"
+                style={{
+                  fontSize: `${headlineFontPx}px`,
+                  letterSpacing: "-0.5px",
+                  whiteSpace: "pre-wrap",
+                  cursor: isActive ? "text" : "default",
+                  ...(email.headlineColor
+                    ? {
+                        color: email.headlineColor,
+                        WebkitTextFillColor: email.headlineColor,
+                        backgroundImage: "none",
+                        filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))",
+                      }
+                    : {
+                        backgroundImage: "linear-gradient(180deg, #DCEEFF 0%, #7CC8FF 55%, #2896FB 100%)",
+                        WebkitBackgroundClip: "text",
+                        backgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        color: "transparent",
+                        filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",
+                      }),
+                }}
+              />
+              {!email.headline && (
+                <div
+                  className="absolute top-0 left-0 pointer-events-none font-['Poppins'] font-black leading-[1.05]"
+                  style={{ fontSize: `${headlineFontPx}px`, color: "rgba(255,255,255,0.25)", letterSpacing: "-0.5px" }}
+                >
+                  Your headline here
+                </div>
+              )}
             </div>
-            {email.subhead && (
+            <div className="relative mt-[14px]">
               <div
                 ref={subheadRef}
-                className="font-['Poppins'] font-semibold leading-[1.35] mt-[14px] text-white"
+                contentEditable={isActive ? ("plaintext-only" as any) : false}
+                suppressContentEditableWarning
+                spellCheck={false}
+                onFocus={onSelect}
+                onInput={(e) => onPatch({ subhead: (e.currentTarget as HTMLDivElement).innerText })}
+                onBlur={(e) => onPatch({ subhead: (e.currentTarget as HTMLDivElement).innerText })}
+                className="font-['Poppins'] font-semibold leading-[1.35] outline-none"
                 style={{
-                  fontSize: `${Math.max(14, Math.min(42, Math.round(headlineFontPx * 0.55)))}px`,
+                  fontSize: `${subheadFontPx}px`,
+                  whiteSpace: "pre-wrap",
+                  color: email.subheadColor || "#FFFFFF",
                   textShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                  cursor: isActive ? "text" : "default",
+                  minHeight: isActive && !email.subhead ? `${subheadFontPx}px` : undefined,
                 }}
-              >
-                {email.subhead}
-              </div>
-            )}
+              />
+              {!email.subhead && isActive && (
+                <div
+                  className="absolute top-0 left-0 pointer-events-none font-['Poppins'] font-semibold leading-[1.35]"
+                  style={{ fontSize: `${subheadFontPx}px`, color: "rgba(255,255,255,0.3)" }}
+                >
+                  Your subheadline here
+                </div>
+              )}
+            </div>
             {email.cta && (
               <div
                 ref={ctaRef}
@@ -774,7 +850,10 @@ export function EmailTemplatesWorkspace() {
         </div>
 
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Headline</div>
+          <div className="flex items-center justify-between mb-[8px]">
+            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B]">Headline</div>
+            <div className="text-[9px] text-[#475569] normal-case tracking-normal">Click preview to edit · Enter = new line</div>
+          </div>
           <textarea
             value={activeEmail.headline}
             onChange={e => patchActive({ headline: e.target.value })}
@@ -783,10 +862,52 @@ export function EmailTemplatesWorkspace() {
             placeholder="Type or paste your headline..."
             className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
+          <div className="flex items-center gap-[8px] mt-[8px]">
+            <div className="flex items-center gap-[6px] flex-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#475569]">Size</span>
+              <input
+                type="range"
+                min={16}
+                max={96}
+                step={1}
+                value={activeEmail.headlineSizeOverride ?? 0}
+                onChange={e => {
+                  const v = Number(e.target.value);
+                  patchActive({ headlineSizeOverride: v < 16 ? null : v });
+                }}
+                className="flex-1 accent-[#2896FB]"
+                title={activeEmail.headlineSizeOverride ? `${activeEmail.headlineSizeOverride}px` : "Auto"}
+              />
+              <span className="text-[10px] font-bold text-[#7CC8FF] w-[36px] text-right">
+                {activeEmail.headlineSizeOverride ? `${activeEmail.headlineSizeOverride}px` : "Auto"}
+              </span>
+            </div>
+            <div className="flex items-center gap-[4px]">
+              <input
+                type="color"
+                value={activeEmail.headlineColor || "#7CC8FF"}
+                onChange={e => patchActive({ headlineColor: e.target.value })}
+                className="w-[24px] h-[24px] rounded-[6px] bg-transparent border border-[rgba(255,255,255,0.1)] cursor-pointer p-0"
+                title="Headline color"
+              />
+              {(activeEmail.headlineColor || activeEmail.headlineSizeOverride) && (
+                <button
+                  onClick={() => patchActive({ headlineColor: null, headlineSizeOverride: null })}
+                  title="Reset to auto"
+                  className="text-[9px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[6px] rounded-[5px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] cursor-pointer transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Subheadline</div>
+          <div className="flex items-center justify-between mb-[8px]">
+            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B]">Subheadline</div>
+            <div className="text-[9px] text-[#475569] normal-case tracking-normal">Click preview to edit</div>
+          </div>
           <textarea
             value={activeEmail.subhead}
             onChange={e => patchActive({ subhead: e.target.value })}
@@ -795,6 +916,45 @@ export function EmailTemplatesWorkspace() {
             placeholder="Type or paste your subheadline..."
             className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
+          <div className="flex items-center gap-[8px] mt-[8px]">
+            <div className="flex items-center gap-[6px] flex-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[1px] text-[#475569]">Size</span>
+              <input
+                type="range"
+                min={10}
+                max={56}
+                step={1}
+                value={activeEmail.subheadSizeOverride ?? 0}
+                onChange={e => {
+                  const v = Number(e.target.value);
+                  patchActive({ subheadSizeOverride: v < 10 ? null : v });
+                }}
+                className="flex-1 accent-[#2896FB]"
+                title={activeEmail.subheadSizeOverride ? `${activeEmail.subheadSizeOverride}px` : "Auto"}
+              />
+              <span className="text-[10px] font-bold text-[#7CC8FF] w-[36px] text-right">
+                {activeEmail.subheadSizeOverride ? `${activeEmail.subheadSizeOverride}px` : "Auto"}
+              </span>
+            </div>
+            <div className="flex items-center gap-[4px]">
+              <input
+                type="color"
+                value={activeEmail.subheadColor || "#FFFFFF"}
+                onChange={e => patchActive({ subheadColor: e.target.value })}
+                className="w-[24px] h-[24px] rounded-[6px] bg-transparent border border-[rgba(255,255,255,0.1)] cursor-pointer p-0"
+                title="Subheadline color"
+              />
+              {(activeEmail.subheadColor || activeEmail.subheadSizeOverride) && (
+                <button
+                  onClick={() => patchActive({ subheadColor: null, subheadSizeOverride: null })}
+                  title="Reset to auto"
+                  className="text-[9px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[6px] rounded-[5px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] cursor-pointer transition-colors"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div>

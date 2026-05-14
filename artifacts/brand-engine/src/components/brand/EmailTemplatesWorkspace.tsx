@@ -303,9 +303,9 @@ function SelectableText({
       data-text-frame={kind}
       className="relative"
       style={{
-        display: "inline-block",
+        alignSelf: "flex-start",
+        width: "fit-content",
         maxWidth: "100%",
-        verticalAlign: "top",
         outline: frameOutline,
         outlineOffset: showFrame || showHover ? "3px" : "0",
         borderRadius: "1px",

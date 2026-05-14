@@ -277,26 +277,21 @@ function SelectableText({
   };
 
   const handles: { id: string; style: React.CSSProperties; ox: number; oy: number }[] = [
-    { id: "nw", style: { top: -7, left: -7, cursor: "nwse-resize" }, ox: -1, oy: -1 },
-    { id: "ne", style: { top: -7, right: -7, cursor: "nesw-resize" }, ox: 1, oy: -1 },
-    { id: "sw", style: { bottom: -7, left: -7, cursor: "nesw-resize" }, ox: -1, oy: 1 },
-    { id: "se", style: { bottom: -7, right: -7, cursor: "nwse-resize" }, ox: 1, oy: 1 },
+    { id: "nw", style: { top: -6, left: -6, cursor: "nwse-resize" }, ox: -1, oy: -1 },
+    { id: "ne", style: { top: -6, right: -6, cursor: "nesw-resize" }, ox: 1, oy: -1 },
+    { id: "sw", style: { bottom: -6, left: -6, cursor: "nesw-resize" }, ox: -1, oy: 1 },
+    { id: "se", style: { bottom: -6, right: -6, cursor: "nwse-resize" }, ox: 1, oy: 1 },
   ];
 
   const [hover, setHover] = useState(false);
   const showHover = isActive && hover && !isSelected && !isEditing;
   const frameOutline = isEditing
-    ? "2px solid #FFC328"
+    ? "1px solid #FFC328"
     : isSelected
-      ? "2px solid #2896FB"
+      ? "1px solid #2896FB"
       : showHover
-        ? "2px dashed #17D94B"
+        ? "1px dashed rgba(40,150,251,0.55)"
         : "none";
-  const frameShadow = isEditing
-    ? "0 0 0 4px rgba(255,195,40,0.18)"
-    : isSelected
-      ? "0 0 0 4px rgba(40,150,251,0.18)"
-      : "none";
 
   const headColorStyle: React.CSSProperties = email.headlineColor
     ? { color: email.headlineColor, WebkitTextFillColor: email.headlineColor, backgroundImage: "none", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))" }
@@ -309,11 +304,9 @@ function SelectableText({
       className="relative"
       style={{
         outline: frameOutline,
-        outlineOffset: showFrame || showHover ? "2px" : "0",
-        boxShadow: frameShadow,
-        borderRadius: "2px",
-        cursor: isActive ? (isEditing ? "text" : "grab") : "default",
-        transition: "outline-color 80ms ease, box-shadow 80ms ease",
+        outlineOffset: showFrame || showHover ? "3px" : "0",
+        borderRadius: "1px",
+        cursor: isActive ? (isEditing ? "text" : "default") : "default",
       }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
@@ -377,12 +370,11 @@ function SelectableText({
           onPointerMove={moveResize}
           onPointerUp={endResize}
           onPointerCancel={endResize}
-          className="absolute z-[15] w-[14px] h-[14px] rounded-[3px]"
+          className="absolute z-[15] w-[8px] h-[8px] rounded-[1px]"
           style={{
             ...h.style,
-            background: "#FFC328",
-            border: "2px solid #0B1426",
-            boxShadow: "0 0 0 1px rgba(255,195,40,0.5), 0 2px 6px rgba(0,0,0,0.45)",
+            background: "#FFFFFF",
+            border: "1px solid #2896FB",
             touchAction: "none",
           }}
         />

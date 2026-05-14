@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Mail, Download, Loader2, Upload, X, Image as ImageIcon, Plus, Sparkles, Trash2, Package, Copy, Scissors, FileDown, Link2 } from "lucide-react";
 import JSZip from "jszip";
 import { useExport } from "./useExport";
@@ -285,13 +286,12 @@ function SelectableText({
 
   const [hover, setHover] = useState(false);
   const showHover = isActive && hover && !isSelected && !isEditing;
+  // When selected, the outline is drawn by the portal (so it isn't clipped by overflow:hidden).
   const frameOutline = isEditing
     ? "1px solid #FFC328"
-    : isSelected
-      ? "1px solid #2896FB"
-      : showHover
-        ? "1px dashed rgba(40,150,251,0.55)"
-        : "none";
+    : showHover
+      ? "1px dashed rgba(40,150,251,0.55)"
+      : "none";
 
   const headColorStyle: React.CSSProperties = email.headlineColor
     ? { color: email.headlineColor, WebkitTextFillColor: email.headlineColor, backgroundImage: "none", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))" }
@@ -365,25 +365,92 @@ function SelectableText({
           {isHead ? "Your headline here" : "Your subheadline here"}
         </div>
       )}
-      {isSelected && handles.map(h => (
+      {isSelected && <PortalHandles textRef={textRef} handles={handles} beginResize={beginResize} moveResize={moveResize} endResize={endResize} />}
+    </div>
+  );
+}
+
+function PortalHandles({
+  textRef, handles, beginResize, moveResize, endResize,
+}: {
+  textRef: React.RefObject<HTMLDivElement | null>;
+  handles: { id: string; ox: number; oy: number; cursor: string }[] | { id: string; style: React.CSSProperties; ox: number; oy: number }[];
+  beginResize: (e: React.PointerEvent, ox: number, oy: number) => void;
+  moveResize: (e: React.PointerEvent) => void;
+  endResize: (e: React.PointerEvent) => void;
+}) {
+  const [rect, setRect] = useState<{ left: number; top: number; right: number; bottom: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    let raf = 0;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      setRect({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+    };
+    update();
+    const tick = () => { update(); raf = requestAnimationFrame(tick); };
+    raf = requestAnimationFrame(tick);
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [textRef]);
+
+  if (!rect) return null;
+
+  const corners = [
+    { id: "nw", x: rect.left, y: rect.top, ox: -1, oy: -1, cursor: "nwse-resize" },
+    { id: "ne", x: rect.right, y: rect.top, ox: 1, oy: -1, cursor: "nesw-resize" },
+    { id: "sw", x: rect.left, y: rect.bottom, ox: -1, oy: 1, cursor: "nesw-resize" },
+    { id: "se", x: rect.right, y: rect.bottom, ox: 1, oy: 1, cursor: "nwse-resize" },
+  ];
+
+  return createPortal(
+    <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 999999 }}>
+      {/* Outline rectangle (drawn in fixed coords, cannot be clipped) */}
+      <div
+        style={{
+          position: "fixed",
+          left: rect.left - 3,
+          top: rect.top - 3,
+          width: rect.right - rect.left + 6,
+          height: rect.bottom - rect.top + 6,
+          border: "1px solid #2896FB",
+          borderRadius: "1px",
+          pointerEvents: "none",
+        }}
+      />
+      {corners.map(c => (
         <div
-          key={h.id}
+          key={c.id}
           data-resize-handle
-          onPointerDown={(e) => beginResize(e, h.ox, h.oy)}
+          onPointerDown={(e) => beginResize(e, c.ox, c.oy)}
           onPointerMove={moveResize}
           onPointerUp={endResize}
           onPointerCancel={endResize}
-          className="absolute z-[15] w-[12px] h-[12px] rounded-[2px]"
           style={{
-            ...h.style,
+            position: "fixed",
+            left: c.x - 6,
+            top: c.y - 6,
+            width: 12,
+            height: 12,
             background: "#FFFFFF",
             border: "2px solid #2896FB",
+            borderRadius: 2,
             boxShadow: "0 1px 3px rgba(0,0,0,0.5)",
+            cursor: c.cursor,
+            pointerEvents: "auto",
             touchAction: "none",
           }}
         />
       ))}
-    </div>
+    </div>,
+    document.body
   );
 }
 

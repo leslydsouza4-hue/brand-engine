@@ -163,6 +163,185 @@ interface EmailPreviewProps {
   registerRef: (id: string, el: HTMLDivElement | null) => void;
 }
 
+type TextField = "headline" | "subhead";
+type TextMode = "idle" | "selected" | "editing";
+
+function SelectableText({
+  kind, email, fontPx, isActive, mode, onModeChange, onSelect, onPatch, textRef,
+}: {
+  kind: TextField;
+  email: EmailItem;
+  fontPx: number;
+  isActive: boolean;
+  mode: TextMode;
+  onModeChange: (m: TextMode) => void;
+  onSelect: () => void;
+  onPatch: (p: Partial<EmailItem>) => void;
+  textRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const isHead = kind === "headline";
+  const sizeKey = isHead ? "headlineSizeOverride" : "subheadSizeOverride";
+  const textKey = isHead ? "headline" : "subhead";
+  const text = isHead ? email.headline : email.subhead;
+  const min = isHead ? 16 : 10, max = isHead ? 96 : 56;
+  const isSelected = mode === "selected";
+  const isEditing = mode === "editing";
+  const showFrame = isSelected || isEditing;
+
+  const [box, setBox] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  useLayoutEffect(() => {
+    const el = textRef.current;
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      setBox({ w: Math.round(r.width), h: Math.round(r.height) });
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [textRef, text, fontPx]);
+
+  // Focus and place caret at end when entering editing mode
+  useEffect(() => {
+    if (!isEditing) return;
+    const el = textRef.current;
+    if (!el) return;
+    el.focus();
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    } catch {}
+  }, [isEditing, textRef]);
+
+  const dragRef = useRef<{ sx: number; sy: number; ss: number; ox: number; oy: number } | null>(null);
+  const beginResize = (e: React.PointerEvent, ox: number, oy: number) => {
+    e.preventDefault(); e.stopPropagation();
+    const cur = (email[sizeKey] as number | null | undefined) ?? fontPx;
+    dragRef.current = { sx: e.clientX, sy: e.clientY, ss: cur, ox, oy };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const moveResize = (e: React.PointerEvent) => {
+    const d = dragRef.current; if (!d) return;
+    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
+    const proj = dx * d.ox + dy * d.oy;
+    const next = Math.max(min, Math.min(max, Math.round(d.ss + proj * 0.6)));
+    onPatch({ [sizeKey]: next } as Partial<EmailItem>);
+  };
+  const endResize = (e: React.PointerEvent) => {
+    if (dragRef.current) {
+      try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
+      dragRef.current = null;
+    }
+  };
+
+  const handles: { id: string; style: React.CSSProperties; ox: number; oy: number }[] = [
+    { id: "tl", style: { top: -5, left: -5, cursor: "nwse-resize" }, ox: -1, oy: -1 },
+    { id: "tr", style: { top: -5, right: -5, cursor: "nesw-resize" }, ox: 1, oy: -1 },
+    { id: "bl", style: { bottom: -5, left: -5, cursor: "nesw-resize" }, ox: -1, oy: 1 },
+    { id: "br", style: { bottom: -5, right: -5, cursor: "nwse-resize" }, ox: 1, oy: 1 },
+    { id: "t", style: { top: -5, left: "50%", marginLeft: -5, cursor: "ns-resize" }, ox: 0, oy: -1 },
+    { id: "b", style: { bottom: -5, left: "50%", marginLeft: -5, cursor: "ns-resize" }, ox: 0, oy: 1 },
+    { id: "l", style: { left: -5, top: "50%", marginTop: -5, cursor: "ew-resize" }, ox: -1, oy: 0 },
+    { id: "r", style: { right: -5, top: "50%", marginTop: -5, cursor: "ew-resize" }, ox: 1, oy: 0 },
+  ];
+
+  const headColorStyle: React.CSSProperties = email.headlineColor
+    ? { color: email.headlineColor, WebkitTextFillColor: email.headlineColor, backgroundImage: "none", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))" }
+    : { backgroundImage: "linear-gradient(180deg, #DCEEFF 0%, #7CC8FF 55%, #2896FB 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))" };
+  const subColorStyle: React.CSSProperties = { color: email.subheadColor || "#FFFFFF", textShadow: "0 2px 8px rgba(0,0,0,0.5)" };
+
+  return (
+    <div
+      data-text-frame={kind}
+      className="relative"
+      style={{
+        outline: showFrame ? "1.5px solid #2896FB" : "none",
+        outlineOffset: showFrame ? "4px" : "0",
+        borderRadius: "2px",
+      }}
+      onMouseDown={(e) => {
+        if (!isActive) return;
+        // Don't hijack handle drags or toolbar interactions
+        const t = e.target as HTMLElement;
+        if (t.closest("[data-resize-handle]") || t.closest("[data-inline-toolbar]")) return;
+        if (mode === "idle") {
+          onSelect();
+          onModeChange("selected");
+          e.stopPropagation();
+        }
+      }}
+      onDoubleClick={(e) => {
+        if (!isActive) return;
+        onSelect();
+        onModeChange("editing");
+        e.stopPropagation();
+      }}
+    >
+      {showFrame && (
+        <div data-inline-toolbar>
+          <InlineTextToolbar kind={kind} email={email} onPatch={onPatch} />
+        </div>
+      )}
+      <div
+        ref={textRef}
+        contentEditable={isEditing ? ("plaintext-only" as any) : false}
+        suppressContentEditableWarning
+        spellCheck={false}
+        onInput={(e) => onPatch({ [textKey]: (e.currentTarget as HTMLDivElement).innerText } as Partial<EmailItem>)}
+        onBlur={(e) => onPatch({ [textKey]: (e.currentTarget as HTMLDivElement).innerText } as Partial<EmailItem>)}
+        className={isHead ? "font-['Poppins'] font-black leading-[1.05] outline-none" : "font-['Poppins'] font-semibold leading-[1.35] outline-none"}
+        style={{
+          fontSize: `${fontPx}px`,
+          letterSpacing: isHead ? "-0.5px" : undefined,
+          whiteSpace: "pre-wrap",
+          cursor: isActive ? (isEditing ? "text" : "default") : "default",
+          minHeight: isActive && !text ? `${fontPx}px` : undefined,
+          ...(isHead ? headColorStyle : subColorStyle),
+        }}
+      />
+      {!text && (
+        <div
+          className={isHead ? "absolute top-0 left-0 pointer-events-none font-['Poppins'] font-black leading-[1.05]" : "absolute top-0 left-0 pointer-events-none font-['Poppins'] font-semibold leading-[1.35]"}
+          style={{
+            fontSize: `${fontPx}px`,
+            color: "rgba(255,255,255,0.25)",
+            letterSpacing: isHead ? "-0.5px" : undefined,
+          }}
+        >
+          {isHead ? "Your headline here" : "Your subheadline here"}
+        </div>
+      )}
+      {isSelected && (
+        <>
+          {handles.map(h => (
+            <div
+              key={h.id}
+              data-resize-handle
+              onPointerDown={(e) => beginResize(e, h.ox, h.oy)}
+              onPointerMove={moveResize}
+              onPointerUp={endResize}
+              onPointerCancel={endResize}
+              className="absolute z-[15] w-[10px] h-[10px] bg-white border-[1.5px] border-[#2896FB] rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
+              style={{ ...h.style, touchAction: "none" }}
+            />
+          ))}
+          <div
+            className="absolute z-[15] left-1/2 -translate-x-1/2 px-[8px] py-[2px] rounded-[4px] bg-[#2896FB] text-white text-[10px] font-bold pointer-events-none"
+            style={{ bottom: -28, fontFamily: "Inter, system-ui, sans-serif", whiteSpace: "nowrap" }}
+          >
+            {box.w} × {box.h}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function InlineTextToolbar({
   kind,
   email,
@@ -276,7 +455,26 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const bundleDragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(34);
-  const [focusedField, setFocusedField] = useState<"headline" | "subhead" | null>(null);
+  const [textSel, setTextSel] = useState<{ field: TextField | null; mode: TextMode }>({ field: null, mode: "idle" });
+  const headlineWrapRef = useRef<HTMLDivElement>(null);
+  const subheadWrapRef = useRef<HTMLDivElement>(null);
+
+  // Click outside both text frames clears the selection
+  useEffect(() => {
+    if (textSel.field === null) return;
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (headlineRef.current?.parentElement?.contains(t)) return;
+      if (subheadRef.current?.parentElement?.contains(t)) return;
+      setTextSel({ field: null, mode: "idle" });
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [textSel.field]);
+
+  // Switching active email clears text selection
+  useEffect(() => { setTextSel({ field: null, mode: "idle" }); }, [email.id]);
+  useEffect(() => { if (!isActive) setTextSel({ field: null, mode: "idle" }); }, [isActive]);
 
   const selectedHighly = HIGHLY_POSES.find(h => h.id === email.selectedHighlyId);
   const selectedBundle = BUNDLE_ASSETS.find(b => b.id === email.selectedBundleId);
@@ -528,110 +726,29 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
               maxHeight: "68%",
             }}
           >
-            <div
-              className="relative"
-              style={{
-                outline: focusedField === "headline" ? "1.5px dashed rgba(124,200,255,0.85)" : "none",
-                outlineOffset: focusedField === "headline" ? "6px" : "0",
-                borderRadius: "4px",
-                transition: "outline-color 120ms ease",
-              }}
-            >
-              {focusedField === "headline" && (
-                <InlineTextToolbar
-                  kind="headline"
-                  email={email}
-                  onPatch={onPatch}
-                />
-              )}
-              <div
-                ref={headlineRef}
-                contentEditable={isActive ? ("plaintext-only" as any) : false}
-                suppressContentEditableWarning
-                spellCheck={false}
-                onFocus={() => { onSelect(); setFocusedField("headline"); }}
-                onBlur={(e) => {
-                  onPatch({ headline: (e.currentTarget as HTMLDivElement).innerText });
-                  setFocusedField(prev => (prev === "headline" ? null : prev));
-                }}
-                onInput={(e) => onPatch({ headline: (e.currentTarget as HTMLDivElement).innerText })}
-                className="font-['Poppins'] font-black leading-[1.05] outline-none"
-                style={{
-                  fontSize: `${headlineFontPx}px`,
-                  letterSpacing: "-0.5px",
-                  whiteSpace: "pre-wrap",
-                  cursor: isActive ? "text" : "default",
-                  ...(email.headlineColor
-                    ? {
-                        color: email.headlineColor,
-                        WebkitTextFillColor: email.headlineColor,
-                        backgroundImage: "none",
-                        filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))",
-                      }
-                    : {
-                        backgroundImage: "linear-gradient(180deg, #DCEEFF 0%, #7CC8FF 55%, #2896FB 100%)",
-                        WebkitBackgroundClip: "text",
-                        backgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
-                        color: "transparent",
-                        filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",
-                      }),
-                }}
+            <SelectableText
+              kind="headline"
+              email={email}
+              fontPx={headlineFontPx}
+              isActive={isActive}
+              mode={textSel.field === "headline" ? textSel.mode : "idle"}
+              onModeChange={(m) => setTextSel(m === "idle" ? { field: null, mode: "idle" } : { field: "headline", mode: m })}
+              onSelect={onSelect}
+              onPatch={onPatch}
+              textRef={headlineRef}
+            />
+            <div className="mt-[14px]">
+              <SelectableText
+                kind="subhead"
+                email={email}
+                fontPx={subheadFontPx}
+                isActive={isActive}
+                mode={textSel.field === "subhead" ? textSel.mode : "idle"}
+                onModeChange={(m) => setTextSel(m === "idle" ? { field: null, mode: "idle" } : { field: "subhead", mode: m })}
+                onSelect={onSelect}
+                onPatch={onPatch}
+                textRef={subheadRef}
               />
-              {!email.headline && (
-                <div
-                  className="absolute top-0 left-0 pointer-events-none font-['Poppins'] font-black leading-[1.05]"
-                  style={{ fontSize: `${headlineFontPx}px`, color: "rgba(255,255,255,0.25)", letterSpacing: "-0.5px" }}
-                >
-                  Your headline here
-                </div>
-              )}
-            </div>
-            <div
-              className="relative mt-[14px]"
-              style={{
-                outline: focusedField === "subhead" ? "1.5px dashed rgba(124,200,255,0.85)" : "none",
-                outlineOffset: focusedField === "subhead" ? "6px" : "0",
-                borderRadius: "4px",
-                transition: "outline-color 120ms ease",
-              }}
-            >
-              {focusedField === "subhead" && (
-                <InlineTextToolbar
-                  kind="subhead"
-                  email={email}
-                  onPatch={onPatch}
-                />
-              )}
-              <div
-                ref={subheadRef}
-                contentEditable={isActive ? ("plaintext-only" as any) : false}
-                suppressContentEditableWarning
-                spellCheck={false}
-                onFocus={() => { onSelect(); setFocusedField("subhead"); }}
-                onBlur={(e) => {
-                  onPatch({ subhead: (e.currentTarget as HTMLDivElement).innerText });
-                  setFocusedField(prev => (prev === "subhead" ? null : prev));
-                }}
-                onInput={(e) => onPatch({ subhead: (e.currentTarget as HTMLDivElement).innerText })}
-                className="font-['Poppins'] font-semibold leading-[1.35] outline-none"
-                style={{
-                  fontSize: `${subheadFontPx}px`,
-                  whiteSpace: "pre-wrap",
-                  color: email.subheadColor || "#FFFFFF",
-                  textShadow: "0 2px 8px rgba(0,0,0,0.5)",
-                  cursor: isActive ? "text" : "default",
-                  minHeight: isActive && !email.subhead ? `${subheadFontPx}px` : undefined,
-                }}
-              />
-              {!email.subhead && isActive && (
-                <div
-                  className="absolute top-0 left-0 pointer-events-none font-['Poppins'] font-semibold leading-[1.35]"
-                  style={{ fontSize: `${subheadFontPx}px`, color: "rgba(255,255,255,0.3)" }}
-                >
-                  Your subheadline here
-                </div>
-              )}
             </div>
             {email.cta && (
               <div

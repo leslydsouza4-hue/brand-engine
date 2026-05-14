@@ -277,10 +277,10 @@ function SelectableText({
   };
 
   const handles: { id: string; style: React.CSSProperties; ox: number; oy: number }[] = [
-    { id: "nw", style: { top: -6, left: -6, cursor: "nwse-resize" }, ox: -1, oy: -1 },
-    { id: "ne", style: { top: -6, right: -6, cursor: "nesw-resize" }, ox: 1, oy: -1 },
-    { id: "sw", style: { bottom: -6, left: -6, cursor: "nesw-resize" }, ox: -1, oy: 1 },
-    { id: "se", style: { bottom: -6, right: -6, cursor: "nwse-resize" }, ox: 1, oy: 1 },
+    { id: "nw", style: { top: -9, left: -9, cursor: "nwse-resize" }, ox: -1, oy: -1 },
+    { id: "ne", style: { top: -9, right: -9, cursor: "nesw-resize" }, ox: 1, oy: -1 },
+    { id: "sw", style: { bottom: -9, left: -9, cursor: "nesw-resize" }, ox: -1, oy: 1 },
+    { id: "se", style: { bottom: -9, right: -9, cursor: "nwse-resize" }, ox: 1, oy: 1 },
   ];
 
   const [hover, setHover] = useState(false);
@@ -370,11 +370,12 @@ function SelectableText({
           onPointerMove={moveResize}
           onPointerUp={endResize}
           onPointerCancel={endResize}
-          className="absolute z-[15] w-[8px] h-[8px] rounded-[1px]"
+          className="absolute z-[15] w-[12px] h-[12px] rounded-[2px]"
           style={{
             ...h.style,
             background: "#FFFFFF",
-            border: "1px solid #2896FB",
+            border: "2px solid #2896FB",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.5)",
             touchAction: "none",
           }}
         />

@@ -172,14 +172,16 @@ type TextField = "headline" | "subhead";
 type TextMode = "idle" | "selected" | "editing";
 
 function SelectableText({
-  kind, email, fontPx, isActive, mode, onModeChange, onSelect, onPatch, textRef,
+  kind, email, fontPx, isActive, mode, selectedKinds, isPrimary, onModeChange, onSelect, onPatch, textRef,
 }: {
   kind: TextField;
   email: EmailItem;
   fontPx: number;
   isActive: boolean;
   mode: TextMode;
-  onModeChange: (m: TextMode) => void;
+  selectedKinds: TextField[];
+  isPrimary: boolean;
+  onModeChange: (m: TextMode, shift: boolean) => void;
   onSelect: () => void;
   onPatch: (p: Partial<EmailItem>) => void;
   textRef: React.RefObject<HTMLDivElement | null>;
@@ -341,22 +343,21 @@ function SelectableText({
         // Don't hijack handle drags or toolbar interactions
         const t = e.target as HTMLElement;
         if (t.closest("[data-resize-handle]") || t.closest("[data-inline-toolbar]")) return;
-        if (mode === "idle") {
-          onSelect();
-          onModeChange("selected");
-          e.stopPropagation();
-        }
+        if (mode === "editing") return;
+        onSelect();
+        onModeChange("selected", e.shiftKey);
+        e.stopPropagation();
       }}
       onDoubleClick={(e) => {
         if (!isActive) return;
         onSelect();
-        onModeChange("editing");
+        onModeChange("editing", false);
         e.stopPropagation();
       }}
     >
-      {showFrame && (
+      {showFrame && isPrimary && (
         <div data-inline-toolbar>
-          <InlineTextToolbar kind={kind} email={email} onPatch={onPatch} />
+          <InlineTextToolbar kinds={isEditing ? [kind] : selectedKinds} email={email} onPatch={onPatch} />
         </div>
       )}
       <div
@@ -478,18 +479,34 @@ function PortalHandles({
 }
 
 function InlineTextToolbar({
-  kind,
+  kinds,
   email,
   onPatch,
 }: {
-  kind: "headline" | "subhead";
+  kinds: TextField[];
   email: EmailItem;
   onPatch: (patch: Partial<EmailItem>) => void;
 }) {
-  const isHead = kind === "headline";
-  const sizeKey = isHead ? "headlineSizeOverride" : "subheadSizeOverride";
-  const colorKey = isHead ? "headlineColor" : "subheadColor";
-  const color = (email[colorKey] as string | null | undefined) ?? null;
+  const primary = kinds[0]!;
+  const isHead = primary === "headline";
+  const isMulti = kinds.length > 1;
+  const colorKeys = kinds.map(k => k === "headline" ? "headlineColor" : "subheadColor");
+  const sizeKeys = kinds.map(k => k === "headline" ? "headlineSizeOverride" : "subheadSizeOverride");
+  const offsetKeys = kinds.map(k => k === "headline" ? "headlineOffset" : "subheadOffset");
+  const color = (email[colorKeys[0]!] as string | null | undefined) ?? null;
+  const setAll = (patch: Partial<EmailItem>) => onPatch(patch);
+  const setColor = (c: string | null) => {
+    const p: Partial<EmailItem> = {};
+    for (const k of colorKeys) (p as any)[k] = c;
+    setAll(p);
+  };
+  const reset = () => {
+    const p: Partial<EmailItem> = {};
+    for (const k of colorKeys) (p as any)[k] = null;
+    for (const k of sizeKeys) (p as any)[k] = null;
+    for (const k of offsetKeys) (p as any)[k] = { x: 0, y: 0 };
+    setAll(p);
+  };
   const swatches = isHead
     ? ["#7CC8FF", "#FFFFFF", "#FFD000", "#2896FB", "#FCA5A5", "#A7F3D0"]
     : ["#FFFFFF", "#7CC8FF", "#FFD000", "#94A3B8", "#FCA5A5", "#A7F3D0"];
@@ -510,13 +527,19 @@ function InlineTextToolbar({
         fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
+      {isMulti && (
+        <>
+          <span className="text-[9px] font-bold uppercase tracking-[0.8px] text-[#7CC8FF] px-[6px]">Both</span>
+          <Sep />
+        </>
+      )}
       {swatches.map(c => {
         const active = color?.toLowerCase() === c.toLowerCase();
         return (
           <button
             key={c}
             type="button"
-            onClick={() => onPatch({ [colorKey]: c } as Partial<EmailItem>)}
+            onClick={() => setColor(c)}
             title={c}
             className="w-[22px] h-[22px] rounded-[6px] cursor-pointer p-0 flex items-center justify-center border-0"
             style={{ background: "transparent" }}
@@ -547,7 +570,7 @@ function InlineTextToolbar({
         <input
           type="color"
           value={color || (isHead ? "#7CC8FF" : "#FFFFFF")}
-          onChange={(e) => onPatch({ [colorKey]: e.target.value } as Partial<EmailItem>)}
+          onChange={(e) => setColor(e.target.value)}
           className="absolute inset-0 opacity-0 cursor-pointer"
         />
       </label>
@@ -556,7 +579,7 @@ function InlineTextToolbar({
 
       <button
         type="button"
-        onClick={() => onPatch({ [sizeKey]: null, [colorKey]: null } as Partial<EmailItem>)}
+        onClick={reset}
         className="h-[28px] px-[10px] rounded-[6px] flex items-center gap-[6px] text-white text-[11px] font-semibold hover:bg-[rgba(255,255,255,0.08)] cursor-pointer border-0 bg-transparent"
         title="Reset size & color to auto"
       >
@@ -578,24 +601,46 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
   const dragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const bundleDragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(34);
-  const [textSel, setTextSel] = useState<{ field: TextField | null; mode: TextMode }>({ field: null, mode: "idle" });
+  const [textSel, setTextSel] = useState<{ fields: TextField[]; editing: TextField | null }>({ fields: [], editing: null });
+
+  const setSelMode = (kind: TextField) => (m: TextMode, shift: boolean) => {
+    setTextSel(prev => {
+      if (m === "idle") return { fields: [], editing: null };
+      if (m === "editing") return { fields: [kind], editing: kind };
+      // m === "selected"
+      if (shift) {
+        // Toggle membership; preserve order [headline, subhead]
+        const has = prev.fields.includes(kind);
+        const nextSet = has ? prev.fields.filter(f => f !== kind) : [...prev.fields, kind];
+        const ordered: TextField[] = ["headline", "subhead"].filter(f => nextSet.includes(f as TextField)) as TextField[];
+        return { fields: ordered, editing: null };
+      }
+      return { fields: [kind], editing: null };
+    });
+  };
 
   // Click outside both text frames clears the selection
   useEffect(() => {
-    if (textSel.field === null) return;
+    if (textSel.fields.length === 0) return;
     const onDown = (e: MouseEvent) => {
       const t = e.target as Node;
       if (headlineRef.current?.parentElement?.contains(t)) return;
       if (subheadRef.current?.parentElement?.contains(t)) return;
-      setTextSel({ field: null, mode: "idle" });
+      // Clicks on the floating toolbar / handles are portaled — keep selection
+      if ((t as HTMLElement).closest?.("[data-inline-toolbar]")) return;
+      if ((t as HTMLElement).closest?.("[data-resize-handle]")) return;
+      setTextSel({ fields: [], editing: null });
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
-  }, [textSel.field]);
+  }, [textSel.fields.length]);
 
   // Switching active email clears text selection
-  useEffect(() => { setTextSel({ field: null, mode: "idle" }); }, [email.id]);
-  useEffect(() => { if (!isActive) setTextSel({ field: null, mode: "idle" }); }, [isActive]);
+  useEffect(() => { setTextSel({ fields: [], editing: null }); }, [email.id]);
+  useEffect(() => { if (!isActive) setTextSel({ fields: [], editing: null }); }, [isActive]);
+
+  const modeFor = (kind: TextField): TextMode =>
+    textSel.editing === kind ? "editing" : textSel.fields.includes(kind) ? "selected" : "idle";
 
   const selectedHighly = HIGHLY_POSES.find(h => h.id === email.selectedHighlyId);
   const selectedBundle = BUNDLE_ASSETS.find(b => b.id === email.selectedBundleId);
@@ -852,8 +897,10 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
               email={email}
               fontPx={headlineFontPx}
               isActive={isActive}
-              mode={textSel.field === "headline" ? textSel.mode : "idle"}
-              onModeChange={(m) => setTextSel(m === "idle" ? { field: null, mode: "idle" } : { field: "headline", mode: m })}
+              mode={modeFor("headline")}
+              selectedKinds={textSel.fields}
+              isPrimary={textSel.fields[0] === "headline" || textSel.editing === "headline"}
+              onModeChange={setSelMode("headline")}
               onSelect={onSelect}
               onPatch={onPatch}
               textRef={headlineRef}
@@ -864,8 +911,10 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 email={email}
                 fontPx={subheadFontPx}
                 isActive={isActive}
-                mode={textSel.field === "subhead" ? textSel.mode : "idle"}
-                onModeChange={(m) => setTextSel(m === "idle" ? { field: null, mode: "idle" } : { field: "subhead", mode: m })}
+                mode={modeFor("subhead")}
+                selectedKinds={textSel.fields}
+                isPrimary={(textSel.fields[0] === "subhead" && !textSel.fields.includes("headline")) || textSel.editing === "subhead"}
+                onModeChange={setSelMode("subhead")}
                 onSelect={onSelect}
                 onPatch={onPatch}
                 textRef={subheadRef}

@@ -188,20 +188,6 @@ function SelectableText({
   const isEditing = mode === "editing";
   const showFrame = isSelected || isEditing;
 
-  const [box, setBox] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
-  useLayoutEffect(() => {
-    const el = textRef.current;
-    if (!el) return;
-    const update = () => {
-      const r = el.getBoundingClientRect();
-      setBox({ w: Math.round(r.width), h: Math.round(r.height) });
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [textRef, text, fontPx]);
-
   // Focus and place caret at end when entering editing mode
   useEffect(() => {
     if (!isEditing) return;
@@ -291,15 +277,26 @@ function SelectableText({
   };
 
   const handles: { id: string; style: React.CSSProperties; ox: number; oy: number }[] = [
-    { id: "tl", style: { top: -5, left: -5, cursor: "nwse-resize" }, ox: -1, oy: -1 },
-    { id: "tr", style: { top: -5, right: -5, cursor: "nesw-resize" }, ox: 1, oy: -1 },
-    { id: "bl", style: { bottom: -5, left: -5, cursor: "nesw-resize" }, ox: -1, oy: 1 },
-    { id: "br", style: { bottom: -5, right: -5, cursor: "nwse-resize" }, ox: 1, oy: 1 },
-    { id: "t", style: { top: -5, left: "50%", marginLeft: -5, cursor: "ns-resize" }, ox: 0, oy: -1 },
-    { id: "b", style: { bottom: -5, left: "50%", marginLeft: -5, cursor: "ns-resize" }, ox: 0, oy: 1 },
-    { id: "l", style: { left: -5, top: "50%", marginTop: -5, cursor: "ew-resize" }, ox: -1, oy: 0 },
-    { id: "r", style: { right: -5, top: "50%", marginTop: -5, cursor: "ew-resize" }, ox: 1, oy: 0 },
+    { id: "nw", style: { top: -7, left: -7, cursor: "nwse-resize" }, ox: -1, oy: -1 },
+    { id: "ne", style: { top: -7, right: -7, cursor: "nesw-resize" }, ox: 1, oy: -1 },
+    { id: "sw", style: { bottom: -7, left: -7, cursor: "nesw-resize" }, ox: -1, oy: 1 },
+    { id: "se", style: { bottom: -7, right: -7, cursor: "nwse-resize" }, ox: 1, oy: 1 },
   ];
+
+  const [hover, setHover] = useState(false);
+  const showHover = isActive && hover && !isSelected && !isEditing;
+  const frameOutline = isEditing
+    ? "2px solid #FFC328"
+    : isSelected
+      ? "2px solid #2896FB"
+      : showHover
+        ? "2px dashed #17D94B"
+        : "none";
+  const frameShadow = isEditing
+    ? "0 0 0 4px rgba(255,195,40,0.18)"
+    : isSelected
+      ? "0 0 0 4px rgba(40,150,251,0.18)"
+      : "none";
 
   const headColorStyle: React.CSSProperties = email.headlineColor
     ? { color: email.headlineColor, WebkitTextFillColor: email.headlineColor, backgroundImage: "none", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.35))" }
@@ -311,10 +308,15 @@ function SelectableText({
       data-text-frame={kind}
       className="relative"
       style={{
-        outline: showFrame ? "1.5px solid #2896FB" : "none",
-        outlineOffset: showFrame ? "4px" : "0",
+        outline: frameOutline,
+        outlineOffset: showFrame || showHover ? "2px" : "0",
+        boxShadow: frameShadow,
         borderRadius: "2px",
+        cursor: isActive ? (isEditing ? "text" : "grab") : "default",
+        transition: "outline-color 80ms ease, box-shadow 80ms ease",
       }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
       onMouseDown={(e) => {
         if (!isActive) return;
         // Don't hijack handle drags or toolbar interactions
@@ -367,28 +369,24 @@ function SelectableText({
           {isHead ? "Your headline here" : "Your subheadline here"}
         </div>
       )}
-      {isSelected && (
-        <>
-          {handles.map(h => (
-            <div
-              key={h.id}
-              data-resize-handle
-              onPointerDown={(e) => beginResize(e, h.ox, h.oy)}
-              onPointerMove={moveResize}
-              onPointerUp={endResize}
-              onPointerCancel={endResize}
-              className="absolute z-[15] w-[10px] h-[10px] bg-white border-[1.5px] border-[#2896FB] rounded-[2px] shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
-              style={{ ...h.style, touchAction: "none" }}
-            />
-          ))}
-          <div
-            className="absolute z-[15] left-1/2 -translate-x-1/2 px-[8px] py-[2px] rounded-[4px] bg-[#2896FB] text-white text-[10px] font-bold pointer-events-none"
-            style={{ bottom: -28, fontFamily: "Inter, system-ui, sans-serif", whiteSpace: "nowrap" }}
-          >
-            {box.w} × {box.h}
-          </div>
-        </>
-      )}
+      {isSelected && handles.map(h => (
+        <div
+          key={h.id}
+          data-resize-handle
+          onPointerDown={(e) => beginResize(e, h.ox, h.oy)}
+          onPointerMove={moveResize}
+          onPointerUp={endResize}
+          onPointerCancel={endResize}
+          className="absolute z-[15] w-[14px] h-[14px] rounded-[3px]"
+          style={{
+            ...h.style,
+            background: "#FFC328",
+            border: "2px solid #0B1426",
+            boxShadow: "0 0 0 1px rgba(255,195,40,0.5), 0 2px 6px rgba(0,0,0,0.45)",
+            touchAction: "none",
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -413,40 +411,53 @@ function InlineTextToolbar({
   // Don't let mousedown on the toolbar steal focus from the contentEditable.
   const keepFocus = (e: React.MouseEvent) => e.preventDefault();
 
+  const Sep = () => <div className="w-px h-[18px] bg-[rgba(255,255,255,0.16)] mx-[2px]" />;
+
   return (
     <div
       onMouseDown={keepFocus}
-      className="absolute z-[20] flex items-center gap-[4px] bg-[rgba(15,23,42,0.96)] backdrop-blur-md border border-[rgba(124,200,255,0.35)] shadow-[0_8px_24px_rgba(0,0,0,0.5)] rounded-[10px] px-[6px] py-[5px]"
+      className="absolute z-[20] flex items-center gap-[2px] p-[4px] rounded-[10px] bg-[#0B1426] border border-[rgba(255,255,255,0.14)] shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
       style={{
         left: 0,
-        bottom: "calc(100% + 12px)",
+        bottom: "calc(100% + 10px)",
         whiteSpace: "nowrap",
         fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
-      <span className="text-[9px] font-bold uppercase tracking-[1px] text-[#64748B] px-[4px]">
-        {isHead ? "Headline" : "Sub"}
-      </span>
-      <div className="w-px h-[18px] bg-[rgba(255,255,255,0.08)]" />
+      {swatches.map(c => {
+        const active = color?.toLowerCase() === c.toLowerCase();
+        return (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onPatch({ [colorKey]: c } as Partial<EmailItem>)}
+            title={c}
+            className="w-[22px] h-[22px] rounded-[6px] cursor-pointer p-0 flex items-center justify-center border-0"
+            style={{ background: "transparent" }}
+          >
+            <span
+              className="block w-[16px] h-[16px] rounded-full"
+              style={{
+                background: c,
+                boxShadow: active
+                  ? "0 0 0 2px #0B1426, 0 0 0 4px #2896FB"
+                  : "0 0 0 1px rgba(255,255,255,0.2)",
+              }}
+            />
+          </button>
+        );
+      })}
 
-      {swatches.map(c => (
-        <button
-          key={c}
-          onClick={() => onPatch({ [colorKey]: c } as Partial<EmailItem>)}
-          title={c}
-          className="w-[18px] h-[18px] rounded-full border cursor-pointer p-0"
-          style={{
-            background: c,
-            borderColor: color?.toLowerCase() === c.toLowerCase() ? "#7CC8FF" : "rgba(255,255,255,0.15)",
-            boxShadow: color?.toLowerCase() === c.toLowerCase() ? "0 0 0 2px rgba(124,200,255,0.35)" : "none",
-          }}
-        />
-      ))}
+      <Sep />
+
       <label
-        className="w-[22px] h-[22px] rounded-[5px] flex items-center justify-center cursor-pointer border border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(40,150,251,0.18)] relative overflow-hidden"
+        className="w-[28px] h-[28px] rounded-[6px] flex items-center justify-center cursor-pointer text-white hover:bg-[rgba(255,255,255,0.08)] relative overflow-hidden"
         title="Custom color"
       >
-        <span className="text-[10px]">🎨</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 3l8 8-9 9H3v-8z" />
+          <path d="M14 5l5 5" />
+        </svg>
         <input
           type="color"
           value={color || (isHead ? "#7CC8FF" : "#FFFFFF")}
@@ -455,13 +466,18 @@ function InlineTextToolbar({
         />
       </label>
 
-      <div className="w-px h-[18px] bg-[rgba(255,255,255,0.08)] mx-[2px]" />
+      <Sep />
 
       <button
+        type="button"
         onClick={() => onPatch({ [sizeKey]: null, [colorKey]: null } as Partial<EmailItem>)}
-        className="text-[10px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[8px] rounded-[5px] bg-transparent hover:bg-[rgba(40,150,251,0.12)] border border-[rgba(255,255,255,0.06)] cursor-pointer"
-        title="Reset to auto"
+        className="h-[28px] px-[10px] rounded-[6px] flex items-center gap-[6px] text-white text-[11px] font-semibold hover:bg-[rgba(255,255,255,0.08)] cursor-pointer border-0 bg-transparent"
+        title="Reset size & color to auto"
       >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 7v6h6" />
+          <path d="M3 13a9 9 0 1 0 3-7.7L3 8" />
+        </svg>
         Reset
       </button>
     </div>
@@ -477,8 +493,6 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
   const bundleDragRef = useRef<{ startX: number; startY: number; baseX: number; baseY: number; rect: DOMRect } | null>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(34);
   const [textSel, setTextSel] = useState<{ field: TextField | null; mode: TextMode }>({ field: null, mode: "idle" });
-  const headlineWrapRef = useRef<HTMLDivElement>(null);
-  const subheadWrapRef = useRef<HTMLDivElement>(null);
 
   // Click outside both text frames clears the selection
   useEffect(() => {

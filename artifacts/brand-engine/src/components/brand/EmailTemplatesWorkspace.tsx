@@ -218,22 +218,73 @@ function SelectableText({
     } catch {}
   }, [isEditing, textRef]);
 
-  const dragRef = useRef<{ sx: number; sy: number; ss: number; ox: number; oy: number } | null>(null);
-  const beginResize = (e: React.PointerEvent, ox: number, oy: number) => {
-    e.preventDefault(); e.stopPropagation();
-    const cur = (email[sizeKey] as number | null | undefined) ?? fontPx;
-    dragRef.current = { sx: e.clientX, sy: e.clientY, ss: cur, ox, oy };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const moveResize = (e: React.PointerEvent) => {
+  // Photoshop-style resize: anchor the opposite edge/corner, scale font by the
+  // ratio of the new bounding box to the original.
+  const dragRef = useRef<{
+    startSize: number;
+    startW: number;
+    startH: number;
+    anchorX: number;
+    anchorY: number;
+    ox: number;
+    oy: number;
+    raf: number | null;
+    pendingX: number;
+    pendingY: number;
+  } | null>(null);
+
+  const applyResize = () => {
     const d = dragRef.current; if (!d) return;
-    const dx = e.clientX - d.sx, dy = e.clientY - d.sy;
-    const proj = dx * d.ox + dy * d.oy;
-    const next = Math.max(min, Math.min(max, Math.round(d.ss + proj * 0.6)));
+    d.raf = null;
+    const newW = d.ox === 0 ? d.startW : Math.max(1, Math.abs(d.pendingX - d.anchorX));
+    const newH = d.oy === 0 ? d.startH : Math.max(1, Math.abs(d.pendingY - d.anchorY));
+    let scale = 1;
+    if (d.ox !== 0 && d.oy !== 0) {
+      // Corner: uniform scale, average the two axes for a smooth feel
+      scale = (newW / d.startW + newH / d.startH) / 2;
+    } else if (d.oy !== 0) {
+      scale = newH / d.startH;
+    } else {
+      scale = newW / d.startW;
+    }
+    const raw = d.startSize * scale;
+    const next = Math.max(min, Math.min(max, Math.round(raw * 10) / 10));
     onPatch({ [sizeKey]: next } as Partial<EmailItem>);
   };
+
+  const beginResize = (e: React.PointerEvent, ox: number, oy: number) => {
+    e.preventDefault(); e.stopPropagation();
+    const el = textRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const cur = (email[sizeKey] as number | null | undefined) ?? fontPx;
+    // Anchor = opposite edge/corner in viewport coordinates
+    const anchorX = ox === 1 ? r.left : ox === -1 ? r.right : r.left + r.width / 2;
+    const anchorY = oy === 1 ? r.top : oy === -1 ? r.bottom : r.top + r.height / 2;
+    dragRef.current = {
+      startSize: cur,
+      startW: r.width,
+      startH: r.height,
+      anchorX, anchorY, ox, oy,
+      raf: null,
+      pendingX: e.clientX,
+      pendingY: e.clientY,
+    };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const moveResize = (e: React.PointerEvent) => {
+    const d = dragRef.current; if (!d) return;
+    d.pendingX = e.clientX;
+    d.pendingY = e.clientY;
+    if (d.raf == null) {
+      d.raf = requestAnimationFrame(applyResize);
+    }
+  };
+
   const endResize = (e: React.PointerEvent) => {
     if (dragRef.current) {
+      if (dragRef.current.raf != null) cancelAnimationFrame(dragRef.current.raf);
       try { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); } catch {}
       dragRef.current = null;
     }
@@ -354,11 +405,7 @@ function InlineTextToolbar({
   const isHead = kind === "headline";
   const sizeKey = isHead ? "headlineSizeOverride" : "subheadSizeOverride";
   const colorKey = isHead ? "headlineColor" : "subheadColor";
-  const size = (email[sizeKey] as number | null | undefined) ?? null;
   const color = (email[colorKey] as string | null | undefined) ?? null;
-  const min = isHead ? 16 : 10;
-  const max = isHead ? 96 : 56;
-  const step = 2;
   const swatches = isHead
     ? ["#7CC8FF", "#FFFFFF", "#FFD000", "#2896FB", "#FCA5A5", "#A7F3D0"]
     : ["#FFFFFF", "#7CC8FF", "#FFD000", "#94A3B8", "#FCA5A5", "#A7F3D0"];
@@ -381,32 +428,6 @@ function InlineTextToolbar({
         {isHead ? "Headline" : "Sub"}
       </span>
       <div className="w-px h-[18px] bg-[rgba(255,255,255,0.08)]" />
-      <button
-        onClick={() => onPatch({ [sizeKey]: Math.max(min, (size ?? min) - step) } as Partial<EmailItem>)}
-        className="w-[22px] h-[22px] rounded-[5px] bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(40,150,251,0.18)] text-white text-[13px] font-bold border-none cursor-pointer leading-none"
-        title="Smaller"
-      >−</button>
-      <input
-        type="number"
-        value={size ?? ""}
-        placeholder="Auto"
-        min={min}
-        max={max}
-        onChange={(e) => {
-          const v = e.target.value;
-          if (v === "") { onPatch({ [sizeKey]: null } as Partial<EmailItem>); return; }
-          const n = Math.max(min, Math.min(max, Number(v)));
-          if (!Number.isNaN(n)) onPatch({ [sizeKey]: n } as Partial<EmailItem>);
-        }}
-        className="w-[44px] h-[22px] rounded-[5px] bg-[rgba(0,0,0,0.4)] border border-[rgba(255,255,255,0.08)] text-white text-[11px] font-bold text-center outline-none focus:border-[rgba(124,200,255,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-      />
-      <button
-        onClick={() => onPatch({ [sizeKey]: Math.min(max, (size ?? min) + step) } as Partial<EmailItem>)}
-        className="w-[22px] h-[22px] rounded-[5px] bg-[rgba(255,255,255,0.06)] hover:bg-[rgba(40,150,251,0.18)] text-white text-[13px] font-bold border-none cursor-pointer leading-none"
-        title="Larger"
-      >+</button>
-
-      <div className="w-px h-[18px] bg-[rgba(255,255,255,0.08)] mx-[2px]" />
 
       {swatches.map(c => (
         <button

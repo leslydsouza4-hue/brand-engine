@@ -29,6 +29,8 @@ interface EmailItem {
   subheadSizeOverride?: number | null;
   headlineColor?: string | null;
   subheadColor?: string | null;
+  headlineOffset?: { x: number; y: number };
+  subheadOffset?: { x: number; y: number };
 }
 
 const newEmail = (): EmailItem => ({
@@ -48,6 +50,8 @@ const newEmail = (): EmailItem => ({
   subheadSizeOverride: null,
   headlineColor: null,
   subheadColor: null,
+  headlineOffset: { x: 0, y: 0 },
+  subheadOffset: { x: 0, y: 0 },
 });
 
 interface ParsedSection {
@@ -182,8 +186,10 @@ function SelectableText({
 }) {
   const isHead = kind === "headline";
   const sizeKey = isHead ? "headlineSizeOverride" : "subheadSizeOverride";
+  const offsetKey = isHead ? "headlineOffset" : "subheadOffset";
   const textKey = isHead ? "headline" : "subhead";
   const text = isHead ? email.headline : email.subhead;
+  const offset = (email[offsetKey] as { x: number; y: number } | undefined) ?? { x: 0, y: 0 };
   const min = isHead ? 16 : 10, max = isHead ? 96 : 56;
   const isSelected = mode === "selected";
   const isEditing = mode === "editing";
@@ -211,6 +217,8 @@ function SelectableText({
     startSize: number;
     startW: number;
     startH: number;
+    startOffsetX: number;
+    startOffsetY: number;
     anchorX: number;
     anchorY: number;
     ox: number;
@@ -236,7 +244,18 @@ function SelectableText({
     }
     const raw = d.startSize * scale;
     const next = Math.max(min, Math.min(max, Math.round(raw * 10) / 10));
-    onPatch({ [sizeKey]: next } as Partial<EmailItem>);
+    // Compute compensating offset so the anchored corner stays in place.
+    // When dragging a left-side handle (ox === -1), the right edge is anchored,
+    // so we shift the wrapper right by (startW - newW). Same idea for the top.
+    const ratio = next / d.startSize;
+    const estW = d.startW * ratio;
+    const estH = d.startH * ratio;
+    const nextOffsetX = d.startOffsetX + (d.ox === -1 ? d.startW - estW : 0);
+    const nextOffsetY = d.startOffsetY + (d.oy === -1 ? d.startH - estH : 0);
+    onPatch({
+      [sizeKey]: next,
+      [offsetKey]: { x: nextOffsetX, y: nextOffsetY },
+    } as Partial<EmailItem>);
   };
 
   const beginResize = (e: React.PointerEvent, ox: number, oy: number) => {
@@ -245,13 +264,15 @@ function SelectableText({
     if (!el) return;
     const r = el.getBoundingClientRect();
     const cur = (email[sizeKey] as number | null | undefined) ?? fontPx;
-    // Anchor = opposite edge/corner in viewport coordinates
+    // Anchor = opposite edge/corner in viewport coordinates (already includes any current transform)
     const anchorX = ox === 1 ? r.left : ox === -1 ? r.right : r.left + r.width / 2;
     const anchorY = oy === 1 ? r.top : oy === -1 ? r.bottom : r.top + r.height / 2;
     dragRef.current = {
       startSize: cur,
       startW: r.width,
       startH: r.height,
+      startOffsetX: offset.x,
+      startOffsetY: offset.y,
       anchorX, anchorY, ox, oy,
       raf: null,
       pendingX: e.clientX,
@@ -310,6 +331,8 @@ function SelectableText({
         outlineOffset: showFrame || showHover ? "3px" : "0",
         borderRadius: "1px",
         cursor: isActive ? (isEditing ? "text" : "default") : "default",
+        transform: offset.x || offset.y ? `translate(${offset.x}px, ${offset.y}px)` : undefined,
+        transformOrigin: "top left",
       }}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
@@ -1249,7 +1272,7 @@ export function EmailTemplatesWorkspace() {
               />
               {(activeEmail.headlineColor || activeEmail.headlineSizeOverride) && (
                 <button
-                  onClick={() => patchActive({ headlineColor: null, headlineSizeOverride: null })}
+                  onClick={() => patchActive({ headlineColor: null, headlineSizeOverride: null, headlineOffset: { x: 0, y: 0 } })}
                   title="Reset to auto"
                   className="text-[9px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[6px] rounded-[5px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] cursor-pointer transition-colors"
                 >
@@ -1303,7 +1326,7 @@ export function EmailTemplatesWorkspace() {
               />
               {(activeEmail.subheadColor || activeEmail.subheadSizeOverride) && (
                 <button
-                  onClick={() => patchActive({ subheadColor: null, subheadSizeOverride: null })}
+                  onClick={() => patchActive({ subheadColor: null, subheadSizeOverride: null, subheadOffset: { x: 0, y: 0 } })}
                   title="Reset to auto"
                   className="text-[9px] font-bold text-[#64748B] hover:text-[#7CC8FF] py-[3px] px-[6px] rounded-[5px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] cursor-pointer transition-colors"
                 >

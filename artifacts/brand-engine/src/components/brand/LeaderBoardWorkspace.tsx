@@ -6,6 +6,9 @@ import bgCommander from "@assets/Commander-Leaderboard-Mar.-2026-(1)_17788852111
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
 import medal2 from "@assets/2lugarrrr_1778871874915.png";
 import medal3 from "@assets/3lugarrrrrr_1778871874915.png";
+import cMedal1 from "@assets/Asset_3@4x-8_1778887779024.png";
+import cMedal2 from "@assets/Asset_2@4x-8_1778887779024.png";
+import cMedal3 from "@assets/Asset_1@4x-8_1778887779024.png";
 import photoDeclan from "@assets/20e391502323bad41fd3e968fb3c036a_(1)_(1)_copy_2_1778875414163.png";
 import photoCharlie from "@assets/Charlie_Chang_copy_1778875414164.png";
 import photoKai from "@assets/image_(100)_copy_1778875414164.png";
@@ -432,7 +435,7 @@ const ORDINAL = ["1ST", "2ND", "3RD", "4TH", "5TH", "6TH", "7TH", "8TH", "9TH", 
 
 function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
   const useMedal = rank <= 3;
-  const medal = [medal1, medal2, medal3][rank - 1];
+  const medal = [cMedal1, cMedal2, cMedal3][rank - 1];
   const ROW_H = 5.94;
   const ICON_BOX = 3.3;
   return (

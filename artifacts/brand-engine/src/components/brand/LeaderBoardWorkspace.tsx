@@ -155,12 +155,12 @@ export function LeaderBoardWorkspace() {
                 left: "14%",
                 right: "10%",
                 bottom: "7%",
-                gridTemplateColumns: "42% 42%",
+                gridTemplateColumns: "38% 48%",
                 columnGap: "4%",
               }}
             >
               {/* Left column — top 3 with medals, gap chosen so #3 aligns with right row 5 */}
-              <div className="flex flex-col" style={{ gap: "5.9cqw" }}>
+              <div className="flex flex-col" style={{ gap: "4.7cqw" }}>
                 {top3.map((r, i) => (
                   <TopRow key={r.id} r={r} medal={[medal1, medal2, medal3][i]!} />
                 ))}
@@ -204,7 +204,7 @@ function Avatar({ src, name, sizeCqw }: { src: string | null; name: string; size
   );
 }
 
-function NamePill({ name, fontCqw, padXCqw, padYCqw, radiusCqw }: { name: string; fontCqw: number; padXCqw: number; padYCqw: number; radiusCqw: number }) {
+function NamePill({ name, fontCqw, padXCqw, padYCqw, radiusCqw, opacity = 1 }: { name: string; fontCqw: number; padXCqw: number; padYCqw: number; radiusCqw: number; opacity?: number }) {
   return (
     <div
       className="flex-1 min-w-0 flex items-center font-['Poppins'] font-bold text-white"
@@ -216,6 +216,7 @@ function NamePill({ name, fontCqw, padXCqw, padYCqw, radiusCqw }: { name: string
           "inset 0 0.08cqw 0 rgba(255,255,255,0.18), inset 0 0 0 0.12cqw #2A6BB5",
         fontSize: `${fontCqw}cqw`,
         letterSpacing: "-0.01em",
+        opacity,
       }}
     >
       <span className="truncate">{name || "—"}</span>
@@ -251,7 +252,7 @@ function RankRow({ r, rank }: { r: Affiliate; rank: number }) {
         {rank}
       </div>
       <Avatar src={r.avatar} name={r.name} sizeCqw={4.4} />
-      <NamePill name={r.name} fontCqw={1.6} padXCqw={1.4} padYCqw={0.85} radiusCqw={0.8} />
+      <NamePill name={r.name} fontCqw={1.6} padXCqw={1.4} padYCqw={0.85} radiusCqw={0.8} opacity={0.6} />
     </div>
   );
 }

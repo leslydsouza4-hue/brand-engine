@@ -27,7 +27,6 @@ const SEED: Affiliate[] = [
 ];
 
 export function LeaderBoardWorkspace() {
-  const [title, setTitle] = useState("Top HighLevel Affiliates March 2026");
   const [rows, setRows] = useState<Affiliate[]>(SEED);
   const previewRef = useRef<HTMLDivElement>(null);
   const { isExporting, handleExport } = useExport();
@@ -53,16 +52,6 @@ export function LeaderBoardWorkspace() {
       {/* Sidebar */}
       <div className="w-[340px] shrink-0 border-r border-white/5 bg-[rgba(255,255,255,0.015)] overflow-y-auto">
         <div className="p-[20px] flex flex-col gap-[18px]">
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Title</div>
-            <input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins']"
-            />
-            <div className="text-[10px] text-[#64748B] mt-[6px]">Tip: edit the month each cycle, e.g. "Top HighLevel Affiliates April 2026"</div>
-          </div>
-
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Affiliates (1–10)</div>
             <div className="flex flex-col gap-[8px]">
@@ -152,7 +141,7 @@ export function LeaderBoardWorkspace() {
           <div
             ref={previewRef}
             data-export-preview
-            data-export-name={`Leader Board - ${title}`}
+            data-export-name="Leader Board"
             className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
             style={{ aspectRatio: "1920 / 1080", background: "#000", containerType: "inline-size" }}
           >
@@ -162,43 +151,20 @@ export function LeaderBoardWorkspace() {
             {/* Frame (border + robot + baked title) */}
             <img src={frameAsset} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" />
 
-            {/* Editable title masking the baked title region */}
+            {/* Two-column rows — positioned to match reference */}
             <div
-              className="absolute left-0 right-0 flex items-center justify-center text-center"
+              className="absolute grid"
               style={{
-                top: "3.4%",
-                height: "9.2%",
-                background:
-                  "linear-gradient(180deg, rgba(11,37,72,0) 0%, #0B2548 18%, #0B2548 82%, rgba(11,37,72,0) 100%)",
-              }}
-            >
-              <div
-                className="font-['Poppins'] font-black tracking-[-0.5px]"
-                style={{
-                  fontSize: "2.85cqw",
-                  paddingLeft: "3cqw",
-                  paddingRight: "3cqw",
-                  color: "#7CC8FF",
-                  textShadow: "0 0.15cqw 0 rgba(0,0,0,0.35)",
-                }}
-              >
-                {title}
-              </div>
-            </div>
-
-            {/* Two-column rows */}
-            <div
-              className="absolute grid grid-cols-2"
-              style={{
-                top: "18%",
-                left: "6%",
-                right: "6%",
-                bottom: "6%",
-                columnGap: "5%",
+                top: "19%",
+                left: "10%",
+                right: "5%",
+                bottom: "7%",
+                gridTemplateColumns: "40% 1fr",
+                columnGap: "4%",
               }}
             >
               {/* Left column — top 3 with medals */}
-              <div className="flex flex-col justify-around pl-[5%]">
+              <div className="flex flex-col justify-around">
                 {top3.map((r, i) => (
                   <TopRow key={r.id} r={r} medal={[medal1, medal2, medal3][i]!} />
                 ))}
@@ -242,12 +208,13 @@ function Avatar({ src, name, sizeCqw }: { src: string | null; name: string; size
   );
 }
 
-function NamePill({ name, fontCqw, padXCqw, padYCqw }: { name: string; fontCqw: number; padXCqw: number; padYCqw: number }) {
+function NamePill({ name, fontCqw, padXCqw, padYCqw, radiusCqw }: { name: string; fontCqw: number; padXCqw: number; padYCqw: number; radiusCqw: number }) {
   return (
     <div
-      className="flex-1 min-w-0 flex items-center justify-center font-['Poppins'] font-bold text-white text-center rounded-full"
+      className="flex-1 min-w-0 flex items-center font-['Poppins'] font-bold text-white"
       style={{
         padding: `${padYCqw}cqw ${padXCqw}cqw`,
+        borderRadius: `${radiusCqw}cqw`,
         background: "linear-gradient(180deg, #143565 0%, #0E2748 100%)",
         boxShadow:
           "inset 0 0.08cqw 0 rgba(255,255,255,0.18), inset 0 0 0 0.12cqw #2A6BB5, 0 0.5cqw 1.4cqw rgba(0,0,0,0.45)",
@@ -262,34 +229,34 @@ function NamePill({ name, fontCqw, padXCqw, padYCqw }: { name: string; fontCqw: 
 
 function TopRow({ r, medal }: { r: Affiliate; medal: string }) {
   return (
-    <div className="flex items-center" style={{ gap: "1.4cqw" }}>
+    <div className="flex items-center" style={{ gap: "1.1cqw" }}>
       <img
         src={medal}
         alt=""
         className="shrink-0"
-        style={{ width: "5.6cqw", height: "auto", filter: "drop-shadow(0 0.4cqw 0.8cqw rgba(0,0,0,0.5))" }}
+        style={{ width: "4.2cqw", height: "auto", filter: "drop-shadow(0 0.3cqw 0.6cqw rgba(0,0,0,0.5))" }}
       />
-      <Avatar src={r.avatar} name={r.name} sizeCqw={7.5} />
-      <NamePill name={r.name} fontCqw={1.85} padXCqw={1.6} padYCqw={1.0} />
+      <Avatar src={r.avatar} name={r.name} sizeCqw={5.6} />
+      <NamePill name={r.name} fontCqw={1.85} padXCqw={1.4} padYCqw={1.0} radiusCqw={0.8} />
     </div>
   );
 }
 
 function RankRow({ r, rank }: { r: Affiliate; rank: number }) {
   return (
-    <div className="flex items-center" style={{ gap: "1.2cqw" }}>
+    <div className="flex items-center" style={{ gap: "0.9cqw" }}>
       <div
         className="shrink-0 text-white font-['Poppins'] font-black text-center"
         style={{
-          width: "3.4cqw",
-          fontSize: "2.2cqw",
+          width: "2.4cqw",
+          fontSize: "1.9cqw",
           textShadow: "0 0.15cqw 0.4cqw rgba(0,0,0,0.5)",
         }}
       >
         {rank}
       </div>
-      <Avatar src={r.avatar} name={r.name} sizeCqw={5.4} />
-      <NamePill name={r.name} fontCqw={1.55} padXCqw={1.3} padYCqw={0.75} />
+      <Avatar src={r.avatar} name={r.name} sizeCqw={4.4} />
+      <NamePill name={r.name} fontCqw={1.6} padXCqw={1.4} padYCqw={0.85} radiusCqw={0.8} />
     </div>
   );
 }

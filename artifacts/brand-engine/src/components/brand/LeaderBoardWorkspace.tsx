@@ -300,14 +300,14 @@ export function LeaderBoardWorkspace() {
                     rowGap: "1.2cqw",
                   }}
                 >
-                  <div className="flex flex-col justify-between items-end">
+                  <div className="flex flex-col justify-center items-end" style={{ gap: "0.7cqw" }}>
                     {cmdrLeft.map((r, i) => (
                       <div key={r.id} style={{ width: "65%" }}>
                         <CommanderRow r={r} rank={i + 1} />
                       </div>
                     ))}
                   </div>
-                  <div className="flex flex-col justify-between items-start">
+                  <div className="flex flex-col justify-center items-start" style={{ gap: "0.7cqw" }}>
                     {cmdrRight.map((r, i) => (
                       <div key={r.id} style={{ width: "65%" }}>
                         <CommanderRow r={r} rank={i + 6} />
@@ -421,7 +421,7 @@ function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
         padding: "0 1cqw 0 0.6cqw",
         borderRadius: "0.8cqw",
         background: "linear-gradient(180deg, rgba(13,32,64,0.85) 0%, rgba(8,20,42,0.85) 100%)",
-        boxShadow: "inset 0 0 0 0.12cqw #4FC3FF, 0 0.25cqw 0.5cqw rgba(0,0,0,0.4)",
+        boxShadow: "inset 0 0 0 0.12cqw #4FC3FF",
       }}
     >
       <div
@@ -433,7 +433,6 @@ function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
             src={medal}
             alt=""
             className="max-w-full max-h-full object-contain"
-            style={{ filter: "drop-shadow(0 0.15cqw 0.3cqw rgba(0,0,0,0.5))" }}
           />
         ) : (
           <div

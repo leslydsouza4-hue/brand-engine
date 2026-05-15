@@ -253,16 +253,22 @@ export function LeaderBoardWorkspace() {
             style={{ aspectRatio: "1920 / 1080", background: "#000", containerType: "inline-size" }}
           >
             {/* Background */}
-            <img src={isCommander ? bgCommander : bgAsset} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            <img
+              src={isCommander ? bgCommander : bgAsset}
+              alt=""
+              className="absolute inset-0 w-full h-full"
+              style={{ objectFit: isCommander ? "fill" : "cover" }}
+            />
 
             {isCommander ? (
               <>
                 {/* Title */}
-                <div className="absolute left-0 right-0 text-center" style={{ top: "8%" }}>
+                <div className="absolute left-0 right-0 text-center" style={{ top: "7%" }}>
                   <div
-                    className="font-['Poppins'] font-black"
+                    className="font-['Bebas_Neue']"
                     style={{
-                      fontSize: "5.4cqw",
+                      fontSize: "6.2cqw",
+                      lineHeight: 1,
                       letterSpacing: "0.04em",
                       background: "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)",
                       WebkitBackgroundClip: "text",
@@ -273,25 +279,26 @@ export function LeaderBoardWorkspace() {
                   >
                     COMMANDER LEADERBOARD
                   </div>
-                  <div className="flex items-center justify-center" style={{ gap: "1cqw", marginTop: "0.6cqw" }}>
+                  <div className="flex items-center justify-center" style={{ gap: "1cqw", marginTop: "0.8cqw" }}>
                     <div style={{ height: "0.18cqw", width: "8cqw", background: "linear-gradient(90deg, transparent 0%, #C58B2C 100%)" }} />
-                    <div className="font-['Poppins'] font-bold text-white" style={{ fontSize: "1.5cqw", letterSpacing: "0.18em" }}>
+                    <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.9cqw", letterSpacing: "0.22em", lineHeight: 1 }}>
                       MARCH 2026
                     </div>
                     <div style={{ height: "0.18cqw", width: "8cqw", background: "linear-gradient(90deg, #C58B2C 0%, transparent 100%)" }} />
                   </div>
                 </div>
 
-                {/* 5 + 5 grid */}
+                {/* 5 + 5 grid — fits inside frame interior */}
                 <div
                   className="absolute grid"
                   style={{
-                    top: "23%",
-                    left: "8%",
-                    right: "8%",
-                    bottom: "10%",
+                    top: "22%",
+                    left: "7%",
+                    right: "11%",
+                    bottom: "13%",
                     gridTemplateColumns: "1fr 1fr",
-                    columnGap: "3%",
+                    columnGap: "2.5%",
+                    rowGap: "1.2cqw",
                   }}
                 >
                   <div className="flex flex-col justify-between">
@@ -404,11 +411,11 @@ function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
     <div
       className="flex items-center"
       style={{
-        gap: "1cqw",
-        padding: "0.7cqw 1.2cqw 0.7cqw 0.7cqw",
-        borderRadius: "0.9cqw",
+        gap: "0.8cqw",
+        padding: "0.55cqw 1cqw 0.55cqw 0.55cqw",
+        borderRadius: "0.8cqw",
         background: "linear-gradient(180deg, rgba(13,32,64,0.85) 0%, rgba(8,20,42,0.85) 100%)",
-        boxShadow: "inset 0 0 0 0.14cqw #4FC3FF, 0 0.3cqw 0.6cqw rgba(0,0,0,0.4)",
+        boxShadow: "inset 0 0 0 0.12cqw #4FC3FF, 0 0.25cqw 0.5cqw rgba(0,0,0,0.4)",
       }}
     >
       {useMedal && medal ? (
@@ -416,14 +423,15 @@ function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
           src={medal}
           alt=""
           className="shrink-0"
-          style={{ width: "3.4cqw", height: "auto", filter: "drop-shadow(0 0.2cqw 0.4cqw rgba(0,0,0,0.5))" }}
+          style={{ width: "2.8cqw", height: "auto", filter: "drop-shadow(0 0.2cqw 0.4cqw rgba(0,0,0,0.5))" }}
         />
       ) : (
         <div
-          className="shrink-0 text-center font-['Poppins'] font-black"
+          className="shrink-0 text-center font-['Bebas_Neue']"
           style={{
-            width: "3.4cqw",
-            fontSize: "1.6cqw",
+            width: "2.8cqw",
+            fontSize: "1.7cqw",
+            lineHeight: 1,
             background: "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -434,10 +442,10 @@ function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
           {ORDINAL[rank - 1]}
         </div>
       )}
-      <Avatar src={r.avatar} name={r.name} sizeCqw={3.4} />
+      <Avatar src={r.avatar} name={r.name} sizeCqw={2.8} />
       <div
-        className="flex-1 min-w-0 truncate font-['Poppins'] font-black text-white"
-        style={{ fontSize: "2cqw", letterSpacing: "0.02em", textTransform: "uppercase" }}
+        className="flex-1 min-w-0 truncate font-['Bebas_Neue'] text-white"
+        style={{ fontSize: "2.2cqw", letterSpacing: "0.04em", lineHeight: 1 }}
       >
         {r.name || "—"}
       </div>

@@ -379,9 +379,10 @@ export function LeaderBoardWorkspace() {
                   <div
                     className="font-['Poppins'] font-black whitespace-nowrap"
                     style={{
-                      fontSize: "3.4cqw",
+                      fontSize: "2.72cqw",
                       lineHeight: 1.05,
-                      letterSpacing: "-0.01em",
+                      letterSpacing: "-0.02em",
+                      WebkitTextStroke: "0.04cqw #BEEAFF",
                       background: "linear-gradient(180deg, #BEEAFF 0%, #2896FB 100%)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",

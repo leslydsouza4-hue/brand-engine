@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { Download, Loader2, Upload, X, User as UserIcon, GripVertical, Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Download, Loader2, Upload, X, User as UserIcon, GripVertical, Check, ChevronDown } from "lucide-react";
 import { useExport } from "./useExport";
 import { LivePreview } from "./LivePreview";
 import bgAsset from "@assets/Group_1_1778872511433.png";
@@ -79,6 +79,16 @@ export function LeaderBoardWorkspace() {
     commander: COMMANDER_SEED,
   });
   const [board, setBoard] = useState<BoardKey>("highlevel");
+  const [boardOpen, setBoardOpen] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!boardOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (boardRef.current && !boardRef.current.contains(e.target as Node)) setBoardOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [boardOpen]);
   const [commanderMonthYear, setCommanderMonthYear] = useState("MARCH 2026");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -124,62 +134,81 @@ export function LeaderBoardWorkspace() {
       <div className="w-[340px] shrink-0 border-r border-white/5 bg-[rgba(255,255,255,0.015)] overflow-y-auto">
         <div className="p-[20px] flex flex-col gap-[18px]">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px]">Board</div>
-            <div className="grid grid-cols-2 gap-[8px]">
-              {(Object.keys(BOARD_LABELS) as BoardKey[]).map(k => {
-                const isActive = board === k;
-                const accent = k === "highlevel"
-                  ? { from: "#00B2A9", to: "#2896FB", glow: "rgba(40,150,251,0.35)", thumb: bgAsset }
-                  : { from: "#FFD24A", to: "#C58B2C", glow: "rgba(255,210,74,0.35)", thumb: bgCommander };
+            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Board</div>
+            <div className="relative" ref={boardRef}>
+              {(() => {
+                const meta = (k: BoardKey) =>
+                  k === "highlevel"
+                    ? { from: "#00B2A9", to: "#2896FB", thumb: bgAsset, dims: "1920 × 1080" }
+                    : { from: "#FFD24A", to: "#C58B2C", thumb: bgCommander, dims: "2068 × 1324" };
+                const active = meta(board);
                 return (
-                  <button
-                    key={k}
-                    type="button"
-                    onClick={() => {
-                      setBoard(k);
-                      setDragIndex(null);
-                      setOverIndex(null);
-                    }}
-                    className={`group relative overflow-hidden rounded-[12px] p-[3px] cursor-pointer transition-all text-left ${
-                      isActive ? "shadow-[0_8px_24px_-8px_var(--glow)]" : "hover:brightness-110"
-                    }`}
-                    style={{
-                      background: isActive
-                        ? `linear-gradient(135deg, ${accent.from} 0%, ${accent.to} 100%)`
-                        : "rgba(255,255,255,0.05)",
-                      // @ts-expect-error css var
-                      "--glow": accent.glow,
-                    }}
-                  >
-                    <div className="relative rounded-[10px] overflow-hidden bg-[#0B1220]">
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setBoardOpen(o => !o)}
+                      className="w-full flex items-center gap-[10px] py-[8px] pl-[8px] pr-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-left cursor-pointer hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(40,150,251,0.35)] transition-colors"
+                    >
                       <div
-                        className="h-[58px] w-full bg-cover bg-center"
-                        style={{
-                          backgroundImage: `url(${accent.thumb})`,
-                          filter: isActive ? "saturate(1.15) brightness(0.9)" : "saturate(0.6) brightness(0.55)",
-                        }}
+                        className="w-[36px] h-[36px] rounded-[8px] shrink-0 bg-cover bg-center ring-1 ring-white/10"
+                        style={{ backgroundImage: `url(${active.thumb})` }}
                       />
-                      <div className="absolute inset-x-0 bottom-0 h-[58px] bg-gradient-to-t from-[#0B1220] via-[rgba(11,18,32,0.4)] to-transparent" />
-                      <div className="relative px-[10px] pt-[6px] pb-[8px]">
-                        <div className={`text-[11px] font-bold leading-tight ${isActive ? "text-white" : "text-[#CBD5E1]"}`}>
-                          {BOARD_LABELS[k]}
-                        </div>
-                        <div className="text-[9px] uppercase tracking-[0.1em] mt-[2px] text-[#64748B]">
-                          {k === "highlevel" ? "1920 × 1080" : "2068 × 1324"}
-                        </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] font-bold text-white leading-tight truncate">{BOARD_LABELS[board]}</div>
+                        <div className="text-[9px] uppercase tracking-[0.12em] text-[#64748B] mt-[2px]">{active.dims}</div>
                       </div>
-                      {isActive && (
-                        <div
-                          className="absolute top-[6px] right-[6px] w-[16px] h-[16px] rounded-full flex items-center justify-center text-[#0B1220]"
-                          style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }}
-                        >
-                          <Check className="w-[10px] h-[10px]" strokeWidth={3} />
-                        </div>
-                      )}
-                    </div>
-                  </button>
+                      <div
+                        className="w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0"
+                        style={{ background: `linear-gradient(135deg, ${active.from}, ${active.to})` }}
+                      >
+                        <ChevronDown className={`w-[11px] h-[11px] text-[#0B1220] transition-transform ${boardOpen ? "rotate-180" : ""}`} strokeWidth={3} />
+                      </div>
+                    </button>
+                    {boardOpen && (
+                      <div className="absolute z-30 left-0 right-0 mt-[6px] p-[4px] rounded-[10px] bg-[#0F172A] border border-[rgba(255,255,255,0.08)] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.7)]">
+                        {(Object.keys(BOARD_LABELS) as BoardKey[]).map(k => {
+                          const m = meta(k);
+                          const isActive = board === k;
+                          return (
+                            <button
+                              key={k}
+                              type="button"
+                              onClick={() => {
+                                setBoard(k);
+                                setBoardOpen(false);
+                                setDragIndex(null);
+                                setOverIndex(null);
+                              }}
+                              className={`w-full flex items-center gap-[10px] py-[7px] pl-[7px] pr-[10px] rounded-[8px] text-left cursor-pointer transition-colors ${
+                                isActive ? "bg-[rgba(40,150,251,0.10)]" : "hover:bg-[rgba(255,255,255,0.04)]"
+                              }`}
+                            >
+                              <div
+                                className="w-[34px] h-[34px] rounded-[7px] shrink-0 bg-cover bg-center ring-1 ring-white/10"
+                                style={{ backgroundImage: `url(${m.thumb})` }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className={`text-[12px] font-semibold leading-tight truncate ${isActive ? "text-white" : "text-[#CBD5E1]"}`}>
+                                  {BOARD_LABELS[k]}
+                                </div>
+                                <div className="text-[9px] uppercase tracking-[0.12em] text-[#64748B] mt-[2px]">{m.dims}</div>
+                              </div>
+                              {isActive && (
+                                <div
+                                  className="w-[16px] h-[16px] rounded-full flex items-center justify-center shrink-0"
+                                  style={{ background: `linear-gradient(135deg, ${m.from}, ${m.to})` }}
+                                >
+                                  <Check className="w-[9px] h-[9px] text-[#0B1220]" strokeWidth={3} />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 );
-              })}
+              })()}
             </div>
           </div>
           {isCommander && (

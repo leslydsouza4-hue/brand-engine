@@ -163,8 +163,8 @@ export function LeaderBoardWorkspace() {
                 columnGap: "4%",
               }}
             >
-              {/* Left column — top 3 with medals */}
-              <div className="flex flex-col justify-around">
+              {/* Left column — top 3 with medals (tightly stacked at top) */}
+              <div className="flex flex-col" style={{ gap: "1.6cqw" }}>
                 {top3.map((r, i) => (
                   <TopRow key={r.id} r={r} medal={[medal1, medal2, medal3][i]!} />
                 ))}

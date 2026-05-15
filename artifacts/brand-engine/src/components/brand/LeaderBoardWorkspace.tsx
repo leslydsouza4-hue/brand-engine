@@ -251,7 +251,7 @@ function RankRow({ r, rank }: { r: Affiliate; rank: number }) {
         {rank}
       </div>
       <Avatar src={r.avatar} name={r.name} sizeCqw={3.5} />
-      <NamePill name={r.name} fontCqw={1.6} padXCqw={1.4} padYCqw={0.68} radiusCqw={0.7} bgAlpha={0.6} />
+      <NamePill name={r.name} fontCqw={1.6} padXCqw={1.4} padYCqw={0.88} radiusCqw={0.7} bgAlpha={0.6} />
     </div>
   );
 }

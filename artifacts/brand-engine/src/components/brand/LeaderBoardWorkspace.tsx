@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Trophy, Download, Loader2, Upload, X, User as UserIcon } from "lucide-react";
+import { Trophy, Download, Loader2, Upload, X, User as UserIcon, GripVertical } from "lucide-react";
 import { useExport } from "./useExport";
 import bgAsset from "@assets/Group_1_1778872511433.png";
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
@@ -36,11 +36,23 @@ const SEED: Affiliate[] = [
 
 export function LeaderBoardWorkspace() {
   const [rows, setRows] = useState<Affiliate[]>(SEED);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const { isExporting, handleExport } = useExport();
 
   const update = (id: string, patch: Partial<Affiliate>) =>
     setRows(rs => rs.map(r => (r.id === id ? { ...r, ...patch } : r)));
+
+  const reorder = (from: number, to: number) => {
+    if (from === to) return;
+    setRows(rs => {
+      const next = rs.slice();
+      const [moved] = next.splice(from, 1);
+      if (moved) next.splice(to, 0, moved);
+      return next;
+    });
+  };
 
   const onAvatar = (id: string, file: File) => {
     const reader = new FileReader();
@@ -66,8 +78,41 @@ export function LeaderBoardWorkspace() {
               {rows.map((r, i) => (
                 <div
                   key={r.id}
-                  className="p-[10px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] flex items-center gap-[10px]"
+                  draggable
+                  onDragStart={e => {
+                    setDragIndex(i);
+                    e.dataTransfer.effectAllowed = "move";
+                  }}
+                  onDragOver={e => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    if (overIndex !== i) setOverIndex(i);
+                  }}
+                  onDragLeave={() => {
+                    if (overIndex === i) setOverIndex(null);
+                  }}
+                  onDrop={e => {
+                    e.preventDefault();
+                    if (dragIndex !== null) reorder(dragIndex, i);
+                    setDragIndex(null);
+                    setOverIndex(null);
+                  }}
+                  onDragEnd={() => {
+                    setDragIndex(null);
+                    setOverIndex(null);
+                  }}
+                  className={`p-[10px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border flex items-center gap-[8px] transition-colors ${
+                    overIndex === i && dragIndex !== null && dragIndex !== i
+                      ? "border-[rgba(40,150,251,0.7)] bg-[rgba(40,150,251,0.08)]"
+                      : "border-[rgba(255,255,255,0.06)]"
+                  } ${dragIndex === i ? "opacity-40" : ""}`}
                 >
+                  <div
+                    className="shrink-0 flex items-center justify-center w-[18px] h-[26px] text-[#64748B] hover:text-[#7CC8FF] cursor-grab active:cursor-grabbing"
+                    title="Drag to reorder"
+                  >
+                    <GripVertical className="w-[14px] h-[14px]" />
+                  </div>
                   <div className="w-[26px] h-[26px] rounded-[7px] flex items-center justify-center text-[11px] font-black text-white shrink-0 bg-[rgba(40,150,251,0.18)] border border-[rgba(40,150,251,0.35)]">
                     {i + 1}
                   </div>

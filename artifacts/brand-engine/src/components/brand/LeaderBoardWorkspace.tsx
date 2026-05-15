@@ -1,8 +1,7 @@
 import { useRef, useState } from "react";
 import { Trophy, Download, Loader2, Upload, X, User as UserIcon } from "lucide-react";
 import { useExport } from "./useExport";
-import frameAsset from "@assets/Asset_19@2x_1778871874915.png";
-import bgAsset from "@assets/Space_Backgrounds_1778871874915.png";
+import bgAsset from "@assets/Group_1_1778872511433.png";
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
 import medal2 from "@assets/2lugarrrr_1778871874915.png";
 import medal3 from "@assets/3lugarrrrrr_1778871874915.png";
@@ -145,11 +144,8 @@ export function LeaderBoardWorkspace() {
             className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
             style={{ aspectRatio: "1920 / 1080", background: "#000", containerType: "inline-size" }}
           >
-            {/* Background */}
+            {/* Background (frame + title + robot all baked in) */}
             <img src={bgAsset} alt="" className="absolute inset-0 w-full h-full object-cover" />
-
-            {/* Frame (border + robot + baked title) */}
-            <img src={frameAsset} alt="" className="absolute inset-0 w-full h-full object-contain pointer-events-none" />
 
             {/* Two-column rows — positioned to match reference */}
             <div
@@ -217,7 +213,7 @@ function NamePill({ name, fontCqw, padXCqw, padYCqw, radiusCqw }: { name: string
         borderRadius: `${radiusCqw}cqw`,
         background: "linear-gradient(180deg, #143565 0%, #0E2748 100%)",
         boxShadow:
-          "inset 0 0.08cqw 0 rgba(255,255,255,0.18), inset 0 0 0 0.12cqw #2A6BB5, 0 0.5cqw 1.4cqw rgba(0,0,0,0.45)",
+          "inset 0 0.08cqw 0 rgba(255,255,255,0.18), inset 0 0 0 0.12cqw #2A6BB5",
         fontSize: `${fontCqw}cqw`,
         letterSpacing: "-0.01em",
       }}
@@ -248,9 +244,8 @@ function RankRow({ r, rank }: { r: Affiliate; rank: number }) {
       <div
         className="shrink-0 text-white font-['Poppins'] font-black text-center"
         style={{
-          width: "2.4cqw",
-          fontSize: "1.9cqw",
-          textShadow: "0 0.15cqw 0.4cqw rgba(0,0,0,0.5)",
+          width: "2cqw",
+          fontSize: "1.4cqw",
         }}
       >
         {rank}

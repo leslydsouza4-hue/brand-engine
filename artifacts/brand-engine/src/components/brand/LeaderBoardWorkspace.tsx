@@ -5,6 +5,15 @@ import bgAsset from "@assets/Group_1_1778872511433.png";
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
 import medal2 from "@assets/2lugarrrr_1778871874915.png";
 import medal3 from "@assets/3lugarrrrrr_1778871874915.png";
+import photoDeclan from "@assets/20e391502323bad41fd3e968fb3c036a_(1)_(1)_copy_2_1778875414163.png";
+import photoCharlie from "@assets/Charlie_Chang_copy_1778875414164.png";
+import photoKai from "@assets/image_(100)_copy_1778875414164.png";
+import photoDar from "@assets/tmpq89e1nnr_1778875414165.png";
+import photoChris from "@assets/IMG_7271_(1)_1778875414164.png";
+import photoCarson from "@assets/Carson_Reed_copy_5_1778875414164.png";
+import photoMax from "@assets/40967358-1712920779192-4287537bb71b7_(1)_1778875414163.png";
+import photoFrancisco from "@assets/b07c242a-2879-49ec-9f4a-65ae47117064_copy_2_1778875414164.png";
+import photoBeant from "@assets/Asset_1@2x_1778875414164.png";
 
 interface Affiliate {
   id: string;
@@ -13,15 +22,15 @@ interface Affiliate {
 }
 
 const SEED: Affiliate[] = [
-  { id: "a1", name: "Declan O'Reilly", avatar: null },
-  { id: "a2", name: "Charlie Chang", avatar: null },
-  { id: "a3", name: "Kai Stone", avatar: null },
-  { id: "a4", name: "Dar Holdsworth", avatar: null },
-  { id: "a5", name: "Chris Koerner", avatar: null },
-  { id: "a6", name: "Carson Reed", avatar: null },
-  { id: "a7", name: "Max Perzon", avatar: null },
-  { id: "a8", name: "Francisco & Jorge", avatar: null },
-  { id: "a9", name: "Beant Singh", avatar: null },
+  { id: "a1", name: "Declan O'Reilly", avatar: photoDeclan },
+  { id: "a2", name: "Charlie Chang", avatar: photoCharlie },
+  { id: "a3", name: "Kai Stone", avatar: photoKai },
+  { id: "a4", name: "Dar Holdsworth", avatar: photoDar },
+  { id: "a5", name: "Chris Koerner", avatar: photoChris },
+  { id: "a6", name: "Carson Reed", avatar: photoCarson },
+  { id: "a7", name: "Max Perzon", avatar: photoMax },
+  { id: "a8", name: "Francisco & Jorge", avatar: photoFrancisco },
+  { id: "a9", name: "Beant Singh", avatar: photoBeant },
   { id: "a10", name: "Theo Cavaliere", avatar: null },
 ];
 

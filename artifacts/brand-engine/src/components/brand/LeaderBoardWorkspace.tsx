@@ -152,11 +152,11 @@ export function LeaderBoardWorkspace() {
               className="absolute grid"
               style={{
                 top: "19%",
-                left: "9%",
-                right: "8%",
+                left: "10%",
+                right: "10%",
                 bottom: "7%",
-                gridTemplateColumns: "38% 1fr",
-                columnGap: "4%",
+                gridTemplateColumns: "36% 44%",
+                justifyContent: "space-between",
               }}
             >
               {/* Left column — top 3 with medals (tightly stacked at top) */}

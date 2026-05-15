@@ -14,6 +14,8 @@ import {
   Mic2,
   Award,
   Clock,
+  Trophy,
+  Megaphone,
   MessageSquarePlus,
   Mail,
   RefreshCw,
@@ -343,6 +345,29 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           >
             <RefreshCw className={iconCls(currentMode === 'growth-flywheel')} />
             Growth Flywheel
+          </button>
+        </div>
+
+        <div className="px-[12px] mb-[10px] relative">
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Affiliate</div>
+
+          <button
+            onClick={() => handleSetMode('affiliate-leaderboard')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'affiliate-leaderboard' ? activeClass : inactiveClass}`}
+          >
+            <Trophy className={iconCls(currentMode === 'affiliate-leaderboard')} />
+            Leader Board
+            <span className="text-[8.5px] font-bold tracking-[0.12em] uppercase text-[#FFC328] bg-[rgba(255,195,40,0.12)] border border-[rgba(255,195,40,0.30)] px-[6px] py-[2px] rounded-[4px] ml-auto">
+              New
+            </span>
+          </button>
+
+          <button
+            onClick={() => handleSetMode('affiliate-blurb')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'affiliate-blurb' ? activeClass : inactiveClass}`}
+          >
+            <Megaphone className={iconCls(currentMode === 'affiliate-blurb')} />
+            Affiliate Blurb
           </button>
         </div>
 

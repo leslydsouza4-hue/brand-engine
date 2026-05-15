@@ -20,13 +20,15 @@ import { BrandBrainWorkspace } from "@/components/brand/BrandBrainWorkspace";
 import { GrowthFlywheelWorkspace } from "@/components/brand/GrowthFlywheelWorkspace";
 import { LandingPageWorkspace } from "@/components/brand/LandingPageWorkspace";
 import { SwooshBackgroundWorkspace } from "@/components/brand/SwooshBackgroundWorkspace";
+import { LeaderBoardWorkspace } from "@/components/brand/LeaderBoardWorkspace";
+import { AffiliateBlurbWorkspace } from "@/components/brand/AffiliateBlurbWorkspace";
 import { LevelUpImageLibraryWorkspace } from "@/components/brand/LevelUpImageLibraryWorkspace";
 import { LevelUpComposerWorkspace } from "@/components/brand/LevelUpComposerWorkspace";
 import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
 
 export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel", "image-library", "social-composer"];
+  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-blurb"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -50,7 +52,7 @@ export default function BrandEngine() {
   // mode so they aren't staring at an empty surface.
   useEffect(() => {
     const luOnly = ["image-library", "social-composer"];
-    const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "growth-flywheel"];
+    const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "growth-flywheel", "affiliate-leaderboard", "affiliate-blurb"];
     if (brandMode === "levelup26" && hlOnly.includes(currentMode)) setCurrentMode("image-library");
     if (brandMode === "highlevel" && luOnly.includes(currentMode)) setCurrentMode("templates");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -107,6 +109,9 @@ export default function BrandEngine() {
         {currentMode === "email-templates" && <EmailTemplatesWorkspace />}
         {currentMode === "feature-requests" && <FeatureRequestsWorkspace />}
         {currentMode === "growth-flywheel" && <GrowthFlywheelWorkspace />}
+
+        {currentMode === "affiliate-leaderboard" && <LeaderBoardWorkspace />}
+        {currentMode === "affiliate-blurb" && <AffiliateBlurbWorkspace />}
 
         {currentMode === "image-library" && <LevelUpImageLibraryWorkspace />}
         {currentMode === "social-composer" && <LevelUpComposerWorkspace />}

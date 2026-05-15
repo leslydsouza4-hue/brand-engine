@@ -153,10 +153,10 @@ export function LeaderBoardWorkspace() {
               style={{
                 top: "19%",
                 left: "14%",
-                right: "10%",
+                right: "6%",
                 bottom: "7%",
-                gridTemplateColumns: "38% 48%",
-                columnGap: "4%",
+                gridTemplateColumns: "36% 54%",
+                columnGap: "3%",
               }}
             >
               {/* Left column — top 3 with medals, gap chosen so #3 aligns with right row 5 */}
@@ -204,19 +204,18 @@ function Avatar({ src, name, sizeCqw }: { src: string | null; name: string; size
   );
 }
 
-function NamePill({ name, fontCqw, padXCqw, padYCqw, radiusCqw, opacity = 1 }: { name: string; fontCqw: number; padXCqw: number; padYCqw: number; radiusCqw: number; opacity?: number }) {
+function NamePill({ name, fontCqw, padXCqw, padYCqw, radiusCqw, bgAlpha = 1 }: { name: string; fontCqw: number; padXCqw: number; padYCqw: number; radiusCqw: number; bgAlpha?: number }) {
   return (
     <div
       className="flex-1 min-w-0 flex items-center font-['Poppins'] font-bold text-white"
       style={{
         padding: `${padYCqw}cqw ${padXCqw}cqw`,
         borderRadius: `${radiusCqw}cqw`,
-        background: "linear-gradient(180deg, #143565 0%, #0E2748 100%)",
+        background: `linear-gradient(180deg, rgba(20,53,101,${bgAlpha}) 0%, rgba(14,39,72,${bgAlpha}) 100%)`,
         boxShadow:
-          "inset 0 0.08cqw 0 rgba(255,255,255,0.18), inset 0 0 0 0.12cqw #2A6BB5",
+          `inset 0 0.08cqw 0 rgba(255,255,255,${0.18 * bgAlpha}), inset 0 0 0 0.12cqw rgba(42,107,181,${bgAlpha})`,
         fontSize: `${fontCqw}cqw`,
         letterSpacing: "-0.01em",
-        opacity,
       }}
     >
       <span className="truncate">{name || "—"}</span>
@@ -241,7 +240,7 @@ function TopRow({ r, medal }: { r: Affiliate; medal: string }) {
 
 function RankRow({ r, rank }: { r: Affiliate; rank: number }) {
   return (
-    <div className="flex items-center" style={{ gap: "0.9cqw" }}>
+    <div className="flex items-center" style={{ gap: "1.4cqw" }}>
       <div
         className="shrink-0 text-white font-['Poppins'] font-black text-center"
         style={{
@@ -251,8 +250,8 @@ function RankRow({ r, rank }: { r: Affiliate; rank: number }) {
       >
         {rank}
       </div>
-      <Avatar src={r.avatar} name={r.name} sizeCqw={4.4} />
-      <NamePill name={r.name} fontCqw={1.6} padXCqw={1.4} padYCqw={0.85} radiusCqw={0.8} opacity={0.6} />
+      <Avatar src={r.avatar} name={r.name} sizeCqw={3.5} />
+      <NamePill name={r.name} fontCqw={1.6} padXCqw={1.4} padYCqw={0.68} radiusCqw={0.7} bgAlpha={0.6} />
     </div>
   );
 }

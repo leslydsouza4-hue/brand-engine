@@ -161,11 +161,11 @@ export function LeaderBoardWorkspace() {
               className="absolute grid"
               style={{
                 top: "19%",
-                left: "14%",
-                right: "6%",
+                left: "16%",
+                right: "4%",
                 bottom: "7%",
-                gridTemplateColumns: "36% 56%",
-                columnGap: "3%",
+                gridTemplateColumns: "40% 50%",
+                columnGap: "5%",
               }}
             >
               {/* Left column — top 3 with medals, gap chosen so #3 aligns with right row 5 */}

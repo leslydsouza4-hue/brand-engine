@@ -302,14 +302,14 @@ export function LeaderBoardWorkspace() {
                 >
                   <div className="flex flex-col justify-center items-end" style={{ gap: "0.7cqw" }}>
                     {cmdrLeft.map((r, i) => (
-                      <div key={r.id} style={{ width: "65%" }}>
+                      <div key={r.id} style={{ width: "71.5%" }}>
                         <CommanderRow r={r} rank={i + 1} />
                       </div>
                     ))}
                   </div>
                   <div className="flex flex-col justify-center items-start" style={{ gap: "0.7cqw" }}>
                     {cmdrRight.map((r, i) => (
-                      <div key={r.id} style={{ width: "65%" }}>
+                      <div key={r.id} style={{ width: "71.5%" }}>
                         <CommanderRow r={r} rank={i + 6} />
                       </div>
                     ))}
@@ -410,8 +410,8 @@ const ORDINAL = ["1ST", "2ND", "3RD", "4TH", "5TH", "6TH", "7TH", "8TH", "9TH", 
 function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
   const useMedal = rank <= 3;
   const medal = [medal1, medal2, medal3][rank - 1];
-  const ROW_H = 5.4;
-  const ICON_BOX = 3.0;
+  const ROW_H = 5.94;
+  const ICON_BOX = 3.3;
   return (
     <div
       className="flex items-center overflow-hidden"

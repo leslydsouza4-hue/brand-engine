@@ -64,7 +64,7 @@ export function LeaderBoardWorkspace() {
     highlevel: HIGHLEVEL_SEED,
     commander: COMMANDER_SEED,
   });
-  const [board, setBoard] = useState<BoardKey>("commander");
+  const [board, setBoard] = useState<BoardKey>("highlevel");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -406,12 +406,15 @@ const ORDINAL = ["1ST", "2ND", "3RD", "4TH", "5TH", "6TH", "7TH", "8TH", "9TH", 
 function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
   const useMedal = rank <= 3;
   const medal = [medal1, medal2, medal3][rank - 1];
+  const ROW_H = 4.4;
+  const ICON_BOX = 2.6;
   return (
     <div
-      className="flex items-center"
+      className="flex items-center overflow-hidden"
       style={{
+        height: `${ROW_H}cqw`,
         gap: "0.8cqw",
-        padding: "0.55cqw 1cqw 0.55cqw 0.55cqw",
+        padding: "0 1cqw 0 0.6cqw",
         borderRadius: "0.8cqw",
         background: "linear-gradient(180deg, rgba(13,32,64,0.85) 0%, rgba(8,20,42,0.85) 100%)",
         boxShadow: "inset 0 0 0 0.12cqw #4FC3FF, 0 0.25cqw 0.5cqw rgba(0,0,0,0.4)",
@@ -419,13 +422,13 @@ function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
     >
       <div
         className="shrink-0 flex items-center justify-center"
-        style={{ width: "2.8cqw", height: "2.8cqw" }}
+        style={{ width: `${ICON_BOX}cqw`, height: `${ICON_BOX}cqw` }}
       >
         {useMedal && medal ? (
           <img
             src={medal}
             alt=""
-            className="w-full h-full object-contain"
+            className="max-w-full max-h-full object-contain"
             style={{ filter: "drop-shadow(0 0.15cqw 0.3cqw rgba(0,0,0,0.5))" }}
           />
         ) : (
@@ -445,7 +448,7 @@ function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
           </div>
         )}
       </div>
-      <Avatar src={r.avatar} name={r.name} sizeCqw={2.8} />
+      <Avatar src={r.avatar} name={r.name} sizeCqw={ICON_BOX} />
       <div
         className="flex-1 min-w-0 truncate font-['Bebas_Neue'] text-white"
         style={{ fontSize: "2.2cqw", letterSpacing: "0.04em", lineHeight: 1 }}

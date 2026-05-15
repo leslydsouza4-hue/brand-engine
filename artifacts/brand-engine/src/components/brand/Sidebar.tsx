@@ -95,19 +95,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           <div className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center shrink-0 relative bg-white/[0.04] backdrop-blur-[12px] border border-white/[0.08]">
             <img src={theme.logoIconUrl} alt={theme.name} className="w-[18px] h-[18px] object-contain" />
           </div>
-          <div className="text-[17px] font-bold text-white tracking-[-0.4px] flex-1 flex items-center gap-[7px]">
-            <span>Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></span>
-            <span
-              className="text-[9px] font-bold tracking-[0.06em] px-[6px] py-[2px] rounded-full text-white relative shrink-0"
-              style={{
-                background: "linear-gradient(135deg, #00B2A9 0%, #2896FB 60%, #095DC3 100%)",
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25), 0 4px 10px -2px rgba(40,150,251,0.45)",
-                textShadow: "0 1px 1px rgba(0,0,0,0.25)",
-              }}
-            >
-              v2.1.1
-            </span>
-          </div>
+          <div className="text-[17px] font-bold text-white tracking-[-0.4px] flex-1">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
           <button onClick={onClose} className="md:hidden w-[28px] h-[28px] flex items-center justify-center rounded-[8px] text-[#94A3B8] hover:text-white hover:bg-white/10 transition-all cursor-pointer">
             <X className="w-[18px] h-[18px]" />
           </button>

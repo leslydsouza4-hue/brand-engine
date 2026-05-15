@@ -296,20 +296,20 @@ export function LeaderBoardWorkspace() {
                     right: "11%",
                     bottom: "13%",
                     gridTemplateColumns: "1fr 1fr",
-                    columnGap: "2.5%",
+                    columnGap: "0.6cqw",
                     rowGap: "1.2cqw",
                   }}
                 >
-                  <div className="flex flex-col justify-between items-start">
+                  <div className="flex flex-col justify-between items-end">
                     {cmdrLeft.map((r, i) => (
-                      <div key={r.id} style={{ width: "50%" }}>
+                      <div key={r.id} style={{ width: "65%" }}>
                         <CommanderRow r={r} rank={i + 1} />
                       </div>
                     ))}
                   </div>
                   <div className="flex flex-col justify-between items-start">
                     {cmdrRight.map((r, i) => (
-                      <div key={r.id} style={{ width: "50%" }}>
+                      <div key={r.id} style={{ width: "65%" }}>
                         <CommanderRow r={r} rank={i + 6} />
                       </div>
                     ))}

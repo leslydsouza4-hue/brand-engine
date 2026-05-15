@@ -165,7 +165,7 @@ export function LeaderBoardWorkspace() {
                 right: "4%",
                 bottom: "7%",
                 gridTemplateColumns: "40% 50%",
-                columnGap: "5%",
+                columnGap: "3%",
               }}
             >
               {/* Left column — top 3 with medals, gap chosen so #3 aligns with right row 5 */}

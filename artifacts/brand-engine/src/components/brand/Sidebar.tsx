@@ -356,10 +356,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             className={`${btnBase} cursor-pointer ${currentMode === 'affiliate-leaderboard' ? activeClass : inactiveClass}`}
           >
             <Trophy className={iconCls(currentMode === 'affiliate-leaderboard')} />
-            Leader Board
-            <span className="text-[8.5px] font-bold tracking-[0.12em] uppercase text-[#FFC328] bg-[rgba(255,195,40,0.12)] border border-[rgba(255,195,40,0.30)] px-[6px] py-[2px] rounded-[4px] ml-auto">
-              New
-            </span>
+            <span className="whitespace-nowrap">Leader Board</span>
           </button>
 
           <button

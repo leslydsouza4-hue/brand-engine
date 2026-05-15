@@ -300,14 +300,18 @@ export function LeaderBoardWorkspace() {
                     rowGap: "1.2cqw",
                   }}
                 >
-                  <div className="flex flex-col justify-between">
+                  <div className="flex flex-col justify-between items-start">
                     {cmdrLeft.map((r, i) => (
-                      <CommanderRow key={r.id} r={r} rank={i + 1} />
+                      <div key={r.id} style={{ width: "50%" }}>
+                        <CommanderRow r={r} rank={i + 1} />
+                      </div>
                     ))}
                   </div>
-                  <div className="flex flex-col justify-between">
+                  <div className="flex flex-col justify-between items-start">
                     {cmdrRight.map((r, i) => (
-                      <CommanderRow key={r.id} r={r} rank={i + 6} />
+                      <div key={r.id} style={{ width: "50%" }}>
+                        <CommanderRow r={r} rank={i + 6} />
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -406,8 +410,8 @@ const ORDINAL = ["1ST", "2ND", "3RD", "4TH", "5TH", "6TH", "7TH", "8TH", "9TH", 
 function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
   const useMedal = rank <= 3;
   const medal = [medal1, medal2, medal3][rank - 1];
-  const ROW_H = 4.4;
-  const ICON_BOX = 2.6;
+  const ROW_H = 5.4;
+  const ICON_BOX = 3.0;
   return (
     <div
       className="flex items-center overflow-hidden"

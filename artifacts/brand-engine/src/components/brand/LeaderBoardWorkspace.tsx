@@ -375,12 +375,12 @@ export function LeaderBoardWorkspace() {
             ) : (
               <>
                 {/* Title overlay */}
-                <div className="absolute left-0 right-0 text-center" style={{ top: "5.5%" }}>
+                <div className="absolute text-center" style={{ top: "10%", left: "8%", right: "5%" }}>
                   <div
-                    className="font-['Poppins'] font-black"
+                    className="font-['Poppins'] font-black whitespace-nowrap"
                     style={{
-                      fontSize: "4.4cqw",
-                      lineHeight: 1,
+                      fontSize: "3.4cqw",
+                      lineHeight: 1.05,
                       letterSpacing: "-0.01em",
                       background: "linear-gradient(180deg, #BEEAFF 0%, #2896FB 100%)",
                       WebkitBackgroundClip: "text",

@@ -21,25 +21,45 @@ interface Affiliate {
   avatar: string | null;
 }
 
-const SEED: Affiliate[] = [
-  { id: "a1", name: "Declan O'Reilly", avatar: photoDeclan },
-  { id: "a2", name: "Charlie Chang", avatar: photoCharlie },
-  { id: "a3", name: "Kai Stone", avatar: photoKai },
-  { id: "a4", name: "Dar Holdsworth", avatar: photoDar },
-  { id: "a5", name: "Chris Koerner", avatar: photoChris },
-  { id: "a6", name: "Carson Reed", avatar: photoCarson },
-  { id: "a7", name: "Max Perzon", avatar: photoMax },
-  { id: "a8", name: "Francisco & Jorge", avatar: photoFrancisco },
-  { id: "a9", name: "Beant Singh", avatar: photoBeant },
-  { id: "a10", name: "Theo Cavaliere", avatar: null },
+const HIGHLEVEL_SEED: Affiliate[] = [
+  { id: "h1", name: "Declan O'Reilly", avatar: photoDeclan },
+  { id: "h2", name: "Charlie Chang", avatar: photoCharlie },
+  { id: "h3", name: "Kai Stone", avatar: photoKai },
+  { id: "h4", name: "Dar Holdsworth", avatar: photoDar },
+  { id: "h5", name: "Chris Koerner", avatar: photoChris },
+  { id: "h6", name: "Carson Reed", avatar: photoCarson },
+  { id: "h7", name: "Max Perzon", avatar: photoMax },
+  { id: "h8", name: "Francisco & Jorge", avatar: photoFrancisco },
+  { id: "h9", name: "Beant Singh", avatar: photoBeant },
+  { id: "h10", name: "Theo Cavaliere", avatar: null },
 ];
 
+const COMMANDER_SEED: Affiliate[] = Array.from({ length: 10 }, (_, i) => ({
+  id: `c${i + 1}`,
+  name: "",
+  avatar: null,
+}));
+
+type BoardKey = "highlevel" | "commander";
+const BOARD_LABELS: Record<BoardKey, string> = {
+  highlevel: "Top HighLevel Affiliates",
+  commander: "Commander Leader Board",
+};
+
 export function LeaderBoardWorkspace() {
-  const [rows, setRows] = useState<Affiliate[]>(SEED);
+  const [boards, setBoards] = useState<Record<BoardKey, Affiliate[]>>({
+    highlevel: HIGHLEVEL_SEED,
+    commander: COMMANDER_SEED,
+  });
+  const [board, setBoard] = useState<BoardKey>("highlevel");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const { isExporting, handleExport } = useExport();
+
+  const rows = boards[board];
+  const setRows = (updater: (rs: Affiliate[]) => Affiliate[]) =>
+    setBoards(b => ({ ...b, [board]: updater(b[board]) }));
 
   const update = (id: string, patch: Partial<Affiliate>) =>
     setRows(rs => rs.map(r => (r.id === id ? { ...r, ...patch } : r)));
@@ -73,7 +93,25 @@ export function LeaderBoardWorkspace() {
       <div className="w-[340px] shrink-0 border-r border-white/5 bg-[rgba(255,255,255,0.015)] overflow-y-auto">
         <div className="p-[20px] flex flex-col gap-[18px]">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Affiliates (1–10)</div>
+            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Board</div>
+            <select
+              value={board}
+              onChange={e => {
+                setBoard(e.target.value as BoardKey);
+                setDragIndex(null);
+                setOverIndex(null);
+              }}
+              className="w-full py-[9px] px-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-[13px] font-semibold text-white outline-none focus:border-[rgba(40,150,251,0.4)] cursor-pointer"
+            >
+              {(Object.keys(BOARD_LABELS) as BoardKey[]).map(k => (
+                <option key={k} value={k} className="bg-[#0B1220]">
+                  {BOARD_LABELS[k]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">{BOARD_LABELS[board]} (1–10)</div>
             <div className="flex flex-col gap-[8px]">
               {rows.map((r, i) => (
                 <div

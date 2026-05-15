@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Download, Loader2, Upload, X, User as UserIcon, GripVertical } from "lucide-react";
+import { Download, Loader2, Upload, X, User as UserIcon, GripVertical, Check } from "lucide-react";
 import { useExport } from "./useExport";
 import { LivePreview } from "./LivePreview";
 import bgAsset from "@assets/Group_1_1778872511433.png";
@@ -124,22 +124,63 @@ export function LeaderBoardWorkspace() {
       <div className="w-[340px] shrink-0 border-r border-white/5 bg-[rgba(255,255,255,0.015)] overflow-y-auto">
         <div className="p-[20px] flex flex-col gap-[18px]">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Board</div>
-            <select
-              value={board}
-              onChange={e => {
-                setBoard(e.target.value as BoardKey);
-                setDragIndex(null);
-                setOverIndex(null);
-              }}
-              className="w-full py-[9px] px-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-[13px] font-semibold text-white outline-none focus:border-[rgba(40,150,251,0.4)] cursor-pointer"
-            >
-              {(Object.keys(BOARD_LABELS) as BoardKey[]).map(k => (
-                <option key={k} value={k} className="bg-[#0B1220]">
-                  {BOARD_LABELS[k]}
-                </option>
-              ))}
-            </select>
+            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[10px]">Board</div>
+            <div className="grid grid-cols-2 gap-[8px]">
+              {(Object.keys(BOARD_LABELS) as BoardKey[]).map(k => {
+                const isActive = board === k;
+                const accent = k === "highlevel"
+                  ? { from: "#00B2A9", to: "#2896FB", glow: "rgba(40,150,251,0.35)", thumb: bgAsset }
+                  : { from: "#FFD24A", to: "#C58B2C", glow: "rgba(255,210,74,0.35)", thumb: bgCommander };
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => {
+                      setBoard(k);
+                      setDragIndex(null);
+                      setOverIndex(null);
+                    }}
+                    className={`group relative overflow-hidden rounded-[12px] p-[3px] cursor-pointer transition-all text-left ${
+                      isActive ? "shadow-[0_8px_24px_-8px_var(--glow)]" : "hover:brightness-110"
+                    }`}
+                    style={{
+                      background: isActive
+                        ? `linear-gradient(135deg, ${accent.from} 0%, ${accent.to} 100%)`
+                        : "rgba(255,255,255,0.05)",
+                      // @ts-expect-error css var
+                      "--glow": accent.glow,
+                    }}
+                  >
+                    <div className="relative rounded-[10px] overflow-hidden bg-[#0B1220]">
+                      <div
+                        className="h-[58px] w-full bg-cover bg-center"
+                        style={{
+                          backgroundImage: `url(${accent.thumb})`,
+                          filter: isActive ? "saturate(1.15) brightness(0.9)" : "saturate(0.6) brightness(0.55)",
+                        }}
+                      />
+                      <div className="absolute inset-x-0 bottom-0 h-[58px] bg-gradient-to-t from-[#0B1220] via-[rgba(11,18,32,0.4)] to-transparent" />
+                      <div className="relative px-[10px] pt-[6px] pb-[8px]">
+                        <div className={`text-[11px] font-bold leading-tight ${isActive ? "text-white" : "text-[#CBD5E1]"}`}>
+                          {BOARD_LABELS[k]}
+                        </div>
+                        <div className="text-[9px] uppercase tracking-[0.1em] mt-[2px] text-[#64748B]">
+                          {k === "highlevel" ? "1920 × 1080" : "2068 × 1324"}
+                        </div>
+                      </div>
+                      {isActive && (
+                        <div
+                          className="absolute top-[6px] right-[6px] w-[16px] h-[16px] rounded-full flex items-center justify-center text-[#0B1220]"
+                          style={{ background: `linear-gradient(135deg, ${accent.from}, ${accent.to})` }}
+                        >
+                          <Check className="w-[10px] h-[10px]" strokeWidth={3} />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {isCommander && (
             <div>

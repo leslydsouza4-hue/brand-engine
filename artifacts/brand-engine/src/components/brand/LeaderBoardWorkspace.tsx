@@ -65,6 +65,7 @@ export function LeaderBoardWorkspace() {
     commander: COMMANDER_SEED,
   });
   const [board, setBoard] = useState<BoardKey>("highlevel");
+  const [commanderMonthYear, setCommanderMonthYear] = useState("MARCH 2026");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -126,6 +127,18 @@ export function LeaderBoardWorkspace() {
               ))}
             </select>
           </div>
+          {isCommander && (
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Month / Year</div>
+              <input
+                type="text"
+                value={commanderMonthYear}
+                onChange={e => setCommanderMonthYear(e.target.value.toUpperCase())}
+                placeholder="MARCH 2026"
+                className="w-full py-[9px] px-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-[13px] font-semibold text-white outline-none focus:border-[rgba(40,150,251,0.4)] uppercase tracking-[0.1em]"
+              />
+            </div>
+          )}
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">{BOARD_LABELS[board]} (1–10)</div>
             <div className="flex flex-col gap-[8px]">
@@ -262,7 +275,7 @@ export function LeaderBoardWorkspace() {
             {isCommander ? (
               <>
                 {/* Title */}
-                <div className="absolute left-0 right-0 text-center" style={{ top: "7%" }}>
+                <div className="absolute left-0 right-0 text-center" style={{ top: "12%" }}>
                   <div
                     className="font-['Bebas_Neue']"
                     style={{
@@ -281,7 +294,7 @@ export function LeaderBoardWorkspace() {
                   <div className="flex items-center justify-center" style={{ gap: "1cqw", marginTop: "0.8cqw" }}>
                     <div style={{ height: "0.18cqw", width: "8cqw", background: "linear-gradient(90deg, transparent 0%, #C58B2C 100%)" }} />
                     <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.9cqw", letterSpacing: "0.22em", lineHeight: 1 }}>
-                      MARCH 2026
+                      {commanderMonthYear || "—"}
                     </div>
                     <div style={{ height: "0.18cqw", width: "8cqw", background: "linear-gradient(90deg, #C58B2C 0%, transparent 100%)" }} />
                   </div>
@@ -291,7 +304,7 @@ export function LeaderBoardWorkspace() {
                 <div
                   className="absolute grid"
                   style={{
-                    top: "22%",
+                    top: "27%",
                     left: "7%",
                     right: "11%",
                     bottom: "13%",

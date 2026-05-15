@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Trophy, Download, Loader2, Upload, X, User as UserIcon, GripVertical } from "lucide-react";
 import { useExport } from "./useExport";
 import bgAsset from "@assets/Group_1_1778872511433.png";
+import bgCommander from "@assets/Commander-Leaderboard-Mar.-2026-(1)_1778885211192.png";
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
 import medal2 from "@assets/2lugarrrr_1778871874915.png";
 import medal3 from "@assets/3lugarrrrrr_1778871874915.png";
@@ -34,9 +35,21 @@ const HIGHLEVEL_SEED: Affiliate[] = [
   { id: "h10", name: "Theo Cavaliere", avatar: null },
 ];
 
-const COMMANDER_SEED: Affiliate[] = Array.from({ length: 10 }, (_, i) => ({
+const COMMANDER_NAMES = [
+  "Pavel Ketsuk",
+  "Jason Wardrop",
+  "Nick Ponte",
+  "Jasper Aiken",
+  "Adam Erhart",
+  "Dan Wardrope",
+  "Keaton Walker",
+  "Michael Cooch",
+  "Clay Lawrence",
+  "Matt Deseno",
+];
+const COMMANDER_SEED: Affiliate[] = COMMANDER_NAMES.map((name, i) => ({
   id: `c${i + 1}`,
-  name: "",
+  name,
   avatar: null,
 }));
 
@@ -86,6 +99,9 @@ export function LeaderBoardWorkspace() {
 
   const top3 = rows.slice(0, 3);
   const rest = rows.slice(3, 10);
+  const isCommander = board === "commander";
+  const cmdrLeft = rows.slice(0, 5);
+  const cmdrRight = rows.slice(5, 10);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -236,35 +252,84 @@ export function LeaderBoardWorkspace() {
             className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
             style={{ aspectRatio: "1920 / 1080", background: "#000", containerType: "inline-size" }}
           >
-            {/* Background (frame + title + robot all baked in) */}
-            <img src={bgAsset} alt="" className="absolute inset-0 w-full h-full object-cover" />
+            {/* Background */}
+            <img src={isCommander ? bgCommander : bgAsset} alt="" className="absolute inset-0 w-full h-full object-cover" />
 
-            {/* Two-column rows — positioned to match reference */}
-            <div
-              className="absolute grid"
-              style={{
-                top: "19%",
-                left: "16%",
-                right: "4%",
-                bottom: "7%",
-                gridTemplateColumns: "40% 50%",
-                columnGap: "3%",
-              }}
-            >
-              {/* Left column — top 3 with medals, gap chosen so #3 aligns with right row 5 */}
-              <div className="flex flex-col" style={{ gap: "4.7cqw" }}>
-                {top3.map((r, i) => (
-                  <TopRow key={r.id} r={r} medal={[medal1, medal2, medal3][i]!} />
-                ))}
-              </div>
+            {isCommander ? (
+              <>
+                {/* Title */}
+                <div className="absolute left-0 right-0 text-center" style={{ top: "8%" }}>
+                  <div
+                    className="font-['Poppins'] font-black"
+                    style={{
+                      fontSize: "5.4cqw",
+                      letterSpacing: "0.04em",
+                      background: "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                      filter: "drop-shadow(0 0.2cqw 0.4cqw rgba(0,0,0,0.5))",
+                    }}
+                  >
+                    COMMANDER LEADERBOARD
+                  </div>
+                  <div className="flex items-center justify-center" style={{ gap: "1cqw", marginTop: "0.6cqw" }}>
+                    <div style={{ height: "0.18cqw", width: "8cqw", background: "linear-gradient(90deg, transparent 0%, #C58B2C 100%)" }} />
+                    <div className="font-['Poppins'] font-bold text-white" style={{ fontSize: "1.5cqw", letterSpacing: "0.18em" }}>
+                      MARCH 2026
+                    </div>
+                    <div style={{ height: "0.18cqw", width: "8cqw", background: "linear-gradient(90deg, #C58B2C 0%, transparent 100%)" }} />
+                  </div>
+                </div>
 
-              {/* Right column — 4–10 with numbers, breathing room between rows */}
-              <div className="flex flex-col" style={{ gap: "1.4cqw" }}>
-                {rest.map((r, i) => (
-                  <RankRow key={r.id} r={r} rank={i + 4} />
-                ))}
+                {/* 5 + 5 grid */}
+                <div
+                  className="absolute grid"
+                  style={{
+                    top: "23%",
+                    left: "8%",
+                    right: "8%",
+                    bottom: "10%",
+                    gridTemplateColumns: "1fr 1fr",
+                    columnGap: "3%",
+                  }}
+                >
+                  <div className="flex flex-col justify-between">
+                    {cmdrLeft.map((r, i) => (
+                      <CommanderRow key={r.id} r={r} rank={i + 1} />
+                    ))}
+                  </div>
+                  <div className="flex flex-col justify-between">
+                    {cmdrRight.map((r, i) => (
+                      <CommanderRow key={r.id} r={r} rank={i + 6} />
+                    ))}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div
+                className="absolute grid"
+                style={{
+                  top: "19%",
+                  left: "16%",
+                  right: "4%",
+                  bottom: "7%",
+                  gridTemplateColumns: "40% 50%",
+                  columnGap: "3%",
+                }}
+              >
+                <div className="flex flex-col" style={{ gap: "4.7cqw" }}>
+                  {top3.map((r, i) => (
+                    <TopRow key={r.id} r={r} medal={[medal1, medal2, medal3][i]!} />
+                  ))}
+                </div>
+                <div className="flex flex-col" style={{ gap: "1.4cqw" }}>
+                  {rest.map((r, i) => (
+                    <RankRow key={r.id} r={r} rank={i + 4} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -326,6 +391,56 @@ function TopRow({ r, medal }: { r: Affiliate; medal: string }) {
       />
       <Avatar src={r.avatar} name={r.name} sizeCqw={5.6} />
       <NamePill name={r.name} fontCqw={1.85} padXCqw={1.4} padYCqw={1.0} radiusCqw={0.8} />
+    </div>
+  );
+}
+
+const ORDINAL = ["1ST", "2ND", "3RD", "4TH", "5TH", "6TH", "7TH", "8TH", "9TH", "10TH"];
+
+function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
+  const useMedal = rank <= 3;
+  const medal = [medal1, medal2, medal3][rank - 1];
+  return (
+    <div
+      className="flex items-center"
+      style={{
+        gap: "1cqw",
+        padding: "0.7cqw 1.2cqw 0.7cqw 0.7cqw",
+        borderRadius: "0.9cqw",
+        background: "linear-gradient(180deg, rgba(13,32,64,0.85) 0%, rgba(8,20,42,0.85) 100%)",
+        boxShadow: "inset 0 0 0 0.14cqw #4FC3FF, 0 0.3cqw 0.6cqw rgba(0,0,0,0.4)",
+      }}
+    >
+      {useMedal && medal ? (
+        <img
+          src={medal}
+          alt=""
+          className="shrink-0"
+          style={{ width: "3.4cqw", height: "auto", filter: "drop-shadow(0 0.2cqw 0.4cqw rgba(0,0,0,0.5))" }}
+        />
+      ) : (
+        <div
+          className="shrink-0 text-center font-['Poppins'] font-black"
+          style={{
+            width: "3.4cqw",
+            fontSize: "1.6cqw",
+            background: "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            letterSpacing: "0.02em",
+          }}
+        >
+          {ORDINAL[rank - 1]}
+        </div>
+      )}
+      <Avatar src={r.avatar} name={r.name} sizeCqw={3.4} />
+      <div
+        className="flex-1 min-w-0 truncate font-['Poppins'] font-black text-white"
+        style={{ fontSize: "2cqw", letterSpacing: "0.02em", textTransform: "uppercase" }}
+      >
+        {r.name || "—"}
+      </div>
     </div>
   );
 }

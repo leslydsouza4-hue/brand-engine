@@ -64,7 +64,7 @@ export function LeaderBoardWorkspace() {
     highlevel: HIGHLEVEL_SEED,
     commander: COMMANDER_SEED,
   });
-  const [board, setBoard] = useState<BoardKey>("highlevel");
+  const [board, setBoard] = useState<BoardKey>("commander");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);

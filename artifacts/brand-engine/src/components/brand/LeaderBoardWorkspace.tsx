@@ -155,7 +155,7 @@ export function LeaderBoardWorkspace() {
                 left: "14%",
                 right: "6%",
                 bottom: "7%",
-                gridTemplateColumns: "36% 54%",
+                gridTemplateColumns: "36% 56%",
                 columnGap: "3%",
               }}
             >

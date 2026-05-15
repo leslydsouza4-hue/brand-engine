@@ -250,14 +250,13 @@ export function LeaderBoardWorkspace() {
             data-export-preview
             data-export-name="Leader Board"
             className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
-            style={{ aspectRatio: "1920 / 1080", background: "#000", containerType: "inline-size" }}
+            style={{ aspectRatio: isCommander ? "2068 / 1324" : "1920 / 1080", background: "#000", containerType: "inline-size" }}
           >
             {/* Background */}
             <img
               src={isCommander ? bgCommander : bgAsset}
               alt=""
-              className="absolute inset-0 w-full h-full"
-              style={{ objectFit: isCommander ? "fill" : "cover" }}
+              className="absolute inset-0 w-full h-full object-cover"
             />
 
             {isCommander ? (
@@ -418,30 +417,34 @@ function CommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
         boxShadow: "inset 0 0 0 0.12cqw #4FC3FF, 0 0.25cqw 0.5cqw rgba(0,0,0,0.4)",
       }}
     >
-      {useMedal && medal ? (
-        <img
-          src={medal}
-          alt=""
-          className="shrink-0"
-          style={{ width: "2.8cqw", height: "auto", filter: "drop-shadow(0 0.2cqw 0.4cqw rgba(0,0,0,0.5))" }}
-        />
-      ) : (
-        <div
-          className="shrink-0 text-center font-['Bebas_Neue']"
-          style={{
-            width: "2.8cqw",
-            fontSize: "1.7cqw",
-            lineHeight: 1,
-            background: "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            letterSpacing: "0.02em",
-          }}
-        >
-          {ORDINAL[rank - 1]}
-        </div>
-      )}
+      <div
+        className="shrink-0 flex items-center justify-center"
+        style={{ width: "2.8cqw", height: "2.8cqw" }}
+      >
+        {useMedal && medal ? (
+          <img
+            src={medal}
+            alt=""
+            className="w-full h-full object-contain"
+            style={{ filter: "drop-shadow(0 0.15cqw 0.3cqw rgba(0,0,0,0.5))" }}
+          />
+        ) : (
+          <div
+            className="font-['Bebas_Neue'] text-center"
+            style={{
+              fontSize: "1.7cqw",
+              lineHeight: 1,
+              background: "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {ORDINAL[rank - 1]}
+          </div>
+        )}
+      </div>
       <Avatar src={r.avatar} name={r.name} sizeCqw={2.8} />
       <div
         className="flex-1 min-w-0 truncate font-['Bebas_Neue'] text-white"

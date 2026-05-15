@@ -167,7 +167,7 @@ export function LeaderBoardWorkspace() {
               </div>
 
               {/* Right column — 4–10 with numbers, breathing room between rows */}
-              <div className="flex flex-col" style={{ gap: "2.5cqw" }}>
+              <div className="flex flex-col" style={{ gap: "1.9cqw" }}>
                 {rest.map((r, i) => (
                   <RankRow key={r.id} r={r} rank={i + 4} />
                 ))}

@@ -377,7 +377,7 @@ export function LeaderBoardWorkspace() {
                 {/* Title overlay */}
                 <div className="absolute text-center" style={{ top: "10%", left: "8%", right: "5%" }}>
                   <div
-                    className="font-['Poppins'] font-semibold whitespace-nowrap"
+                    className="font-['Poppins'] font-bold whitespace-nowrap"
                     style={{
                       fontSize: "2.72cqw",
                       lineHeight: 1.05,

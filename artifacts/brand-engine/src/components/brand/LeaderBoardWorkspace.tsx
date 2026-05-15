@@ -160,7 +160,7 @@ export function LeaderBoardWorkspace() {
               }}
             >
               {/* Left column — top 3 with medals (tightly stacked at top) */}
-              <div className="flex flex-col" style={{ gap: "1.6cqw" }}>
+              <div className="flex flex-col" style={{ gap: "3cqw" }}>
                 {top3.map((r, i) => (
                   <TopRow key={r.id} r={r} medal={[medal1, medal2, medal3][i]!} />
                 ))}
@@ -188,7 +188,7 @@ function Avatar({ src, name, sizeCqw }: { src: string | null; name: string; size
       style={{
         width: px,
         height: px,
-        boxShadow: "0 0 0 0.25cqw #7CC8FF, 0 0.6cqw 1.6cqw rgba(0,0,0,0.5)",
+        boxShadow: "0 0 0 0.25cqw #7CC8FF",
       }}
     >
       {src ? (

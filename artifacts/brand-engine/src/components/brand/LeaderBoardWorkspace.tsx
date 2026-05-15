@@ -176,7 +176,7 @@ export function LeaderBoardWorkspace() {
               </div>
 
               {/* Right column — 4–10 with numbers, breathing room between rows */}
-              <div className="flex flex-col" style={{ gap: "1.9cqw" }}>
+              <div className="flex flex-col" style={{ gap: "1.4cqw" }}>
                 {rest.map((r, i) => (
                   <RankRow key={r.id} r={r} rank={i + 4} />
                 ))}
@@ -260,7 +260,7 @@ function RankRow({ r, rank }: { r: Affiliate; rank: number }) {
         {rank}
       </div>
       <Avatar src={r.avatar} name={r.name} sizeCqw={3.5} />
-      <NamePill name={r.name} fontCqw={1.6} padXCqw={1.4} padYCqw={0.88} radiusCqw={0.7} bgAlpha={0.6} />
+      <NamePill name={r.name} fontCqw={1.85} padXCqw={1.4} padYCqw={1.0} radiusCqw={0.8} bgAlpha={0.6} />
     </div>
   );
 }

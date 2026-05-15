@@ -155,12 +155,12 @@ export function LeaderBoardWorkspace() {
                 left: "14%",
                 right: "10%",
                 bottom: "7%",
-                gridTemplateColumns: "36% 44%",
+                gridTemplateColumns: "42% 42%",
                 justifyContent: "space-between",
               }}
             >
-              {/* Left column — top 3 with medals (tightly stacked at top) */}
-              <div className="flex flex-col" style={{ gap: "3cqw" }}>
+              {/* Left column — top 3 with medals, distributed to align with right column */}
+              <div className="flex flex-col justify-between">
                 {top3.map((r, i) => (
                   <TopRow key={r.id} r={r} medal={[medal1, medal2, medal3][i]!} />
                 ))}

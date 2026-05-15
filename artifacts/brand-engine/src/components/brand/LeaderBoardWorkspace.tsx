@@ -380,7 +380,8 @@ export function LeaderBoardWorkspace() {
                     className="font-['Poppins'] font-bold whitespace-nowrap"
                     style={{
                       fontSize: "2.72cqw",
-                      lineHeight: 1.05,
+                      lineHeight: 1.3,
+                      paddingBottom: "0.4cqw",
                       letterSpacing: "-0.01em",
                       background: "linear-gradient(180deg, #BEEAFF 0%, #2896FB 100%)",
                       WebkitBackgroundClip: "text",

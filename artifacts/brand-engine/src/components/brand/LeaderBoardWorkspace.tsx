@@ -18,6 +18,13 @@ import photoBeant from "@assets/Asset_1@2x_1778875414164.png";
 import photoPavel from "@assets/image_1778886967955.png";
 import photoJason from "@assets/image_1778886996113.png";
 import photoNick from "@assets/image_1778887019751.png";
+import photoJasper from "@assets/image_1778887174334.png";
+import photoAdam from "@assets/image_1778887201450.png";
+import photoDan from "@assets/image_1778887227001.png";
+import photoKeaton from "@assets/image_1778887253935.png";
+import photoMichael from "@assets/image_1778887288526.png";
+import photoClay from "@assets/image_1778887313620.png";
+import photoMatt from "@assets/image_1778887339817.png";
 
 interface Affiliate {
   id: string;
@@ -42,13 +49,13 @@ const COMMANDER_ROSTER: Array<{ name: string; avatar: string | null }> = [
   { name: "Pavel Ketsuk", avatar: photoPavel },
   { name: "Jason Wardrop", avatar: photoJason },
   { name: "Nick Ponte", avatar: photoNick },
-  { name: "Jasper Aiken", avatar: null },
-  { name: "Adam Erhart", avatar: null },
-  { name: "Dan Wardrope", avatar: null },
-  { name: "Keaton Walker", avatar: null },
-  { name: "Michael Cooch", avatar: null },
-  { name: "Clay Lawrence", avatar: null },
-  { name: "Matt Deseno", avatar: null },
+  { name: "Jasper Aiken", avatar: photoJasper },
+  { name: "Adam Erhart", avatar: photoAdam },
+  { name: "Dan Wardrope", avatar: photoDan },
+  { name: "Keaton Walker", avatar: photoKeaton },
+  { name: "Michael Cooch", avatar: photoMichael },
+  { name: "Clay Lawrence", avatar: photoClay },
+  { name: "Matt Deseno", avatar: photoMatt },
 ];
 const COMMANDER_SEED: Affiliate[] = COMMANDER_ROSTER.map((p, i) => ({
   id: `c${i + 1}`,

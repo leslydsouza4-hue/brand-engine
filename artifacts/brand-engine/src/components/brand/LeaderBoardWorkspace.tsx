@@ -239,7 +239,7 @@ function TopRow({ r, medal }: { r: Affiliate; medal: string }) {
         src={medal}
         alt=""
         className="shrink-0"
-        style={{ width: "2.1cqw", height: "auto", filter: "drop-shadow(0 0.3cqw 0.6cqw rgba(0,0,0,0.5))" }}
+        style={{ width: "2.31cqw", height: "auto", filter: "drop-shadow(0 0.3cqw 0.6cqw rgba(0,0,0,0.5))" }}
       />
       <Avatar src={r.avatar} name={r.name} sizeCqw={5.6} />
       <NamePill name={r.name} fontCqw={1.85} padXCqw={1.4} padYCqw={1.0} radiusCqw={0.8} />

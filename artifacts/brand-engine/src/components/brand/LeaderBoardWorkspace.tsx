@@ -159,15 +159,15 @@ export function LeaderBoardWorkspace() {
                 justifyContent: "space-between",
               }}
             >
-              {/* Left column — top 3 with medals, distributed to align with right column */}
-              <div className="flex flex-col justify-between">
+              {/* Left column — top 3 with medals, gap chosen so #3 aligns with right row 5 */}
+              <div className="flex flex-col" style={{ gap: "5.5cqw" }}>
                 {top3.map((r, i) => (
                   <TopRow key={r.id} r={r} medal={[medal1, medal2, medal3][i]!} />
                 ))}
               </div>
 
-              {/* Right column — 4–10 with numbers */}
-              <div className="flex flex-col justify-between">
+              {/* Right column — 4–10 with numbers, tight stack from top */}
+              <div className="flex flex-col" style={{ gap: "0.8cqw" }}>
                 {rest.map((r, i) => (
                   <RankRow key={r.id} r={r} rank={i + 4} />
                 ))}

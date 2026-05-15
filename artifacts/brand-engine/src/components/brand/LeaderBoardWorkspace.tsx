@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Download, Loader2, Upload, X, User as UserIcon, GripVertical, Check, ChevronDown } from "lucide-react";
 import { useExport } from "./useExport";
 import { LivePreview } from "./LivePreview";
-import bgAsset from "@assets/Group_1_1778872511433.png";
+import bgAsset from "@assets/Group_1_1778888276448.png";
 import bgCommander from "@assets/Commander-Leaderboard-Mar.-2026-(1)_1778885211192.png";
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
 import medal2 from "@assets/2lugarrrr_1778871874915.png";
@@ -90,6 +90,7 @@ export function LeaderBoardWorkspace() {
     return () => document.removeEventListener("mousedown", onClick);
   }, [boardOpen]);
   const [commanderMonthYear, setCommanderMonthYear] = useState("MARCH 2026");
+  const [highlevelMonthYear, setHighlevelMonthYear] = useState("MARCH 2026");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -136,93 +137,54 @@ export function LeaderBoardWorkspace() {
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Board</div>
             <div className="relative" ref={boardRef}>
-              {(() => {
-                const meta = (k: BoardKey) =>
-                  k === "highlevel"
-                    ? { from: "#00B2A9", to: "#2896FB", thumb: bgAsset, dims: "1920 × 1080" }
-                    : { from: "#FFD24A", to: "#C58B2C", thumb: bgCommander, dims: "2068 × 1324" };
-                const active = meta(board);
-                return (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setBoardOpen(o => !o)}
-                      className="w-full flex items-center gap-[10px] py-[8px] pl-[8px] pr-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-left cursor-pointer hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(40,150,251,0.35)] transition-colors"
-                    >
-                      <div
-                        className="w-[36px] h-[36px] rounded-[8px] shrink-0 bg-cover bg-center ring-1 ring-white/10"
-                        style={{ backgroundImage: `url(${active.thumb})` }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[12px] font-bold text-white leading-tight truncate">{BOARD_LABELS[board]}</div>
-                        <div className="text-[9px] uppercase tracking-[0.12em] text-[#64748B] mt-[2px]">{active.dims}</div>
-                      </div>
-                      <div
-                        className="w-[18px] h-[18px] rounded-full flex items-center justify-center shrink-0"
-                        style={{ background: `linear-gradient(135deg, ${active.from}, ${active.to})` }}
+              <button
+                type="button"
+                onClick={() => setBoardOpen(o => !o)}
+                className="w-full flex items-center gap-[10px] py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-left cursor-pointer hover:bg-[rgba(255,255,255,0.06)] hover:border-[rgba(40,150,251,0.35)] transition-colors"
+              >
+                <div className="flex-1 min-w-0 text-[13px] font-semibold text-white truncate">{BOARD_LABELS[board]}</div>
+                <ChevronDown className={`w-[14px] h-[14px] text-[#94A3B8] transition-transform shrink-0 ${boardOpen ? "rotate-180" : ""}`} strokeWidth={2.5} />
+              </button>
+              {boardOpen && (
+                <div className="absolute z-30 left-0 right-0 mt-[6px] p-[4px] rounded-[10px] bg-[#0F172A] border border-[rgba(255,255,255,0.08)] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.7)]">
+                  {(Object.keys(BOARD_LABELS) as BoardKey[]).map(k => {
+                    const isActive = board === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => {
+                          setBoard(k);
+                          setBoardOpen(false);
+                          setDragIndex(null);
+                          setOverIndex(null);
+                        }}
+                        className={`w-full flex items-center gap-[10px] py-[9px] px-[12px] rounded-[8px] text-left cursor-pointer transition-colors ${
+                          isActive ? "bg-[rgba(40,150,251,0.10)] text-white" : "text-[#CBD5E1] hover:bg-[rgba(255,255,255,0.04)] hover:text-white"
+                        }`}
                       >
-                        <ChevronDown className={`w-[11px] h-[11px] text-[#0B1220] transition-transform ${boardOpen ? "rotate-180" : ""}`} strokeWidth={3} />
-                      </div>
-                    </button>
-                    {boardOpen && (
-                      <div className="absolute z-30 left-0 right-0 mt-[6px] p-[4px] rounded-[10px] bg-[#0F172A] border border-[rgba(255,255,255,0.08)] shadow-[0_18px_40px_-12px_rgba(0,0,0,0.7)]">
-                        {(Object.keys(BOARD_LABELS) as BoardKey[]).map(k => {
-                          const m = meta(k);
-                          const isActive = board === k;
-                          return (
-                            <button
-                              key={k}
-                              type="button"
-                              onClick={() => {
-                                setBoard(k);
-                                setBoardOpen(false);
-                                setDragIndex(null);
-                                setOverIndex(null);
-                              }}
-                              className={`w-full flex items-center gap-[10px] py-[7px] pl-[7px] pr-[10px] rounded-[8px] text-left cursor-pointer transition-colors ${
-                                isActive ? "bg-[rgba(40,150,251,0.10)]" : "hover:bg-[rgba(255,255,255,0.04)]"
-                              }`}
-                            >
-                              <div
-                                className="w-[34px] h-[34px] rounded-[7px] shrink-0 bg-cover bg-center ring-1 ring-white/10"
-                                style={{ backgroundImage: `url(${m.thumb})` }}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <div className={`text-[12px] font-semibold leading-tight truncate ${isActive ? "text-white" : "text-[#CBD5E1]"}`}>
-                                  {BOARD_LABELS[k]}
-                                </div>
-                                <div className="text-[9px] uppercase tracking-[0.12em] text-[#64748B] mt-[2px]">{m.dims}</div>
-                              </div>
-                              {isActive && (
-                                <div
-                                  className="w-[16px] h-[16px] rounded-full flex items-center justify-center shrink-0"
-                                  style={{ background: `linear-gradient(135deg, ${m.from}, ${m.to})` }}
-                                >
-                                  <Check className="w-[9px] h-[9px] text-[#0B1220]" strokeWidth={3} />
-                                </div>
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
+                        <div className="flex-1 min-w-0 text-[12px] font-semibold truncate">{BOARD_LABELS[k]}</div>
+                        {isActive && <Check className="w-[12px] h-[12px] text-[#2896FB] shrink-0" strokeWidth={3} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
-          {isCommander && (
-            <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Month / Year</div>
-              <input
-                type="text"
-                value={commanderMonthYear}
-                onChange={e => setCommanderMonthYear(e.target.value.toUpperCase())}
-                placeholder="MARCH 2026"
-                className="w-full py-[9px] px-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-[13px] font-semibold text-white outline-none focus:border-[rgba(40,150,251,0.4)] uppercase tracking-[0.1em]"
-              />
-            </div>
-          )}
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Month / Year</div>
+            <input
+              type="text"
+              value={isCommander ? commanderMonthYear : highlevelMonthYear}
+              onChange={e => {
+                const v = e.target.value.toUpperCase();
+                if (isCommander) setCommanderMonthYear(v); else setHighlevelMonthYear(v);
+              }}
+              placeholder="MARCH 2026"
+              className="w-full py-[9px] px-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-[13px] font-semibold text-white outline-none focus:border-[rgba(40,150,251,0.4)] uppercase tracking-[0.1em]"
+            />
+          </div>
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">{BOARD_LABELS[board]} (1–10)</div>
             <div className="flex flex-col gap-[8px]">
@@ -411,6 +373,25 @@ export function LeaderBoardWorkspace() {
                 </div>
               </>
             ) : (
+              <>
+                {/* Title overlay */}
+                <div className="absolute left-0 right-0 text-center" style={{ top: "5.5%" }}>
+                  <div
+                    className="font-['Poppins'] font-black"
+                    style={{
+                      fontSize: "4.4cqw",
+                      lineHeight: 1,
+                      letterSpacing: "-0.01em",
+                      background: "linear-gradient(180deg, #BEEAFF 0%, #2896FB 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                      filter: "drop-shadow(0 0.15cqw 0.35cqw rgba(0,0,0,0.45))",
+                    }}
+                  >
+                    Top HighLevel Affiliates {highlevelMonthYear || "—"}
+                  </div>
+                </div>
               <div
                 className="absolute grid"
                 style={{
@@ -433,6 +414,7 @@ export function LeaderBoardWorkspace() {
                   ))}
                 </div>
               </div>
+              </>
             )}
         </div>
       </LivePreview>

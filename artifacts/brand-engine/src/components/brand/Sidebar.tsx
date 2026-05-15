@@ -360,11 +360,13 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           </button>
 
           <button
-            onClick={() => handleSetMode('affiliate-blurb')}
-            className={`${btnBase} cursor-pointer ${currentMode === 'affiliate-blurb' ? activeClass : inactiveClass}`}
+            disabled
+            className={`${btnBase} opacity-40 cursor-not-allowed ${inactiveClass}`}
+            title="Coming soon"
           >
-            <Megaphone className={iconCls(currentMode === 'affiliate-blurb')} />
-            Affiliate Blurb
+            <Megaphone className={iconCls(false)} />
+            <span className="flex-1 text-left">Affiliate Blurb</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-[#64748B] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-[4px] px-[6px] py-[2px]">Soon</span>
           </button>
         </div>
 

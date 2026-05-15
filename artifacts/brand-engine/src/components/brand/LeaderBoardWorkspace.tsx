@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
-import { Trophy, Download, Loader2, Upload, X, User as UserIcon, GripVertical } from "lucide-react";
+import { Download, Loader2, Upload, X, User as UserIcon, GripVertical } from "lucide-react";
 import { useExport } from "./useExport";
+import { LivePreview } from "./LivePreview";
 import bgAsset from "@assets/Group_1_1778872511433.png";
 import bgCommander from "@assets/Commander-Leaderboard-Mar.-2026-(1)_1778885211192.png";
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
@@ -249,35 +250,32 @@ export function LeaderBoardWorkspace() {
               ))}
             </div>
           </div>
+
+          <button
+            onClick={onDownload}
+            disabled={isExporting}
+            className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50"
+          >
+            {isExporting ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
+            {isExporting ? "Exporting..." : "Download PNG"}
+          </button>
         </div>
       </div>
 
       {/* Preview */}
-      <div className="flex-1 overflow-y-auto p-[28px]">
-        <div className="max-w-[1100px] mx-auto">
-          <div className="flex items-center justify-between mb-[18px]">
-            <div className="flex items-center gap-[10px]">
-              <Trophy className="w-[18px] h-[18px] text-[#FFD000]" />
-              <div className="text-[14px] font-bold text-white">Leader Board Preview</div>
-            </div>
-            <button
-              onClick={onDownload}
-              disabled={isExporting}
-              className="flex items-center gap-[6px] py-[8px] px-[14px] rounded-[10px] bg-gradient-to-br from-[#00B2A9] to-[#2896FB] text-white text-[12px] font-bold cursor-pointer hover:brightness-[1.08] disabled:opacity-50 border-none"
-            >
-              {isExporting ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
-              {isExporting ? "Exporting..." : "Download PNG"}
-            </button>
-          </div>
-
-          {/* Canvas — 1920x1080 ratio */}
-          <div
-            ref={previewRef}
-            data-export-preview
-            data-export-name="Leader Board"
-            className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
-            style={{ aspectRatio: isCommander ? "2068 / 1324" : "1920 / 1080", background: "#000", containerType: "inline-size" }}
-          >
+      <LivePreview>
+        <div
+          ref={previewRef}
+          data-export-preview
+          data-export-name="Leader Board"
+          className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)] w-full"
+          style={{
+            aspectRatio: isCommander ? "2068 / 1324" : "1920 / 1080",
+            background: "#000",
+            containerType: "inline-size",
+            maxWidth: "min(100%, calc((100vh - 200px) * " + (isCommander ? "1.562" : "1.778") + "))",
+          }}
+        >
             {/* Background */}
             <img
               src={isCommander ? bgCommander : bgAsset}
@@ -366,9 +364,8 @@ export function LeaderBoardWorkspace() {
                 </div>
               </div>
             )}
-          </div>
         </div>
-      </div>
+      </LivePreview>
     </div>
   );
 }

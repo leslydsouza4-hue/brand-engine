@@ -15,6 +15,9 @@ import photoCarson from "@assets/Carson_Reed_copy_5_1778875414164.png";
 import photoMax from "@assets/40967358-1712920779192-4287537bb71b7_(1)_1778875414163.png";
 import photoFrancisco from "@assets/b07c242a-2879-49ec-9f4a-65ae47117064_copy_2_1778875414164.png";
 import photoBeant from "@assets/Asset_1@2x_1778875414164.png";
+import photoPavel from "@assets/image_1778886967955.png";
+import photoJason from "@assets/image_1778886996113.png";
+import photoNick from "@assets/image_1778887019751.png";
 
 interface Affiliate {
   id: string;
@@ -35,22 +38,22 @@ const HIGHLEVEL_SEED: Affiliate[] = [
   { id: "h10", name: "Theo Cavaliere", avatar: null },
 ];
 
-const COMMANDER_NAMES = [
-  "Pavel Ketsuk",
-  "Jason Wardrop",
-  "Nick Ponte",
-  "Jasper Aiken",
-  "Adam Erhart",
-  "Dan Wardrope",
-  "Keaton Walker",
-  "Michael Cooch",
-  "Clay Lawrence",
-  "Matt Deseno",
+const COMMANDER_ROSTER: Array<{ name: string; avatar: string | null }> = [
+  { name: "Pavel Ketsuk", avatar: photoPavel },
+  { name: "Jason Wardrop", avatar: photoJason },
+  { name: "Nick Ponte", avatar: photoNick },
+  { name: "Jasper Aiken", avatar: null },
+  { name: "Adam Erhart", avatar: null },
+  { name: "Dan Wardrope", avatar: null },
+  { name: "Keaton Walker", avatar: null },
+  { name: "Michael Cooch", avatar: null },
+  { name: "Clay Lawrence", avatar: null },
+  { name: "Matt Deseno", avatar: null },
 ];
-const COMMANDER_SEED: Affiliate[] = COMMANDER_NAMES.map((name, i) => ({
+const COMMANDER_SEED: Affiliate[] = COMMANDER_ROSTER.map((p, i) => ({
   id: `c${i + 1}`,
-  name,
-  avatar: null,
+  name: p.name,
+  avatar: p.avatar,
 }));
 
 type BoardKey = "highlevel" | "commander";

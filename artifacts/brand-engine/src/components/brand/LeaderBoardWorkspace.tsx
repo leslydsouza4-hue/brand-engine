@@ -319,21 +319,22 @@ export function LeaderBoardWorkspace() {
               <>
                 {/* Title */}
                 <div className="absolute left-0 right-0 text-center" style={{ top: "12%" }}>
-                  <div
-                    className="font-['Bebas_Neue']"
+                  <span
+                    className="font-['Bebas_Neue'] inline-block"
                     style={{
                       fontSize: "6.2cqw",
                       lineHeight: 1,
                       letterSpacing: "0.04em",
-                      background: "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)",
+                      backgroundImage: "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                       backgroundClip: "text",
+                      color: "#E0B156",
                       filter: "drop-shadow(0 0.2cqw 0.4cqw rgba(0,0,0,0.5))",
                     }}
                   >
                     COMMANDER LEADERBOARD
-                  </div>
+                  </span>
                   <div className="flex items-center justify-center" style={{ gap: "1cqw", marginTop: "0.8cqw" }}>
                     <div style={{ height: "0.18cqw", width: "8cqw", background: "linear-gradient(90deg, transparent 0%, #C58B2C 100%)" }} />
                     <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.9cqw", letterSpacing: "0.22em", lineHeight: 1 }}>

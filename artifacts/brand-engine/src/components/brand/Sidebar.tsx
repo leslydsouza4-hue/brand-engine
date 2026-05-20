@@ -303,6 +303,14 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             <Lightbulb className={iconCls(currentMode === 'did-you-know')} />
             Did You Know
           </button>
+
+          <button
+            onClick={() => handleSetMode('spotlight-sessions')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'spotlight-sessions' ? activeClass : inactiveClass}`}
+          >
+            <Mic2 className={iconCls(currentMode === 'spotlight-sessions')} />
+            Spotlight Sessions
+          </button>
         </div>
 
         <div className="px-[12px] mb-[10px] relative">

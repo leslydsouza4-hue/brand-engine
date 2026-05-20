@@ -4,7 +4,7 @@ import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
 import { useExport } from "./useExport";
 
-const BG_URL = `${import.meta.env.BASE_URL}assets/spotlight/bg.png`;
+const BG_URL = `${import.meta.env.BASE_URL}assets/spotlight/bg.png?v=2`;
 
 export function SpotlightSessionsWorkspace() {
   const { isExporting, handleExport } = useExport();

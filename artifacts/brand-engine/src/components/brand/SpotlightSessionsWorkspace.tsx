@@ -339,25 +339,6 @@ export function SpotlightSessionsWorkspace() {
             </div>
           </div>
 
-          {/* Empty state when no photo */}
-          {!personImage && (
-            <div className="absolute right-[6%] top-[42%] -translate-y-1/2 flex flex-col items-center gap-[1cqw] pointer-events-none">
-              <div
-                className="rounded-full flex items-center justify-center"
-                style={{
-                  width: "20cqw",
-                  height: "20cqw",
-                  background: "rgba(255,255,255,0.4)",
-                  border: "0.2cqw dashed rgba(14,46,99,0.3)",
-                }}
-              >
-                <Sparkles className="text-[#0E2E63]/40" style={{ width: "4cqw", height: "4cqw" }} />
-              </div>
-              <div style={{ fontFamily: "'Poppins'", fontWeight: 600, color: "#0E2E63", fontSize: "1.6cqw", opacity: 0.55 }}>
-                Upload a guest photo
-              </div>
-            </div>
-          )}
         </div>
       </LivePreview>
     </div>

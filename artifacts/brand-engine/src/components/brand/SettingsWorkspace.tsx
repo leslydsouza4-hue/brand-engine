@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Upload, RotateCcw, Check, X, Palette, Image as ImageIcon, Globe, Monitor } from "lucide-react";
+import { Upload, RotateCcw, Check, X, Palette, Image as ImageIcon, Globe, Monitor, Play } from "lucide-react";
+import { resetIntro } from "./WelcomeIntro";
 import {
   loadSettings,
   saveSettings,
@@ -308,6 +309,16 @@ export function SettingsWorkspace() {
               />
             </SettingRow>
           </SettingSection>
+
+          <div className="mt-[20px]">
+            <button
+              onClick={() => { resetIntro(); window.dispatchEvent(new Event("brand-engine:replay-intro")); }}
+              className="flex items-center gap-[8px] py-[8px] px-[14px] bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.06)] rounded-[10px] text-[12px] text-[#94A3B8] cursor-pointer hover:text-white hover:border-[rgba(0,178,169,0.25)] transition-all"
+            >
+              <Play className="w-[13px] h-[13px]" />
+              Replay welcome intro
+            </button>
+          </div>
 
           <div className="mt-[20px] mb-[32px] flex items-center justify-between">
             <div className="text-[11px] text-[#334155]">

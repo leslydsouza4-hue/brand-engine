@@ -27,6 +27,7 @@ import { LevelUpImageLibraryWorkspace } from "@/components/brand/LevelUpImageLib
 import { LevelUpComposerWorkspace } from "@/components/brand/LevelUpComposerWorkspace";
 import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
+import { WelcomeIntro, hasSeenIntro } from "@/components/brand/WelcomeIntro";
 
 export default function BrandEngine() {
   const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-blurb"];
@@ -47,6 +48,12 @@ export default function BrandEngine() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [craftSeedPrompt, setCraftSeedPrompt] = useState<string | null>(null);
   const [brandMode] = useBrandMode();
+  const [showIntro, setShowIntro] = useState(() => !hasSeenIntro());
+  useEffect(() => {
+    const onReplay = () => setShowIntro(true);
+    window.addEventListener("brand-engine:replay-intro", onReplay);
+    return () => window.removeEventListener("brand-engine:replay-intro", onReplay);
+  }, []);
 
   // When the user toggles to LU26 mode while sitting on a HighLevel-only
   // workspace (or vice versa), bounce them to a sensible default for that
@@ -120,6 +127,9 @@ export default function BrandEngine() {
       </div>
       <FeatureRequestBubble />
       <TutorialPopup currentMode={currentMode} />
+      {showIntro && brandMode === "highlevel" && (
+        <WelcomeIntro onDismiss={() => setShowIntro(false)} />
+      )}
     </div>
   );
 }

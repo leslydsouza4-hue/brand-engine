@@ -24,7 +24,8 @@ import {
   Wand2,
   ChevronDown,
   Check,
-  PlayCircle
+  PlayCircle,
+  Scissors
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useBrandMode, BRAND_THEMES, type BrandMode } from "./brandModeStore";
@@ -422,6 +423,14 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
           >
             <Map className={iconCls(currentMode === 'events')} />
             Customer Journey
+          </button>
+
+          <button 
+            onClick={() => handleSetMode('highly-cutout')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'highly-cutout' ? activeClass : inactiveClass}`}
+          >
+            <Scissors className={iconCls(currentMode === 'highly-cutout')} />
+            Highly Cutout
           </button>
 
           <div className={`${btnBase} ${disabledClass}`}>

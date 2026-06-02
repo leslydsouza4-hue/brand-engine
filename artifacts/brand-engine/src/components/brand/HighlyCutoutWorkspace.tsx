@@ -59,9 +59,10 @@ export function HighlyCutoutWorkspace() {
   const [nodes, setNodes] = useState<Pt[]>([]);
 
   const [border, setBorder] = useState(30); // 0..100
-  const [detail, setDetail] = useState(6); // 1..10
+  const [detail, setDetail] = useState(7); // 1..10
   const [lineWidth, setLineWidth] = useState(8); // image px
   const [showNodes, setShowNodes] = useState(true);
+  const [pageFormat, setPageFormat] = useState<"original" | "a4">("original");
 
   const [processing, setProcessing] = useState(false);
   const [removingBg, setRemovingBg] = useState(false);
@@ -70,8 +71,8 @@ export function HighlyCutoutWorkspace() {
 
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
-  const offsetPx = 4 + (border / 100) * 40;
-  const epsilon = 5 - ((detail - 1) / 9) * 4.2; // detail 1 -> 5, 10 -> 0.8
+  // Slider 0..100 -> border distance as a fraction of the longest image side.
+  const offsetPx = Math.round((0.006 + (border / 100) * 0.05) * Math.max(imgW, imgH) || 0);
 
   const regenerate = useCallback(
     (img: HTMLImageElement, b: number, d: number) => {
@@ -84,9 +85,9 @@ export function HighlyCutoutWorkspace() {
       window.setTimeout(() => {
         if (job !== jobRef.current) return; // superseded by a newer trace
         try {
-          const off = 4 + (b / 100) * 40;
-          const eps = 5 - ((d - 1) / 9) * 4.2;
-          const res = computeCutContour(img, { offset: off, detail: eps });
+          const offsetFrac = 0.006 + (b / 100) * 0.05;
+          const detailFrac = 0.012 - ((d - 1) / 9) * 0.0105;
+          const res = computeCutContour(img, { offsetFrac, detailFrac });
           if (job !== jobRef.current) return;
           setImgW(res.imgW);
           setImgH(res.imgH);
@@ -203,16 +204,65 @@ export function HighlyCutoutWorkspace() {
 
   const exportName = "highly-cutout";
 
+  // A4 at 300 DPI (print-ready).
+  const A4_LONG = 3508;
+  const A4_SHORT = 2480;
+  // Minimum long edge for the "Original ratio" export so it never looks low-res.
+  const MIN_LONG = 3000;
+
+  /**
+   * Work out the output canvas size and where to place the artwork inside it.
+   * `s` scales image-space → output-space; (dx,dy) is the artwork's top-left.
+   */
+  const computeLayout = () => {
+    const portrait = imgH >= imgW;
+    if (pageFormat === "a4") {
+      const outW = portrait ? A4_SHORT : A4_LONG;
+      const outH = portrait ? A4_LONG : A4_SHORT;
+      const margin = 0.07; // breathing room around the sticker
+      const s = Math.min((outW * (1 - margin * 2)) / imgW, (outH * (1 - margin * 2)) / imgH);
+      return { outW, outH, s, dx: (outW - imgW * s) / 2, dy: (outH - imgH * s) / 2 };
+    }
+    // Original aspect ratio, upscaled so the file is genuinely hi-res
+    // (but capped so an unusually large upload can't blow up browser memory).
+    const longSrc = Math.max(imgW, imgH);
+    const targetLong = Math.min(6000, Math.max(longSrc, MIN_LONG));
+    const s = targetLong / longSrc;
+    return { outW: Math.round(imgW * s), outH: Math.round(imgH * s), s, dx: 0, dy: 0 };
+  };
+
+  // Map trace nodes from image space into output space, with an optional final
+  // unit scale `k` (used to convert export px → PDF points for true A4 sizing).
+  const mapNodes = (s: number, dx: number, dy: number, k = 1): Pt[] =>
+    nodes.map((n) => ({ x: (dx + n.x * s) * k, y: (dy + n.y * s) * k }));
+
+  // A4 in PostScript points (1/72"): 595.28 × 841.89.
+  const A4_PT_SHORT = 595.28;
+  const A4_PT_LONG = 841.89;
+
   const exportPDF = async () => {
     if (!imgSrc || nodes.length < 3) return;
     setExporting(true);
     try {
-      const orientation = imgW >= imgH ? "landscape" : "portrait";
-      const pdf = new jsPDF({ orientation, unit: "px", format: [imgW, imgH] });
-      pdf.addImage(imgSrc, "PNG", 0, 0, imgW, imgH, undefined, "FAST");
-      const { start, segments } = nodesToPdfBezier(nodes);
+      const { outW, outH, s, dx, dy } = computeLayout();
+      const orientation = outW >= outH ? "landscape" : "portrait";
+      let pdf: jsPDF;
+      let k: number; // px (export space) → PDF unit
+      if (pageFormat === "a4") {
+        // Real, physically-sized A4 page in points; scale our px layout down to fit.
+        pdf = new jsPDF({ orientation, unit: "pt", format: "a4", compress: false });
+        k = (orientation === "portrait" ? A4_PT_SHORT : A4_PT_LONG) / outW;
+      } else {
+        pdf = new jsPDF({ orientation, unit: "px", format: [outW, outH], compress: false });
+        k = 1;
+      }
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, outW * k, outH * k, "F");
+      // "NONE" = embed the artwork without lossy recompression (best print quality).
+      pdf.addImage(imgSrc, "PNG", dx * k, dy * k, imgW * s * k, imgH * s * k, undefined, "NONE");
+      const { start, segments } = nodesToPdfBezier(mapNodes(s, dx, dy, k));
       pdf.setDrawColor(237, 28, 36);
-      pdf.setLineWidth(lineWidth);
+      pdf.setLineWidth(lineWidth * s * k);
       pdf.setLineJoin("round");
       pdf.setLineCap("round");
       pdf.lines(segments, start.x, start.y, [1, 1], "S", true);
@@ -223,7 +273,7 @@ export function HighlyCutoutWorkspace() {
           source: "Highly Cutout",
           format: "pdf",
           thumbnail: thumb,
-          dimensions: `${imgW}x${imgH}`,
+          dimensions: `${outW}x${outH}`,
         })
       );
     } finally {
@@ -235,16 +285,19 @@ export function HighlyCutoutWorkspace() {
     if (!imgElRef.current || nodes.length < 3) return;
     setExporting(true);
     try {
+      const { outW, outH, s, dx, dy } = computeLayout();
       const canvas = document.createElement("canvas");
-      canvas.width = imgW;
-      canvas.height = imgH;
+      canvas.width = outW;
+      canvas.height = outH;
       const ctx = canvas.getContext("2d")!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
       ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, imgW, imgH);
-      ctx.drawImage(imgElRef.current, 0, 0, imgW, imgH);
-      const path = new Path2D(nodesToSvgPath(nodes));
+      ctx.fillRect(0, 0, outW, outH);
+      ctx.drawImage(imgElRef.current, dx, dy, imgW * s, imgH * s);
+      const path = new Path2D(nodesToSvgPath(mapNodes(s, dx, dy)));
       ctx.strokeStyle = RED;
-      ctx.lineWidth = lineWidth;
+      ctx.lineWidth = lineWidth * s;
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
       ctx.stroke(path);
@@ -261,7 +314,7 @@ export function HighlyCutoutWorkspace() {
           source: "Highly Cutout",
           format: "png",
           thumbnail: thumb,
-          dimensions: `${imgW}x${imgH}`,
+          dimensions: `${outW}x${outH}`,
         })
       );
     } finally {
@@ -391,6 +444,34 @@ export function HighlyCutoutWorkspace() {
             <div className="text-[10px] text-[#64748B] leading-relaxed bg-white/[0.02] border border-white/[0.06] rounded-[10px] p-[10px]">
               <span className="text-[#94A3B8] font-semibold">Adjust nodes:</span> drag any dot to reshape
               the line · click the line to add a node · double-click a node to remove it.
+            </div>
+
+            {/* Page size */}
+            <div>
+              <label className="text-[11px] font-semibold text-[#CBD5E1] block mb-[6px]">Export size</label>
+              <div className="grid grid-cols-2 gap-[6px]">
+                {([
+                  { key: "original", label: "Original ratio" },
+                  { key: "a4", label: "A4 page" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setPageFormat(opt.key)}
+                    className={`py-[8px] rounded-[10px] text-[11px] font-semibold border transition-all cursor-pointer ${
+                      pageFormat === opt.key
+                        ? "bg-[rgba(237,28,36,0.14)] border-[rgba(237,28,36,0.45)] text-white"
+                        : "bg-white/[0.04] border-white/10 text-[#CBD5E1] hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-[#64748B] mt-[3px]">
+                {pageFormat === "a4"
+                  ? "Centered on a print-ready A4 page at 300 DPI."
+                  : "Keeps Highly's shape, exported at high resolution."}
+              </p>
             </div>
 
             {/* Export */}

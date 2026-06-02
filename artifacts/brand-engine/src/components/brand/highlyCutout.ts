@@ -322,21 +322,27 @@ function simplifyClosed(points: Pt[], epsilon: number): Pt[] {
 }
 
 export interface CutOptions {
-  /** Border distance in working-resolution pixels (rounded offset). */
-  offset?: number;
-  /** Simplify tolerance — higher = fewer nodes. */
-  detail?: number;
+  /** Border distance as a fraction of the longest working-resolution dimension. */
+  offsetFrac?: number;
+  /** Simplify tolerance as a fraction of the longest working-resolution dimension. */
+  detailFrac?: number;
   /** Working resolution cap (max image dimension used for analysis). */
   maxDim?: number;
 }
 
 /** Compute a smooth, draggable cut contour for an image. */
 export function computeCutContour(img: HTMLImageElement, opts: CutOptions = {}): CutResult {
-  const maxDim = opts.maxDim ?? 480;
-  const offset = Math.max(0, opts.offset ?? 14);
-  const detail = opts.detail ?? 1.6;
+  // Trace at a high working resolution so the outline hugs the artwork faithfully.
+  const maxDim = opts.maxDim ?? 1000;
+  const offsetFrac = Math.max(0, opts.offsetFrac ?? 0.022);
+  const detailFrac = opts.detailFrac ?? 0.005;
 
   const { mask, w, h, scale } = buildMask(img, maxDim);
+
+  // Border distance and simplify tolerance scale with the working resolution so
+  // the result looks the same regardless of the source image's pixel size.
+  const maxWD = Math.max(w, h);
+  const offset = Math.max(1, offsetFrac * maxWD);
 
   // Pad so the dilated outline near the edges stays fully inside the grid.
   const pad = Math.ceil(offset) + 3;
@@ -360,7 +366,7 @@ export function computeCutContour(img: HTMLImageElement, opts: CutOptions = {}):
 
   // Smooth then simplify to a manageable set of draggable nodes.
   contour = chaikin(contour, 2);
-  const epsilon = Math.max(0.6, detail);
+  const epsilon = Math.max(0.6, detailFrac * maxWD);
   let nodes = simplifyClosed(contour, epsilon);
 
   // Convert back to original image-pixel coordinates (remove padding + undo scale).

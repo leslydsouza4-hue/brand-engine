@@ -328,14 +328,17 @@ export interface CutOptions {
   detailFrac?: number;
   /** Working resolution cap (max image dimension used for analysis). */
   maxDim?: number;
+  /** Chaikin smoothing passes (fewer = sharper concave notches). */
+  smooth?: number;
 }
 
 /** Compute a smooth, draggable cut contour for an image. */
 export function computeCutContour(img: HTMLImageElement, opts: CutOptions = {}): CutResult {
   // Trace at a high working resolution so the outline hugs the artwork faithfully.
   const maxDim = opts.maxDim ?? 1000;
-  const offsetFrac = Math.max(0, opts.offsetFrac ?? 0.022);
-  const detailFrac = opts.detailFrac ?? 0.005;
+  const offsetFrac = Math.max(0, opts.offsetFrac ?? 0.01);
+  const detailFrac = opts.detailFrac ?? 0.0022;
+  const smooth = opts.smooth ?? 1;
 
   const { mask, w, h, scale } = buildMask(img, maxDim);
 
@@ -365,7 +368,7 @@ export function computeCutContour(img: HTMLImageElement, opts: CutOptions = {}):
   if (contour.length < 8) return { nodes: [], imgW: img.naturalWidth, imgH: img.naturalHeight };
 
   // Smooth then simplify to a manageable set of draggable nodes.
-  contour = chaikin(contour, 2);
+  contour = chaikin(contour, smooth);
   const epsilon = Math.max(0.6, detailFrac * maxWD);
   let nodes = simplifyClosed(contour, epsilon);
 

@@ -58,7 +58,7 @@ export function HighlyCutoutWorkspace() {
   const [imgH, setImgH] = useState(0);
   const [nodes, setNodes] = useState<Pt[]>([]);
 
-  const [border, setBorder] = useState(30); // 0..100
+  const [border, setBorder] = useState(20); // 0..100
   const [detail, setDetail] = useState(7); // 1..10
   const [lineWidth, setLineWidth] = useState(8); // image px
   const [showNodes, setShowNodes] = useState(true);
@@ -72,7 +72,8 @@ export function HighlyCutoutWorkspace() {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   // Slider 0..100 -> border distance as a fraction of the longest image side.
-  const offsetPx = Math.round((0.006 + (border / 100) * 0.05) * Math.max(imgW, imgH) || 0);
+  // Kept in a tight band so the line hugs the artwork like a real die-cut.
+  const offsetPx = Math.round((0.004 + (border / 100) * 0.03) * Math.max(imgW, imgH) || 0);
 
   const regenerate = useCallback(
     (img: HTMLImageElement, b: number, d: number) => {
@@ -85,8 +86,8 @@ export function HighlyCutoutWorkspace() {
       window.setTimeout(() => {
         if (job !== jobRef.current) return; // superseded by a newer trace
         try {
-          const offsetFrac = 0.006 + (b / 100) * 0.05;
-          const detailFrac = 0.012 - ((d - 1) / 9) * 0.0105;
+          const offsetFrac = 0.004 + (b / 100) * 0.03;
+          const detailFrac = 0.005 - ((d - 1) / 9) * 0.004;
           const res = computeCutContour(img, { offsetFrac, detailFrac });
           if (job !== jobRef.current) return;
           setImgW(res.imgW);

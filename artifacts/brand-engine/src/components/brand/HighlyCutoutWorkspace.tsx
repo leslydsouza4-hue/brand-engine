@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useId } from "react";
 import {
   UploadCloud,
   Loader2,
@@ -6,7 +6,6 @@ import {
   Scissors,
   FileText,
   Download,
-  Trash2,
   Info,
   Eye,
   EyeOff,
@@ -52,14 +51,15 @@ export function HighlyCutoutWorkspace() {
   const imgElRef = useRef<HTMLImageElement | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const jobRef = useRef(0);
+  const clipId = useId();
 
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [imgW, setImgW] = useState(0);
   const [imgH, setImgH] = useState(0);
   const [nodes, setNodes] = useState<Pt[]>([]);
 
-  const [border, setBorder] = useState(20); // 0..100
-  const [detail, setDetail] = useState(7); // 1..10
+  const [border, setBorder] = useState(40); // 0..100
+  const [detail, setDetail] = useState(6); // 1..10
   const [lineWidth, setLineWidth] = useState(8); // image px
   const [showNodes, setShowNodes] = useState(true);
   const [pageFormat, setPageFormat] = useState<"original" | "a4">("original");
@@ -88,7 +88,7 @@ export function HighlyCutoutWorkspace() {
         try {
           const offsetFrac = 0.004 + (b / 100) * 0.03;
           const detailFrac = 0.005 - ((d - 1) / 9) * 0.004;
-          const res = computeCutContour(img, { offsetFrac, detailFrac });
+          const res = computeCutContour(img, { offsetFrac, detailFrac, smooth: 2, alphaThreshold: 160 });
           if (job !== jobRef.current) return;
           setImgW(res.imgW);
           setImgH(res.imgH);
@@ -293,10 +293,15 @@ export function HighlyCutoutWorkspace() {
       const ctx = canvas.getContext("2d")!;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, outW, outH);
-      ctx.drawImage(imgElRef.current, dx, dy, imgW * s, imgH * s);
+      // Die-cut sticker on a transparent background: white sticker body, the
+      // artwork clipped to that body, then the red cut line on top.
       const path = new Path2D(nodesToSvgPath(mapNodes(s, dx, dy)));
+      ctx.save();
+      ctx.fillStyle = "#ffffff";
+      ctx.fill(path);
+      ctx.clip(path);
+      ctx.drawImage(imgElRef.current, dx, dy, imgW * s, imgH * s);
+      ctx.restore();
       ctx.strokeStyle = RED;
       ctx.lineWidth = lineWidth * s;
       ctx.lineJoin = "round";
@@ -507,15 +512,9 @@ export function HighlyCutoutWorkspace() {
           </div>
         ) : (
           <div
-            className="relative bg-white rounded-[12px] shadow-[0_20px_60px_rgba(0,0,0,0.5)] max-w-full"
+            className="relative max-w-full"
             style={{ width: "min(640px, 100%)", aspectRatio: imgW && imgH ? `${imgW} / ${imgH}` : undefined }}
           >
-            <img
-              src={imgSrc}
-              alt="Highly"
-              className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
-              draggable={false}
-            />
             {imgW > 0 && imgH > 0 && (
               <svg
                 ref={svgRef}
@@ -527,6 +526,34 @@ export function HighlyCutoutWorkspace() {
                 onPointerLeave={onSvgPointerUp}
               >
                 {svgPath && (
+                  <defs>
+                    <clipPath id={clipId}>
+                      <path d={svgPath} />
+                    </clipPath>
+                  </defs>
+                )}
+                {/* White sticker body so the die-cut shape reads like a real sticker */}
+                {svgPath && (
+                  <path
+                    d={svgPath}
+                    fill="#ffffff"
+                    stroke="none"
+                    style={{ filter: "drop-shadow(0 10px 24px rgba(0,0,0,0.45))" }}
+                    pointerEvents="none"
+                  />
+                )}
+                {/* Artwork, clipped to the sticker body */}
+                <image
+                  href={imgSrc}
+                  x={0}
+                  y={0}
+                  width={imgW}
+                  height={imgH}
+                  preserveAspectRatio="xMidYMid meet"
+                  clipPath={svgPath ? `url(#${clipId})` : undefined}
+                  style={{ pointerEvents: "none", userSelect: "none" }}
+                />
+                {svgPath && (
                   <>
                     {/* Wide invisible hit area to add nodes on click */}
                     <path
@@ -536,17 +563,6 @@ export function HighlyCutoutWorkspace() {
                       strokeWidth={Math.max(lineWidth * 2.5, 16)}
                       style={{ cursor: "copy" }}
                       onClick={onPathClick}
-                    />
-                    {/* Soft white halo for contrast over artwork */}
-                    <path
-                      d={svgPath}
-                      fill="none"
-                      stroke="#ffffff"
-                      strokeWidth={lineWidth + Math.max(2, lineWidth * 0.5)}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                      opacity={0.85}
-                      pointerEvents="none"
                     />
                     {/* The red cut line */}
                     <path
@@ -580,7 +596,7 @@ export function HighlyCutoutWorkspace() {
             )}
 
             {busy && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/40 rounded-[12px]">
+              <div className="absolute inset-0 flex items-center justify-center">
                 <div className="flex items-center gap-[8px] px-[14px] py-[8px] rounded-full bg-[#0a111e] text-white text-[12px] font-semibold">
                   <Loader2 className="w-[14px] h-[14px] animate-spin" />
                   {removingBg ? "Isolating Highly…" : "Tracing outline…"}

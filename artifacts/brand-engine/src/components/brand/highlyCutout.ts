@@ -22,7 +22,8 @@ const INF = 1e9;
 /** Build a foreground mask from an image's alpha channel at a working resolution. */
 function buildMask(
   img: HTMLImageElement,
-  maxDim: number
+  maxDim: number,
+  alphaThreshold = 128
 ): { mask: Uint8Array; w: number; h: number; scale: number } {
   const scale = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
   const w = Math.max(1, Math.round(img.naturalWidth * scale));
@@ -47,7 +48,7 @@ function buildMask(
 
   if (hasAlpha) {
     for (let i = 0; i < w * h; i++) {
-      mask[i] = data[i * 4 + 3] > 32 ? 1 : 0;
+      mask[i] = data[i * 4 + 3] > alphaThreshold ? 1 : 0;
     }
   } else {
     // No transparency: treat near-white (sampled from corners) as background.
@@ -330,6 +331,8 @@ export interface CutOptions {
   maxDim?: number;
   /** Chaikin smoothing passes (fewer = sharper concave notches). */
   smooth?: number;
+  /** Alpha cutoff (0-255) for the silhouette; higher = crisper, ignores faint glow. */
+  alphaThreshold?: number;
 }
 
 /** Compute a smooth, draggable cut contour for an image. */
@@ -338,9 +341,10 @@ export function computeCutContour(img: HTMLImageElement, opts: CutOptions = {}):
   const maxDim = opts.maxDim ?? 1000;
   const offsetFrac = Math.max(0, opts.offsetFrac ?? 0.01);
   const detailFrac = opts.detailFrac ?? 0.0022;
-  const smooth = opts.smooth ?? 1;
+  const smooth = opts.smooth ?? 2;
+  const alphaThreshold = opts.alphaThreshold ?? 160;
 
-  const { mask, w, h, scale } = buildMask(img, maxDim);
+  const { mask, w, h, scale } = buildMask(img, maxDim, alphaThreshold);
 
   // Border distance and simplify tolerance scale with the working resolution so
   // the result looks the same regardless of the source image's pixel size.

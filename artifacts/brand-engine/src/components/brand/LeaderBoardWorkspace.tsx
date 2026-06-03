@@ -689,7 +689,7 @@ function ComboTitle({
   return (
     <div
       className="absolute flex flex-col items-center justify-center text-center"
-      style={{ left: `${box.left * 100}%`, width: `${box.width * 100}%`, top: "4.5%", height: "11%" }}
+      style={{ left: `${box.left * 100}%`, width: `${box.width * 100}%`, top: "8.5%", height: "11%" }}
     >
       <div
         className="font-['Bebas_Neue']"

@@ -670,7 +670,7 @@ function ComboCenterEmblem() {
         src={`${import.meta.env.BASE_URL}assets/logos/Lockup=Icon, Color=Full.png`}
         alt=""
         draggable={false}
-        style={{ width: "4cqw", height: "4cqw", objectFit: "contain" }}
+        style={{ width: "3.2cqw", height: "3.2cqw", objectFit: "contain" }}
       />
     </div>
   );

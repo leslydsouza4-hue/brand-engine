@@ -29,7 +29,7 @@ import photoKeaton from "@assets/image_1778887253935.png";
 import photoMichael from "@assets/image_1778887288526.png";
 import photoClay from "@assets/image_1778887313620.png";
 import photoMatt from "@assets/image_1778887339817.png";
-import comboBg from "@assets/image334_1780515321543.png";
+import comboBg from "@assets/image334_1780516264928.png";
 
 interface Affiliate {
   id: string;
@@ -339,7 +339,7 @@ export function LeaderBoardWorkspace() {
   );
 }
 
-function Avatar({ src, name, sizeCqw }: { src: string | null; name: string; sizeCqw: number }) {
+function Avatar({ src, name, sizeCqw, ringColor = "#7CC8FF" }: { src: string | null; name: string; sizeCqw: number; ringColor?: string }) {
   const px = `${sizeCqw}cqw`;
   return (
     <div
@@ -347,7 +347,7 @@ function Avatar({ src, name, sizeCqw }: { src: string | null; name: string; size
       style={{
         width: px,
         height: px,
-        boxShadow: "0 0 0 0.25cqw #7CC8FF",
+        boxShadow: `0 0 0 0.25cqw ${ringColor}`,
       }}
     >
       {src ? (
@@ -603,8 +603,8 @@ function EditableRows({
 }
 
 // Geometry of the printed boxes in image334 (fractions of board W / H).
-const COMBO_ROW_CY = [0.1929, 0.269, 0.345, 0.4216, 0.498, 0.5746, 0.651, 0.7274, 0.8044];
-const COMBO_ROW_H = 0.064;
+const COMBO_ROW_CY = [0.1931, 0.2691, 0.3452, 0.4217, 0.4981, 0.5749, 0.6513, 0.7279, 0.805];
+const COMBO_ROW_H = 0.065;
 const COMBO_LEFT = { left: 0.052, width: 0.396 };
 const COMBO_RIGHT = { left: 0.638, width: 0.302 };
 
@@ -711,8 +711,8 @@ function ComboSlot({
   const isRight = side === "right";
   const top = (cy - COMBO_ROW_H / 2) * 100;
   const height = COMBO_ROW_H * 100;
-  const nameColor = isRight ? "#072447" : "#FFFFFF";
-  const numColor = isRight ? "#0B3C7A" : "#F2C461";
+  const topRingColor = rank === 2 ? "#5BC6FF" : "#E7B65C";
+  const ringColor = isRight ? "#8FD3FF" : rank <= 3 ? topRingColor : "#7CC8FF";
   return (
     <div
       className="absolute flex items-center"
@@ -721,23 +721,76 @@ function ComboSlot({
         height: `${height}%`,
         left: `${box.left * 100}%`,
         width: `${box.width * 100}%`,
-        padding: "0 1.4cqw",
+        padding: isRight ? "0 1.6cqw 0 1.2cqw" : "0 1.4cqw",
         gap: "1cqw",
       }}
     >
+      {isRight ? (
+        <div
+          className="absolute flex items-center justify-center font-['Bebas_Neue']"
+          style={{ left: "-4.8cqw", top: 0, bottom: 0, width: "4cqw", color: "#FFFFFF", fontSize: "2.8cqw", lineHeight: 1 }}
+        >
+          {rank}
+        </div>
+      ) : (
+        <ComboRankBadge rank={rank} />
+      )}
+      <Avatar src={r.avatar ?? null} name={r.name ?? ""} sizeCqw={3.2} ringColor={ringColor} />
       <div
-        className="shrink-0 text-center font-['Bebas_Neue']"
-        style={{ width: "2.2cqw", fontSize: "2.3cqw", lineHeight: 1, color: numColor }}
+        className="flex-1 min-w-0 truncate"
+        style={
+          isRight
+            ? {
+                fontFamily: "Poppins, sans-serif",
+                fontWeight: 700,
+                fontSize: "1.95cqw",
+                color: "#FFFFFF",
+                lineHeight: 1.05,
+                textShadow: "0 0.12cqw 0.3cqw rgba(3,16,40,0.55)",
+              }
+            : {
+                fontFamily: "'Bebas Neue', sans-serif",
+                fontSize: "2.5cqw",
+                letterSpacing: "0.03em",
+                lineHeight: 1,
+                color: "#FFFFFF",
+                textTransform: "uppercase",
+              }
+        }
+      >
+        {r.name ?? ""}
+      </div>
+    </div>
+  );
+}
+
+function ComboRankBadge({ rank }: { rank: number }) {
+  if (rank <= 3) {
+    const color = rank === 2 ? "#5BC6FF" : "#E7B65C";
+    return (
+      <div
+        className="shrink-0 flex items-center justify-center font-['Bebas_Neue']"
+        style={{
+          width: "3cqw",
+          height: "3cqw",
+          border: `0.22cqw solid ${color}`,
+          borderRadius: "0.5cqw",
+          color,
+          fontSize: "2cqw",
+          lineHeight: 1,
+          boxShadow: `0 0 0.8cqw ${color}55`,
+        }}
       >
         {rank}
       </div>
-      <Avatar src={r?.avatar ?? null} name={r?.name ?? ""} sizeCqw={3.1} />
-      <div
-        className="flex-1 min-w-0 truncate font-['Bebas_Neue']"
-        style={{ fontSize: "2.4cqw", letterSpacing: "0.03em", lineHeight: 1, color: nameColor }}
-      >
-        {r?.name ?? ""}
-      </div>
+    );
+  }
+  return (
+    <div
+      className="shrink-0 text-center font-['Bebas_Neue']"
+      style={{ width: "3cqw", color: "#79B8E6", fontSize: "1.9cqw", lineHeight: 1, letterSpacing: "0.02em" }}
+    >
+      {rank}TH
     </div>
   );
 }

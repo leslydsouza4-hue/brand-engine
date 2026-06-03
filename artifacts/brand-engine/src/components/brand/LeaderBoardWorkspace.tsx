@@ -787,32 +787,40 @@ function ComboSlot({
     );
   }
 
-  // Commander: outlined dark box with rank badge / ordinal + ring-colored avatar.
-  const ringColor = rank <= 3 ? (rank === 2 ? "#5BC6FF" : "#E7B65C") : "#7CC8FF";
+  // Commander: glossy navy box (bright cyan left accent + top sheen) like the reference.
   return (
     <div
       className="absolute flex items-center"
       style={{
         ...common,
-        padding: "0 1.3cqw",
-        gap: "1cqw",
-        background: "linear-gradient(180deg, rgba(15,44,78,0.92) 0%, rgba(7,22,45,0.92) 100%)",
-        border: "0.16cqw solid rgba(92,176,236,0.55)",
+        padding: "0 1.3cqw 0 1.6cqw",
+        gap: "1.1cqw",
+        overflow: "hidden",
+        background:
+          "linear-gradient(115deg, transparent 55%, rgba(170,215,255,0.07) 70%, transparent 82%), " +
+          "linear-gradient(180deg, rgba(185,220,255,0.13) 0%, rgba(185,220,255,0) 24%), " +
+          "linear-gradient(180deg, #13325f 0%, #0b274f 55%, #071d3a 100%)",
+        border: "0.1cqw solid rgba(74,134,216,0.55)",
         borderRadius: "1cqw",
-        boxShadow: "inset 0 0 1.2cqw rgba(40,150,251,0.12)",
+        boxShadow:
+          "inset 0 0.16cqw 0.12cqw rgba(150,200,255,0.30), " +
+          "inset 0 -0.28cqw 0.35cqw rgba(0,0,0,0.32), " +
+          "inset 0.22cqw 0 0 rgba(38,222,240,0.7), " +
+          "0 0.3cqw 0.7cqw rgba(0,0,0,0.4)",
       }}
     >
       <ComboRankBadge rank={rank} />
-      <Avatar src={r.avatar ?? null} name={r.name ?? ""} sizeCqw={3.4} ringColor={ringColor} />
+      <Avatar src={r.avatar ?? null} name={r.name ?? ""} sizeCqw={3.6} ringColor="#A9C1DB" />
       <div
         className="flex-1 min-w-0 truncate"
         style={{
           fontFamily: "'Bebas Neue', sans-serif",
-          fontSize: "2.6cqw",
-          letterSpacing: "0.03em",
+          fontSize: "2.7cqw",
+          letterSpacing: "0.04em",
           lineHeight: 1,
           color: "#FFFFFF",
           textTransform: "uppercase",
+          textShadow: "0 0.1cqw 0.3cqw rgba(0,0,0,0.45)",
         }}
       >
         {r.name ?? ""}
@@ -823,19 +831,20 @@ function ComboSlot({
 
 function ComboRankBadge({ rank }: { rank: number }) {
   if (rank <= 3) {
-    const color = rank === 2 ? "#5BC6FF" : "#E7B65C";
+    const color = rank === 2 ? "#C6D2E0" : "#E7B65C";
     return (
       <div
         className="shrink-0 flex items-center justify-center font-['Bebas_Neue']"
         style={{
-          width: "3cqw",
-          height: "3cqw",
+          width: "3.1cqw",
+          height: "3.1cqw",
           border: `0.22cqw solid ${color}`,
-          borderRadius: "0.5cqw",
+          borderRadius: "0.6cqw",
           color,
-          fontSize: "2cqw",
+          fontSize: "2.1cqw",
           lineHeight: 1,
-          boxShadow: `0 0 0.8cqw ${color}55`,
+          background: "rgba(2,12,28,0.45)",
+          boxShadow: `0 0 0.7cqw ${color}40, inset 0 0 0.5cqw ${color}25`,
         }}
       >
         {rank}
@@ -845,7 +854,7 @@ function ComboRankBadge({ rank }: { rank: number }) {
   return (
     <div
       className="shrink-0 text-center font-['Bebas_Neue']"
-      style={{ width: "3cqw", color: "#79B8E6", fontSize: "1.9cqw", lineHeight: 1, letterSpacing: "0.02em" }}
+      style={{ width: "3.1cqw", color: "#EAF2FB", fontSize: "2cqw", lineHeight: 1, letterSpacing: "0.02em" }}
     >
       {rank}TH
     </div>

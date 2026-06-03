@@ -29,7 +29,7 @@ import photoKeaton from "@assets/image_1778887253935.png";
 import photoMichael from "@assets/image_1778887288526.png";
 import photoClay from "@assets/image_1778887313620.png";
 import photoMatt from "@assets/image_1778887339817.png";
-import comboBg from "@assets/image334_1780516264928.png";
+import comboBg from "@assets/image222_1780516914399.png";
 
 interface Affiliate {
   id: string;
@@ -76,13 +76,13 @@ const BOARD_LABELS: Record<BoardKey, string> = {
   combo: "Commander + Affiliate",
 };
 
-// Combo board = Commander (9) on the left + Affiliate (9) on the right, over one bg image.
-const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 9).map((p, i) => ({
+// Combo board = Commander (7) on the left + Affiliate (10) on the right, over one boxless bg image.
+const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 7).map((p, i) => ({
   id: `xc${i + 1}`,
   name: p.name,
   avatar: p.avatar,
 }));
-const COMBO_AFF_SEED: Affiliate[] = HIGHLEVEL_SEED.slice(0, 9).map((p, i) => ({
+const COMBO_AFF_SEED: Affiliate[] = HIGHLEVEL_SEED.slice(0, 10).map((p, i) => ({
   id: `xa${i + 1}`,
   name: p.name,
   avatar: p.avatar,
@@ -185,8 +185,8 @@ export function LeaderBoardWorkspace() {
           </div>
           {isCombo ? (
             <>
-              <EditableRows title="Commander (1–9)" rows={comboCmdr} onChange={setComboCmdr} />
-              <EditableRows title="Affiliate (1–9)" rows={comboAff} onChange={setComboAff} />
+              <EditableRows title="Commander (1–7)" rows={comboCmdr} onChange={setComboCmdr} />
+              <EditableRows title="Affiliate (1–10)" rows={comboAff} onChange={setComboAff} />
             </>
           ) : (
             <EditableRows key={board} title={`${BOARD_LABELS[board]} (1–10)`} rows={singleRows} onChange={setSingleRows} />
@@ -602,13 +602,26 @@ function EditableRows({
   );
 }
 
-// Geometry of the printed boxes in image334 (fractions of board W / H).
-const COMBO_ROW_CY = [0.1931, 0.2691, 0.3452, 0.4217, 0.4981, 0.5749, 0.6513, 0.7279, 0.805];
-const COMBO_ROW_H = 0.065;
-const COMBO_LEFT = { left: 0.052, width: 0.396 };
-const COMBO_RIGHT = { left: 0.638, width: 0.302 };
+// Boxless frame image222 (1536x1024): left (gold) panel inner ~x0.035-0.482,
+// right (blue) panel inner ~x0.530-0.968, both y ~0.045-0.93. No printed boxes —
+// we draw our own rows. Dotted accents sit near each panel's inner edge, so the
+// content insets stop short of them.
+const COMBO_LEFT = { left: 0.048, width: 0.4 };
+const COMBO_RIGHT = { left: 0.533, width: 0.4 };
+const COMBO_ROWS_TOP = 0.2;
+const COMBO_ROWS_BOT = 0.9;
+
+// Evenly distribute n rows in the panel's content band; returns center-Y and row height (board fractions).
+function comboRowGeom(n: number, i: number) {
+  const span = (COMBO_ROWS_BOT - COMBO_ROWS_TOP) / Math.max(n, 1);
+  const cy = COMBO_ROWS_TOP + span * (i + 0.5);
+  const h = span * (n <= 7 ? 0.8 : 0.84);
+  return { cy, h };
+}
 
 function ComboBoard({ cmdr, aff, month }: { cmdr: Affiliate[]; aff: Affiliate[]; month: string }) {
+  const cmdrRows = cmdr.slice(0, 7);
+  const affRows = aff.slice(0, 10);
   return (
     <div className="absolute inset-0 overflow-hidden">
       <img
@@ -622,25 +635,38 @@ function ComboBoard({ cmdr, aff, month }: { cmdr: Affiliate[]; aff: Affiliate[];
       <ComboTitle title="COMMANDER LEADERBOARD" month={month} accent="gold" box={COMBO_LEFT} />
       <ComboTitle title="AFFILIATE LEADERBOARD" month={month} accent="cyan" box={COMBO_RIGHT} />
 
-      {COMBO_ROW_CY.map((cy, i) => (
-        <ComboSlot key={`c${i}`} cy={cy} box={COMBO_LEFT} side="left" r={cmdr[i]} rank={i + 1} />
-      ))}
-      {COMBO_ROW_CY.map((cy, i) => (
-        <ComboSlot key={`a${i}`} cy={cy} box={COMBO_RIGHT} side="right" r={aff[i]} rank={i + 1} />
-      ))}
+      {cmdrRows.map((r, i) => {
+        const g = comboRowGeom(cmdrRows.length, i);
+        return <ComboSlot key={`c${i}`} cy={g.cy} h={g.h} box={COMBO_LEFT} side="left" r={r} rank={i + 1} />;
+      })}
+      {affRows.map((r, i) => {
+        const g = comboRowGeom(affRows.length, i);
+        return <ComboSlot key={`a${i}`} cy={g.cy} h={g.h} box={COMBO_RIGHT} side="right" r={r} rank={i + 1} />;
+      })}
 
-      {/* arrows inside the printed center circle */}
-      <div
-        className="absolute"
-        style={{
-          left: "50%",
-          top: "91%",
-          width: "4.4cqw",
-          height: "4.4cqw",
-          transform: "translate(-50%, -50%)",
-          zIndex: 6,
-        }}
-      >
+      <ComboCenterEmblem />
+    </div>
+  );
+}
+
+function ComboCenterEmblem() {
+  return (
+    <div
+      className="absolute flex items-center justify-center"
+      style={{
+        left: "50%",
+        top: "92.5%",
+        width: "6cqw",
+        height: "6cqw",
+        transform: "translate(-50%, -50%)",
+        borderRadius: "9999px",
+        background: "radial-gradient(circle at 50% 40%, #0c1a33 0%, #050d1c 100%)",
+        border: "0.25cqw solid #E7B65C",
+        boxShadow: "0 0 1.4cqw rgba(231,182,92,0.55), inset 0 0 0.8cqw rgba(231,182,92,0.3)",
+        zIndex: 6,
+      }}
+    >
+      <div style={{ width: "3.4cqw", height: "3.4cqw" }}>
         <ArrowsEmblem />
       </div>
     </div>
@@ -663,7 +689,7 @@ function ComboTitle({
   return (
     <div
       className="absolute flex flex-col items-center justify-center text-center"
-      style={{ left: `${box.left * 100}%`, width: `${box.width * 100}%`, top: "3.4%", height: "11%" }}
+      style={{ left: `${box.left * 100}%`, width: `${box.width * 100}%`, top: "4.5%", height: "11%" }}
     >
       <div
         className="font-['Bebas_Neue']"
@@ -696,12 +722,14 @@ function ComboTitle({
 
 function ComboSlot({
   cy,
+  h,
   box,
   side,
   r,
   rank,
 }: {
   cy: number;
+  h: number;
   box: { left: number; width: number };
   side: "left" | "right";
   r?: Affiliate;
@@ -709,54 +737,80 @@ function ComboSlot({
 }) {
   if (!r) return null;
   const isRight = side === "right";
-  const top = (cy - COMBO_ROW_H / 2) * 100;
-  const height = COMBO_ROW_H * 100;
-  const topRingColor = rank === 2 ? "#5BC6FF" : "#E7B65C";
-  const ringColor = isRight ? "#8FD3FF" : rank <= 3 ? topRingColor : "#7CC8FF";
+  const common = {
+    top: `${(cy - h / 2) * 100}%`,
+    height: `${h * 100}%`,
+    left: `${box.left * 100}%`,
+    width: `${box.width * 100}%`,
+  } as const;
+
+  if (isRight) {
+    // Affiliate: white rank number (left, outside the pill) + blue gradient pill.
+    return (
+      <div className="absolute flex items-center" style={{ ...common, gap: "0.9cqw" }}>
+        <div
+          className="shrink-0 text-center font-['Bebas_Neue']"
+          style={{ width: "3cqw", color: "#FFFFFF", fontSize: "2.4cqw", lineHeight: 1 }}
+        >
+          {rank}
+        </div>
+        <div
+          className="flex-1 min-w-0 h-full flex items-center"
+          style={{
+            background: "linear-gradient(95deg, #0140ea 0%, #2f86ff 100%)",
+            borderRadius: "1cqw",
+            padding: "0 1.3cqw",
+            gap: "1cqw",
+            boxShadow:
+              "inset 0 0.18cqw 0.4cqw rgba(255,255,255,0.22), inset 0 -0.2cqw 0.4cqw rgba(0,0,0,0.25), 0 0.25cqw 0.6cqw rgba(0,0,0,0.35)",
+          }}
+        >
+          <Avatar src={r.avatar ?? null} name={r.name ?? ""} sizeCqw={2.9} ringColor="#CFE6FF" />
+          <div
+            className="flex-1 min-w-0 truncate"
+            style={{
+              fontFamily: "Poppins, sans-serif",
+              fontWeight: 700,
+              fontSize: "1.75cqw",
+              color: "#FFFFFF",
+              lineHeight: 1.05,
+              textShadow: "0 0.12cqw 0.3cqw rgba(3,16,40,0.5)",
+            }}
+          >
+            {r.name ?? ""}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Commander: outlined dark box with rank badge / ordinal + ring-colored avatar.
+  const ringColor = rank <= 3 ? (rank === 2 ? "#5BC6FF" : "#E7B65C") : "#7CC8FF";
   return (
     <div
       className="absolute flex items-center"
       style={{
-        top: `${top}%`,
-        height: `${height}%`,
-        left: `${box.left * 100}%`,
-        width: `${box.width * 100}%`,
-        padding: isRight ? "0 1.6cqw 0 1.2cqw" : "0 1.4cqw",
+        ...common,
+        padding: "0 1.3cqw",
         gap: "1cqw",
+        background: "linear-gradient(180deg, rgba(15,44,78,0.92) 0%, rgba(7,22,45,0.92) 100%)",
+        border: "0.16cqw solid rgba(92,176,236,0.55)",
+        borderRadius: "1cqw",
+        boxShadow: "inset 0 0 1.2cqw rgba(40,150,251,0.12)",
       }}
     >
-      {isRight ? (
-        <div
-          className="absolute flex items-center justify-center font-['Bebas_Neue']"
-          style={{ left: "-4.8cqw", top: 0, bottom: 0, width: "4cqw", color: "#FFFFFF", fontSize: "2.8cqw", lineHeight: 1 }}
-        >
-          {rank}
-        </div>
-      ) : (
-        <ComboRankBadge rank={rank} />
-      )}
-      <Avatar src={r.avatar ?? null} name={r.name ?? ""} sizeCqw={3.2} ringColor={ringColor} />
+      <ComboRankBadge rank={rank} />
+      <Avatar src={r.avatar ?? null} name={r.name ?? ""} sizeCqw={3.4} ringColor={ringColor} />
       <div
         className="flex-1 min-w-0 truncate"
-        style={
-          isRight
-            ? {
-                fontFamily: "Poppins, sans-serif",
-                fontWeight: 700,
-                fontSize: "1.95cqw",
-                color: "#FFFFFF",
-                lineHeight: 1.05,
-                textShadow: "0 0.12cqw 0.3cqw rgba(3,16,40,0.55)",
-              }
-            : {
-                fontFamily: "'Bebas Neue', sans-serif",
-                fontSize: "2.5cqw",
-                letterSpacing: "0.03em",
-                lineHeight: 1,
-                color: "#FFFFFF",
-                textTransform: "uppercase",
-              }
-        }
+        style={{
+          fontFamily: "'Bebas Neue', sans-serif",
+          fontSize: "2.6cqw",
+          letterSpacing: "0.03em",
+          lineHeight: 1,
+          color: "#FFFFFF",
+          textTransform: "uppercase",
+        }}
       >
         {r.name ?? ""}
       </div>

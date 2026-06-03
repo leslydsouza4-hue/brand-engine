@@ -697,7 +697,7 @@ function ComboTitle({
       <div
         className="font-['Bebas_Neue']"
         style={{
-          fontSize: "3cqw",
+          fontSize: "3.3cqw",
           lineHeight: 1,
           letterSpacing: "0.04em",
           backgroundImage: gold

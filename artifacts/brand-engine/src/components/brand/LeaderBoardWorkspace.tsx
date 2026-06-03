@@ -666,9 +666,12 @@ function ComboCenterEmblem() {
         zIndex: 6,
       }}
     >
-      <div style={{ width: "3.4cqw", height: "3.4cqw" }}>
-        <ArrowsEmblem />
-      </div>
+      <img
+        src={`${import.meta.env.BASE_URL}assets/logos/Lockup=Icon, Color=Full.png`}
+        alt=""
+        draggable={false}
+        style={{ width: "4cqw", height: "4cqw", objectFit: "contain" }}
+      />
     </div>
   );
 }
@@ -846,15 +849,5 @@ function ComboRankBadge({ rank }: { rank: number }) {
     >
       {rank}TH
     </div>
-  );
-}
-
-function ArrowsEmblem() {
-  return (
-    <svg viewBox="0 0 60 50" className="w-full h-full">
-      <path d="M12,20 L19,28 L15,28 L15,46 L9,46 L9,28 L5,28 Z" fill="#FFD000" />
-      <path d="M30,6 L37,14 L33,14 L33,46 L27,46 L27,14 L23,14 Z" fill="#36D399" />
-      <path d="M48,14 L55,22 L51,22 L51,46 L45,46 L45,22 L41,22 Z" fill="#2896FB" />
-    </svg>
   );
 }

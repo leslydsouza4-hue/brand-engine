@@ -56,6 +56,9 @@ export function HighlyCutoutWorkspace() {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [imgW, setImgW] = useState(0);
   const [imgH, setImgH] = useState(0);
+  // True resolution of the uploaded file (before any processing) — drives the low-res warning.
+  const [srcW, setSrcW] = useState(0);
+  const [srcH, setSrcH] = useState(0);
   const [nodes, setNodes] = useState<Pt[]>([]);
 
   const [border, setBorder] = useState(40); // 0..100
@@ -117,6 +120,8 @@ export function HighlyCutoutWorkspace() {
       const raw = ev.target?.result as string;
       try {
         let img = await loadImage(raw);
+        setSrcW(img.naturalWidth);
+        setSrcH(img.naturalHeight);
         let finalSrc = raw;
         // Highly usually arrives as a transparent PNG. If not, isolate it first.
         if (!hasTransparency(img)) {
@@ -224,11 +229,15 @@ export function HighlyCutoutWorkspace() {
       const s = Math.min((outW * (1 - margin * 2)) / imgW, (outH * (1 - margin * 2)) / imgH);
       return { outW, outH, s, dx: (outW - imgW * s) / 2, dy: (outH - imgH * s) / 2 };
     }
-    // Original aspect ratio, upscaled so the file is genuinely hi-res
-    // (but capped so an unusually large upload can't blow up browser memory).
+    // Original aspect ratio. Export at the artwork's native resolution so we
+    // never throw away real detail; only upscale small uploads modestly toward
+    // MIN_LONG, and cap very large uploads so the browser can't run out of memory.
     const longSrc = Math.max(imgW, imgH);
-    const targetLong = Math.min(6000, Math.max(longSrc, MIN_LONG));
-    const s = targetLong / longSrc;
+    if (longSrc <= 0) return { outW: 0, outH: 0, s: 1, dx: 0, dy: 0 };
+    let s = Math.min(8000, Math.max(longSrc, MIN_LONG)) / longSrc;
+    // Hard cap on total pixels (~40 MP ≈ 160 MB RGBA) so a huge upload can't OOM the tab.
+    const MAX_AREA = 40_000_000;
+    if (imgW * s * imgH * s > MAX_AREA) s = Math.sqrt(MAX_AREA / (imgW * imgH));
     return { outW: Math.round(imgW * s), outH: Math.round(imgH * s), s, dx: 0, dy: 0 };
   };
 
@@ -476,8 +485,24 @@ export function HighlyCutoutWorkspace() {
               <p className="text-[10px] text-[#64748B] mt-[3px]">
                 {pageFormat === "a4"
                   ? "Centered on a print-ready A4 page at 300 DPI."
-                  : "Keeps Highly's shape, exported at high resolution."}
+                  : "Keeps Highly's shape at full resolution."}
               </p>
+              {srcW > 0 && imgW > 0 && imgH > 0 && (() => {
+                const lay = computeLayout();
+                const lowRes = Math.max(srcW, srcH) < 2000;
+                return (
+                  <div className="mt-[8px] space-y-[3px]">
+                    <p className="text-[10px] text-[#64748B]">
+                      Uploaded: {srcW}×{srcH}px · Export: {lay.outW}×{lay.outH}px
+                    </p>
+                    {lowRes && (
+                      <p className="text-[10px] leading-[1.4] text-[#FBBF24] bg-[rgba(251,191,36,0.08)] border border-[rgba(251,191,36,0.25)] rounded-[8px] px-[8px] py-[6px]">
+                        This Highly file is small, so the download will look soft no matter what. Upload the largest / original Highly PNG you have for a crisp, print-ready cut.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Export */}

@@ -67,17 +67,34 @@ const COMMANDER_SEED: Affiliate[] = COMMANDER_ROSTER.map((p, i) => ({
   avatar: p.avatar,
 }));
 
-type BoardKey = "highlevel" | "commander";
+type SingleBoard = "highlevel" | "commander";
+type BoardKey = SingleBoard | "combo";
 const BOARD_LABELS: Record<BoardKey, string> = {
   highlevel: "Top HighLevel Affiliates",
   commander: "Commander Leader Board",
+  combo: "Commander + Affiliate",
 };
 
+// Combo board = Commander (7) on the left + Affiliate (10) on the right, in one image.
+const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 7).map((p, i) => ({
+  id: `xc${i + 1}`,
+  name: p.name,
+  avatar: p.avatar,
+}));
+const COMBO_AFF_SEED: Affiliate[] = HIGHLEVEL_SEED.map((p, i) => ({
+  id: `xa${i + 1}`,
+  name: p.name,
+  avatar: p.avatar,
+}));
+
 export function LeaderBoardWorkspace() {
-  const [boards, setBoards] = useState<Record<BoardKey, Affiliate[]>>({
+  const [boards, setBoards] = useState<Record<SingleBoard, Affiliate[]>>({
     highlevel: HIGHLEVEL_SEED,
     commander: COMMANDER_SEED,
   });
+  const [comboCmdr, setComboCmdr] = useState<Affiliate[]>(COMBO_CMDR_SEED);
+  const [comboAff, setComboAff] = useState<Affiliate[]>(COMBO_AFF_SEED);
+  const [comboMonthYear, setComboMonthYear] = useState("FEBRUARY 2026");
   const [board, setBoard] = useState<BoardKey>("highlevel");
   const [boardOpen, setBoardOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -91,43 +108,23 @@ export function LeaderBoardWorkspace() {
   }, [boardOpen]);
   const [commanderMonthYear, setCommanderMonthYear] = useState("MARCH 2026");
   const [highlevelMonthYear, setHighlevelMonthYear] = useState("MARCH 2026");
-  const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [overIndex, setOverIndex] = useState<number | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const { isExporting, handleExport } = useExport();
 
-  const rows = boards[board];
-  const setRows = (updater: (rs: Affiliate[]) => Affiliate[]) =>
-    setBoards(b => ({ ...b, [board]: updater(b[board]) }));
-
-  const update = (id: string, patch: Partial<Affiliate>) =>
-    setRows(rs => rs.map(r => (r.id === id ? { ...r, ...patch } : r)));
-
-  const reorder = (from: number, to: number) => {
-    if (from === to) return;
-    setRows(rs => {
-      const next = rs.slice();
-      const [moved] = next.splice(from, 1);
-      if (moved) next.splice(to, 0, moved);
-      return next;
-    });
-  };
-
-  const onAvatar = (id: string, file: File) => {
-    const reader = new FileReader();
-    reader.onload = e => update(id, { avatar: String(e.target?.result || "") });
-    reader.readAsDataURL(file);
-  };
+  const isCommander = board === "commander";
+  const isCombo = board === "combo";
+  const singleRows = isCombo ? [] : boards[board as SingleBoard];
+  const setSingleRows = (next: Affiliate[]) =>
+    setBoards(b => ({ ...b, [board as SingleBoard]: next }));
 
   const onDownload = () => {
     if (previewRef.current) void handleExport("png", previewRef.current);
   };
 
-  const top3 = rows.slice(0, 3);
-  const rest = rows.slice(3, 10);
-  const isCommander = board === "commander";
-  const cmdrLeft = rows.slice(0, 5);
-  const cmdrRight = rows.slice(5, 10);
+  const top3 = singleRows.slice(0, 3);
+  const rest = singleRows.slice(3, 10);
+  const cmdrLeft = singleRows.slice(0, 5);
+  const cmdrRight = singleRows.slice(5, 10);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -156,8 +153,6 @@ export function LeaderBoardWorkspace() {
                         onClick={() => {
                           setBoard(k);
                           setBoardOpen(false);
-                          setDragIndex(null);
-                          setOverIndex(null);
                         }}
                         className={`w-full flex items-center gap-[10px] py-[9px] px-[12px] rounded-[8px] text-left cursor-pointer transition-colors ${
                           isActive ? "bg-[rgba(40,150,251,0.10)] text-white" : "text-[#CBD5E1] hover:bg-[rgba(255,255,255,0.04)] hover:text-white"
@@ -176,112 +171,25 @@ export function LeaderBoardWorkspace() {
             <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Month / Year</div>
             <input
               type="text"
-              value={isCommander ? commanderMonthYear : highlevelMonthYear}
+              value={isCombo ? comboMonthYear : isCommander ? commanderMonthYear : highlevelMonthYear}
               onChange={e => {
                 const v = e.target.value.toUpperCase();
-                if (isCommander) setCommanderMonthYear(v); else setHighlevelMonthYear(v);
+                if (isCombo) setComboMonthYear(v);
+                else if (isCommander) setCommanderMonthYear(v);
+                else setHighlevelMonthYear(v);
               }}
               placeholder="MARCH 2026"
               className="w-full py-[9px] px-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-[13px] font-semibold text-white outline-none focus:border-[rgba(40,150,251,0.4)] uppercase tracking-[0.1em]"
             />
           </div>
-          <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">{BOARD_LABELS[board]} (1–10)</div>
-            <div className="flex flex-col gap-[8px]">
-              {rows.map((r, i) => (
-                <div
-                  key={r.id}
-                  draggable
-                  onDragStart={e => {
-                    setDragIndex(i);
-                    e.dataTransfer.effectAllowed = "move";
-                  }}
-                  onDragOver={e => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = "move";
-                    if (overIndex !== i) setOverIndex(i);
-                  }}
-                  onDragLeave={() => {
-                    if (overIndex === i) setOverIndex(null);
-                  }}
-                  onDrop={e => {
-                    e.preventDefault();
-                    if (dragIndex !== null) reorder(dragIndex, i);
-                    setDragIndex(null);
-                    setOverIndex(null);
-                  }}
-                  onDragEnd={() => {
-                    setDragIndex(null);
-                    setOverIndex(null);
-                  }}
-                  className={`p-[10px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border flex items-center gap-[8px] transition-colors ${
-                    overIndex === i && dragIndex !== null && dragIndex !== i
-                      ? "border-[rgba(40,150,251,0.7)] bg-[rgba(40,150,251,0.08)]"
-                      : "border-[rgba(255,255,255,0.06)]"
-                  } ${dragIndex === i ? "opacity-40" : ""}`}
-                >
-                  <div
-                    className="shrink-0 flex items-center justify-center w-[18px] h-[26px] text-[#64748B] hover:text-[#7CC8FF] cursor-grab active:cursor-grabbing"
-                    title="Drag to reorder"
-                  >
-                    <GripVertical className="w-[14px] h-[14px]" />
-                  </div>
-                  <div className="w-[26px] h-[26px] rounded-[7px] flex items-center justify-center text-[11px] font-black text-white shrink-0 bg-[rgba(40,150,251,0.18)] border border-[rgba(40,150,251,0.35)]">
-                    {i + 1}
-                  </div>
-                  {r.avatar ? (
-                    <img
-                      src={r.avatar}
-                      alt=""
-                      className="w-[34px] h-[34px] rounded-full object-cover shrink-0 ring-2 ring-[rgba(40,150,251,0.35)]"
-                    />
-                  ) : (
-                    <label
-                      className="w-[34px] h-[34px] rounded-full shrink-0 flex items-center justify-center bg-[rgba(255,255,255,0.04)] border border-dashed border-[rgba(255,255,255,0.12)] hover:border-[rgba(40,150,251,0.5)] cursor-pointer text-[#64748B] hover:text-[#7CC8FF]"
-                      title="Upload photo"
-                    >
-                      <Upload className="w-[12px] h-[12px]" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={e => e.target.files?.[0] && onAvatar(r.id, e.target.files[0])}
-                      />
-                    </label>
-                  )}
-                  <input
-                    value={r.name}
-                    onChange={e => update(r.id, { name: e.target.value })}
-                    placeholder="Name"
-                    className="flex-1 min-w-0 py-[7px] px-[8px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-[7px] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)]"
-                  />
-                  {r.avatar && (
-                    <div className="flex flex-col gap-[4px] shrink-0">
-                      <label
-                        className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center bg-[rgba(40,150,251,0.12)] border border-[rgba(40,150,251,0.25)] hover:bg-[rgba(40,150,251,0.2)] cursor-pointer text-[#7CC8FF]"
-                        title="Replace photo"
-                      >
-                        <Upload className="w-[10px] h-[10px]" />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={e => e.target.files?.[0] && onAvatar(r.id, e.target.files[0])}
-                        />
-                      </label>
-                      <button
-                        onClick={() => update(r.id, { avatar: null })}
-                        className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center bg-[rgba(248,113,113,0.1)] border border-[rgba(248,113,113,0.25)] hover:bg-[rgba(248,113,113,0.2)] cursor-pointer text-[#FCA5A5]"
-                        title="Remove photo"
-                      >
-                        <X className="w-[10px] h-[10px]" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          {isCombo ? (
+            <>
+              <EditableRows title="Commander (1–7)" rows={comboCmdr} onChange={setComboCmdr} />
+              <EditableRows title="Affiliate (1–10)" rows={comboAff} onChange={setComboAff} />
+            </>
+          ) : (
+            <EditableRows key={board} title={`${BOARD_LABELS[board]} (1–10)`} rows={singleRows} onChange={setSingleRows} />
+          )}
 
           <button
             onClick={onDownload}
@@ -302,12 +210,16 @@ export function LeaderBoardWorkspace() {
           data-export-name="Leader Board"
           className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)] w-full"
           style={{
-            aspectRatio: isCommander ? "2068 / 1324" : "1920 / 1080",
+            aspectRatio: isCombo ? "1573 / 1000" : isCommander ? "2068 / 1324" : "1920 / 1080",
             background: "#000",
             containerType: "inline-size",
-            maxWidth: "min(100%, calc((100vh - 200px) * " + (isCommander ? "1.562" : "1.778") + "))",
+            maxWidth: "min(100%, calc((100vh - 200px) * " + (isCombo ? "1.573" : isCommander ? "1.562" : "1.778") + "))",
           }}
         >
+            {isCombo ? (
+              <ComboBoard cmdr={comboCmdr} aff={comboAff} month={comboMonthYear} />
+            ) : (
+            <>
             {/* Background */}
             <img
               src={isCommander ? bgCommander : bgAsset}
@@ -417,6 +329,8 @@ export function LeaderBoardWorkspace() {
                 </div>
               </div>
               </>
+            )}
+            </>
             )}
         </div>
       </LivePreview>
@@ -553,6 +467,350 @@ function RankRow({ r, rank }: { r: Affiliate; rank: number }) {
       </div>
       <Avatar src={r.avatar} name={r.name} sizeCqw={3.5} />
       <NamePill name={r.name} fontCqw={1.85} padXCqw={1.4} padYCqw={1.0} radiusCqw={0.8} bgAlpha={0.6} />
+    </div>
+  );
+}
+
+function EditableRows({
+  title,
+  rows,
+  onChange,
+}: {
+  title: string;
+  rows: Affiliate[];
+  onChange: (next: Affiliate[]) => void;
+}) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
+  const update = (id: string, patch: Partial<Affiliate>) =>
+    onChange(rows.map(r => (r.id === id ? { ...r, ...patch } : r)));
+
+  const reorder = (from: number, to: number) => {
+    if (from === to) return;
+    const next = rows.slice();
+    const [moved] = next.splice(from, 1);
+    if (moved) next.splice(to, 0, moved);
+    onChange(next);
+  };
+
+  const onAvatar = (id: string, file: File) => {
+    const reader = new FileReader();
+    reader.onload = e => update(id, { avatar: String(e.target?.result || "") });
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div>
+      <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">{title}</div>
+      <div className="flex flex-col gap-[8px]">
+        {rows.map((r, i) => (
+          <div
+            key={r.id}
+            draggable
+            onDragStart={e => {
+              setDragIndex(i);
+              e.dataTransfer.effectAllowed = "move";
+            }}
+            onDragOver={e => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "move";
+              if (overIndex !== i) setOverIndex(i);
+            }}
+            onDragLeave={() => {
+              if (overIndex === i) setOverIndex(null);
+            }}
+            onDrop={e => {
+              e.preventDefault();
+              if (dragIndex !== null) reorder(dragIndex, i);
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+            onDragEnd={() => {
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+            className={`p-[10px] rounded-[10px] bg-[rgba(255,255,255,0.03)] border flex items-center gap-[8px] transition-colors ${
+              overIndex === i && dragIndex !== null && dragIndex !== i
+                ? "border-[rgba(40,150,251,0.7)] bg-[rgba(40,150,251,0.08)]"
+                : "border-[rgba(255,255,255,0.06)]"
+            } ${dragIndex === i ? "opacity-40" : ""}`}
+          >
+            <div
+              className="shrink-0 flex items-center justify-center w-[18px] h-[26px] text-[#64748B] hover:text-[#7CC8FF] cursor-grab active:cursor-grabbing"
+              title="Drag to reorder"
+            >
+              <GripVertical className="w-[14px] h-[14px]" />
+            </div>
+            <div className="w-[26px] h-[26px] rounded-[7px] flex items-center justify-center text-[11px] font-black text-white shrink-0 bg-[rgba(40,150,251,0.18)] border border-[rgba(40,150,251,0.35)]">
+              {i + 1}
+            </div>
+            {r.avatar ? (
+              <img
+                src={r.avatar}
+                alt=""
+                className="w-[34px] h-[34px] rounded-full object-cover shrink-0 ring-2 ring-[rgba(40,150,251,0.35)]"
+              />
+            ) : (
+              <label
+                className="w-[34px] h-[34px] rounded-full shrink-0 flex items-center justify-center bg-[rgba(255,255,255,0.04)] border border-dashed border-[rgba(255,255,255,0.12)] hover:border-[rgba(40,150,251,0.5)] cursor-pointer text-[#64748B] hover:text-[#7CC8FF]"
+                title="Upload photo"
+              >
+                <Upload className="w-[12px] h-[12px]" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={e => e.target.files?.[0] && onAvatar(r.id, e.target.files[0])}
+                />
+              </label>
+            )}
+            <input
+              value={r.name}
+              onChange={e => update(r.id, { name: e.target.value })}
+              placeholder="Name"
+              className="flex-1 min-w-0 py-[7px] px-[8px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-[7px] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)]"
+            />
+            {r.avatar && (
+              <div className="flex flex-col gap-[4px] shrink-0">
+                <label
+                  className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center bg-[rgba(40,150,251,0.12)] border border-[rgba(40,150,251,0.25)] hover:bg-[rgba(40,150,251,0.2)] cursor-pointer text-[#7CC8FF]"
+                  title="Replace photo"
+                >
+                  <Upload className="w-[10px] h-[10px]" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => e.target.files?.[0] && onAvatar(r.id, e.target.files[0])}
+                  />
+                </label>
+                <button
+                  onClick={() => update(r.id, { avatar: null })}
+                  className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center bg-[rgba(248,113,113,0.1)] border border-[rgba(248,113,113,0.25)] hover:bg-[rgba(248,113,113,0.2)] cursor-pointer text-[#FCA5A5]"
+                  title="Remove photo"
+                >
+                  <X className="w-[10px] h-[10px]" />
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ComboBoard({ cmdr, aff, month }: { cmdr: Affiliate[]; aff: Affiliate[]; month: string }) {
+  return (
+    <div
+      className="absolute inset-0 overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(130% 100% at 50% 0%, #122c54 0%, #0a1a34 40%, #050f1f 74%, #03091f 100%)",
+      }}
+    >
+      {/* corner glows */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(40% 48% at 0% 0%, rgba(197,139,44,0.30), transparent 70%)," +
+            "radial-gradient(34% 42% at 1% 22%, rgba(40,150,251,0.24), transparent 72%)," +
+            "radial-gradient(40% 48% at 100% 100%, rgba(197,139,44,0.26), transparent 70%)," +
+            "radial-gradient(34% 42% at 100% 80%, rgba(40,150,251,0.22), transparent 72%)",
+        }}
+      />
+
+      {/* Commander panel (left) */}
+      <div
+        className="absolute flex flex-col"
+        style={{
+          top: "3.2%",
+          bottom: "3.2%",
+          left: "2.5%",
+          width: "44.5%",
+          padding: "2.4cqw 1.8cqw 2.2cqw",
+          borderRadius: "1.6cqw",
+          background: "linear-gradient(160deg, rgba(9,22,44,0.94) 0%, rgba(4,11,24,0.97) 100%)",
+          boxShadow:
+            "inset 0 0 0 0.18cqw rgba(197,139,44,0.85), inset 0 0 2.2cqw rgba(197,139,44,0.12), 0 0 2.6cqw rgba(197,139,44,0.22)",
+        }}
+      >
+        <ComboHeader title="COMMANDER LEADERBOARD" month={month} accent="gold" />
+        <div className="flex-1 flex flex-col" style={{ gap: "0.8cqw", marginTop: "1.4cqw", minHeight: 0 }}>
+          {cmdr.slice(0, 7).map((r, i) => (
+            <ComboCommanderRow key={r.id} r={r} rank={i + 1} />
+          ))}
+        </div>
+      </div>
+
+      {/* Affiliate panel (right) */}
+      <div
+        className="absolute flex flex-col"
+        style={{
+          top: "3.2%",
+          bottom: "3.2%",
+          right: "2.5%",
+          width: "44.5%",
+          padding: "2.4cqw 1.8cqw 2.2cqw",
+          borderRadius: "1.6cqw",
+          background: "linear-gradient(160deg, rgba(9,22,44,0.94) 0%, rgba(4,11,24,0.97) 100%)",
+          boxShadow:
+            "inset 0 0 0 0.18cqw rgba(79,195,255,0.85), inset 0 0 2.2cqw rgba(40,150,251,0.14), 0 0 2.6cqw rgba(40,150,251,0.26)",
+        }}
+      >
+        <ComboHeader title="AFFILIATE LEADERBOARD" month={month} accent="cyan" />
+        <div className="flex-1 flex flex-col" style={{ gap: "0.55cqw", marginTop: "1.2cqw", minHeight: 0 }}>
+          {aff.slice(0, 10).map((r, i) => (
+            <ComboAffiliateRow key={r.id} r={r} rank={i + 1} />
+          ))}
+        </div>
+      </div>
+
+      {/* center emblem */}
+      <div
+        className="absolute left-1/2"
+        style={{ bottom: "1.2%", transform: "translateX(-50%)", zIndex: 5 }}
+      >
+        <ArrowsEmblem />
+      </div>
+    </div>
+  );
+}
+
+function ComboHeader({ title, month, accent }: { title: string; month: string; accent: "gold" | "cyan" }) {
+  const gold = accent === "gold";
+  const dash = gold ? "#C58B2C" : "#4FC3FF";
+  return (
+    <div className="text-center shrink-0">
+      <div
+        className="font-['Bebas_Neue'] inline-block"
+        style={{
+          fontSize: "3.5cqw",
+          lineHeight: 1,
+          letterSpacing: "0.04em",
+          backgroundImage: gold
+            ? "linear-gradient(180deg, #FFE89A 0%, #C58B2C 100%)"
+            : "linear-gradient(180deg, #BEEAFF 0%, #2896FB 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          color: gold ? "#E0B156" : "#56B8FB",
+          filter: "drop-shadow(0 0.2cqw 0.4cqw rgba(0,0,0,0.5))",
+        }}
+      >
+        {title}
+      </div>
+      <div className="flex items-center justify-center" style={{ gap: "0.8cqw", marginTop: "0.5cqw" }}>
+        <div style={{ height: "0.16cqw", width: "5cqw", background: `linear-gradient(90deg, transparent 0%, ${dash} 100%)` }} />
+        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.55cqw", letterSpacing: "0.2em", lineHeight: 1 }}>
+          {month || "—"}
+        </div>
+        <div style={{ height: "0.16cqw", width: "5cqw", background: `linear-gradient(90deg, ${dash} 0%, transparent 100%)` }} />
+      </div>
+    </div>
+  );
+}
+
+function ComboCommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
+  const isTop = rank <= 3;
+  return (
+    <div
+      className="flex items-center overflow-hidden"
+      style={{
+        flex: 1,
+        minHeight: 0,
+        gap: "1cqw",
+        padding: "0 1.2cqw",
+        borderRadius: "0.9cqw",
+        background: "linear-gradient(180deg, rgba(13,32,64,0.55) 0%, rgba(8,20,42,0.55) 100%)",
+        boxShadow: "inset 0 0 0 0.12cqw rgba(79,195,255,0.5)",
+      }}
+    >
+      <div className="shrink-0 flex items-center justify-center" style={{ width: "3.4cqw" }}>
+        {isTop ? (
+          <div
+            className="flex items-center justify-center"
+            style={{
+              width: "2.7cqw",
+              height: "2.7cqw",
+              borderRadius: "0.5cqw",
+              boxShadow: "inset 0 0 0 0.14cqw #C58B2C",
+              background: "rgba(197,139,44,0.10)",
+            }}
+          >
+            <span className="font-['Bebas_Neue']" style={{ fontSize: "2cqw", lineHeight: 1, color: "#F2C461" }}>
+              {rank}
+            </span>
+          </div>
+        ) : (
+          <span
+            className="font-['Bebas_Neue']"
+            style={{ fontSize: "1.7cqw", lineHeight: 1, color: "#CFE6FF", letterSpacing: "0.02em" }}
+          >
+            {ORDINAL[rank - 1]}
+          </span>
+        )}
+      </div>
+      <Avatar src={r.avatar} name={r.name} sizeCqw={3.0} />
+      <div
+        className="flex-1 min-w-0 truncate font-['Bebas_Neue'] text-white"
+        style={{ fontSize: "2.2cqw", letterSpacing: "0.04em", lineHeight: 1 }}
+      >
+        {r.name || "—"}
+      </div>
+    </div>
+  );
+}
+
+function ComboAffiliateRow({ r, rank }: { r: Affiliate; rank: number }) {
+  return (
+    <div className="flex items-center" style={{ flex: 1, minHeight: 0, gap: "0.9cqw" }}>
+      <div
+        className="shrink-0 text-center font-['Poppins'] font-extrabold text-white"
+        style={{ width: "2.6cqw", fontSize: "1.75cqw" }}
+      >
+        {rank}
+      </div>
+      <Avatar src={r.avatar} name={r.name} sizeCqw={2.9} />
+      <div
+        className="flex-1 min-w-0 h-full flex items-center"
+        style={{
+          padding: "0 1.4cqw",
+          borderRadius: "0.7cqw",
+          background: "linear-gradient(90deg, #2E9BFF 0%, #1769D6 100%)",
+          boxShadow: "inset 0 0.08cqw 0 rgba(255,255,255,0.28), inset 0 0 0 0.1cqw rgba(120,200,255,0.4)",
+        }}
+      >
+        <span
+          className="truncate font-['Poppins'] font-bold text-white"
+          style={{ fontSize: "1.7cqw", letterSpacing: "-0.01em" }}
+        >
+          {r.name || "—"}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ArrowsEmblem() {
+  return (
+    <div
+      className="flex items-center justify-center"
+      style={{
+        width: "6.5cqw",
+        height: "6.5cqw",
+        borderRadius: "50%",
+        background: "radial-gradient(circle at 50% 38%, #0d2142 0%, #050d1c 100%)",
+        boxShadow: "inset 0 0 0 0.25cqw rgba(197,139,44,0.85), 0 0 1.8cqw rgba(0,0,0,0.6)",
+      }}
+    >
+      <svg viewBox="0 0 60 50" style={{ width: "56%", height: "56%" }}>
+        <path d="M12,20 L19,28 L15,28 L15,46 L9,46 L9,28 L5,28 Z" fill="#FFD000" />
+        <path d="M30,6 L37,14 L33,14 L33,46 L27,46 L27,14 L23,14 Z" fill="#36D399" />
+        <path d="M48,14 L55,22 L51,22 L51,46 L45,46 L45,22 L41,22 Z" fill="#2896FB" />
+      </svg>
     </div>
   );
 }

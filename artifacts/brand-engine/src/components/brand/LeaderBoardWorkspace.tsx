@@ -29,6 +29,7 @@ import photoKeaton from "@assets/image_1778887253935.png";
 import photoMichael from "@assets/image_1778887288526.png";
 import photoClay from "@assets/image_1778887313620.png";
 import photoMatt from "@assets/image_1778887339817.png";
+import comboBg from "@assets/image334_1780515321543.png";
 
 interface Affiliate {
   id: string;
@@ -75,13 +76,13 @@ const BOARD_LABELS: Record<BoardKey, string> = {
   combo: "Commander + Affiliate",
 };
 
-// Combo board = Commander (7) on the left + Affiliate (10) on the right, in one image.
-const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 7).map((p, i) => ({
+// Combo board = Commander (9) on the left + Affiliate (9) on the right, over one bg image.
+const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 9).map((p, i) => ({
   id: `xc${i + 1}`,
   name: p.name,
   avatar: p.avatar,
 }));
-const COMBO_AFF_SEED: Affiliate[] = HIGHLEVEL_SEED.map((p, i) => ({
+const COMBO_AFF_SEED: Affiliate[] = HIGHLEVEL_SEED.slice(0, 9).map((p, i) => ({
   id: `xa${i + 1}`,
   name: p.name,
   avatar: p.avatar,
@@ -184,8 +185,8 @@ export function LeaderBoardWorkspace() {
           </div>
           {isCombo ? (
             <>
-              <EditableRows title="Commander (1–7)" rows={comboCmdr} onChange={setComboCmdr} />
-              <EditableRows title="Affiliate (1–10)" rows={comboAff} onChange={setComboAff} />
+              <EditableRows title="Commander (1–9)" rows={comboCmdr} onChange={setComboCmdr} />
+              <EditableRows title="Affiliate (1–9)" rows={comboAff} onChange={setComboAff} />
             </>
           ) : (
             <EditableRows key={board} title={`${BOARD_LABELS[board]} (1–10)`} rows={singleRows} onChange={setSingleRows} />
@@ -210,10 +211,10 @@ export function LeaderBoardWorkspace() {
           data-export-name="Leader Board"
           className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)] w-full"
           style={{
-            aspectRatio: isCombo ? "1573 / 1000" : isCommander ? "2068 / 1324" : "1920 / 1080",
+            aspectRatio: isCombo ? "1536 / 1024" : isCommander ? "2068 / 1324" : "1920 / 1080",
             background: "#000",
             containerType: "inline-size",
-            maxWidth: "min(100%, calc((100vh - 200px) * " + (isCombo ? "1.573" : isCommander ? "1.562" : "1.778") + "))",
+            maxWidth: "min(100%, calc((100vh - 200px) * " + (isCombo ? "1.5" : isCommander ? "1.562" : "1.778") + "))",
           }}
         >
             {isCombo ? (
@@ -601,77 +602,44 @@ function EditableRows({
   );
 }
 
+// Geometry of the printed boxes in image334 (fractions of board W / H).
+const COMBO_ROW_CY = [0.1929, 0.269, 0.345, 0.4216, 0.498, 0.5746, 0.651, 0.7274, 0.8044];
+const COMBO_ROW_H = 0.064;
+const COMBO_LEFT = { left: 0.052, width: 0.396 };
+const COMBO_RIGHT = { left: 0.638, width: 0.302 };
+
 function ComboBoard({ cmdr, aff, month }: { cmdr: Affiliate[]; aff: Affiliate[]; month: string }) {
   return (
-    <div
-      className="absolute inset-0 overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(130% 100% at 50% 0%, #122c54 0%, #0a1a34 40%, #050f1f 74%, #03091f 100%)",
-      }}
-    >
-      {/* corner glows */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(40% 48% at 0% 0%, rgba(197,139,44,0.30), transparent 70%)," +
-            "radial-gradient(34% 42% at 1% 22%, rgba(40,150,251,0.24), transparent 72%)," +
-            "radial-gradient(40% 48% at 100% 100%, rgba(197,139,44,0.26), transparent 70%)," +
-            "radial-gradient(34% 42% at 100% 80%, rgba(40,150,251,0.22), transparent 72%)",
-        }}
+    <div className="absolute inset-0 overflow-hidden">
+      <img
+        src={comboBg}
+        alt=""
+        draggable={false}
+        className="absolute inset-0 w-full h-full select-none"
+        style={{ objectFit: "fill" }}
       />
 
-      {/* Commander panel (left) */}
-      <div
-        className="absolute flex flex-col"
-        style={{
-          top: "3.2%",
-          bottom: "3.2%",
-          left: "2.5%",
-          width: "44.5%",
-          padding: "2.4cqw 1.8cqw 2.2cqw",
-          borderRadius: "1.6cqw",
-          background: "linear-gradient(160deg, rgba(9,22,44,0.94) 0%, rgba(4,11,24,0.97) 100%)",
-          boxShadow:
-            "inset 0 0 0 0.18cqw rgba(197,139,44,0.85), inset 0 0 2.2cqw rgba(197,139,44,0.12), 0 0 2.6cqw rgba(197,139,44,0.22)",
-        }}
-      >
-        <ComboHeader title="COMMANDER LEADERBOARD" month={month} accent="gold" />
-        <div className="flex-1 flex flex-col" style={{ gap: "0.8cqw", marginTop: "1.4cqw", minHeight: 0 }}>
-          {cmdr.slice(0, 7).map((r, i) => (
-            <ComboCommanderRow key={r.id} r={r} rank={i + 1} />
-          ))}
-        </div>
-      </div>
+      <ComboTitle title="COMMANDER LEADERBOARD" month={month} accent="gold" box={COMBO_LEFT} />
+      <ComboTitle title="AFFILIATE LEADERBOARD" month={month} accent="cyan" box={COMBO_RIGHT} />
 
-      {/* Affiliate panel (right) */}
-      <div
-        className="absolute flex flex-col"
-        style={{
-          top: "3.2%",
-          bottom: "3.2%",
-          right: "2.5%",
-          width: "44.5%",
-          padding: "2.4cqw 1.8cqw 2.2cqw",
-          borderRadius: "1.6cqw",
-          background: "linear-gradient(160deg, rgba(9,22,44,0.94) 0%, rgba(4,11,24,0.97) 100%)",
-          boxShadow:
-            "inset 0 0 0 0.18cqw rgba(79,195,255,0.85), inset 0 0 2.2cqw rgba(40,150,251,0.14), 0 0 2.6cqw rgba(40,150,251,0.26)",
-        }}
-      >
-        <ComboHeader title="AFFILIATE LEADERBOARD" month={month} accent="cyan" />
-        <div className="flex-1 flex flex-col" style={{ gap: "0.55cqw", marginTop: "1.2cqw", minHeight: 0 }}>
-          {aff.slice(0, 10).map((r, i) => (
-            <ComboAffiliateRow key={r.id} r={r} rank={i + 1} />
-          ))}
-        </div>
-      </div>
+      {COMBO_ROW_CY.map((cy, i) => (
+        <ComboSlot key={`c${i}`} cy={cy} box={COMBO_LEFT} side="left" r={cmdr[i]} rank={i + 1} />
+      ))}
+      {COMBO_ROW_CY.map((cy, i) => (
+        <ComboSlot key={`a${i}`} cy={cy} box={COMBO_RIGHT} side="right" r={aff[i]} rank={i + 1} />
+      ))}
 
-      {/* center emblem */}
+      {/* arrows inside the printed center circle */}
       <div
-        className="absolute left-1/2"
-        style={{ bottom: "1.2%", transform: "translateX(-50%)", zIndex: 5 }}
+        className="absolute"
+        style={{
+          left: "50%",
+          top: "91%",
+          width: "4.4cqw",
+          height: "4.4cqw",
+          transform: "translate(-50%, -50%)",
+          zIndex: 6,
+        }}
       >
         <ArrowsEmblem />
       </div>
@@ -679,15 +647,28 @@ function ComboBoard({ cmdr, aff, month }: { cmdr: Affiliate[]; aff: Affiliate[];
   );
 }
 
-function ComboHeader({ title, month, accent }: { title: string; month: string; accent: "gold" | "cyan" }) {
+function ComboTitle({
+  title,
+  month,
+  accent,
+  box,
+}: {
+  title: string;
+  month: string;
+  accent: "gold" | "cyan";
+  box: { left: number; width: number };
+}) {
   const gold = accent === "gold";
   const dash = gold ? "#C58B2C" : "#4FC3FF";
   return (
-    <div className="text-center shrink-0">
+    <div
+      className="absolute flex flex-col items-center justify-center text-center"
+      style={{ left: `${box.left * 100}%`, width: `${box.width * 100}%`, top: "3.4%", height: "11%" }}
+    >
       <div
-        className="font-['Bebas_Neue'] inline-block"
+        className="font-['Bebas_Neue']"
         style={{
-          fontSize: "3.5cqw",
+          fontSize: "3cqw",
           lineHeight: 1,
           letterSpacing: "0.04em",
           backgroundImage: gold
@@ -702,93 +683,60 @@ function ComboHeader({ title, month, accent }: { title: string; month: string; a
       >
         {title}
       </div>
-      <div className="flex items-center justify-center" style={{ gap: "0.8cqw", marginTop: "0.5cqw" }}>
-        <div style={{ height: "0.16cqw", width: "5cqw", background: `linear-gradient(90deg, transparent 0%, ${dash} 100%)` }} />
-        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.55cqw", letterSpacing: "0.2em", lineHeight: 1 }}>
+      <div className="flex items-center justify-center" style={{ gap: "0.8cqw", marginTop: "0.6cqw" }}>
+        <div style={{ height: "0.16cqw", width: "4cqw", background: `linear-gradient(90deg, transparent 0%, ${dash} 100%)` }} />
+        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.5cqw", letterSpacing: "0.2em", lineHeight: 1 }}>
           {month || "—"}
         </div>
-        <div style={{ height: "0.16cqw", width: "5cqw", background: `linear-gradient(90deg, ${dash} 0%, transparent 100%)` }} />
+        <div style={{ height: "0.16cqw", width: "4cqw", background: `linear-gradient(90deg, ${dash} 0%, transparent 100%)` }} />
       </div>
     </div>
   );
 }
 
-function ComboCommanderRow({ r, rank }: { r: Affiliate; rank: number }) {
-  const isTop = rank <= 3;
+function ComboSlot({
+  cy,
+  box,
+  side,
+  r,
+  rank,
+}: {
+  cy: number;
+  box: { left: number; width: number };
+  side: "left" | "right";
+  r?: Affiliate;
+  rank: number;
+}) {
+  if (!r) return null;
+  const isRight = side === "right";
+  const top = (cy - COMBO_ROW_H / 2) * 100;
+  const height = COMBO_ROW_H * 100;
+  const nameColor = isRight ? "#072447" : "#FFFFFF";
+  const numColor = isRight ? "#0B3C7A" : "#F2C461";
   return (
     <div
-      className="flex items-center overflow-hidden"
+      className="absolute flex items-center"
       style={{
-        flex: 1,
-        minHeight: 0,
+        top: `${top}%`,
+        height: `${height}%`,
+        left: `${box.left * 100}%`,
+        width: `${box.width * 100}%`,
+        padding: "0 1.4cqw",
         gap: "1cqw",
-        padding: "0 1.2cqw",
-        borderRadius: "0.9cqw",
-        background: "linear-gradient(180deg, rgba(13,32,64,0.55) 0%, rgba(8,20,42,0.55) 100%)",
-        boxShadow: "inset 0 0 0 0.12cqw rgba(79,195,255,0.5)",
       }}
     >
-      <div className="shrink-0 flex items-center justify-center" style={{ width: "3.4cqw" }}>
-        {isTop ? (
-          <div
-            className="flex items-center justify-center"
-            style={{
-              width: "2.7cqw",
-              height: "2.7cqw",
-              borderRadius: "0.5cqw",
-              boxShadow: "inset 0 0 0 0.14cqw #C58B2C",
-              background: "rgba(197,139,44,0.10)",
-            }}
-          >
-            <span className="font-['Bebas_Neue']" style={{ fontSize: "2cqw", lineHeight: 1, color: "#F2C461" }}>
-              {rank}
-            </span>
-          </div>
-        ) : (
-          <span
-            className="font-['Bebas_Neue']"
-            style={{ fontSize: "1.7cqw", lineHeight: 1, color: "#CFE6FF", letterSpacing: "0.02em" }}
-          >
-            {ORDINAL[rank - 1]}
-          </span>
-        )}
-      </div>
-      <Avatar src={r.avatar} name={r.name} sizeCqw={3.0} />
       <div
-        className="flex-1 min-w-0 truncate font-['Bebas_Neue'] text-white"
-        style={{ fontSize: "2.2cqw", letterSpacing: "0.04em", lineHeight: 1 }}
-      >
-        {r.name || "—"}
-      </div>
-    </div>
-  );
-}
-
-function ComboAffiliateRow({ r, rank }: { r: Affiliate; rank: number }) {
-  return (
-    <div className="flex items-center" style={{ flex: 1, minHeight: 0, gap: "0.9cqw" }}>
-      <div
-        className="shrink-0 text-center font-['Poppins'] font-extrabold text-white"
-        style={{ width: "2.6cqw", fontSize: "1.75cqw" }}
+        className="shrink-0 text-center font-['Bebas_Neue']"
+        style={{ width: "2.2cqw", fontSize: "2.3cqw", lineHeight: 1, color: numColor }}
       >
         {rank}
       </div>
-      <Avatar src={r.avatar} name={r.name} sizeCqw={2.9} />
+      <Avatar src={r?.avatar ?? null} name={r?.name ?? ""} sizeCqw={3.1} />
       <div
-        className="flex-1 min-w-0 h-full flex items-center"
-        style={{
-          padding: "0 1.4cqw",
-          borderRadius: "0.7cqw",
-          background: "linear-gradient(90deg, #2E9BFF 0%, #1769D6 100%)",
-          boxShadow: "inset 0 0.08cqw 0 rgba(255,255,255,0.28), inset 0 0 0 0.1cqw rgba(120,200,255,0.4)",
-        }}
+        className="flex-1 min-w-0 truncate font-['Bebas_Neue']"
+        style={{ fontSize: "2.4cqw", letterSpacing: "0.03em", lineHeight: 1, color: nameColor }}
       >
-        <span
-          className="truncate font-['Poppins'] font-bold text-white"
-          style={{ fontSize: "1.7cqw", letterSpacing: "-0.01em" }}
-        >
-          {r.name || "—"}
-        </span>
+        {r?.name ?? ""}
       </div>
     </div>
   );
@@ -796,21 +744,10 @@ function ComboAffiliateRow({ r, rank }: { r: Affiliate; rank: number }) {
 
 function ArrowsEmblem() {
   return (
-    <div
-      className="flex items-center justify-center"
-      style={{
-        width: "6.5cqw",
-        height: "6.5cqw",
-        borderRadius: "50%",
-        background: "radial-gradient(circle at 50% 38%, #0d2142 0%, #050d1c 100%)",
-        boxShadow: "inset 0 0 0 0.25cqw rgba(197,139,44,0.85), 0 0 1.8cqw rgba(0,0,0,0.6)",
-      }}
-    >
-      <svg viewBox="0 0 60 50" style={{ width: "56%", height: "56%" }}>
-        <path d="M12,20 L19,28 L15,28 L15,46 L9,46 L9,28 L5,28 Z" fill="#FFD000" />
-        <path d="M30,6 L37,14 L33,14 L33,46 L27,46 L27,14 L23,14 Z" fill="#36D399" />
-        <path d="M48,14 L55,22 L51,22 L51,46 L45,46 L45,22 L41,22 Z" fill="#2896FB" />
-      </svg>
-    </div>
+    <svg viewBox="0 0 60 50" className="w-full h-full">
+      <path d="M12,20 L19,28 L15,28 L15,46 L9,46 L9,28 L5,28 Z" fill="#FFD000" />
+      <path d="M30,6 L37,14 L33,14 L33,46 L27,46 L27,14 L23,14 Z" fill="#36D399" />
+      <path d="M48,14 L55,22 L51,22 L51,46 L45,46 L45,22 L41,22 Z" fill="#2896FB" />
+    </svg>
   );
 }

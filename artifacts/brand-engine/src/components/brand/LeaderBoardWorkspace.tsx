@@ -797,16 +797,17 @@ function ComboSlot({
         gap: "1.1cqw",
         overflow: "hidden",
         background:
-          "linear-gradient(115deg, transparent 55%, rgba(170,215,255,0.07) 70%, transparent 82%), " +
-          "linear-gradient(180deg, rgba(185,220,255,0.13) 0%, rgba(185,220,255,0) 24%), " +
-          "linear-gradient(180deg, #13325f 0%, #0b274f 55%, #071d3a 100%)",
-        border: "0.1cqw solid rgba(74,134,216,0.55)",
+          "linear-gradient(115deg, transparent 55%, rgba(180,220,255,0.06) 70%, transparent 82%), " +
+          "linear-gradient(180deg, rgba(150,195,255,0.16) 0%, rgba(40,90,160,0.07) 100%)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+        border: "0.1cqw solid rgba(150,195,255,0.32)",
         borderRadius: "1cqw",
         boxShadow:
-          "inset 0 0.16cqw 0.12cqw rgba(150,200,255,0.30), " +
-          "inset 0 -0.28cqw 0.35cqw rgba(0,0,0,0.32), " +
-          "inset 0.22cqw 0 0 rgba(38,222,240,0.7), " +
-          "0 0.3cqw 0.7cqw rgba(0,0,0,0.4)",
+          "inset 0 0.16cqw 0.14cqw rgba(185,220,255,0.22), " +
+          "inset 0 -0.28cqw 0.4cqw rgba(0,0,0,0.18), " +
+          "inset 0.22cqw 0 0 rgba(38,222,240,0.55), " +
+          "0 0.3cqw 0.7cqw rgba(0,0,0,0.28)",
       }}
     >
       <ComboRankBadge rank={rank} />

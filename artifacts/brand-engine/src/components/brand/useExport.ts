@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { toPng, toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { addExport, createThumbnail } from "./exportStore";
+import { getFontEmbedCSS } from "./fontEmbed";
 
 async function preloadImages(root: HTMLElement): Promise<void> {
   const imgs = root.querySelectorAll("img");
@@ -54,6 +55,7 @@ async function captureElement(target: HTMLElement): Promise<{ dataUrl: string; n
   const ratio = targetW / currentW;
 
   const restoreFontLinks = removeGoogleFontLinks();
+  const fontEmbedCSS = await getFontEmbedCSS();
   await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
   const opts = {
@@ -62,6 +64,7 @@ async function captureElement(target: HTMLElement): Promise<{ dataUrl: string; n
     pixelRatio: ratio,
     cacheBust: true,
     skipAutoScale: true,
+    fontEmbedCSS,
     filter: (node: HTMLElement) => {
       if (node.tagName === 'LINK' && node.getAttribute('href')?.includes('fonts.googleapis.com')) {
         return false;
@@ -110,21 +113,27 @@ export function useExport() {
         createThumbnail(rawDataUrl).then((thumb) => addExport({ name: `${safeName}.pdf`, source: "Custom Design", format: "pdf", thumbnail: thumb, dimensions: `${img.width}x${img.height}` }));
       } else if (format === "jpeg") {
         const restoreFontLinks2 = removeGoogleFontLinks();
+        const fontEmbedCSS2 = await getFontEmbedCSS();
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        const jpegDataUrl = await toJpeg(target, {
-          width: currentW,
-          height: rect.height,
-          pixelRatio: ratio,
-          cacheBust: true,
-          skipAutoScale: true,
-          quality: 0.95,
-          backgroundColor: "#060B16",
-          filter: (node: HTMLElement) => {
-            if (node.tagName === 'LINK' && node.getAttribute('href')?.includes('fonts.googleapis.com')) return false;
-            return true;
-          },
-        });
-        restoreFontLinks2();
+        let jpegDataUrl: string;
+        try {
+          jpegDataUrl = await toJpeg(target, {
+            width: currentW,
+            height: rect.height,
+            pixelRatio: ratio,
+            cacheBust: true,
+            skipAutoScale: true,
+            quality: 0.95,
+            backgroundColor: "#060B16",
+            fontEmbedCSS: fontEmbedCSS2,
+            filter: (node: HTMLElement) => {
+              if (node.tagName === 'LINK' && node.getAttribute('href')?.includes('fonts.googleapis.com')) return false;
+              return true;
+            },
+          });
+        } finally {
+          restoreFontLinks2();
+        }
         const a = document.createElement("a");
         a.href = jpegDataUrl;
         a.download = `${safeName}.jpg`;

@@ -47,6 +47,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - Claude Design (Custom Design) — Anthropic Claude generates the design markup; Nano Banana Pro (Gemini) is used for any inline image needs via `lib/integrations-gemini-ai`
   - The standalone "AI Image" generator workspace was removed in favor of Claude Design (covers all use cases)
 - **CMYK Export**: Customer Journey PDF export uses server-side Sharp CMYK conversion → DeviceCMYK PDF (true print-ready CMYK color space)
+- **Font embedding (exports)**: Fonts are loaded from Google Fonts (cross-origin) for the live preview, so html-to-image can't inline them and previously fell back to system fonts on download. `useExport.ts` now passes an explicit `fontEmbedCSS` (built by `fontEmbed.ts` from self-hosted woff2 in `src/assets/fonts/` — Bebas Neue 400, Poppins 400–800, Inter 400–800, base64 data URIs, cached) to `toPng`/`toJpeg`, so PNG/JPEG exports embed the real brand fonts. Note: workspaces that call `toPng` directly with `skipFonts:true` (e.g. Master Class) do NOT use this and still rely on system fallback.
 - **API Proxy**: Vite dev server proxies `/api` to API server at `http://localhost:8080`
 - **Assets**: Shaun images from GitHub raw URLs
 

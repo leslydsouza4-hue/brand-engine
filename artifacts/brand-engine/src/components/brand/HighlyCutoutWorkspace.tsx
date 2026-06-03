@@ -59,7 +59,7 @@ export function HighlyCutoutWorkspace() {
   const [nodes, setNodes] = useState<Pt[]>([]);
 
   const [border, setBorder] = useState(40); // 0..100
-  const [detail, setDetail] = useState(6); // 1..10
+  const [detail, setDetail] = useState(8); // 1..10 — high default for a faithful "exact die" trace
   const [lineWidth, setLineWidth] = useState(8); // image px
   const [showNodes, setShowNodes] = useState(true);
   const [pageFormat, setPageFormat] = useState<"original" | "a4">("original");

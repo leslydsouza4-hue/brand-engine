@@ -338,7 +338,9 @@ export interface CutOptions {
 /** Compute a smooth, draggable cut contour for an image. */
 export function computeCutContour(img: HTMLImageElement, opts: CutOptions = {}): CutResult {
   // Trace at a high working resolution so the outline hugs the artwork faithfully.
-  const maxDim = opts.maxDim ?? 1000;
+  // 1500 keeps fine detail (fingers, antenna arrows) on hi-res uploads without
+  // blowing up the distance-transform cost; small images are never upscaled.
+  const maxDim = opts.maxDim ?? 1500;
   const offsetFrac = Math.max(0, opts.offsetFrac ?? 0.01);
   const detailFrac = opts.detailFrac ?? 0.0022;
   const smooth = opts.smooth ?? 2;

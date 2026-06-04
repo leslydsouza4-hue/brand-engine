@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Sparkles, Loader2, Download, Trash2, Check, Copy, Mail, Megaphone, Share2, Images, ChevronDown, ImagePlus, X, Link2, Plus } from "lucide-react";
+import { Sparkles, Loader2, Download, Trash2, Check, Copy, Mail, Megaphone, Share2, Images, ChevronDown, ImagePlus, X, Link2, Plus, Upload } from "lucide-react";
 import {
   SUMMER_THEMES,
   SUMMER_SECTIONS,
@@ -185,6 +185,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   // Reference images + asset-tab prompt (shared across the workspace).
   const [refImages, setRefImages] = useState<string[]>([]);
   const refInputRef = useRef<HTMLInputElement | null>(null);
+  const bgInputRef = useRef<HTMLInputElement | null>(null);
   const [assetPrompt, setAssetPrompt] = useState<string>(theme.sampleImagePrompt);
   const [assetGenerating, setAssetGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
@@ -500,6 +501,31 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   const removeRefImage = useCallback((idx: number) => {
     setRefImages((prev) => prev.filter((_, i) => i !== idx));
   }, []);
+
+  // Manually set the active card's background from an uploaded image file.
+  const uploadBg = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0 || !activeCard) return;
+      const file = Array.from(files).find((f) => f.type.startsWith("image/"));
+      if (!file) {
+        setGenError("That file isn't an image — pick a PNG, JPG or WebP.");
+        return;
+      }
+      try {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        patchContent(activeCard.id, { bgImage: dataUrl });
+        setGenError(null);
+      } catch {
+        setGenError("Couldn't read that image — try a different file.");
+      }
+    },
+    [activeCard, patchContent]
+  );
 
   // ── Export ────────────────────────────────────────────────────────────────
   const exportCard = useCallback(
@@ -937,7 +963,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                   </div>
                 </div>
 
-                {/* AI background */}
+                {/* Background — generate with AI or upload your own */}
                 <div className="pt-[18px] border-t border-white/[0.07]">
                   <div className={labelCls}>AI background · {theme.name} style</div>
                   <textarea
@@ -957,6 +983,32 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                     {activeCard.generating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
                     {activeCard.generating ? "Generating…" : "Generate background"}
                   </button>
+
+                  <div className="flex items-center gap-[10px] my-[12px]">
+                    <div className="h-px flex-1 bg-white/[0.08]" />
+                    <span className="text-[10px] font-bold uppercase tracking-[1.5px] text-[#5E6B82]">or</span>
+                    <div className="h-px flex-1 bg-white/[0.08]" />
+                  </div>
+
+                  <input
+                    ref={bgInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      void uploadBg(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <button
+                    onClick={() => bgInputRef.current?.click()}
+                    disabled={activeCard.generating}
+                    className="w-full flex items-center justify-center gap-[8px] py-[12px] rounded-[12px] font-bold text-[13px] cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed transition-colors bg-transparent border border-white/[0.16] text-[#D7DEEA] hover:border-white/[0.32] hover:text-white"
+                  >
+                    <Upload size={15} />
+                    Upload your own image
+                  </button>
+
                   {genError && <div className="text-[#ff9b9b] text-[12px] mt-[8px] leading-[1.45]">{genError}</div>}
                   {activeContent.bgImage && (
                     <button

@@ -11,8 +11,6 @@ import { Sparkles, Loader2, Download, Trash2, Check, Mail, Megaphone, Share2, Im
 import {
   SUMMER_THEMES,
   SUMMER_SECTIONS,
-  SUMMER_FONTS,
-  SUMMER_FONT_ORDER,
   formatsForSection,
   defaultContent,
   defaultLayout,
@@ -29,6 +27,18 @@ import {
 import { ScaledCanvasPreview, SummerCanvasNode } from "./SummerCanvas";
 import { useSummerAssets, addSummerAsset, removeSummerAsset } from "./summerStore";
 import { getFontEmbedCSS } from "./fontEmbed";
+import { fontDefFor, getGoogleFontEmbedCSS } from "./googleFonts";
+import { SummerFontPicker } from "./SummerFontPicker";
+
+/** Combined embed CSS for export: brand body fonts + the chosen Google heading font. */
+async function buildEmbedCSS(headlineFont: string): Promise<string> {
+  const def = fontDefFor(headlineFont);
+  const [brand, google] = await Promise.all([
+    getFontEmbedCSS(),
+    getGoogleFontEmbedCSS(def.family, def.weight),
+  ]);
+  return google ? `${brand}\n${google}` : brand;
+}
 
 const ELEMENT_LABELS: [SummerElementKey, string][] = [
   ["eyebrow", "Eyebrow"],
@@ -205,19 +215,19 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
     if (!node) return;
     setExporting(true);
     try {
-      const fontEmbedCSS = await getFontEmbedCSS();
+      const fontEmbedCSS = await buildEmbedCSS(content.headlineFont);
       const dataUrl = await nodeToPng(node, activeFormat, fontEmbedCSS);
       triggerDownload(dataUrl, `summer-${themeId}-${activeFormat.key}.png`);
     } finally {
       setExporting(false);
     }
-  }, [activeFormat, themeId]);
+  }, [activeFormat, themeId, content.headlineFont]);
 
   const exportZip = useCallback(async () => {
     if (sectionFormats.length === 0) return;
     setExportingZip(true);
     try {
-      const fontEmbedCSS = await getFontEmbedCSS();
+      const fontEmbedCSS = await buildEmbedCSS(content.headlineFont);
       const zip = new JSZip();
       for (const fmt of sectionFormats) {
         const node = exportRefs.current[fmt.key];
@@ -232,7 +242,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
     } finally {
       setExportingZip(false);
     }
-  }, [sectionFormats, themeId, section]);
+  }, [sectionFormats, themeId, section, content.headlineFont]);
 
   const p = theme.palette;
   const accentInk = themeId === "feral" ? "#fff" : "#06121a";
@@ -385,30 +395,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
             <div className="pt-[18px] border-t border-white/[0.07] flex flex-col gap-[14px]">
               <div>
                 <div className={labelCls}>Heading font</div>
-                <div className="flex gap-2">
-                  {SUMMER_FONT_ORDER.map((fk) => {
-                    const f = SUMMER_FONTS[fk];
-                    const on = content.headlineFont === fk;
-                    return (
-                      <button
-                        key={fk}
-                        type="button"
-                        onClick={() => set("headlineFont", fk)}
-                        className="flex-1 rounded-[10px] px-3 py-2 text-[14px] transition-colors"
-                        style={{
-                          fontFamily: f.family,
-                          textTransform: f.transform,
-                          letterSpacing: f.tracking,
-                          border: on ? "1px solid rgba(255,208,0,0.7)" : "1px solid rgba(255,255,255,0.12)",
-                          background: on ? "rgba(255,208,0,0.12)" : "rgba(255,255,255,0.04)",
-                          color: "#fff",
-                        }}
-                      >
-                        {f.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <SummerFontPicker value={content.headlineFont} onChange={(fam) => set("headlineFont", fam)} />
               </div>
 
               {/* Contextual element editor (Canva-style) — size + color target the

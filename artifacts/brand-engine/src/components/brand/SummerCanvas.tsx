@@ -8,7 +8,6 @@
 
 import { useLayoutEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import {
-  SUMMER_FONTS,
   SUMMER_CTA_BG,
   SUMMER_CTA_INK,
   type SummerContent,
@@ -17,6 +16,7 @@ import {
   type SummerFormat,
   type SummerThemeDef,
 } from "./summerThemes";
+import { fontDefFor, fontStackFor, headingTypography } from "./googleFonts";
 
 function scaleFor(format: SummerFormat): number {
   const minDim = Math.min(format.width, format.height);
@@ -125,7 +125,8 @@ function CanvasInner({
 }: RenderProps & { interaction?: Interaction }): ReactElement {
   const s = scaleFor(format);
   const minDim = Math.min(format.width, format.height);
-  const font = SUMMER_FONTS[content.headlineFont];
+  const fontDef = fontDefFor(content.headlineFont);
+  const headType = headingTypography(fontDef);
   const sz = (k: SummerElementKey) => content.layout[k].size ?? 1;
   const overlay = content.overlay ?? { color: "black" as const, opacity: 0 };
   return (
@@ -166,11 +167,10 @@ function CanvasInner({
           <h1
             style={{
               margin: 0,
-              fontFamily: font.family,
-              fontWeight: font.weight,
-              textTransform: font.transform,
-              letterSpacing: font.tracking,
-              lineHeight: font.lineHeight,
+              fontFamily: fontStackFor(fontDef),
+              fontWeight: headType.weight,
+              letterSpacing: headType.letterSpacing,
+              lineHeight: headType.lineHeight,
               fontSize: `${Math.max(22, minDim * 0.085) * sz("headline")}px`,
               color: content.colors.headline,
             }}

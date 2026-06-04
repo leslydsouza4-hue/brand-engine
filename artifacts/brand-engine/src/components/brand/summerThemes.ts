@@ -63,24 +63,9 @@ export interface SummerThemeDef {
 
 // ── Canva-style editing model ──────────────────────────────────────────────
 
-/** Selectable heading font styles (both are embedded for exports). */
-export type SummerFontKey = "poppins" | "bebas";
-
-export interface SummerFontDef {
-  label: string;
-  family: string;
-  weight: number;
-  transform: "uppercase" | "none";
-  tracking: string;
-  lineHeight: number;
-}
-
-export const SUMMER_FONTS: Record<SummerFontKey, SummerFontDef> = {
-  poppins: { label: "Modern", family: "'Poppins', sans-serif", weight: 700, transform: "none", tracking: "-0.02em", lineHeight: 1.04 },
-  bebas: { label: "Bold Display", family: "'Bebas Neue', sans-serif", weight: 400, transform: "uppercase", tracking: "0.012em", lineHeight: 0.92 },
-};
-
-export const SUMMER_FONT_ORDER: SummerFontKey[] = ["poppins", "bebas"];
+// Heading fonts are any Google Font (see googleFonts.ts). `headlineFont` holds
+// the family name (e.g. "Poppins", "Bebas Neue", "Playfair Display"); the
+// preview loads it on demand and exports embed it as base64 woff2.
 
 /** The CTA is always brand yellow, by request. */
 export const SUMMER_CTA_BG = "#FFD000";
@@ -280,7 +265,7 @@ export interface SummerContent {
   cta: string;
   bgImage: string | null;
   /** Selected heading font style. */
-  headlineFont: SummerFontKey;
+  headlineFont: string;
   /** Per-element text colors. */
   colors: SummerColors;
   /** Per-element placement (drag-to-move). */
@@ -297,7 +282,7 @@ export function defaultContent(themeId: SummerThemeId): SummerContent {
     subtext: t.copy.subtext,
     cta: t.copy.cta,
     bgImage: null,
-    headlineFont: t.fontHeading.includes("Bebas") ? "bebas" : "poppins",
+    headlineFont: t.fontHeading.includes("Bebas") ? "Bebas Neue" : "Poppins",
     colors: {
       eyebrow: t.palette.primary,
       headline: "#FFFFFF",

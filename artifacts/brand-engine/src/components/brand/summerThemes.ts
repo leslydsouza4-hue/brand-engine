@@ -72,7 +72,18 @@ export const SUMMER_CTA_BG = "#FFD000";
 export const SUMMER_CTA_INK = "#1A1206";
 
 /** Editable / draggable elements on a canvas. */
-export type SummerElementKey = "eyebrow" | "headline" | "subtext" | "cta";
+export type SummerElementKey = "eyebrow" | "headline" | "subtext" | "cta" | "logo";
+
+/** Available Summer of AI logo color variants (transparent PNGs in /public). */
+export type SummerLogoVariant = "yellow" | "blue";
+
+/** Summer of AI lockup placement + variant. Position lives in the layout map. */
+export interface SummerLogo {
+  /** Whether to render the logo on the canvas. */
+  show: boolean;
+  /** Which color lockup to use. */
+  variant: SummerLogoVariant;
+}
 
 export interface SummerElementLayout {
   /** Left edge as a fraction of canvas width (0..1). */
@@ -123,30 +134,34 @@ export function defaultLayoutFor(width: number, height: number): SummerLayoutMap
   switch (orientationKind(width, height)) {
     case "wide":
       return {
-        eyebrow: { x: 0.06, y: 0.17, w: 0.6 },
-        headline: { x: 0.06, y: 0.31, w: 0.62 },
-        subtext: { x: 0.06, y: 0.63, w: 0.52 },
-        cta: { x: 0.06, y: 0.81, w: 0.5 },
+        logo: { x: 0.06, y: 0.07, w: 0.2 },
+        eyebrow: { x: 0.06, y: 0.34, w: 0.6 },
+        headline: { x: 0.06, y: 0.44, w: 0.62 },
+        subtext: { x: 0.06, y: 0.66, w: 0.52 },
+        cta: { x: 0.06, y: 0.82, w: 0.5 },
       };
     case "tall":
       return {
-        eyebrow: { x: 0.06, y: 0.07, w: 0.86 },
+        logo: { x: 0.06, y: 0.05, w: 0.4 },
+        eyebrow: { x: 0.06, y: 0.51, w: 0.86 },
         headline: { x: 0.06, y: 0.58, w: 0.86 },
-        subtext: { x: 0.06, y: 0.77, w: 0.78 },
+        subtext: { x: 0.06, y: 0.78, w: 0.78 },
         cta: { x: 0.06, y: 0.88, w: 0.62 },
       };
     case "portrait":
       return {
-        eyebrow: { x: 0.06, y: 0.06, w: 0.88 },
-        headline: { x: 0.06, y: 0.52, w: 0.88 },
-        subtext: { x: 0.06, y: 0.74, w: 0.76 },
+        logo: { x: 0.06, y: 0.05, w: 0.34 },
+        eyebrow: { x: 0.06, y: 0.45, w: 0.88 },
+        headline: { x: 0.06, y: 0.53, w: 0.88 },
+        subtext: { x: 0.06, y: 0.75, w: 0.76 },
         cta: { x: 0.06, y: 0.87, w: 0.52 },
       };
     default:
       return {
-        eyebrow: { x: 0.06, y: 0.07, w: 0.88 },
-        headline: { x: 0.06, y: 0.46, w: 0.88 },
-        subtext: { x: 0.06, y: 0.69, w: 0.74 },
+        logo: { x: 0.06, y: 0.05, w: 0.3 },
+        eyebrow: { x: 0.06, y: 0.39, w: 0.88 },
+        headline: { x: 0.06, y: 0.47, w: 0.88 },
+        subtext: { x: 0.06, y: 0.7, w: 0.74 },
         cta: { x: 0.06, y: 0.84, w: 0.52 },
       };
   }
@@ -319,7 +334,16 @@ export interface SummerContent {
   layout: SummerLayoutMap;
   /** Flat black/white wash over the background. */
   overlay: SummerOverlay;
+  /** Summer of AI lockup (show + color variant); position is in `layout.logo`. */
+  logo: SummerLogo;
 }
+
+/** Default logo color per theme (Electric uses the blue lockup, others yellow). */
+const DEFAULT_LOGO_VARIANT: Record<SummerThemeId, SummerLogoVariant> = {
+  "sun-drunk": "yellow",
+  electric: "blue",
+  feral: "yellow",
+};
 
 export function defaultContent(themeId: SummerThemeId): SummerContent {
   const t = SUMMER_THEMES[themeId];
@@ -337,6 +361,7 @@ export function defaultContent(themeId: SummerThemeId): SummerContent {
     },
     layout: defaultLayout(),
     overlay: { color: "black", opacity: 0 },
+    logo: { show: true, variant: DEFAULT_LOGO_VARIANT[themeId] },
   };
 }
 

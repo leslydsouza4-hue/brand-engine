@@ -18,6 +18,13 @@ import {
 } from "./summerThemes";
 import { fontDefFor, fontStackFor, headingTypography } from "./googleFonts";
 
+const BASE = import.meta.env.BASE_URL;
+
+/** Transparent-PNG Summer of AI lockup per color variant. */
+function logoUrl(variant: "yellow" | "blue"): string {
+  return `${BASE}assets/summer/logo-${variant}.png`;
+}
+
 function scaleFor(format: SummerFormat): number {
   const minDim = Math.min(format.width, format.height);
   return Math.max(0.3, Math.min(1.1, minDim / 1080));
@@ -215,6 +222,29 @@ function CanvasInner({
           >
             {content.cta}
           </span>
+        </ElementBox>
+      )}
+
+      {content.logo?.show && (
+        <ElementBox
+          k="logo"
+          layout={{ ...content.layout.logo, w: content.layout.logo.w * sz("logo") }}
+          interaction={interaction}
+        >
+          <img
+            src={logoUrl(content.logo.variant)}
+            alt="Summer of AI"
+            crossOrigin="anonymous"
+            draggable={false}
+            style={{
+              display: "block",
+              width: "100%",
+              height: "auto",
+              pointerEvents: "none",
+              userSelect: "none",
+              filter: "drop-shadow(0 6px 18px rgba(0,0,0,0.35))",
+            }}
+          />
         </ElementBox>
       )}
     </>

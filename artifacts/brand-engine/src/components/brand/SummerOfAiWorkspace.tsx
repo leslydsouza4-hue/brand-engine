@@ -492,7 +492,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                 <div className={labelCls}>Element</div>
                 <div className="flex gap-[5px] mb-[12px]">
                   {ELEMENT_LABELS.map(([k, label]) => {
-                    const on = (selected ?? "headline") === k;
+                    const on = (selected && selected !== "logo" ? selected : "headline") === k;
                     return (
                       <button
                         key={k}
@@ -511,7 +511,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                   })}
                 </div>
                 {(() => {
-                  const target = selected ?? "headline";
+                  const target = selected && selected !== "logo" ? selected : "headline";
                   const size = (activeContent.layout)[target].size ?? 1;
                   const isText = target !== "cta";
                   return (
@@ -553,6 +553,97 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                     </div>
                   );
                 })()}
+              </div>
+
+              {/* Summer of AI logo — show, color variant, position, size */}
+              <div className="pt-[14px] border-t border-white/[0.07]">
+                <div className="flex items-center justify-between mb-[10px]">
+                  <div className={labelCls} style={{ marginBottom: 0 }}>Summer of AI logo</div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={content.logo.show}
+                    onClick={() => set("logo", { ...content.logo, show: !content.logo.show })}
+                    className="relative w-[42px] h-[24px] rounded-full transition-colors shrink-0"
+                    style={{ background: content.logo.show ? p.accent : "rgba(255,255,255,0.16)" }}
+                    aria-label="Toggle logo"
+                  >
+                    <span
+                      className="absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white transition-all"
+                      style={{ left: content.logo.show ? 21 : 3 }}
+                    />
+                  </button>
+                </div>
+
+                {content.logo.show && (
+                  <div className="flex flex-col gap-[12px]">
+                    <div className="flex items-center gap-[12px]">
+                      <span className="text-[11px] text-[#8C9AAE] w-[52px] shrink-0">Color</span>
+                      <div className="flex gap-[6px]">
+                        {(["yellow", "blue"] as const).map((v) => {
+                          const on = content.logo.variant === v;
+                          return (
+                            <button
+                              key={v}
+                              type="button"
+                              onClick={() => set("logo", { ...content.logo, variant: v })}
+                              className="px-[12px] py-[6px] rounded-[8px] text-[11px] font-semibold capitalize flex items-center gap-[7px] transition-colors"
+                              style={{
+                                border: on ? `1px solid ${p.accent}` : "1px solid rgba(255,255,255,0.12)",
+                                background: on ? `${p.accent}22` : "rgba(255,255,255,0.04)",
+                                color: on ? "#fff" : "#CBD5E1",
+                              }}
+                            >
+                              <span
+                                className="w-[13px] h-[13px] rounded-full"
+                                style={{ background: v === "yellow" ? "#FFD400" : "#2F86FF" }}
+                              />
+                              {v}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-[12px]">
+                      <span className="text-[11px] text-[#8C9AAE] w-[52px] shrink-0">Position</span>
+                      <div className="flex gap-[6px]">
+                        <button
+                          type="button"
+                          onClick={() => moveElement("logo", 0.06, 0.05)}
+                          className="px-[12px] py-[6px] rounded-[8px] text-[11px] font-semibold text-[#CBD5E1] border border-white/12 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                        >
+                          Top left
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveElement("logo", Math.max(0, (1 - activeContent.layout.logo.w) / 2), 0.05)}
+                          className="px-[12px] py-[6px] rounded-[8px] text-[11px] font-semibold text-[#CBD5E1] border border-white/12 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                        >
+                          Top center
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-[12px]">
+                      <span className="text-[11px] text-[#8C9AAE] w-[52px] shrink-0">Size</span>
+                      <input
+                        type="range"
+                        min={0.5}
+                        max={2.2}
+                        step={0.05}
+                        value={activeContent.layout.logo.size ?? 1}
+                        onChange={(e) => setSize("logo", parseFloat(e.target.value))}
+                        className="flex-1 cursor-pointer"
+                        style={{ accentColor: p.accent }}
+                        aria-label="Logo size"
+                      />
+                      <span className="text-[11px] tabular-nums text-[#8C9AAE] w-[42px] text-right">
+                        {Math.round((activeContent.layout.logo.size ?? 1) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between gap-3">

@@ -86,8 +86,8 @@ export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {
     headingTracking: "-0.02em",
     headingLineHeight: 1.02,
     imageStyle:
-      "hazy golden-hour sunlight, warm sand and cream tones, relaxed coastal luxury, soft film grain, dreamy sun flare, gentle shallow depth of field, editorial vacation lifestyle, calm and unhurried",
-    imageAvoid: "no text, no watermark, no logos, no harsh neon, no dark moody shadows",
+      "cinematic golden-hour photograph, strong warm directional backlight with natural lens flare and sun haze streaming through windows or sheer curtains, rich amber, terracotta, honey and cream tones, relaxed candid lifestyle of people lounging, reading or unwinding, soft silhouettes and glowing rim light, dreamy shallow depth of field, fine 35mm film grain, editorial vacation luxury, warm low-contrast highlights, calm and unhurried",
+    imageAvoid: "no text, no watermark, no logos, no harsh neon, no cool blue tones, no flat overhead daylight, no oversaturated colors",
     copy: {
       eyebrow: "SUMMER OF AI",
       headline: "Sun's Out, Models Out",

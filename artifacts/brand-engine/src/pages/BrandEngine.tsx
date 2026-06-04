@@ -26,12 +26,13 @@ import { SpotlightSessionsWorkspace } from "@/components/brand/SpotlightSessions
 import { AffiliateBlurbWorkspace } from "@/components/brand/AffiliateBlurbWorkspace";
 import { LevelUpImageLibraryWorkspace } from "@/components/brand/LevelUpImageLibraryWorkspace";
 import { LevelUpComposerWorkspace } from "@/components/brand/LevelUpComposerWorkspace";
+import { SummerOfAiWorkspace } from "@/components/brand/SummerOfAiWorkspace";
 import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
 import { WelcomeIntro, hasSeenIntro } from "@/components/brand/WelcomeIntro";
 
 export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-blurb"];
+  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-blurb", "summer-sun-drunk", "summer-electric", "summer-feral"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -61,9 +62,13 @@ export default function BrandEngine() {
   // mode so they aren't staring at an empty surface.
   useEffect(() => {
     const luOnly = ["image-library", "social-composer"];
+    const summerOnly = ["summer-sun-drunk", "summer-electric", "summer-feral"];
     const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "highly-cutout", "growth-flywheel", "affiliate-leaderboard", "affiliate-blurb"];
-    if (brandMode === "levelup26" && hlOnly.includes(currentMode)) setCurrentMode("image-library");
-    if (brandMode === "highlevel" && luOnly.includes(currentMode)) setCurrentMode("templates");
+    const notHl = [...luOnly, ...summerOnly];
+    const notLu = [...hlOnly, ...summerOnly];
+    if (brandMode === "levelup26" && notLu.includes(currentMode)) setCurrentMode("image-library");
+    if (brandMode === "highlevel" && notHl.includes(currentMode)) setCurrentMode("templates");
+    if (brandMode === "summer-of-ai" && !summerOnly.includes(currentMode)) setCurrentMode("summer-sun-drunk");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brandMode]);
 
@@ -126,6 +131,10 @@ export default function BrandEngine() {
 
         {currentMode === "image-library" && <LevelUpImageLibraryWorkspace />}
         {currentMode === "social-composer" && <LevelUpComposerWorkspace />}
+
+        {currentMode === "summer-sun-drunk" && <SummerOfAiWorkspace themeId="sun-drunk" />}
+        {currentMode === "summer-electric" && <SummerOfAiWorkspace themeId="electric" />}
+        {currentMode === "summer-feral" && <SummerOfAiWorkspace themeId="feral" />}
       </div>
       <FeatureRequestBubble />
       <TutorialPopup currentMode={currentMode} />

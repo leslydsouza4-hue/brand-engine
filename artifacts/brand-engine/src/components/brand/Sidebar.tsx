@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useBrandMode, BRAND_THEMES, type BrandMode } from "./brandModeStore";
+import { SUMMER_THEMES, SUMMER_THEME_ORDER } from "./summerThemes";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -56,6 +57,7 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
     onClose?.();
   };
   const isLU = brandMode === "levelup26";
+  const isSummer = brandMode === "summer-of-ai";
 
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const brandMenuRef = useRef<HTMLDivElement | null>(null);
@@ -76,9 +78,11 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
   const brandGradient = (m: BrandMode) =>
     m === "levelup26"
       ? "linear-gradient(135deg, #7C3AED 0%, #A855F7 50%, #22D3EE 100%)"
-      : "linear-gradient(135deg, #00B2A9 0%, #1FC9E0 50%, #2896FB 100%)";
+      : m === "summer-of-ai"
+        ? "linear-gradient(135deg, #FFC83D 0%, #FF7A3D 50%, #2EC5FF 100%)"
+        : "linear-gradient(135deg, #00B2A9 0%, #1FC9E0 50%, #2896FB 100%)";
   const brandGlowRgba = (m: BrandMode) =>
-    m === "levelup26" ? "rgba(124,58,237,0.45)" : "rgba(0,178,169,0.45)";
+    m === "levelup26" ? "rgba(124,58,237,0.45)" : m === "summer-of-ai" ? "rgba(255,122,61,0.45)" : "rgba(0,178,169,0.45)";
 
   return (
     <>
@@ -251,7 +255,37 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
             </div>
           </div>
         )}
-        {!isLU && <>
+        {isSummer && (
+          <div className="px-[12px] mb-[10px] relative">
+            <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Summer of AI</div>
+            {SUMMER_THEME_ORDER.map((id) => {
+              const st = SUMMER_THEMES[id];
+              const mode = `summer-${id}`;
+              const active = currentMode === mode;
+              return (
+                <button
+                  key={id}
+                  onClick={() => handleSetMode(mode)}
+                  className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[10px] rounded-[12px] cursor-pointer border-none transition-all duration-250 mt-[2px] ${
+                    active ? 'bg-white/[0.05] text-white' : 'text-[#CBD5E1] hover:bg-white/[0.03] hover:text-white hover:translate-x-[2px]'
+                  }`}
+                >
+                  {active && (
+                    <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-[4px]" style={{ background: st.palette.gradient }} />
+                  )}
+                  <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center shrink-0" style={{ background: st.palette.gradient }} />
+                  <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">{st.name}</span>
+                </button>
+              );
+            })}
+            <div className="px-[14px] py-[14px] mt-[8px] rounded-[12px] bg-white/[0.02] border border-white/[0.06]">
+              <div className="text-[11px] text-[#94A3B8] leading-[1.5]">
+                Three campaign worlds — Sun Drunk, Electric and Feral. Each theme builds on-brand emailers, ads and social posts with AI-generated imagery.
+              </div>
+            </div>
+          </div>
+        )}
+        {!isLU && !isSummer && <>
         <div className="px-[12px] mb-[10px] relative">
           <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Create</div>
 

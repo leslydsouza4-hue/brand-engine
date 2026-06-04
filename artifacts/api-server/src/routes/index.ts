@@ -9,6 +9,7 @@ import claudeDesignRouter from "./claude-design";
 import brandBrainRouter from "./brand-brain";
 import levelupDriveRouter from "./levelup/drive";
 import levelupVisionRouter from "./levelup/vision";
+import summerGenerateImageRouter from "./summer/generate-image";
 const router: IRouter = Router();
 
 router.use(healthRouter);
@@ -21,5 +22,6 @@ router.use(claudeDesignRouter);
 router.use(brandBrainRouter);
 router.use(levelupDriveRouter);
 router.use(levelupVisionRouter);
+router.use(summerGenerateImageRouter);
 
 export default router;

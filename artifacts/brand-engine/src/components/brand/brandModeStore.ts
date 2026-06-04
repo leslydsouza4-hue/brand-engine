@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type BrandMode = "highlevel" | "levelup26";
+export type BrandMode = "highlevel" | "levelup26" | "summer-of-ai";
 
 const KEY = "brandEngine.brandMode.v1";
 const listeners = new Set<(m: BrandMode) => void>();
@@ -8,7 +8,9 @@ const listeners = new Set<(m: BrandMode) => void>();
 let current: BrandMode = (() => {
   try {
     const raw = localStorage.getItem(KEY) as BrandMode | null;
-    return raw === "levelup26" ? "levelup26" : "highlevel";
+    if (raw === "levelup26") return "levelup26";
+    if (raw === "summer-of-ai") return "summer-of-ai";
+    return "highlevel";
   } catch {
     return "highlevel";
   }
@@ -90,6 +92,23 @@ export const BRAND_THEMES: Record<BrandMode, BrandTheme> = {
     fontBody: "'Inter', sans-serif",
     logoIconUrl: `${BASE}assets/levelup26/logo-icon.svg`,
     logoLockupUrl: `${BASE}assets/levelup26/logo-lockup.svg`,
+  },
+  "summer-of-ai": {
+    // Top-level "Summer of AI" campaign identity. The three sub-themes
+    // (Sun Drunk / Electric / Feral) carry their own distinct palettes in
+    // summerThemes.ts — this object only drives the brand chip + app bg.
+    name: "Summer of AI",
+    shortName: "SOA",
+    primary: "#FF7A3D", // sunset orange
+    accent: "#2EC5FF", // electric blue
+    cta: "#FFC83D", // warm gold
+    bgDeep: "#0E0A14",
+    bgPanel: "#16101D",
+    textOnPrimary: "#FFFFFF",
+    fontHeading: "'Bebas Neue', sans-serif",
+    fontBody: "'Inter', sans-serif",
+    logoIconUrl: `${BASE}assets/summer/logo-icon.svg`,
+    logoLockupUrl: `${BASE}assets/summer/logo-icon.svg`,
   },
 };
 

@@ -224,7 +224,6 @@ function CanvasInner({
               height: "auto",
               pointerEvents: "none",
               userSelect: "none",
-              filter: "drop-shadow(0 6px 18px rgba(0,0,0,0.35))",
             }}
           />
         </ElementBox>

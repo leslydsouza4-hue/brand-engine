@@ -5,3 +5,4 @@
 - [html-to-image font fallback](html-to-image-font-fallback.md) — exports lose fonts because Google Fonts are cross-origin; self-host woff2 + pass explicit fontEmbedCSS.
 - [Integration libs run from src](gemini-lib-runtime-from-src.md) — lib/integrations-*-ai are bundled from src by esbuild; lib edits work at runtime despite pre-existing TS6305/lib-build errors — don't rebuild dist.
 - [toPng image preload](toPng-image-preload.md) — toPng can capture blank/half-loaded images; await every <img> decode before rasterizing.
+- [Async run-token hand-off](async-run-token-handoff.md) — parent async op + awaited sub-op sharing a stale-run token: make ONE token at top, pass it down; don't let the sub-op bump its own.

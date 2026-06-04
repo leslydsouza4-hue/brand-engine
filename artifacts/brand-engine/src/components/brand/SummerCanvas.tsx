@@ -14,6 +14,7 @@ import {
   type SummerElementKey,
   type SummerElementLayout,
   type SummerFormat,
+  type SummerLayoutMap,
   type SummerThemeDef,
 } from "./summerThemes";
 import { fontDefFor, fontStackFor, headingTypography } from "./googleFonts";
@@ -32,6 +33,88 @@ function scaleFor(format: SummerFormat): number {
 
 function clamp01(v: number): number {
   return Math.max(0, Math.min(0.98, v));
+}
+
+/** A live alignment guide line shown while dragging (Figma-style). */
+interface Guide {
+  axis: "x" | "y";
+  pos: number;
+}
+
+/** Effective box width (fraction) of an element, accounting for the logo size multiplier. */
+function boxWidthOf(layout: SummerLayoutMap, k: SummerElementKey): number {
+  const l = layout[k];
+  return k === "logo" ? l.w * (l.size ?? 1) : l.w;
+}
+
+const SNAP_MARGIN = 0.06;
+
+/**
+ * Figma-style snapping. Given a proposed top-left (x,y) and the dragged box width,
+ * snap the element's left/center/right edges to canvas guides (edges, margins,
+ * center) and to sibling elements' left/center/right; snap the top edge to canvas
+ * guides and sibling tops. Returns the adjusted position and the guide lines to draw.
+ */
+function computeSnap(
+  k: SummerElementKey,
+  x: number,
+  y: number,
+  w: number,
+  layout: SummerLayoutMap,
+  threshX: number,
+  threshY: number,
+): { x: number; y: number; guides: Guide[] } {
+  const xGuides = new Set<number>([0, SNAP_MARGIN, 0.5, 1 - SNAP_MARGIN, 1]);
+  const yGuides = new Set<number>([0, SNAP_MARGIN, 0.5, 1 - SNAP_MARGIN, 1]);
+  for (const key of Object.keys(layout) as SummerElementKey[]) {
+    if (key === k) continue;
+    const sx = layout[key].x;
+    const sw = boxWidthOf(layout, key);
+    xGuides.add(sx);
+    xGuides.add(sx + sw / 2);
+    xGuides.add(sx + sw);
+    yGuides.add(layout[key].y);
+  }
+
+  const guides: Guide[] = [];
+  let nx = x;
+  let ny = y;
+
+  // X axis: try the dragged box's left (0), center (w/2), right (w) against each guide.
+  let bestXDist = threshX;
+  let bestXPos: number | null = null;
+  let bestXGuide: number | null = null;
+  for (const g of xGuides) {
+    for (const off of [0, w / 2, w]) {
+      const dist = Math.abs(x + off - g);
+      if (dist < bestXDist) {
+        bestXDist = dist;
+        bestXPos = g - off;
+        bestXGuide = g;
+      }
+    }
+  }
+  if (bestXPos != null && bestXGuide != null) {
+    nx = bestXPos;
+    guides.push({ axis: "x", pos: bestXGuide });
+  }
+
+  // Y axis: snap the top edge.
+  let bestYDist = threshY;
+  let bestYGuide: number | null = null;
+  for (const g of yGuides) {
+    const dist = Math.abs(y - g);
+    if (dist < bestYDist) {
+      bestYDist = dist;
+      bestYGuide = g;
+    }
+  }
+  if (bestYGuide != null) {
+    ny = bestYGuide;
+    guides.push({ axis: "y", pos: bestYGuide });
+  }
+
+  return { x: clamp01(nx), y: clamp01(ny), guides };
 }
 
 function bgLayer(theme: SummerThemeDef, content: SummerContent): ReactElement {
@@ -53,6 +136,8 @@ interface Interaction {
   onSelect: (k: SummerElementKey | null) => void;
   onMove: (k: SummerElementKey, x: number, y: number) => void;
   rootRef: React.RefObject<HTMLDivElement | null>;
+  layout: SummerLayoutMap;
+  setGuides: (g: Guide[]) => void;
 }
 
 interface RenderProps {
@@ -92,9 +177,24 @@ function ElementBox({
           if (rect.width === 0 || rect.height === 0) return;
           const dx = (ev.clientX - startX) / rect.width;
           const dy = (ev.clientY - startY) / rect.height;
-          interaction.onMove(k, clamp01(origX + dx), clamp01(origY + dy));
+          let nx = clamp01(origX + dx);
+          let ny = clamp01(origY + dy);
+          const snapped = computeSnap(
+            k,
+            nx,
+            ny,
+            layout.w,
+            interaction.layout,
+            ev.shiftKey ? 0 : 7 / rect.width,
+            ev.shiftKey ? 0 : 7 / rect.height,
+          );
+          nx = snapped.x;
+          ny = snapped.y;
+          interaction.setGuides(snapped.guides);
+          interaction.onMove(k, nx, ny);
         };
         const up = () => {
+          interaction.setGuides([]);
           window.removeEventListener("pointermove", move);
           window.removeEventListener("pointerup", up);
           window.removeEventListener("pointercancel", up);
@@ -277,6 +377,7 @@ export function ScaledCanvasPreview({
   const wrapRef = useRef<HTMLDivElement>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
+  const [guides, setGuides] = useState<Guide[]>([]);
 
   useLayoutEffect(() => {
     const el = wrapRef.current;
@@ -290,7 +391,9 @@ export function ScaledCanvasPreview({
   }, [format.width]);
 
   const interaction: Interaction | undefined =
-    onSelect && onMove ? { selected: selected ?? null, onSelect, onMove, rootRef: nodeRef } : undefined;
+    onSelect && onMove
+      ? { selected: selected ?? null, onSelect, onMove, rootRef: nodeRef, layout: content.layout, setGuides }
+      : undefined;
 
   return (
     <div
@@ -316,6 +419,37 @@ export function ScaledCanvasPreview({
       >
         <CanvasInner theme={theme} format={format} content={content} interaction={interaction} />
       </div>
+      {guides.map((g, i) =>
+        g.axis === "x" ? (
+          <div
+            key={`x${i}`}
+            style={{
+              position: "absolute",
+              left: `${g.pos * 100}%`,
+              top: 0,
+              bottom: 0,
+              width: 1,
+              background: "#FF2D9B",
+              pointerEvents: "none",
+              zIndex: 50,
+            }}
+          />
+        ) : (
+          <div
+            key={`y${i}`}
+            style={{
+              position: "absolute",
+              top: `${g.pos * 100}%`,
+              left: 0,
+              right: 0,
+              height: 1,
+              background: "#FF2D9B",
+              pointerEvents: "none",
+              zIndex: 50,
+            }}
+          />
+        ),
+      )}
     </div>
   );
 }

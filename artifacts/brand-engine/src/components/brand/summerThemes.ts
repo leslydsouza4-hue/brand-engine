@@ -214,7 +214,7 @@ export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {
       accent: "#00E5FF",
       cta: "#00E5FF",
       ctaInk: "#03060F",
-      gradient: "linear-gradient(135deg, #2962FF 0%, #00C2FF 55%, #00E5FF 100%)",
+      gradient: "linear-gradient(135deg, #00020A 0%, #02103A 55%, #04266E 100%)",
       scrim: "linear-gradient(180deg, rgba(3,6,15,0) 0%, rgba(3,6,15,0.35) 45%, rgba(3,6,15,0.85) 100%)",
     },
     fontHeading: "'Bebas Neue', sans-serif",
@@ -289,6 +289,7 @@ export const SUMMER_FORMATS: SummerFormat[] = [
   { key: "email-hero", label: "Hero Email", section: "emailers", kind: "email", width: 600, height: 760, note: "Top-of-email feature banner" },
   { key: "email-announce", label: "Announcement", section: "emailers", kind: "email", width: 600, height: 520, note: "Mid-email announcement block" },
   { key: "email-reminder", label: "Reminder", section: "emailers", kind: "email", width: 600, height: 380, note: "Short nudge / countdown" },
+  { key: "email-wide", label: "Wide (1920×1080)", section: "emailers", kind: "email", width: 1920, height: 1080, note: "Full-width 16:9 hero" },
   // Ads
   { key: "ad-display", label: "Display Ad", section: "ads", kind: "ad", width: 300, height: 250, note: "Medium rectangle (300×250)" },
   { key: "ad-meta", label: "Meta Ad", section: "ads", kind: "ad", width: 1080, height: 1080, note: "Instagram / Facebook feed" },

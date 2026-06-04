@@ -14,6 +14,7 @@ import {
   formatsForSection,
   defaultContent,
   defaultLayout,
+  defaultLayoutFor,
   orientationFor,
   type SummerThemeId,
   type SummerSection,
@@ -135,13 +136,13 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
 
   const moveElement = useCallback(
     (k: SummerElementKey, x: number, y: number) => {
-      if (!activeKey) return;
+      if (!activeFormat) return;
       setLayouts((prev) => {
-        const cur = prev[activeKey] ?? defaultLayout();
-        return { ...prev, [activeKey]: { ...cur, [k]: { ...cur[k], x, y } } };
+        const cur = prev[activeFormat.key] ?? defaultLayoutFor(activeFormat.width, activeFormat.height);
+        return { ...prev, [activeFormat.key]: { ...cur, [k]: { ...cur[k], x, y } } };
       });
     },
-    [activeKey]
+    [activeFormat]
   );
 
   const setColor = useCallback((k: keyof SummerColors, v: string) => {
@@ -150,13 +151,13 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
 
   const setSize = useCallback(
     (k: SummerElementKey, size: number) => {
-      if (!activeKey) return;
+      if (!activeFormat) return;
       setLayouts((prev) => {
-        const cur = prev[activeKey] ?? defaultLayout();
-        return { ...prev, [activeKey]: { ...cur, [k]: { ...cur[k], size } } };
+        const cur = prev[activeFormat.key] ?? defaultLayoutFor(activeFormat.width, activeFormat.height);
+        return { ...prev, [activeFormat.key]: { ...cur, [k]: { ...cur[k], size } } };
       });
     },
-    [activeKey]
+    [activeFormat]
   );
 
   const setOverlay = useCallback((patch: Partial<SummerOverlay>) => {
@@ -164,15 +165,19 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   }, []);
 
   const resetLayout = useCallback(() => {
-    if (!activeKey) return;
-    setLayouts((prev) => ({ ...prev, [activeKey]: defaultLayout() }));
+    if (!activeFormat) return;
+    setLayouts((prev) => ({ ...prev, [activeFormat.key]: defaultLayoutFor(activeFormat.width, activeFormat.height) }));
     setSelected(null);
-  }, [activeKey]);
+  }, [activeFormat]);
 
-  // The content fed to the canvas uses the active format's saved layout.
+  // The content fed to the canvas uses the active format's saved layout, falling
+  // back to a layout tuned for this format's aspect ratio.
   const activeContent = useMemo<SummerContent>(
-    () => ({ ...content, layout: layouts[activeKey] ?? defaultLayout() }),
-    [content, layouts, activeKey]
+    () => ({
+      ...content,
+      layout: layouts[activeKey] ?? (activeFormat ? defaultLayoutFor(activeFormat.width, activeFormat.height) : defaultLayout()),
+    }),
+    [content, layouts, activeKey, activeFormat]
   );
 
   const generate = useCallback(async () => {
@@ -424,7 +429,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                 </div>
                 {(() => {
                   const target = selected ?? "headline";
-                  const size = (layouts[activeKey] ?? defaultLayout())[target].size ?? 1;
+                  const size = (activeContent.layout)[target].size ?? 1;
                   const isText = target !== "cta";
                   return (
                     <div className="flex flex-col gap-[12px]">
@@ -632,7 +637,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
             key={f.key}
             theme={theme}
             format={f}
-            content={{ ...content, layout: layouts[f.key] ?? defaultLayout() }}
+            content={{ ...content, layout: layouts[f.key] ?? defaultLayoutFor(f.width, f.height) }}
             innerRef={(el) => {
               exportRefs.current[f.key] = el;
             }}

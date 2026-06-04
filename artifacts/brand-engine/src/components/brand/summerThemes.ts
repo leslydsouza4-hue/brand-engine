@@ -100,14 +100,61 @@ export interface SummerOverlay {
   opacity: number;
 }
 
-/** Default element placement — a bottom-anchored stack that reads on any ratio. */
+/** Coarse aspect-ratio bucket used to pick a sensible starting layout. */
+export type SummerOrientation = "wide" | "square" | "portrait" | "tall";
+
+export function orientationKind(width: number, height: number): SummerOrientation {
+  const r = width / height;
+  if (r >= 1.15) return "wide";
+  if (r >= 0.95) return "square";
+  if (r >= 0.7) return "portrait";
+  return "tall";
+}
+
+/**
+ * Default element placement, tuned per aspect ratio so switching format sizes
+ * (Square / Portrait / Story / Landscape) starts from a layout that actually
+ * fits the canvas instead of one fixed bottom stack.
+ * - wide: left-aligned block, vertically centered (room on the right for art)
+ * - tall: bottom-anchored low third with breathing room up top
+ * - portrait/square: bottom-anchored stack, tightened for the shorter canvas
+ */
+export function defaultLayoutFor(width: number, height: number): SummerLayoutMap {
+  switch (orientationKind(width, height)) {
+    case "wide":
+      return {
+        eyebrow: { x: 0.06, y: 0.17, w: 0.6 },
+        headline: { x: 0.06, y: 0.31, w: 0.62 },
+        subtext: { x: 0.06, y: 0.63, w: 0.52 },
+        cta: { x: 0.06, y: 0.81, w: 0.5 },
+      };
+    case "tall":
+      return {
+        eyebrow: { x: 0.06, y: 0.07, w: 0.86 },
+        headline: { x: 0.06, y: 0.58, w: 0.86 },
+        subtext: { x: 0.06, y: 0.77, w: 0.78 },
+        cta: { x: 0.06, y: 0.88, w: 0.62 },
+      };
+    case "portrait":
+      return {
+        eyebrow: { x: 0.06, y: 0.06, w: 0.88 },
+        headline: { x: 0.06, y: 0.52, w: 0.88 },
+        subtext: { x: 0.06, y: 0.74, w: 0.76 },
+        cta: { x: 0.06, y: 0.87, w: 0.52 },
+      };
+    default:
+      return {
+        eyebrow: { x: 0.06, y: 0.07, w: 0.88 },
+        headline: { x: 0.06, y: 0.46, w: 0.88 },
+        subtext: { x: 0.06, y: 0.69, w: 0.74 },
+        cta: { x: 0.06, y: 0.84, w: 0.52 },
+      };
+  }
+}
+
+/** Square-ish default used where no specific format is known. */
 export function defaultLayout(): SummerLayoutMap {
-  return {
-    eyebrow: { x: 0.06, y: 0.06, w: 0.88 },
-    headline: { x: 0.06, y: 0.5, w: 0.88 },
-    subtext: { x: 0.06, y: 0.73, w: 0.74 },
-    cta: { x: 0.06, y: 0.87, w: 0.5 },
-  };
+  return defaultLayoutFor(1080, 1080);
 }
 
 export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {

@@ -65,14 +65,28 @@ function nearestAspectRatio(width?: number, height?: number): string | undefined
   return best.label;
 }
 
+// Parse a data URL ("data:image/png;base64,XXXX") into an inlineData part.
+// Restricted to the image types Gemini accepts as input.
+const ALLOWED_REF_MIME = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+function parseDataUrl(url: unknown): { data: string; mimeType: string } | null {
+  if (typeof url !== "string") return null;
+  const m = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(url.trim());
+  if (!m || !ALLOWED_REF_MIME.has(m[1])) return null;
+  return { mimeType: m[1], data: m[2] };
+}
+
+const MAX_REFERENCE_IMAGES = 3;
+
 router.post("/summer/generate-image", async (req, res) => {
-  const { themeId, prompt, orientation, model, width, height } = (req.body ?? {}) as {
+  const { themeId, prompt, orientation, model, width, height, referenceImages } = (req.body ??
+    {}) as {
     themeId?: string;
     prompt?: string;
     orientation?: string;
     model?: string;
     width?: number;
     height?: number;
+    referenceImages?: unknown;
   };
 
   const subject = (prompt ?? "").trim();
@@ -86,6 +100,11 @@ router.post("/summer/generate-image", async (req, res) => {
     return;
   }
 
+  const refs = (Array.isArray(referenceImages) ? referenceImages : [])
+    .map(parseDataUrl)
+    .filter((r): r is { data: string; mimeType: string } => r !== null)
+    .slice(0, MAX_REFERENCE_IMAGES);
+
   const chosenModel: GeminiImageModel = ALLOWED_MODELS.includes(model as GeminiImageModel)
     ? (model as GeminiImageModel)
     : DEFAULT_MODEL;
@@ -95,10 +114,15 @@ router.post("/summer/generate-image", async (req, res) => {
   const aspectRatio =
     chosenModel === "gemini-3-pro-image-preview" ? nearestAspectRatio(width, height) : undefined;
   const orient = orientation ? `${orientation}. ` : "";
+  const refGuidance =
+    refs.length > 0
+      ? `Use the supplied reference image${refs.length > 1 ? "s" : ""} as strong visual guidance for the subject, composition, colors, and key visual elements — closely match what they show, reinterpreted in the visual style below. `
+      : "";
   const fullPrompt =
     `Professional marketing campaign background image, no text or graphic overlays. ` +
     `Subject: ${subject}. ` +
     `${orient}` +
+    `${refGuidance}` +
     `Visual style: ${theme.style}. ` +
     `Photorealistic, high-end editorial photography, natural lighting, realistic textures, ` +
     `sharp focus, full-bleed composition with room for text overlay. ` +
@@ -106,7 +130,10 @@ router.post("/summer/generate-image", async (req, res) => {
     `Do not include any of the following: ${theme.avoid}.`;
 
   try {
-    const result = await generateImage(fullPrompt, chosenModel, aspectRatio ? { aspectRatio } : undefined);
+    const result = await generateImage(fullPrompt, chosenModel, {
+      ...(aspectRatio ? { aspectRatio } : {}),
+      ...(refs.length > 0 ? { referenceImages: refs } : {}),
+    });
     const dataUrl = `data:${result.mimeType};base64,${result.b64_json}`;
     res.json({ dataUrl, model: chosenModel, aspectRatio });
   } catch (err) {

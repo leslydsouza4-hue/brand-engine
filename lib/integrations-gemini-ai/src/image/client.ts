@@ -25,11 +25,25 @@ export type GeminiImageModel = "gemini-2.5-flash-image" | "gemini-3-pro-image-pr
 export async function generateImage(
   prompt: string,
   model: GeminiImageModel = "gemini-2.5-flash-image",
-  options?: { aspectRatio?: string }
+  options?: {
+    aspectRatio?: string;
+    referenceImages?: { data: string; mimeType: string }[];
+  }
 ): Promise<{ b64_json: string; mimeType: string }> {
+  // Reference images (if any) come first so the model conditions on them,
+  // followed by the text prompt.
+  const parts: Array<
+    | { inlineData: { data: string; mimeType: string } }
+    | { text: string }
+  > = [];
+  for (const ref of options?.referenceImages ?? []) {
+    parts.push({ inlineData: { data: ref.data, mimeType: ref.mimeType } });
+  }
+  parts.push({ text: prompt });
+
   const response = await ai.models.generateContent({
     model,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
       ...(options?.aspectRatio

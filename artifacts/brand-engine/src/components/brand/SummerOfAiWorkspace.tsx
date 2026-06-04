@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Sparkles, Loader2, Download, Trash2, Check, Mail, Megaphone, Share2, Images, ChevronDown } from "lucide-react";
+import { Sparkles, Loader2, Download, Trash2, Check, Mail, Megaphone, Share2, Images, ChevronDown, ImagePlus, X } from "lucide-react";
 import {
   SUMMER_THEMES,
   SUMMER_SECTIONS,
@@ -100,6 +100,8 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   const [layouts, setLayouts] = useState<Record<string, SummerLayoutMap>>({});
   const [selected, setSelected] = useState<SummerElementKey | null>(null);
   const [imagePrompt, setImagePrompt] = useState<string>(theme.sampleImagePrompt);
+  const [refImages, setRefImages] = useState<string[]>([]);
+  const refInputRef = useRef<HTMLInputElement | null>(null);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -113,6 +115,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
     setContent(defaultContent(themeId));
     setLayouts({});
     setImagePrompt(SUMMER_THEMES[themeId].sampleImagePrompt);
+    setRefImages([]);
     setGenError(null);
     setSelected(null);
   }, [themeId]);
@@ -195,6 +198,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
           orientation: activeFormat ? orientationFor(activeFormat) : undefined,
           width: activeFormat?.width,
           height: activeFormat?.height,
+          referenceImages: refImages,
         }),
       });
       if (!r.ok) {
@@ -212,7 +216,37 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
     } finally {
       setGenerating(false);
     }
-  }, [imagePrompt, themeId, activeFormat, set]);
+  }, [imagePrompt, themeId, activeFormat, refImages, set]);
+
+  // Read uploaded reference image files into data URLs (capped at 3 total).
+  // Uses allSettled so one unreadable file doesn't drop the whole batch.
+  const addRefFiles = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const imgs = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const results = await Promise.allSettled(
+      imgs.map(
+        (f) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(f);
+          })
+      )
+    );
+    const urls = results
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+      .map((r) => r.value);
+    if (urls.length > 0) {
+      setRefImages((prev) => [...prev, ...urls].slice(0, 3));
+    }
+    const failed = results.length - urls.length;
+    setGenError(failed > 0 ? `${failed} reference image${failed > 1 ? "s" : ""} couldn't be read and were skipped.` : null);
+  }, []);
+
+  const removeRefImage = useCallback((idx: number) => {
+    setRefImages((prev) => prev.filter((_, i) => i !== idx));
+  }, []);
 
   const exportOne = useCallback(async () => {
     if (!activeFormat) return;
@@ -286,6 +320,54 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
     </button>
   );
 
+  // Reference-image uploader: thumbnails of any uploaded references + an add
+  // button. References are sent to the model as visual guidance (max 3).
+  const referenceUploader = () => (
+    <div className="mt-[10px]">
+      <input
+        ref={refInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          void addRefFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      <div className="flex flex-wrap gap-[8px]">
+        {refImages.map((src, i) => (
+          <div key={i} className="relative w-[52px] h-[52px] rounded-[10px] overflow-hidden border border-white/[0.14]">
+            <img src={src} alt={`reference ${i + 1}`} className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => removeRefImage(i)}
+              aria-label="Remove reference"
+              className="absolute top-[2px] right-[2px] w-[16px] h-[16px] rounded-full flex items-center justify-center cursor-pointer border-none bg-black/70 hover:bg-black text-white transition-colors"
+            >
+              <X size={10} />
+            </button>
+          </div>
+        ))}
+        {refImages.length < 3 && (
+          <button
+            type="button"
+            onClick={() => refInputRef.current?.click()}
+            className="w-[52px] h-[52px] rounded-[10px] flex flex-col items-center justify-center gap-[2px] cursor-pointer bg-white/[0.04] border border-dashed border-white/[0.2] text-[#94A3B8] hover:text-white hover:border-white/[0.4] transition-colors"
+          >
+            <ImagePlus size={16} />
+            <span className="text-[8px] font-bold uppercase tracking-[0.5px]">Ref</span>
+          </button>
+        )}
+      </div>
+      <p className="text-[10.5px] text-[#64748B] mt-[7px] leading-[1.45]">
+        {refImages.length > 0
+          ? `${refImages.length} reference${refImages.length > 1 ? "s" : ""} — the AI will match their subject & composition, in the ${theme.name} style.`
+          : "Optional: upload a reference photo to guide the result (subject, composition, colors)."}
+      </p>
+    </div>
+  );
+
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
       {/* LEFT — control panel */}
@@ -348,6 +430,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
               onKeyDown={onPromptKeyDown}
               placeholder="Describe the subject…  (⌘/Ctrl+Enter to generate)"
             />
+            {referenceUploader()}
             {generateBtn("Generate asset")}
             {genError && <div className="text-[#ff9b9b] text-[12px] mt-[8px] leading-[1.45]">{genError}</div>}
             <p className="text-[11px] text-[#64748B] mt-[14px] leading-[1.5]">
@@ -494,6 +577,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                 onKeyDown={onPromptKeyDown}
                 placeholder="Describe the subject…  (⌘/Ctrl+Enter to generate)"
               />
+              {referenceUploader()}
               {generateBtn("Generate background")}
               {genError && <div className="text-[#ff9b9b] text-[12px] mt-[8px] leading-[1.45]">{genError}</div>}
               {content.bgImage && (

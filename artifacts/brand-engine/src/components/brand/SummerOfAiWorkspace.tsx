@@ -11,13 +11,19 @@ import { Sparkles, Loader2, Download, Trash2, Check, Mail, Megaphone, Share2, Im
 import {
   SUMMER_THEMES,
   SUMMER_SECTIONS,
+  SUMMER_FONTS,
+  SUMMER_FONT_ORDER,
   formatsForSection,
   defaultContent,
+  defaultLayout,
   orientationFor,
   type SummerThemeId,
   type SummerSection,
   type SummerFormat,
   type SummerContent,
+  type SummerElementKey,
+  type SummerColors,
+  type SummerLayoutMap,
 } from "./summerThemes";
 import { ScaledCanvasPreview, SummerCanvasNode } from "./SummerCanvas";
 import { useSummerAssets, addSummerAsset, removeSummerAsset } from "./summerStore";
@@ -70,6 +76,10 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   );
   const [activeFormatKey, setActiveFormatKey] = useState<string>(sectionFormats[0]?.key ?? "");
   const [content, setContent] = useState<SummerContent>(() => defaultContent(themeId));
+  // Layout (element placement) is kept per format so each size can be arranged
+  // independently; copy / colors / font are shared across sizes.
+  const [layouts, setLayouts] = useState<Record<string, SummerLayoutMap>>({});
+  const [selected, setSelected] = useState<SummerElementKey | null>(null);
   const [imagePrompt, setImagePrompt] = useState<string>(theme.sampleImagePrompt);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
@@ -82,8 +92,10 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   // Reset content + prompt whenever the theme changes.
   useEffect(() => {
     setContent(defaultContent(themeId));
+    setLayouts({});
     setImagePrompt(SUMMER_THEMES[themeId].sampleImagePrompt);
     setGenError(null);
+    setSelected(null);
   }, [themeId]);
 
   // Keep a valid active format when the section changes.
@@ -100,6 +112,35 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   const set = useCallback(<K extends keyof SummerContent>(key: K, value: SummerContent[K]) => {
     setContent((c) => ({ ...c, [key]: value }));
   }, []);
+
+  const activeKey = activeFormat?.key ?? "";
+
+  const moveElement = useCallback(
+    (k: SummerElementKey, x: number, y: number) => {
+      if (!activeKey) return;
+      setLayouts((prev) => {
+        const cur = prev[activeKey] ?? defaultLayout();
+        return { ...prev, [activeKey]: { ...cur, [k]: { ...cur[k], x, y } } };
+      });
+    },
+    [activeKey]
+  );
+
+  const setColor = useCallback((k: keyof SummerColors, v: string) => {
+    setContent((c) => ({ ...c, colors: { ...c.colors, [k]: v } }));
+  }, []);
+
+  const resetLayout = useCallback(() => {
+    if (!activeKey) return;
+    setLayouts((prev) => ({ ...prev, [activeKey]: defaultLayout() }));
+    setSelected(null);
+  }, [activeKey]);
+
+  // The content fed to the canvas uses the active format's saved layout.
+  const activeContent = useMemo<SummerContent>(
+    () => ({ ...content, layout: layouts[activeKey] ?? defaultLayout() }),
+    [content, layouts, activeKey]
+  );
 
   const generate = useCallback(async () => {
     const prompt = imagePrompt.trim();
@@ -333,6 +374,74 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
               </div>
             </div>
 
+            {/* Design — fonts, colors, layout */}
+            <div className="pt-[18px] border-t border-white/[0.07] flex flex-col gap-[14px]">
+              <div>
+                <div className={labelCls}>Heading font</div>
+                <div className="flex gap-2">
+                  {SUMMER_FONT_ORDER.map((fk) => {
+                    const f = SUMMER_FONTS[fk];
+                    const on = content.headlineFont === fk;
+                    return (
+                      <button
+                        key={fk}
+                        type="button"
+                        onClick={() => set("headlineFont", fk)}
+                        className="flex-1 rounded-[10px] px-3 py-2 text-[14px] transition-colors"
+                        style={{
+                          fontFamily: f.family,
+                          textTransform: f.transform,
+                          letterSpacing: f.tracking,
+                          border: on ? "1px solid rgba(255,208,0,0.7)" : "1px solid rgba(255,255,255,0.12)",
+                          background: on ? "rgba(255,208,0,0.12)" : "rgba(255,255,255,0.04)",
+                          color: "#fff",
+                        }}
+                      >
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className={labelCls}>Text colors</div>
+                <div className="flex flex-col gap-2">
+                  {([
+                    ["eyebrow", "Eyebrow"],
+                    ["headline", "Headline"],
+                    ["subtext", "Subtext"],
+                  ] as [keyof SummerColors, string][]).map(([key, label]) => (
+                    <label key={key} className="flex items-center justify-between gap-3">
+                      <span className="text-[12px] text-[#CBD5E1]">{label}</span>
+                      <span className="flex items-center gap-2">
+                        <span className="text-[11px] tabular-nums text-[#8C9AAE] uppercase">{content.colors[key]}</span>
+                        <input
+                          type="color"
+                          value={content.colors[key]}
+                          onChange={(e) => setColor(key, e.target.value)}
+                          className="w-[30px] h-[30px] rounded-[8px] cursor-pointer bg-transparent border border-white/15 p-0"
+                          aria-label={`${label} color`}
+                        />
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-1 text-[11px] text-[#8C9AAE]">The button stays brand yellow by design.</p>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] leading-snug text-[#8C9AAE]">Drag any text or the button on the preview to reposition it.</p>
+                <button
+                  type="button"
+                  onClick={resetLayout}
+                  className="shrink-0 rounded-[8px] px-3 py-2 text-[12px] text-white border border-white/12 bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                >
+                  Reset layout
+                </button>
+              </div>
+            </div>
+
             {/* AI background */}
             <div className="pt-[18px] border-t border-white/[0.07]">
               <div className={labelCls}>AI background · {theme.name} style</div>
@@ -423,7 +532,14 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
             >
               {activeFormat && (
                 <div style={{ width: previewWidth(activeFormat), maxWidth: "100%" }}>
-                  <ScaledCanvasPreview theme={theme} format={activeFormat} content={content} />
+                  <ScaledCanvasPreview
+                    theme={theme}
+                    format={activeFormat}
+                    content={activeContent}
+                    selected={selected}
+                    onSelect={setSelected}
+                    onMove={moveElement}
+                  />
                 </div>
               )}
             </div>
@@ -438,7 +554,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
             key={f.key}
             theme={theme}
             format={f}
-            content={content}
+            content={{ ...content, layout: layouts[f.key] ?? defaultLayout() }}
             innerRef={(el) => {
               exportRefs.current[f.key] = el;
             }}

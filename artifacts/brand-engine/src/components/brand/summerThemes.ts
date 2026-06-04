@@ -61,6 +61,61 @@ export interface SummerThemeDef {
   sampleImagePrompt: string;
 }
 
+// ── Canva-style editing model ──────────────────────────────────────────────
+
+/** Selectable heading font styles (both are embedded for exports). */
+export type SummerFontKey = "poppins" | "bebas";
+
+export interface SummerFontDef {
+  label: string;
+  family: string;
+  weight: number;
+  transform: "uppercase" | "none";
+  tracking: string;
+  lineHeight: number;
+}
+
+export const SUMMER_FONTS: Record<SummerFontKey, SummerFontDef> = {
+  poppins: { label: "Modern", family: "'Poppins', sans-serif", weight: 700, transform: "none", tracking: "-0.02em", lineHeight: 1.04 },
+  bebas: { label: "Bold Display", family: "'Bebas Neue', sans-serif", weight: 400, transform: "uppercase", tracking: "0.012em", lineHeight: 0.92 },
+};
+
+export const SUMMER_FONT_ORDER: SummerFontKey[] = ["poppins", "bebas"];
+
+/** The CTA is always brand yellow, by request. */
+export const SUMMER_CTA_BG = "#FFD000";
+export const SUMMER_CTA_INK = "#1A1206";
+
+/** Editable / draggable elements on a canvas. */
+export type SummerElementKey = "eyebrow" | "headline" | "subtext" | "cta";
+
+export interface SummerElementLayout {
+  /** Left edge as a fraction of canvas width (0..1). */
+  x: number;
+  /** Top edge as a fraction of canvas height (0..1). */
+  y: number;
+  /** Max width as a fraction of canvas width (controls text wrapping). */
+  w: number;
+}
+
+export type SummerLayoutMap = Record<SummerElementKey, SummerElementLayout>;
+
+export interface SummerColors {
+  eyebrow: string;
+  headline: string;
+  subtext: string;
+}
+
+/** Default element placement — a bottom-anchored stack that reads on any ratio. */
+export function defaultLayout(): SummerLayoutMap {
+  return {
+    eyebrow: { x: 0.06, y: 0.06, w: 0.88 },
+    headline: { x: 0.06, y: 0.5, w: 0.88 },
+    subtext: { x: 0.06, y: 0.73, w: 0.74 },
+    cta: { x: 0.06, y: 0.87, w: 0.5 },
+  };
+}
+
 export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {
   "sun-drunk": {
     id: "sun-drunk",
@@ -215,6 +270,12 @@ export interface SummerContent {
   subtext: string;
   cta: string;
   bgImage: string | null;
+  /** Selected heading font style. */
+  headlineFont: SummerFontKey;
+  /** Per-element text colors. */
+  colors: SummerColors;
+  /** Per-element placement (drag-to-move). */
+  layout: SummerLayoutMap;
 }
 
 export function defaultContent(themeId: SummerThemeId): SummerContent {
@@ -225,6 +286,13 @@ export function defaultContent(themeId: SummerThemeId): SummerContent {
     subtext: t.copy.subtext,
     cta: t.copy.cta,
     bgImage: null,
+    headlineFont: t.fontHeading.includes("Bebas") ? "bebas" : "poppins",
+    colors: {
+      eyebrow: t.palette.primary,
+      headline: "#FFFFFF",
+      subtext: "#F4EFE6",
+    },
+    layout: defaultLayout(),
   };
 }
 

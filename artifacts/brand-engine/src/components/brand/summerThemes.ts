@@ -96,6 +96,8 @@ export interface SummerElementLayout {
   y: number;
   /** Max width as a fraction of canvas width (controls text wrapping). */
   w: number;
+  /** Font-size multiplier relative to the theme default (1 = default). */
+  size?: number;
 }
 
 export type SummerLayoutMap = Record<SummerElementKey, SummerElementLayout>;
@@ -104,6 +106,13 @@ export interface SummerColors {
   eyebrow: string;
   headline: string;
   subtext: string;
+}
+
+/** Flat color wash over the background image (darken / lighten for legibility). */
+export interface SummerOverlay {
+  color: "black" | "white";
+  /** 0..1 strength. 0 = no overlay. */
+  opacity: number;
 }
 
 /** Default element placement — a bottom-anchored stack that reads on any ratio. */
@@ -276,6 +285,8 @@ export interface SummerContent {
   colors: SummerColors;
   /** Per-element placement (drag-to-move). */
   layout: SummerLayoutMap;
+  /** Flat black/white wash over the background. */
+  overlay: SummerOverlay;
 }
 
 export function defaultContent(themeId: SummerThemeId): SummerContent {
@@ -293,6 +304,7 @@ export function defaultContent(themeId: SummerThemeId): SummerContent {
       subtext: "#F4EFE6",
     },
     layout: defaultLayout(),
+    overlay: { color: "black", opacity: 0 },
   };
 }
 

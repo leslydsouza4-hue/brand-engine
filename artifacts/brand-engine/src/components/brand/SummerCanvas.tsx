@@ -126,9 +126,21 @@ function CanvasInner({
   const s = scaleFor(format);
   const minDim = Math.min(format.width, format.height);
   const font = SUMMER_FONTS[content.headlineFont];
+  const sz = (k: SummerElementKey) => content.layout[k].size ?? 1;
+  const overlay = content.overlay ?? { color: "black" as const, opacity: 0 };
   return (
     <>
       {bgLayer(theme, content)}
+      {overlay.opacity > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: overlay.color === "white" ? "#FFFFFF" : "#000000",
+            opacity: overlay.opacity,
+          }}
+        />
+      )}
       <div style={{ position: "absolute", inset: 0, background: theme.palette.scrim }} />
 
       {content.eyebrow && (
@@ -140,7 +152,7 @@ function CanvasInner({
               fontWeight: 700,
               letterSpacing: "0.22em",
               textTransform: "uppercase",
-              fontSize: `${Math.max(9, 13 * s)}px`,
+              fontSize: `${Math.max(9, 13 * s) * sz("eyebrow")}px`,
               color: content.colors.eyebrow,
             }}
           >
@@ -159,7 +171,7 @@ function CanvasInner({
               textTransform: font.transform,
               letterSpacing: font.tracking,
               lineHeight: font.lineHeight,
-              fontSize: `${Math.max(22, minDim * 0.085)}px`,
+              fontSize: `${Math.max(22, minDim * 0.085) * sz("headline")}px`,
               color: content.colors.headline,
             }}
           >
@@ -175,7 +187,7 @@ function CanvasInner({
               margin: 0,
               fontFamily: theme.fontBody,
               color: content.colors.subtext,
-              fontSize: `${Math.max(12, minDim * 0.03)}px`,
+              fontSize: `${Math.max(12, minDim * 0.03) * sz("subtext")}px`,
               lineHeight: 1.45,
             }}
           >
@@ -193,9 +205,9 @@ function CanvasInner({
               color: SUMMER_CTA_INK,
               fontFamily: theme.fontBody,
               fontWeight: 800,
-              fontSize: `${Math.max(14, minDim * 0.04)}px`,
+              fontSize: `${Math.max(14, minDim * 0.04) * sz("cta")}px`,
               letterSpacing: "0.01em",
-              padding: `${Math.max(12, minDim * 0.024)}px ${Math.max(20, minDim * 0.044)}px`,
+              padding: `${Math.max(12, minDim * 0.024) * sz("cta")}px ${Math.max(20, minDim * 0.044) * sz("cta")}px`,
               borderRadius: "999px",
               whiteSpace: "nowrap",
               boxShadow: "0 12px 32px -12px rgba(0,0,0,0.55)",

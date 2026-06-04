@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Sparkles, Loader2, Download, Trash2, Check, Mail, Megaphone, Share2, Images } from "lucide-react";
+import { Sparkles, Loader2, Download, Trash2, Check, Mail, Megaphone, Share2, Images, ChevronDown } from "lucide-react";
 import {
   SUMMER_THEMES,
   SUMMER_SECTIONS,
@@ -24,10 +24,18 @@ import {
   type SummerElementKey,
   type SummerColors,
   type SummerLayoutMap,
+  type SummerOverlay,
 } from "./summerThemes";
 import { ScaledCanvasPreview, SummerCanvasNode } from "./SummerCanvas";
 import { useSummerAssets, addSummerAsset, removeSummerAsset } from "./summerStore";
 import { getFontEmbedCSS } from "./fontEmbed";
+
+const ELEMENT_LABELS: [SummerElementKey, string][] = [
+  ["eyebrow", "Eyebrow"],
+  ["headline", "Headline"],
+  ["subtext", "Subtext"],
+  ["cta", "Button"],
+];
 
 const SECTION_ICON = { emailers: Mail, ads: Megaphone, social: Share2, assets: Images } as const;
 
@@ -128,6 +136,21 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
 
   const setColor = useCallback((k: keyof SummerColors, v: string) => {
     setContent((c) => ({ ...c, colors: { ...c.colors, [k]: v } }));
+  }, []);
+
+  const setSize = useCallback(
+    (k: SummerElementKey, size: number) => {
+      if (!activeKey) return;
+      setLayouts((prev) => {
+        const cur = prev[activeKey] ?? defaultLayout();
+        return { ...prev, [activeKey]: { ...cur, [k]: { ...cur[k], size } } };
+      });
+    },
+    [activeKey]
+  );
+
+  const setOverlay = useCallback((patch: Partial<SummerOverlay>) => {
+    setContent((c) => ({ ...c, overlay: { ...c.overlay, ...patch } }));
   }, []);
 
   const resetLayout = useCallback(() => {
@@ -318,40 +341,24 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
           </div>
         ) : (
           <>
-            {/* Format picker */}
+            {/* Format picker (dropdown) */}
             <div>
               <div className={labelCls}>Format</div>
-              <div className="flex flex-col gap-[7px]">
-                {sectionFormats.map((f) => {
-                  const active = f.key === activeFormatKey;
-                  const r = f.width / f.height;
-                  let tw = 30;
-                  let th = 30;
-                  if (r >= 1) th = 30 / r;
-                  else tw = 30 * r;
-                  return (
-                    <button
-                      key={f.key}
-                      type="button"
-                      onClick={() => setActiveFormatKey(f.key)}
-                      className="flex items-center gap-[12px] text-left p-[10px] rounded-[12px] cursor-pointer transition-all border"
-                      style={
-                        active
-                          ? { background: "rgba(255,255,255,0.06)", borderColor: `${p.accent}8c`, boxShadow: `0 0 16px -8px ${p.accent}` }
-                          : { background: "rgba(255,255,255,0.02)", borderColor: "rgba(255,255,255,0.08)" }
-                      }
-                    >
-                      <span className="w-[34px] h-[34px] flex items-center justify-center shrink-0">
-                        <span style={{ width: tw, height: th, borderRadius: 4, background: active ? p.gradient : "rgba(255,255,255,0.22)" }} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-semibold text-white truncate">{f.label}</span>
-                        <span className="block text-[11px] text-[#7C8BA5] truncate">{f.note} · {f.width}×{f.height}</span>
-                      </span>
-                    </button>
-                  );
-                })}
+              <div className="relative">
+                <select
+                  value={activeFormatKey}
+                  onChange={(e) => setActiveFormatKey(e.target.value)}
+                  style={{ ...inputStyle, appearance: "none", WebkitAppearance: "none", MozAppearance: "none", cursor: "pointer", paddingRight: 40, fontWeight: 600 }}
+                >
+                  {sectionFormats.map((f) => (
+                    <option key={f.key} value={f.key} style={{ background: "#0B1020", color: "#E2E8F0" }}>
+                      {f.label} — {f.width}×{f.height}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2 text-[#7C8BA5]" />
               </div>
+              {activeFormat && <p className="mt-[7px] text-[11px] text-[#7C8BA5] leading-[1.4]">{activeFormat.note}</p>}
             </div>
 
             {/* Copy */}
@@ -404,34 +411,77 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                 </div>
               </div>
 
+              {/* Contextual element editor (Canva-style) — size + color target the
+                  element selected on the canvas (or picked from the pills below). */}
               <div>
-                <div className={labelCls}>Text colors</div>
-                <div className="flex flex-col gap-2">
-                  {([
-                    ["eyebrow", "Eyebrow"],
-                    ["headline", "Headline"],
-                    ["subtext", "Subtext"],
-                  ] as [keyof SummerColors, string][]).map(([key, label]) => (
-                    <label key={key} className="flex items-center justify-between gap-3">
-                      <span className="text-[12px] text-[#CBD5E1]">{label}</span>
-                      <span className="flex items-center gap-2">
-                        <span className="text-[11px] tabular-nums text-[#8C9AAE] uppercase">{content.colors[key]}</span>
-                        <input
-                          type="color"
-                          value={content.colors[key]}
-                          onChange={(e) => setColor(key, e.target.value)}
-                          className="w-[30px] h-[30px] rounded-[8px] cursor-pointer bg-transparent border border-white/15 p-0"
-                          aria-label={`${label} color`}
-                        />
-                      </span>
-                    </label>
-                  ))}
+                <div className={labelCls}>Element</div>
+                <div className="flex gap-[5px] mb-[12px]">
+                  {ELEMENT_LABELS.map(([k, label]) => {
+                    const on = (selected ?? "headline") === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setSelected(k)}
+                        className="flex-1 rounded-[8px] px-[6px] py-[7px] text-[11px] font-semibold transition-colors"
+                        style={{
+                          border: on ? `1px solid ${p.accent}` : "1px solid rgba(255,255,255,0.12)",
+                          background: on ? `${p.accent}22` : "rgba(255,255,255,0.04)",
+                          color: on ? "#fff" : "#CBD5E1",
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
                 </div>
-                <p className="mt-1 text-[11px] text-[#8C9AAE]">The button stays brand yellow by design.</p>
+                {(() => {
+                  const target = selected ?? "headline";
+                  const size = (layouts[activeKey] ?? defaultLayout())[target].size ?? 1;
+                  const isText = target !== "cta";
+                  return (
+                    <div className="flex flex-col gap-[12px]">
+                      <div className="flex items-center gap-[12px]">
+                        <span className="text-[11px] text-[#8C9AAE] w-[40px] shrink-0">Size</span>
+                        <input
+                          type="range"
+                          min={0.5}
+                          max={2.2}
+                          step={0.05}
+                          value={size}
+                          onChange={(e) => setSize(target, parseFloat(e.target.value))}
+                          className="flex-1 cursor-pointer"
+                          style={{ accentColor: p.accent }}
+                          aria-label="Text size"
+                        />
+                        <span className="text-[11px] tabular-nums text-[#8C9AAE] w-[42px] text-right">{Math.round(size * 100)}%</span>
+                      </div>
+                      {isText ? (
+                        <div className="flex items-center gap-[12px]">
+                          <span className="text-[11px] text-[#8C9AAE] w-[40px] shrink-0">Color</span>
+                          <span className="flex-1 text-[11px] tabular-nums text-[#8C9AAE] uppercase">{content.colors[target as keyof SummerColors]}</span>
+                          <input
+                            type="color"
+                            value={content.colors[target as keyof SummerColors]}
+                            onChange={(e) => setColor(target as keyof SummerColors, e.target.value)}
+                            className="w-[42px] h-[30px] rounded-[8px] cursor-pointer bg-transparent border border-white/15 p-0"
+                            aria-label="Text color"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-[12px]">
+                          <span className="text-[11px] text-[#8C9AAE] w-[40px] shrink-0">Color</span>
+                          <span className="inline-block w-[18px] h-[18px] rounded-[5px]" style={{ background: "#FFD000" }} />
+                          <span className="flex-1 text-[11px] text-[#8C9AAE]">Brand yellow — fixed by design</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[11px] leading-snug text-[#8C9AAE]">Drag any text or the button on the preview to reposition it.</p>
+                <p className="text-[11px] leading-snug text-[#8C9AAE]">Click an element on the canvas to edit it, then drag it to reposition.</p>
                 <button
                   type="button"
                   onClick={resetLayout}
@@ -462,6 +512,47 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
                   Clear background (use gradient)
                 </button>
               )}
+
+              {/* Image overlay — flat black/white wash with opacity */}
+              <div className="mt-[16px]">
+                <div className={labelCls}>Image overlay</div>
+                <div className="flex items-center gap-[10px]">
+                  <div className="flex gap-[5px] shrink-0">
+                    {(["black", "white"] as const).map((c) => {
+                      const on = content.overlay.color === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setOverlay({ color: c, opacity: content.overlay.opacity === 0 ? 0.35 : content.overlay.opacity })}
+                          className="w-[30px] h-[30px] rounded-[8px] cursor-pointer transition-transform"
+                          style={{
+                            background: c === "black" ? "#0A0A0A" : "#FFFFFF",
+                            border: on ? `2px solid ${p.accent}` : "1px solid rgba(255,255,255,0.22)",
+                          }}
+                          aria-label={`${c} overlay`}
+                          title={`${c} overlay`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={0.85}
+                    step={0.05}
+                    value={content.overlay.opacity}
+                    onChange={(e) => setOverlay({ opacity: parseFloat(e.target.value) })}
+                    className="flex-1 cursor-pointer"
+                    style={{ accentColor: p.accent }}
+                    aria-label="Overlay opacity"
+                  />
+                  <span className="text-[11px] tabular-nums text-[#8C9AAE] w-[42px] text-right">{Math.round(content.overlay.opacity * 100)}%</span>
+                </div>
+                <p className="mt-[6px] text-[11px] text-[#8C9AAE] leading-[1.4]">
+                  A flat {content.overlay.color} layer over the image — dial up the opacity for cleaner, more legible text.
+                </p>
+              </div>
 
               {assets.length > 0 && (
                 <div className="mt-[14px]">

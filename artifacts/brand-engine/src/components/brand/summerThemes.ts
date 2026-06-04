@@ -52,7 +52,6 @@ export interface SummerThemeDef {
   imageAvoid: string;
   /** Editable starter copy. */
   copy: {
-    eyebrow: string;
     headline: string;
     subtext: string;
     cta: string;
@@ -72,7 +71,7 @@ export const SUMMER_CTA_BG = "#FFD000";
 export const SUMMER_CTA_INK = "#1A1206";
 
 /** Editable / draggable elements on a canvas. */
-export type SummerElementKey = "eyebrow" | "headline" | "subtext" | "cta" | "logo";
+export type SummerElementKey = "headline" | "subtext" | "cta" | "logo";
 
 /** Available Summer of AI logo color variants (transparent PNGs in /public). */
 export type SummerLogoVariant = "yellow" | "blue";
@@ -99,7 +98,6 @@ export interface SummerElementLayout {
 export type SummerLayoutMap = Record<SummerElementKey, SummerElementLayout>;
 
 export interface SummerColors {
-  eyebrow: string;
   headline: string;
   subtext: string;
 }
@@ -135,33 +133,29 @@ export function defaultLayoutFor(width: number, height: number): SummerLayoutMap
     case "wide":
       return {
         logo: { x: 0.06, y: 0.07, w: 0.2 },
-        eyebrow: { x: 0.06, y: 0.34, w: 0.6 },
         headline: { x: 0.06, y: 0.44, w: 0.62 },
-        subtext: { x: 0.06, y: 0.66, w: 0.52 },
+        subtext: { x: 0.06, y: 0.62, w: 0.52 },
         cta: { x: 0.06, y: 0.82, w: 0.5 },
       };
     case "tall":
       return {
         logo: { x: 0.06, y: 0.05, w: 0.4 },
-        eyebrow: { x: 0.06, y: 0.51, w: 0.86 },
         headline: { x: 0.06, y: 0.58, w: 0.86 },
-        subtext: { x: 0.06, y: 0.78, w: 0.78 },
+        subtext: { x: 0.06, y: 0.72, w: 0.78 },
         cta: { x: 0.06, y: 0.88, w: 0.62 },
       };
     case "portrait":
       return {
         logo: { x: 0.06, y: 0.05, w: 0.34 },
-        eyebrow: { x: 0.06, y: 0.45, w: 0.88 },
         headline: { x: 0.06, y: 0.53, w: 0.88 },
-        subtext: { x: 0.06, y: 0.75, w: 0.76 },
+        subtext: { x: 0.06, y: 0.7, w: 0.76 },
         cta: { x: 0.06, y: 0.87, w: 0.52 },
       };
     default:
       return {
         logo: { x: 0.06, y: 0.05, w: 0.3 },
-        eyebrow: { x: 0.06, y: 0.39, w: 0.88 },
         headline: { x: 0.06, y: 0.47, w: 0.88 },
-        subtext: { x: 0.06, y: 0.7, w: 0.74 },
+        subtext: { x: 0.06, y: 0.65, w: 0.74 },
         cta: { x: 0.06, y: 0.84, w: 0.52 },
       };
   }
@@ -200,7 +194,6 @@ export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {
       "cinematic golden-hour photograph, strong warm directional backlight with natural lens flare and sun haze streaming through windows or sheer curtains, rich amber, terracotta, honey and cream tones, relaxed candid lifestyle of people lounging, reading or unwinding, soft silhouettes and glowing rim light, dreamy shallow depth of field, fine 35mm film grain, editorial vacation luxury, warm low-contrast highlights, calm and unhurried",
     imageAvoid: "no text, no watermark, no logos, no harsh neon, no cool blue tones, no flat overhead daylight, no oversaturated colors",
     copy: {
-      eyebrow: "SUMMER OF AI",
       headline: "Sun's Out, Models Out",
       subtext: "Slow mornings, big breakthroughs — the AI summer you've been waiting for.",
       cta: "Save Your Spot",
@@ -234,7 +227,6 @@ export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {
       "electric blue and cyan neon lighting, high-speed motion blur, glowing light trails, futuristic AI energy, dark cinematic background, high contrast, sleek and high-tech, sparks of light",
     imageAvoid: "no text, no watermark, no logos, no warm beige tones, no daylight",
     copy: {
-      eyebrow: "SUMMER OF AI",
       headline: "Move At The Speed Of AI",
       subtext: "Plug in, power up and outpace everyone this summer.",
       cta: "Get Early Access",
@@ -268,7 +260,6 @@ export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {
       "bold and untamed, intense high-contrast lighting, dark moody emotional tone, dramatic deep shadows, gritty cinematic atmosphere, raw and powerful, fierce energy, muted palette with a single blood-red accent",
     imageAvoid: "no text, no watermark, no logos, no pastel colors, no soft cheerful lighting",
     copy: {
-      eyebrow: "SUMMER OF AI",
       headline: "Unleash Something Untamed",
       subtext: "No limits, no rules — just raw AI power set loose this summer.",
       cta: "Join The Pack",
@@ -376,7 +367,6 @@ export function parseImageCopies(text: string): string[] {
 
 /** Editable content shown on a canvas. */
 export interface SummerContent {
-  eyebrow: string;
   headline: string;
   subtext: string;
   cta: string;
@@ -403,14 +393,12 @@ const DEFAULT_LOGO_VARIANT: Record<SummerThemeId, SummerLogoVariant> = {
 export function defaultContent(themeId: SummerThemeId): SummerContent {
   const t = SUMMER_THEMES[themeId];
   return {
-    eyebrow: t.copy.eyebrow,
     headline: t.copy.headline,
     subtext: t.copy.subtext,
     cta: t.copy.cta,
     bgImage: null,
     headlineFont: t.fontHeading.includes("Bebas") ? "Bebas Neue" : "Poppins",
     colors: {
-      eyebrow: t.palette.primary,
       headline: "#FFFFFF",
       subtext: "#F4EFE6",
     },

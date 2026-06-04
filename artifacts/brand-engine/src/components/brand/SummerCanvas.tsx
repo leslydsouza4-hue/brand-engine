@@ -1,6 +1,6 @@
 // Summer of AI — themed canvas renderer (Canva-style free-form layout).
 //
-// One renderer drives every format. Elements (eyebrow / headline / subtext /
+// One renderer drives every format. Elements (headline / subtext /
 // CTA) are absolutely positioned by fractional coordinates so the same content
 // reads on any aspect ratio. The export node is rendered at the format's true
 // pixel dimensions; ScaledCanvasPreview shows a faithful, fit-to-width preview
@@ -150,24 +150,6 @@ function CanvasInner({
         />
       )}
       <div style={{ position: "absolute", inset: 0, background: theme.palette.scrim }} />
-
-      {content.eyebrow && (
-        <ElementBox k="eyebrow" layout={content.layout.eyebrow} interaction={interaction}>
-          <span
-            style={{
-              display: "inline-block",
-              fontFamily: theme.fontBody,
-              fontWeight: 700,
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              fontSize: `${Math.max(9, 13 * s) * sz("eyebrow")}px`,
-              color: content.colors.eyebrow,
-            }}
-          >
-            {content.eyebrow}
-          </span>
-        </ElementBox>
-      )}
 
       {content.headline && (
         <ElementBox k="headline" layout={content.layout.headline} interaction={interaction}>

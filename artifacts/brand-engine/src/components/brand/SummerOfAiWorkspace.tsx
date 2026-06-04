@@ -105,7 +105,6 @@ async function buildEmbedCSS(headlineFont: string): Promise<string> {
 }
 
 const ELEMENT_LABELS: [SummerElementKey, string][] = [
-  ["eyebrow", "Eyebrow"],
   ["headline", "Headline"],
   ["subtext", "Subtext"],
   ["cta", "Button"],
@@ -754,10 +753,6 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
 
                 {/* Copy */}
                 <div className="flex flex-col gap-[14px]">
-                  <div>
-                    <div className={labelCls}>Eyebrow</div>
-                    <input style={inputStyle} value={activeContent.eyebrow} onChange={(e) => set("eyebrow", e.target.value)} />
-                  </div>
                   <div>
                     <div className={labelCls}>Headline</div>
                     <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 58 }} value={activeContent.headline} onChange={(e) => set("headline", e.target.value)} />

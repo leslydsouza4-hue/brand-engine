@@ -7,7 +7,6 @@ import {
   MonitorPlay,
   Lightbulb,
   X,
-  Package,
   FileText,
   Map,
   CalendarDays,
@@ -74,15 +73,6 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
       document.removeEventListener("keydown", onEsc);
     };
   }, [brandMenuOpen]);
-
-  const brandGradient = (m: BrandMode) =>
-    m === "levelup26"
-      ? "linear-gradient(135deg, #7C3AED 0%, #A855F7 50%, #22D3EE 100%)"
-      : m === "summer-of-ai"
-        ? "linear-gradient(135deg, #FFC83D 0%, #FF7A3D 50%, #2EC5FF 100%)"
-        : "linear-gradient(135deg, #00B2A9 0%, #1FC9E0 50%, #2896FB 100%)";
-  const brandGlowRgba = (m: BrandMode) =>
-    m === "levelup26" ? "rgba(124,58,237,0.45)" : m === "summer-of-ai" ? "rgba(255,122,61,0.45)" : "rgba(0,178,169,0.45)";
 
   return (
     <>
@@ -257,30 +247,47 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         )}
         {isSummer && (
           <div className="px-[12px] mb-[10px] relative">
-            <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Summer of AI</div>
-            {SUMMER_THEME_ORDER.map((id) => {
-              const st = SUMMER_THEMES[id];
-              const mode = `summer-${id}`;
-              const active = currentMode === mode;
-              return (
-                <button
-                  key={id}
-                  onClick={() => handleSetMode(mode)}
-                  className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[10px] rounded-[12px] cursor-pointer border-none transition-all duration-250 mt-[2px] ${
-                    active ? 'bg-white/[0.05] text-white' : 'text-[#CBD5E1] hover:bg-white/[0.03] hover:text-white hover:translate-x-[2px]'
-                  }`}
-                >
-                  {active && (
-                    <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-[4px]" style={{ background: st.palette.gradient }} />
-                  )}
-                  <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center shrink-0" style={{ background: st.palette.gradient }} />
-                  <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">{st.name}</span>
-                </button>
-              );
-            })}
-            <div className="px-[14px] py-[14px] mt-[8px] rounded-[12px] bg-white/[0.02] border border-white/[0.06]">
+            <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[10px]">Campaign Themes</div>
+            <div className="flex flex-col gap-[8px]">
+              {SUMMER_THEME_ORDER.map((id) => {
+                const st = SUMMER_THEMES[id];
+                const mode = `summer-${id}`;
+                const active = currentMode === mode;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => handleSetMode(mode)}
+                    className={`group relative w-full flex items-center gap-[11px] p-[10px] rounded-[14px] cursor-pointer transition-all duration-200 overflow-hidden ${
+                      active
+                        ? 'bg-white/[0.06] border border-white/[0.12]'
+                        : 'bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/[0.1] hover:translate-x-[2px]'
+                    }`}
+                    style={active ? { boxShadow: `0 6px 22px -8px ${st.palette.accent}88` } : undefined}
+                  >
+                    <span
+                      aria-hidden
+                      className="w-[40px] h-[40px] rounded-[10px] shrink-0 relative"
+                      style={{
+                        background: st.palette.gradient,
+                        boxShadow: active ? `0 0 0 1px ${st.palette.accent}66, inset 0 1px 0 rgba(255,255,255,0.35)` : 'inset 0 1px 0 rgba(255,255,255,0.25)',
+                      }}
+                    >
+                      <span className="absolute inset-0 rounded-[10px]" style={{ background: 'radial-gradient(120% 80% at 20% 10%, rgba(255,255,255,0.4), transparent 60%)' }} />
+                    </span>
+                    <span className="flex-1 min-w-0 text-left">
+                      <span className={`block text-[13px] font-bold tracking-[-0.1px] truncate ${active ? 'text-white' : 'text-[#E2E8F0]'}`}>{st.name}</span>
+                      <span className="block text-[10.5px] text-[#94A3B8] truncate">{st.tagline}</span>
+                    </span>
+                    {active && (
+                      <span aria-hidden className="w-[7px] h-[7px] rounded-full shrink-0 mr-[2px]" style={{ background: st.palette.accent, boxShadow: `0 0 8px ${st.palette.accent}` }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="px-[13px] py-[12px] mt-[12px] rounded-[12px] bg-white/[0.02] border border-white/[0.06]">
               <div className="text-[11px] text-[#94A3B8] leading-[1.5]">
-                Three campaign worlds — Sun Drunk, Electric and Feral. Each theme builds on-brand emailers, ads and social posts with AI-generated imagery.
+                Pick a theme to build on-brand emailers, ads and social posts with AI-generated imagery.
               </div>
             </div>
           </div>

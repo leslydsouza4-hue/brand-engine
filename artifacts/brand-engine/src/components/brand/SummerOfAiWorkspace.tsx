@@ -7,11 +7,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Sparkles, Loader2, Download, Trash2, Check, Mail, Megaphone, Share2, Images, ChevronDown, ImagePlus, X } from "lucide-react";
+import { Sparkles, Loader2, Download, Trash2, Check, Mail, Megaphone, Share2, Images, ChevronDown, ImagePlus, X, LayoutGrid, Link2, Plus } from "lucide-react";
 import {
   SUMMER_THEMES,
   SUMMER_SECTIONS,
   formatsForSection,
+  parseImageCopies,
   defaultContent,
   defaultLayout,
   defaultLayoutFor,
@@ -48,7 +49,21 @@ const ELEMENT_LABELS: [SummerElementKey, string][] = [
   ["cta", "Button"],
 ];
 
-const SECTION_ICON = { emailers: Mail, ads: Megaphone, social: Share2, assets: Images } as const;
+const SECTION_ICON = { emailers: Mail, ads: Megaphone, social: Share2, batch: LayoutGrid, assets: Images } as const;
+
+/** Output sizes available to the bulk generator. */
+const BATCH_ORIENTATIONS: { id: string; label: string; w: number; h: number }[] = [
+  { id: "square", label: "Square · 1080×1080", w: 1080, h: 1080 },
+  { id: "portrait", label: "Portrait · 1080×1350", w: 1080, h: 1350 },
+  { id: "story", label: "Story · 1080×1920", w: 1080, h: 1920 },
+  { id: "landscape", label: "Landscape · 1200×628", w: 1200, h: 628 },
+];
+
+interface BatchResult {
+  prompt: string;
+  dataUrl?: string;
+  error?: string;
+}
 
 function triggerDownload(dataUrl: string, name: string): void {
   const a = document.createElement("a");
@@ -90,7 +105,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   const theme = SUMMER_THEMES[themeId];
   const [section, setSection] = useState<SummerSection>("emailers");
   const sectionFormats = useMemo(
-    () => (section === "assets" ? [] : formatsForSection(section)),
+    () => (section === "assets" || section === "batch" ? [] : formatsForSection(section)),
     [section]
   );
   const [activeFormatKey, setActiveFormatKey] = useState<string>(sectionFormats[0]?.key ?? "");
@@ -107,6 +122,18 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
   const [exporting, setExporting] = useState(false);
   const [exportingZip, setExportingZip] = useState(false);
 
+  // Bulk generator state.
+  const [docUrl, setDocUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [batchPrompts, setBatchPrompts] = useState<string[]>([""]);
+  const [batchOrientation, setBatchOrientation] = useState<string>("square");
+  const [batchRunning, setBatchRunning] = useState(false);
+  const [batchProgress, setBatchProgress] = useState({ done: 0, total: 0 });
+  const [batchResults, setBatchResults] = useState<BatchResult[]>([]);
+  const [batchError, setBatchError] = useState<string | null>(null);
+  // Run token: bumped on theme change so an in-flight batch can't write stale state.
+  const batchJobRef = useRef(0);
+
   const assets = useSummerAssets(themeId);
   const exportRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -118,11 +145,18 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
     setRefImages([]);
     setGenError(null);
     setSelected(null);
+    setDocUrl("");
+    setBatchPrompts([""]);
+    setBatchResults([]);
+    setBatchError(null);
+    setBatchProgress({ done: 0, total: 0 });
+    setBatchRunning(false);
+    batchJobRef.current += 1; // invalidate any in-flight batch
   }, [themeId]);
 
   // Keep a valid active format when the section changes.
   useEffect(() => {
-    if (section === "assets") return;
+    if (section === "assets" || section === "batch") return;
     const fmts = formatsForSection(section);
     if (!fmts.some((f) => f.key === activeFormatKey)) {
       setActiveFormatKey(fmts[0]?.key ?? "");
@@ -217,6 +251,87 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
       setGenerating(false);
     }
   }, [imagePrompt, themeId, activeFormat, refImages, set]);
+
+  // Fetch a Google Doc and pull every "IMAGE COPY" brief out of it into the
+  // editable prompt list.
+  const importDoc = useCallback(async () => {
+    const url = docUrl.trim();
+    if (!url) return;
+    setImporting(true);
+    setBatchError(null);
+    try {
+      const r = await fetch("/api/import-doc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      if (!r.ok) {
+        const j = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error || `request failed (${r.status})`);
+      }
+      const j = (await r.json()) as { text?: string };
+      const copies = parseImageCopies(j.text || "");
+      if (copies.length === 0) {
+        setBatchError('No "IMAGE COPY" briefs were found in that doc. Make sure each image brief is labeled "IMAGE COPY".');
+        return;
+      }
+      setBatchPrompts(copies);
+    } catch (err) {
+      setBatchError((err as Error).message || "could not import that doc");
+    } finally {
+      setImporting(false);
+    }
+  }, [docUrl]);
+
+  // Generate one themed image per non-empty prompt, sequentially.
+  const generateBatch = useCallback(async () => {
+    const prompts = batchPrompts.map((p) => p.trim()).filter(Boolean);
+    if (prompts.length === 0 || batchRunning) return;
+    const dims = BATCH_ORIENTATIONS.find((o) => o.id === batchOrientation) ?? BATCH_ORIENTATIONS[0];
+    const job = ++batchJobRef.current;
+    const stale = () => batchJobRef.current !== job;
+    setBatchRunning(true);
+    setBatchError(null);
+    setBatchResults([]);
+    setBatchProgress({ done: 0, total: prompts.length });
+    let storageWarned = false;
+    for (let i = 0; i < prompts.length; i++) {
+      if (stale()) return; // theme changed mid-run — abandon without touching state
+      const prompt = prompts[i];
+      try {
+        const r = await fetch("/api/summer/generate-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            themeId,
+            prompt,
+            width: dims.w,
+            height: dims.h,
+            referenceImages: refImages,
+          }),
+        });
+        if (!r.ok) {
+          const j = (await r.json().catch(() => ({}))) as { error?: string };
+          throw new Error(j.error || `request failed (${r.status})`);
+        }
+        const j = (await r.json()) as { dataUrl: string };
+        if (stale()) return;
+        const { persisted } = addSummerAsset(themeId, j.dataUrl, prompt);
+        if (!persisted) storageWarned = true;
+        setBatchResults((prev) => [...prev, { prompt, dataUrl: j.dataUrl }]);
+      } catch (err) {
+        if (stale()) return;
+        setBatchResults((prev) => [...prev, { prompt, error: (err as Error).message || "failed" }]);
+      } finally {
+        if (!stale()) setBatchProgress({ done: i + 1, total: prompts.length });
+      }
+    }
+    if (stale()) return;
+    if (storageWarned) {
+      setBatchError("Some images were generated but your library storage is full — older assets may not survive a reload.");
+    }
+    setBatchRunning(false);
+  }, [batchPrompts, batchRunning, batchOrientation, themeId, refImages]);
 
   // Read uploaded reference image files into data URLs (capped at 3 total).
   // Uses allSettled so one unreadable file doesn't drop the whole batch.
@@ -394,7 +509,7 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
         {/* Section selector */}
         <div>
           <div className={labelCls}>Section</div>
-          <div className="grid grid-cols-4 gap-[6px]">
+          <div className="grid grid-cols-5 gap-[6px]">
             {SUMMER_SECTIONS.map((s) => {
               const Icon = SECTION_ICON[s.id];
               const active = s.id === section;
@@ -435,6 +550,130 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
             {genError && <div className="text-[#ff9b9b] text-[12px] mt-[8px] leading-[1.45]">{genError}</div>}
             <p className="text-[11px] text-[#64748B] mt-[14px] leading-[1.5]">
               Every asset is locked to the {theme.name} visual style and saved to this theme's library.
+            </p>
+          </div>
+        ) : section === "batch" ? (
+          <div className="flex flex-col gap-[18px]">
+            {/* Import from a Google Doc */}
+            <div>
+              <div className={labelCls}>Import from Google Doc</div>
+              <div className="flex gap-[8px]">
+                <input
+                  style={inputStyle}
+                  value={docUrl}
+                  onChange={(e) => setDocUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void importDoc();
+                    }
+                  }}
+                  placeholder="Paste a public Google Doc link…"
+                />
+                <button
+                  type="button"
+                  onClick={() => void importDoc()}
+                  disabled={importing || !docUrl.trim()}
+                  className="shrink-0 flex items-center justify-center gap-[6px] px-[14px] rounded-[10px] font-bold text-[13px] cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: "rgba(255,255,255,0.08)", color: "#E2E8F0" }}
+                >
+                  {importing ? <Loader2 size={15} className="animate-spin" /> : <Link2 size={15} />}
+                  Import
+                </button>
+              </div>
+              <p className="text-[11px] text-[#64748B] mt-[8px] leading-[1.5]">
+                Label each image brief in the doc with the text <span className="text-[#CBD5E1] font-semibold">IMAGE COPY</span>. We'll pull one prompt per label.
+              </p>
+            </div>
+
+            {/* Editable prompt list */}
+            <div>
+              <div className={labelCls}>Image briefs ({batchPrompts.length})</div>
+              <div className="flex flex-col gap-[8px]">
+                {batchPrompts.map((pr, i) => (
+                  <div key={i} className="flex gap-[8px] items-start">
+                    <textarea
+                      style={{ ...inputStyle, resize: "vertical", minHeight: 54 }}
+                      value={pr}
+                      onChange={(e) => setBatchPrompts((prev) => prev.map((x, j) => (j === i ? e.target.value : x)))}
+                      placeholder={`Image ${i + 1} — describe the subject…`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setBatchPrompts((prev) => (prev.length > 1 ? prev.filter((_, j) => j !== i) : [""]))}
+                      className="shrink-0 mt-[2px] py-[10px] px-[10px] rounded-[8px] bg-transparent border border-white/[0.16] text-[#94A3B8] cursor-pointer hover:text-white transition-colors"
+                      aria-label="Remove image brief"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setBatchPrompts((prev) => [...prev, ""])}
+                className="mt-[10px] flex items-center gap-[6px] py-[8px] px-[12px] rounded-[9px] text-[12.5px] font-semibold cursor-pointer border border-dashed border-white/[0.18] text-[#CBD5E1] hover:text-white transition-colors bg-transparent"
+              >
+                <Plus size={14} /> Add image
+              </button>
+            </div>
+
+            {/* Output size */}
+            <div>
+              <div className={labelCls}>Output size</div>
+              <div className="relative">
+                <select
+                  value={batchOrientation}
+                  onChange={(e) => setBatchOrientation(e.target.value)}
+                  style={{ ...inputStyle, appearance: "none", WebkitAppearance: "none", MozAppearance: "none", cursor: "pointer", paddingRight: 40, fontWeight: 600 }}
+                >
+                  {BATCH_ORIENTATIONS.map((o) => (
+                    <option key={o.id} value={o.id} style={{ background: "#0B1020", color: "#E2E8F0" }}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="pointer-events-none absolute right-[14px] top-1/2 -translate-y-1/2 text-[#7C8BA5]" />
+              </div>
+            </div>
+
+            {referenceUploader()}
+            {genError && <div className="text-[#ff9b9b] text-[12px] leading-[1.45]">{genError}</div>}
+
+            {/* Generate */}
+            {(() => {
+              const count = batchPrompts.map((x) => x.trim()).filter(Boolean).length;
+              return (
+                <button
+                  type="button"
+                  onClick={() => void generateBatch()}
+                  disabled={batchRunning || count === 0}
+                  className="flex items-center justify-center gap-[8px] py-[13px] rounded-[12px] font-bold text-[14px] cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: p.accent, color: accentInk }}
+                >
+                  {batchRunning ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Generating {batchProgress.done} of {batchProgress.total}…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} /> Generate {count} image{count === 1 ? "" : "s"}
+                    </>
+                  )}
+                </button>
+              );
+            })()}
+            {batchRunning && batchProgress.total > 0 && (
+              <div className="h-[6px] rounded-full overflow-hidden bg-white/[0.08]">
+                <div
+                  className="h-full transition-all"
+                  style={{ width: `${(batchProgress.done / batchProgress.total) * 100}%`, background: p.accent }}
+                />
+              </div>
+            )}
+            {batchError && <div className="text-[#ff9b9b] text-[12px] leading-[1.45]">{batchError}</div>}
+            <p className="text-[11px] text-[#64748B] leading-[1.5]">
+              Each image is generated in the {theme.name} style and saved to this theme's library. Large batches take a while — one image generates at a time.
             </p>
           </div>
         ) : (
@@ -757,6 +996,13 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
               setSection("social");
             }}
           />
+        ) : section === "batch" ? (
+          <BatchResults
+            results={batchResults}
+            running={batchRunning}
+            progress={batchProgress}
+            accent={p.accent}
+          />
         ) : (
           <>
             <div className="flex items-center justify-between mb-[16px] gap-[12px] flex-wrap">
@@ -883,6 +1129,66 @@ function AssetGrid({
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function BatchResults({
+  results,
+  running,
+  progress,
+  accent,
+}: {
+  results: BatchResult[];
+  running: boolean;
+  progress: { done: number; total: number };
+  accent: string;
+}) {
+  if (results.length === 0 && !running) {
+    return (
+      <div className="border border-dashed border-white/[0.16] rounded-[18px] py-[70px] px-[20px] text-center text-[#7C8BA5]">
+        <LayoutGrid size={34} className="mx-auto mb-[12px] opacity-60" />
+        <div className="text-[15px] text-[#CBD5E1]">Bulk image generator</div>
+        <div className="text-[12.5px] mt-[6px] text-[#5C6B85] leading-[1.5]">
+          Import a Google Doc (briefs labeled “IMAGE COPY”) or add prompts by hand, then generate them all in one run.
+        </div>
+      </div>
+    );
+  }
+  const okCount = results.filter((r) => r.dataUrl).length;
+  return (
+    <div>
+      <div className="text-[13px] text-[#94A3B8] mb-[16px]">
+        {running
+          ? `Generating ${progress.done} of ${progress.total}…`
+          : `${okCount} image${okCount === 1 ? "" : "s"} generated · saved to this theme's library`}
+      </div>
+      <div className="grid gap-[16px]" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
+        {results.map((r, i) => (
+          <div key={i} className="rounded-[14px] overflow-hidden border border-white/[0.1]" style={{ background: "rgba(0,0,0,0.3)" }}>
+            <div className="aspect-square bg-black flex items-center justify-center">
+              {r.dataUrl ? (
+                <img src={r.dataUrl} alt={r.prompt} className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-[#ff9b9b] text-[12px] text-center px-[14px] leading-[1.4]">Failed: {r.error}</div>
+              )}
+            </div>
+            <div className="p-[12px]">
+              <div
+                className="text-[12px] text-[#94A3B8] leading-[1.4]"
+                style={{ minHeight: 34, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+              >
+                {r.prompt}
+              </div>
+            </div>
+          </div>
+        ))}
+        {running && (
+          <div className="rounded-[14px] overflow-hidden border border-white/[0.1] aspect-square flex items-center justify-center" style={{ background: "rgba(0,0,0,0.3)" }}>
+            <Loader2 size={26} className="animate-spin" color={accent} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@
 
 export type SummerThemeId = "sun-drunk" | "electric" | "feral";
 
-export type SummerSection = "emailers" | "ads" | "social" | "assets";
+export type SummerSection = "emailers" | "ads" | "social" | "batch" | "assets";
 
 export interface SummerPalette {
   /** Page / canvas background. */
@@ -312,11 +312,67 @@ export const SUMMER_SECTIONS: { id: SummerSection; label: string }[] = [
   { id: "emailers", label: "Emailers" },
   { id: "ads", label: "Ads" },
   { id: "social", label: "Social Posts" },
+  { id: "batch", label: "Bulk" },
   { id: "assets", label: "Asset Library" },
 ];
 
 export function formatsForSection(section: SummerSection): SummerFormat[] {
   return SUMMER_FORMATS.filter((f) => f.section === section);
+}
+
+/** A line that starts an image brief, e.g. "IMAGE COPY", "Image Copy 2:", "IMAGE COPY #3 -". */
+const IMAGE_COPY_LABEL = /^\s*image\s+copy\b\s*#?\s*\d*\s*[:.\-–)]*/i;
+
+/**
+ * A label-style heading (other than IMAGE COPY) that should end the current
+ * brief — either an ALL-CAPS label or a known field name, followed by a colon
+ * within the first ~40 chars. Avoids cutting prose that merely contains a colon.
+ */
+function isFieldHeading(line: string): boolean {
+  const colon = line.indexOf(":");
+  if (colon === -1 || colon > 40) return false;
+  const label = line.slice(0, colon).trim();
+  if (!label) return false;
+  const isAllCaps = /^[A-Z0-9 /&\-]+$/.test(label) && /[A-Z]/.test(label);
+  const known = /\b(copy|headline|sub[- ]?head(?:line)?|subject|body|cta|caption|title|text|hook|post|description|alt)\b/i.test(label);
+  return isAllCaps || known;
+}
+
+/**
+ * Pull image briefs out of a doc body. Each brief is marked by an "IMAGE COPY"
+ * label on its own line (optionally numbered / punctuated); the brief is the
+ * text after that label up to the next "IMAGE COPY" label, a blank line, or
+ * another field heading (e.g. "CAPTION COPY:", "HEADLINE:").
+ */
+export function parseImageCopies(text: string): string[] {
+  const lines = text.split(/\r?\n/);
+  const out: string[] = [];
+  let capturing = false;
+  let buf: string[] = [];
+  const flush = () => {
+    const seg = buf.join(" ").replace(/\s+/g, " ").replace(/^[\s:.\-–)]+/, "").trim();
+    if (seg) out.push(seg);
+    buf = [];
+  };
+  for (const line of lines) {
+    const m = line.match(IMAGE_COPY_LABEL);
+    if (m) {
+      if (capturing) flush();
+      capturing = true;
+      const rest = line.slice(m[0].length).trim();
+      if (rest) buf.push(rest);
+      continue;
+    }
+    if (!capturing) continue;
+    if (line.trim() === "" || isFieldHeading(line)) {
+      flush();
+      capturing = false;
+      continue;
+    }
+    buf.push(line.trim());
+  }
+  if (capturing) flush();
+  return out;
 }
 
 /** Editable content shown on a canvas. */

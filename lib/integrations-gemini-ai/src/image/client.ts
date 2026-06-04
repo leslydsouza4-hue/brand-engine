@@ -24,13 +24,17 @@ export type GeminiImageModel = "gemini-2.5-flash-image" | "gemini-3-pro-image-pr
 
 export async function generateImage(
   prompt: string,
-  model: GeminiImageModel = "gemini-2.5-flash-image"
+  model: GeminiImageModel = "gemini-2.5-flash-image",
+  options?: { aspectRatio?: string }
 ): Promise<{ b64_json: string; mimeType: string }> {
   const response = await ai.models.generateContent({
     model,
     contents: [{ role: "user", parts: [{ text: prompt }] }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
+      ...(options?.aspectRatio
+        ? { imageConfig: { aspectRatio: options.aspectRatio } }
+        : {}),
     },
   });
 

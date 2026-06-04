@@ -70,7 +70,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - `GET  /api/levelup/drive/image?id=...&size=w800` — Stream a Drive image through Drive's thumbnail endpoint (CORS-safe proxy)
   - `POST /api/levelup/vision/tag` — Gemini 2.5 Flash JSON image tagging (people/scene/mood/colors/objects/peopleCount)
   - `POST /api/levelup/vision/parse-query` — Turn an NL search string into structured tag criteria for the library
-  - `POST /api/summer/generate-image` — Summer of AI themed image generation; validates `prompt`+`themeId`, appends the theme's style-lock suffix, restricts to an allowlisted Gemini image model, returns `{dataUrl}`
+  - `POST /api/summer/generate-image` — Summer of AI themed image generation; validates `prompt`+`themeId`, appends the theme's style-lock suffix (photorealistic, no-text, full-bleed), restricts to an allowlisted Gemini image model. Defaults to **Nano Banana Pro** (`gemini-3-pro-image-preview`) for quality — `gemini-2.5-flash-image` ("Nano Banana 2") only used if explicitly requested. Accepts optional `width`/`height` and maps them to the nearest Gemini-supported `aspectRatio` (via `imageConfig.aspectRatio`) so backgrounds match each format instead of being square-cropped. Returns `{dataUrl, model, aspectRatio}`
 - **Dependencies**: `@workspace/integrations-openai-ai-server` for OpenAI, `@workspace/integrations-gemini-ai` for Gemini
 
 ## Key Commands

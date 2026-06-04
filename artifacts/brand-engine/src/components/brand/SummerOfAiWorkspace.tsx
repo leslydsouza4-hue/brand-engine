@@ -114,6 +114,8 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
           themeId,
           prompt,
           orientation: activeFormat ? orientationFor(activeFormat) : undefined,
+          width: activeFormat?.width,
+          height: activeFormat?.height,
         }),
       });
       if (!r.ok) {

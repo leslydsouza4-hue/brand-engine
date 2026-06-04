@@ -1,0 +1,189 @@
+Create a new Workspace System in Brand Engine.
+
+Goal:
+
+Allow multiple campaign workspaces with their own assets, themes, copy, and templates.
+
+--------------------------------------------------
+
+WORKSPACES
+
+Add workspace selector:
+
+- HighLevel
+
+- LevelUp 26
+
+- Summer of AI
+
+--------------------------------------------------
+
+SUMMER OF AI WORKSPACE
+
+Add 3 campaign themes:
+
+1. Sun Drunk
+
+2. Electric
+
+3. Feral
+
+--------------------------------------------------
+
+THEME STRUCTURE
+
+Each theme contains:
+
+- Emailers
+
+- Ads
+
+- Social Posts
+
+These should appear as sections inside the selected theme.
+
+--------------------------------------------------
+
+SUN DRUNK
+
+Visual style:
+
+- hazy golden sunlight
+
+- warm beige
+
+- beach lifestyle
+
+- vacation imagery
+
+- relaxed luxury
+
+Use approved image library.
+
+Do not generate random imagery.
+
+--------------------------------------------------
+
+ELECTRIC
+
+Visual style:
+
+- electric blue
+
+- motion blur
+
+- speed
+
+- AI energy
+
+- neon accents
+
+- futuristic atmosphere
+
+Use approved image library when available.
+
+If imagery generation is used:
+
+- generate only within Electric style rules
+
+--------------------------------------------------
+
+FERAL
+
+Visual style:
+
+- bold
+
+- untamed
+
+- intense
+
+- high contrast
+
+- darker emotional tone
+
+Use approved image library when available.
+
+--------------------------------------------------
+
+CONTENT SYSTEM
+
+Each theme should support:
+
+- approved campaign copy
+
+- approved image library
+
+- approved template library
+
+Templates should be generated from campaign assets and content.
+
+Do not use generic design generation.
+
+--------------------------------------------------
+
+EMAILERS
+
+Allow:
+
+- hero email
+
+- announcement email
+
+- reminder email
+
+Generate approved campaign layouts.
+
+--------------------------------------------------
+
+ADS
+
+Allow:
+
+- display ads
+
+- Meta ads
+
+- LinkedIn ads
+
+--------------------------------------------------
+
+SOCIAL POSTS
+
+Allow:
+
+- square
+
+- portrait
+
+- story
+
+--------------------------------------------------
+
+ASSET LIBRARY
+
+Each theme should have:
+
+- image library
+
+- background library
+
+- campaign assets
+
+Use theme assets first before AI generation.
+
+--------------------------------------------------
+
+GOAL
+
+Transform Brand Engine into a campaign workspace system where every workspace has:
+
+- themes
+
+- assets
+
+- templates
+
+- content
+
+instead of generic design generation.

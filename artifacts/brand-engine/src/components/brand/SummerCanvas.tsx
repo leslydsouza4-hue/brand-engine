@@ -232,6 +232,13 @@ function CanvasInner({
 }: RenderProps & { interaction?: Interaction }): ReactElement {
   const s = scaleFor(format);
   const minDim = Math.min(format.width, format.height);
+  // Type-size reference. For landscape canvases the short side (height) badly
+  // undersells how large text should read across a wide frame (e.g. a
+  // 1920×1080 emailer), so lift the reference toward the area-based geometric
+  // mean. Square / portrait / story keep using the short side, so their sizing
+  // is unchanged.
+  const isLandscape = format.width / format.height >= 1.15;
+  const typeRef = isLandscape ? Math.sqrt(format.width * format.height) : minDim;
   const fontDef = fontDefFor(content.headlineFont);
   const headType = headingTypography(fontDef);
   const sz = (k: SummerElementKey) => content.layout[k].size ?? 1;
@@ -260,7 +267,7 @@ function CanvasInner({
               fontWeight: headType.weight,
               letterSpacing: headType.letterSpacing,
               lineHeight: headType.lineHeight,
-              fontSize: `${Math.max(22, minDim * 0.085) * sz("headline")}px`,
+              fontSize: `${Math.max(22, typeRef * 0.085) * sz("headline")}px`,
               color: content.colors.headline,
             }}
           >
@@ -276,7 +283,7 @@ function CanvasInner({
               margin: 0,
               fontFamily: theme.fontBody,
               color: content.colors.subtext,
-              fontSize: `${Math.max(12, minDim * 0.03) * sz("subtext")}px`,
+              fontSize: `${Math.max(12, typeRef * 0.03) * sz("subtext")}px`,
               lineHeight: 1.45,
             }}
           >
@@ -294,9 +301,9 @@ function CanvasInner({
               color: SUMMER_CTA_INK,
               fontFamily: theme.fontBody,
               fontWeight: 800,
-              fontSize: `${Math.max(14, minDim * 0.04) * sz("cta")}px`,
+              fontSize: `${Math.max(14, typeRef * 0.04) * sz("cta")}px`,
               letterSpacing: "0.01em",
-              padding: `${Math.max(12, minDim * 0.024) * sz("cta")}px ${Math.max(20, minDim * 0.044) * sz("cta")}px`,
+              padding: `${Math.max(12, typeRef * 0.024) * sz("cta")}px ${Math.max(20, typeRef * 0.044) * sz("cta")}px`,
               borderRadius: "999px",
               whiteSpace: "nowrap",
               boxShadow: "0 12px 32px -12px rgba(0,0,0,0.55)",

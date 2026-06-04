@@ -24,22 +24,13 @@ import {
   ChevronDown,
   Check,
   PlayCircle,
-  Scissors,
-  Sun,
-  Zap,
-  Flame
+  Scissors
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useBrandMode, BRAND_THEMES, type BrandMode } from "./brandModeStore";
 import { SUMMER_THEMES, SUMMER_THEME_ORDER } from "./summerThemes";
 
 const BASE = import.meta.env.BASE_URL;
-
-const SUMMER_THEME_ICONS = {
-  "sun-drunk": Sun,
-  electric: Zap,
-  feral: Flame,
-} as const;
 
 const activeClass = 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)] before:content-[""] before:absolute before:-left-[12px] before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[22px] before:bg-gradient-to-b before:from-[#00B2A9] before:to-[#2896FB] before:rounded-r-[4px] before:shadow-[0_0_16px_rgba(0,178,169,0.3)]';
 const inactiveClass = 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]';
@@ -257,86 +248,34 @@ export function Sidebar({ currentMode, setMode, mobileOpen, onClose }: SidebarPr
         {isSummer && (
           <div className="px-[12px] mb-[10px] relative">
             <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[10px]">Campaign Themes</div>
-            <div className="flex flex-col gap-[10px]">
+            <div className="flex flex-col gap-[2px]">
               {SUMMER_THEME_ORDER.map((id) => {
                 const st = SUMMER_THEMES[id];
                 const mode = `summer-${id}`;
                 const active = currentMode === mode;
-                const Icon = SUMMER_THEME_ICONS[id];
                 return (
                   <button
                     key={id}
                     onClick={() => handleSetMode(mode)}
-                    className={`group relative w-full text-left rounded-[16px] cursor-pointer transition-all duration-200 overflow-hidden border ${
-                      active
-                        ? 'border-white/[0.18] -translate-y-[1px]'
-                        : 'border-white/[0.06] hover:border-white/[0.14] hover:-translate-y-[1px]'
+                    className={`group w-full flex items-center gap-[11px] px-[12px] py-[9px] rounded-[9px] cursor-pointer transition-colors duration-150 ${
+                      active ? 'bg-white/[0.06]' : 'hover:bg-white/[0.035]'
                     }`}
-                    style={{
-                      background: 'rgba(255,255,255,0.02)',
-                      boxShadow: active
-                        ? `0 10px 30px -10px ${st.palette.accent}99, inset 0 0 0 1px ${st.palette.accent}55`
-                        : '0 4px 14px -10px rgba(0,0,0,0.6)',
-                    }}
                   >
-                    {/* Gradient banner */}
                     <span
                       aria-hidden
-                      className="block relative h-[58px] w-full"
-                      style={{ background: st.palette.gradient }}
-                    >
-                      <span
-                        className="absolute inset-0"
-                        style={{ background: 'radial-gradient(120% 90% at 15% 0%, rgba(255,255,255,0.45), transparent 55%)' }}
-                      />
-                      <Icon
-                        className="absolute top-[10px] left-[12px] w-[19px] h-[19px] text-white"
-                        style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.45))' }}
-                        strokeWidth={2.4}
-                      />
-                      <span className="absolute top-[12px] right-[12px] flex gap-[5px]">
-                        {[st.palette.primary, st.palette.accent, st.palette.cta].map((c, i) => (
-                          <span
-                            key={i}
-                            className="w-[9px] h-[9px] rounded-full"
-                            style={{ background: c, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.55), 0 1px 2px rgba(0,0,0,0.3)' }}
-                          />
-                        ))}
-                      </span>
-                      <span
-                        className="absolute left-[12px] bottom-[6px] text-white leading-none"
-                        style={{
-                          fontFamily: st.fontHeading,
-                          fontSize: st.fontHeading.includes('Bebas') ? '26px' : '17px',
-                          fontWeight: st.fontHeading.includes('Bebas') ? 400 : 800,
-                          letterSpacing: st.fontHeading.includes('Bebas') ? '0.04em' : '-0.01em',
-                          textTransform: 'uppercase',
-                          textShadow: '0 1px 6px rgba(0,0,0,0.4)',
-                        }}
-                      >
-                        {st.name}
-                      </span>
+                      className="w-[10px] h-[10px] rounded-full shrink-0"
+                      style={{
+                        background: st.palette.accent,
+                        boxShadow: active ? `0 0 0 3px ${st.palette.accent}33` : 'none',
+                      }}
+                    />
+                    <span className={`flex-1 text-left text-[13px] tracking-[-0.1px] truncate ${active ? 'text-white font-medium' : 'text-[#94A3B8] group-hover:text-[#E2E8F0]'}`}>
+                      {st.name}
                     </span>
-                    {/* Body */}
-                    <span className="block px-[13px] pt-[9px] pb-[11px]">
-                      <span className={`block text-[12px] font-semibold tracking-[-0.1px] ${active ? 'text-white' : 'text-[#E2E8F0]'}`}>{st.tagline}</span>
-                      <span className="block text-[10.5px] text-[#94A3B8] leading-[1.45] mt-[3px] line-clamp-2">{st.mood}</span>
-                    </span>
-                    {active && (
-                      <span
-                        aria-hidden
-                        className="absolute top-[10px] right-[44px] w-[7px] h-[7px] rounded-full"
-                        style={{ background: '#fff', boxShadow: `0 0 8px ${st.palette.accent}` }}
-                      />
-                    )}
+                    {active && <Check className="w-[15px] h-[15px] text-white/80 shrink-0" strokeWidth={2.4} />}
                   </button>
                 );
               })}
-            </div>
-            <div className="px-[13px] py-[12px] mt-[12px] rounded-[12px] bg-white/[0.02] border border-white/[0.06]">
-              <div className="text-[11px] text-[#94A3B8] leading-[1.5]">
-                Pick a theme to build on-brand emailers, ads and social posts with AI-generated imagery.
-              </div>
             </div>
           </div>
         )}

@@ -267,7 +267,7 @@ function CanvasInner({
               fontWeight: headType.weight,
               letterSpacing: headType.letterSpacing,
               lineHeight: headType.lineHeight,
-              fontSize: `${Math.max(22, typeRef * 0.085) * sz("headline")}px`,
+              fontSize: `${Math.max(14, typeRef * 0.085) * sz("headline")}px`,
               color: content.colors.headline,
             }}
           >
@@ -283,7 +283,7 @@ function CanvasInner({
               margin: 0,
               fontFamily: theme.fontBody,
               color: content.colors.subtext,
-              fontSize: `${Math.max(12, typeRef * 0.03) * sz("subtext")}px`,
+              fontSize: `${Math.max(8, typeRef * 0.03) * sz("subtext")}px`,
               lineHeight: 1.45,
             }}
           >
@@ -301,9 +301,9 @@ function CanvasInner({
               color: SUMMER_CTA_INK,
               fontFamily: theme.fontBody,
               fontWeight: 800,
-              fontSize: `${Math.max(14, typeRef * 0.04) * sz("cta")}px`,
+              fontSize: `${Math.max(9, typeRef * 0.04) * sz("cta")}px`,
               letterSpacing: "0.01em",
-              padding: `${Math.max(12, typeRef * 0.024) * sz("cta")}px ${Math.max(20, typeRef * 0.044) * sz("cta")}px`,
+              padding: `${Math.max(6, typeRef * 0.024) * sz("cta")}px ${Math.max(10, typeRef * 0.044) * sz("cta")}px`,
               borderRadius: "999px",
               whiteSpace: "nowrap",
               boxShadow: "0 12px 32px -12px rgba(0,0,0,0.55)",

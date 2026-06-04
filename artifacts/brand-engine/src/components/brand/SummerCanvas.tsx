@@ -130,30 +130,27 @@ function WideLayout({ theme, format, content }: RenderProps): ReactElement {
   );
 }
 
-// Newsletter-style email: image band on top, content panel below.
+// Full-bleed email banner: image is the hero, copy overlaid on a warm scrim.
 function EmailLayout({ theme, format, content }: RenderProps): ReactElement {
   const s = scaleFor(format);
   const minDim = Math.min(format.width, format.height);
-  const imgH = format.kind === "email" ? Math.round(format.height * 0.46) : Math.round(format.height * 0.5);
   return (
-    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", background: theme.palette.panel }}>
-      <div style={{ position: "relative", width: "100%", height: `${imgH}px`, overflow: "hidden" }}>
-        {bgLayer(theme, content, 1)}
-        <div style={{ position: "absolute", inset: 0, background: theme.palette.scrim, opacity: 0.55 }} />
-        <div style={{ position: "absolute", top: `${20 * s}px`, left: `${28 * s}px` }}>
-          <Eyebrow theme={theme} content={content} s={s} />
-        </div>
+    <>
+      {bgLayer(theme, content, 1)}
+      <div style={{ position: "absolute", inset: 0, background: theme.palette.scrim }} />
+      <div style={{ position: "absolute", top: `${26 * s}px`, left: `${30 * s}px`, right: `${30 * s}px` }}>
+        <Eyebrow theme={theme} content={content} s={s} />
       </div>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: `${14 * s}px`, padding: `${28 * s}px ${32 * s}px` }}>
-        <h1 style={headingStyle(theme, Math.max(22, minDim * 0.075), theme.palette.ink)}>{content.headline}</h1>
+      <div style={{ position: "absolute", left: `${30 * s}px`, right: `${30 * s}px`, bottom: `${32 * s}px`, display: "flex", flexDirection: "column", gap: `${14 * s}px` }}>
+        <h1 style={headingStyle(theme, Math.max(22, minDim * 0.085), "#FFFFFF")}>{content.headline}</h1>
         {content.subtext && (
-          <p style={{ margin: 0, fontFamily: theme.fontBody, color: theme.palette.sub, fontSize: `${Math.max(12, minDim * 0.026)}px`, lineHeight: 1.45 }}>{content.subtext}</p>
+          <p style={{ margin: 0, fontFamily: theme.fontBody, color: "rgba(255,255,255,0.88)", fontSize: `${Math.max(12, minDim * 0.03)}px`, lineHeight: 1.45, maxWidth: "88%" }}>{content.subtext}</p>
         )}
         <div>
-          <CtaButton theme={theme} content={content} s={s} />
+          <CtaButton theme={theme} content={content} s={s} pill />
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

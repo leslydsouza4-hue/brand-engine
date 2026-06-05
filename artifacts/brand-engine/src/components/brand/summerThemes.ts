@@ -8,7 +8,7 @@
 
 export type SummerThemeId = "sun-drunk" | "electric" | "feral";
 
-export type SummerSection = "emailers" | "ads" | "social";
+export type SummerSection = "emailers" | "ads" | "social" | "community";
 
 export interface SummerPalette {
   /** Page / canvas background. */
@@ -344,12 +344,17 @@ export const SUMMER_FORMATS: SummerFormat[] = [
   { key: "social-square", label: "Square", section: "social", kind: "social", width: 1080, height: 1080, note: "Feed post (1:1)" },
   { key: "social-portrait", label: "Portrait", section: "social", kind: "social", width: 1080, height: 1350, note: "Feed post (4:5)" },
   { key: "social-story", label: "Story", section: "social", kind: "social", width: 1080, height: 1920, note: "Story / Reel (9:16)" },
+  // Community Posts
+  { key: "community-square", label: "Square", section: "community", kind: "social", width: 1080, height: 1080, note: "Community feed post (1:1)" },
+  { key: "community-portrait", label: "Portrait", section: "community", kind: "social", width: 1080, height: 1350, note: "Vertical community post (4:5)" },
+  { key: "community-banner", label: "Banner", section: "community", kind: "social", width: 1920, height: 1080, note: "Announcement banner (16:9)" },
 ];
 
 export const SUMMER_SECTIONS: { id: SummerSection; label: string }[] = [
   { id: "emailers", label: "Emailers" },
   { id: "ads", label: "Ads" },
   { id: "social", label: "Social Posts" },
+  { id: "community", label: "Community Posts" },
 ];
 
 export function formatsForSection(section: SummerSection): SummerFormat[] {

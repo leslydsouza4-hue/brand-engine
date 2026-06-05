@@ -37,7 +37,7 @@ import { fontDefFor, getGoogleFontEmbedCSS } from "./googleFonts";
 import { SummerFontPicker } from "./SummerFontPicker";
 
 /** Content sections that hold a stack of design cards (everything but assets). */
-const CONTENT_SECTIONS = ["emailers", "ads", "social"] as const;
+const CONTENT_SECTIONS = ["emailers", "ads", "social", "community"] as const;
 type ContentSection = (typeof CONTENT_SECTIONS)[number];
 
 /** A single finished, editable, themed design in a section's stack. */

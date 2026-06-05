@@ -418,7 +418,6 @@ function CanvasInner({
               padding: `${Math.max(6, typeRef * 0.024) * sz("cta")}px ${Math.max(10, typeRef * 0.044) * sz("cta")}px`,
               borderRadius: "999px",
               whiteSpace: "nowrap",
-              boxShadow: `0 ${Math.max(6, typeRef * 0.018) * sz("cta")}px ${Math.max(14, typeRef * 0.04) * sz("cta")}px rgba(0,0,0,0.45)`,
             }}
           >
             {content.cta}

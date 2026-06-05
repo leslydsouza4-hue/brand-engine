@@ -23,7 +23,6 @@ import {
   Wand2,
   ChevronDown,
   Check,
-  PlayCircle,
   Scissors,
   Share2,
   Users
@@ -509,13 +508,6 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
         </div>
 
         <div className="mt-auto shrink-0 px-[12px] pt-[12px] pb-[20px] border-t border-white/5">
-          <button
-            onClick={() => window.dispatchEvent(new Event("brand-engine:replay-intro"))}
-            className="w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px] text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]"
-          >
-            <PlayCircle className="w-[18px] h-[18px] shrink-0 opacity-60" />
-            Take a Tour
-          </button>
           <button 
             onClick={() => handleSetMode('brand-directory')}
             className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px]

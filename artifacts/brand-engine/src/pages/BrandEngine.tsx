@@ -14,7 +14,6 @@ import { EventsWorkspace } from "@/components/brand/EventsWorkspace";
 import { HighlyCutoutWorkspace } from "@/components/brand/HighlyCutoutWorkspace";
 import { ContentArmyWorkspace } from "@/components/brand/ContentArmyWorkspace";
 import { DidYouKnowWorkspace } from "@/components/brand/DidYouKnowWorkspace";
-import { FeatureRequestBubble } from "@/components/brand/FeatureRequestBubble";
 import { FeatureRequestsWorkspace } from "@/components/brand/FeatureRequestsWorkspace";
 import { EmailTemplatesWorkspace } from "@/components/brand/EmailTemplatesWorkspace";
 import { BrandBrainWorkspace } from "@/components/brand/BrandBrainWorkspace";
@@ -29,7 +28,6 @@ import { LevelUpComposerWorkspace } from "@/components/brand/LevelUpComposerWork
 import { SummerOfAiWorkspace } from "@/components/brand/SummerOfAiWorkspace";
 import type { SummerSection } from "@/components/brand/summerThemes";
 import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
-import { TutorialPopup } from "@/components/brand/TutorialPopup";
 import { WelcomeIntro, hasSeenIntro } from "@/components/brand/WelcomeIntro";
 
 export default function BrandEngine() {
@@ -138,8 +136,6 @@ export default function BrandEngine() {
         {currentMode === "summer-electric" && <SummerOfAiWorkspace themeId="electric" section={summerSection} />}
         {currentMode === "summer-feral" && <SummerOfAiWorkspace themeId="feral" section={summerSection} />}
       </div>
-      <FeatureRequestBubble />
-      <TutorialPopup currentMode={currentMode} />
       {showIntro && brandMode === "highlevel" && (
         <WelcomeIntro onDismiss={() => setShowIntro(false)} />
       )}

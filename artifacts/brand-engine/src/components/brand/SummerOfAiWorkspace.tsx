@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Sparkles, Loader2, Download, Trash2, Copy, ChevronDown, ImagePlus, X, Link2, Plus, Upload, UserPlus } from "lucide-react";
+import { Sparkles, Loader2, Download, Trash2, Copy, ChevronDown, ImagePlus, X, Link2, Plus, Upload, UserPlus, Type, Palette, Image as ImageIcon } from "lucide-react";
 import {
   SUMMER_THEMES,
   SUMMER_GRADIENTS,
@@ -205,6 +205,9 @@ export function SummerOfAiWorkspace({
   const [subjectLoading, setSubjectLoading] = useState(false);
   const [removeBg, setRemoveBg] = useState(true);
   const [genError, setGenError] = useState<string | null>(null);
+
+  // Left control-panel tab.
+  const [leftTab, setLeftTab] = useState<"content" | "design" | "background">("content");
 
   // Google-Doc import state.
   const [docUrl, setDocUrl] = useState("");
@@ -720,6 +723,12 @@ export function SummerOfAiWorkspace({
 
   const generatingCount = sectionCards.filter((c) => c.generating).length;
 
+  const LEFT_TABS: { id: "content" | "design" | "background"; label: string; icon: typeof Type }[] = [
+    { id: "content", label: "Content", icon: Type },
+    { id: "design", label: "Design", icon: Palette },
+    { id: "background", label: "Background", icon: ImageIcon },
+  ];
+
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
       {/* LEFT — control panel */}
@@ -741,6 +750,33 @@ export function SummerOfAiWorkspace({
         </div>
 
         <>
+        {/* Section tabs */}
+        <div className="flex gap-[4px] p-[5px] rounded-[14px] bg-black/25 border border-white/[0.06]">
+          {LEFT_TABS.map((t) => {
+            const on = leftTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setLeftTab(t.id)}
+                className="flex-1 flex items-center justify-center gap-[7px] py-[9px] rounded-[10px] text-[12.5px] font-semibold transition-all cursor-pointer"
+                style={{
+                  background: on ? p.gradient : "transparent",
+                  color: on ? "#fff" : "#94A3B8",
+                  boxShadow: on ? `0 8px 20px -10px ${p.accent}` : "none",
+                }}
+              >
+                <t.icon size={14} />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {activeCard && activeContent && activeFormat && (
+          <>
+            {leftTab === "content" && (
+              <>
             {/* Import from a Google Doc → one design per IMAGE COPY brief */}
             <div className="pb-[18px] border-b border-white/[0.07]">
               <div className={labelCls}>Import from Google Doc</div>
@@ -774,8 +810,6 @@ export function SummerOfAiWorkspace({
               {importMsg && <div className={`mt-[8px] text-[12px] leading-[1.45] ${importMsg.kind === "ok" ? "text-[#9ad9b4]" : "text-[#ff9b9b]"}`}>{importMsg.text}</div>}
             </div>
 
-            {activeCard && activeContent && activeFormat && (
-              <>
                 {/* Format picker (this card's size) */}
                 <div>
                   <div className={labelCls}>Format</div>
@@ -811,9 +845,12 @@ export function SummerOfAiWorkspace({
                     <input style={inputStyle} value={activeContent.cta} onChange={(e) => set("cta", e.target.value)} />
                   </div>
                 </div>
+              </>
+            )}
 
                 {/* Design — fonts, colors, layout */}
-                <div className="pt-[18px] border-t border-white/[0.07] flex flex-col gap-[14px]">
+                {leftTab === "design" && (
+                <div className="flex flex-col gap-[14px]">
                   <div>
                     <div className={labelCls}>Heading font</div>
                     <SummerFontPicker value={activeContent.headlineFont} onChange={(fam) => set("headlineFont", fam)} />
@@ -980,10 +1017,11 @@ export function SummerOfAiWorkspace({
                       Reset layout
                     </button>
                   </div>
-                </div>
+                </div>)}
 
                 {/* Background — generate with AI or upload your own */}
-                <div className="pt-[18px] border-t border-white/[0.07]">
+                {leftTab === "background" && (
+                <div>
                   <div className={labelCls}>AI background · {theme.name} style</div>
                   <textarea
                     style={{ ...inputStyle, resize: "vertical", minHeight: 54 }}
@@ -1286,7 +1324,7 @@ export function SummerOfAiWorkspace({
                       </div>
                     </div>
                   )}
-                </div>
+                </div>)}
               </>
             )}
           </>

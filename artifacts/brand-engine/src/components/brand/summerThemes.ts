@@ -261,8 +261,8 @@ export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {
     headingTracking: "0.005em",
     headingLineHeight: 0.92,
     imageStyle:
-      "electric blue and cyan neon lighting, high-speed motion blur, glowing light trails, futuristic AI energy, dark cinematic background, high contrast, sleek and high-tech, sparks of light",
-    imageAvoid: "no text, no watermark, no logos, no warm beige tones, no daylight",
+      "dramatic side-profile silhouette of a person against a deep black background, intense electric-blue and cyan neon light streaking horizontally across the frame, long-exposure high-speed motion blur, glowing light trails and fine sparkling particles trailing off the subject, rim-lit edges, cinematic moody studio lighting, very high contrast with crushed blacks, futuristic AI energy, sleek and high-tech, editorial photographic quality",
+    imageAvoid: "no text, no watermark, no logos, no warm beige tones, no daylight, no bright backgrounds, no flat lighting, no full-color clothing, no busy backgrounds, no cartoon or illustration style",
     copy: {
       headline: "Move At The Speed Of AI",
       subtext: "Plug in, power up and outpace everyone this summer.",

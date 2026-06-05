@@ -109,6 +109,26 @@ export interface SummerOverlay {
   opacity: number;
 }
 
+/** An uploaded human / subject cutout composited over the background. */
+export interface SummerSubject {
+  /** Image source (data URL — ideally a transparent PNG cutout). */
+  src: string;
+  /** Center X as a fraction of canvas width (0..1). */
+  x: number;
+  /** Center Y as a fraction of canvas height (0..1). */
+  y: number;
+  /** Width as a fraction of canvas width (0..1). */
+  scale: number;
+}
+
+/** A selectable background gradient preset. */
+export interface SummerGradient {
+  id: string;
+  label: string;
+  /** CSS background value (soft radial "blooms" over a base wash → hazy look). */
+  css: string;
+}
+
 /** Coarse aspect-ratio bucket used to pick a sensible starting layout. */
 export type SummerOrientation = "wide" | "square" | "portrait" | "tall";
 
@@ -270,6 +290,32 @@ export const SUMMER_THEMES: Record<SummerThemeId, SummerThemeDef> = {
 
 export const SUMMER_THEME_ORDER: SummerThemeId[] = ["sun-drunk", "electric", "feral"];
 
+/**
+ * On-brand, hazy gradient presets per theme. Each layers soft radial "blooms"
+ * over a base wash so it reads as atmospheric haze rather than a flat ramp —
+ * ideal as a backdrop for an uploaded person cutout.
+ */
+export const SUMMER_GRADIENTS: Record<SummerThemeId, SummerGradient[]> = {
+  "sun-drunk": [
+    { id: "golden-haze", label: "Golden Haze", css: "radial-gradient(70% 90% at 80% 15%, rgba(255,244,205,0.95) 0%, rgba(255,244,205,0) 58%), linear-gradient(135deg, #F6D79B 0%, #E6AE62 48%, #C9744A 100%)" },
+    { id: "sun-bloom", label: "Sun Bloom", css: "radial-gradient(80% 70% at 50% 0%, rgba(255,243,210,0.95) 0%, rgba(255,243,210,0) 60%), linear-gradient(180deg, #F8DDA4 0%, #E4A663 55%, #C86B45 100%)" },
+    { id: "peach-dusk", label: "Peach Dusk", css: "radial-gradient(75% 80% at 22% 20%, rgba(255,233,205,0.9) 0%, rgba(255,233,205,0) 55%), linear-gradient(125deg, #F4C893 0%, #E29A6C 50%, #C25E5A 100%)" },
+    { id: "warm-sand", label: "Warm Sand", css: "radial-gradient(90% 90% at 85% 80%, rgba(255,224,176,0.55) 0%, rgba(255,224,176,0) 55%), linear-gradient(150deg, #FBEFD3 0%, #ECC487 45%, #C98E54 100%)" },
+  ],
+  electric: [
+    { id: "neon-dawn", label: "Neon Dawn", css: "radial-gradient(70% 85% at 80% 12%, rgba(0,229,255,0.5) 0%, rgba(0,229,255,0) 55%), linear-gradient(135deg, #00020A 0%, #02103A 55%, #04266E 100%)" },
+    { id: "deep-current", label: "Deep Current", css: "radial-gradient(80% 80% at 18% 82%, rgba(41,98,255,0.55) 0%, rgba(41,98,255,0) 60%), linear-gradient(160deg, #00030C 0%, #021445 60%, #052A78 100%)" },
+    { id: "voltage", label: "Voltage", css: "radial-gradient(70% 70% at 50% 0%, rgba(0,229,255,0.45) 0%, rgba(0,229,255,0) 55%), linear-gradient(180deg, #010512 0%, #03143F 70%, #0A3A8C 100%)" },
+    { id: "grid-glow", label: "Grid Glow", css: "radial-gradient(60% 70% at 78% 78%, rgba(0,229,255,0.4) 0%, rgba(0,229,255,0) 55%), radial-gradient(60% 70% at 20% 18%, rgba(41,98,255,0.4) 0%, rgba(41,98,255,0) 55%), linear-gradient(150deg, #00030C 0%, #021238 60%, #052166 100%)" },
+  ],
+  feral: [
+    { id: "ember", label: "Ember", css: "radial-gradient(70% 90% at 76% 16%, rgba(255,86,48,0.5) 0%, rgba(255,86,48,0) 55%), linear-gradient(135deg, #1A0608 0%, #7A0D1C 55%, #E01E37 100%)" },
+    { id: "blood-moon", label: "Blood Moon", css: "radial-gradient(65% 70% at 50% 8%, rgba(224,30,55,0.55) 0%, rgba(224,30,55,0) 55%), linear-gradient(180deg, #0C0405 0%, #2A0509 60%, #5A0712 100%)" },
+    { id: "scorched", label: "Scorched", css: "radial-gradient(80% 80% at 22% 82%, rgba(255,86,48,0.45) 0%, rgba(255,86,48,0) 60%), linear-gradient(150deg, #0C0A0A 0%, #3A0810 55%, #B3122A 100%)" },
+    { id: "crimson-haze", label: "Crimson Haze", css: "radial-gradient(75% 80% at 80% 78%, rgba(224,30,55,0.4) 0%, rgba(224,30,55,0) 55%), linear-gradient(135deg, #14080A 0%, #4A0912 55%, #9E1326 100%)" },
+  ],
+};
+
 /** Layout family a format renders with. */
 export type SummerFormatKind = "email" | "ad" | "social";
 
@@ -379,6 +425,10 @@ export interface SummerContent {
   layout: SummerLayoutMap;
   /** Flat black/white wash over the background. */
   overlay: SummerOverlay;
+  /** Chosen gradient background (CSS). null = use the theme's default gradient. */
+  gradient: string | null;
+  /** Uploaded human/subject cutout composited over the background. */
+  subject: SummerSubject | null;
   /** Summer of AI lockup (show + color variant); position is in `layout.logo`. */
   logo: SummerLogo;
 }
@@ -404,6 +454,8 @@ export function defaultContent(themeId: SummerThemeId): SummerContent {
     },
     layout: defaultLayout(),
     overlay: { color: "black", opacity: 0 },
+    gradient: null,
+    subject: null,
     logo: { show: true, variant: DEFAULT_LOGO_VARIANT[themeId] },
   };
 }

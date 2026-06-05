@@ -15,6 +15,7 @@ import {
   type SummerElementLayout,
   type SummerFormat,
   type SummerLayoutMap,
+  type SummerSubject,
   type SummerThemeDef,
 } from "./summerThemes";
 import { fontDefFor, fontStackFor, headingTypography } from "./googleFonts";
@@ -128,16 +129,94 @@ function bgLayer(theme: SummerThemeDef, content: SummerContent): ReactElement {
       />
     );
   }
-  return <div style={{ position: "absolute", inset: 0, background: theme.palette.gradient }} />;
+  return <div style={{ position: "absolute", inset: 0, background: content.gradient ?? theme.palette.gradient }} />;
 }
 
 interface Interaction {
   selected: SummerElementKey | null;
   onSelect: (k: SummerElementKey | null) => void;
   onMove: (k: SummerElementKey, x: number, y: number) => void;
+  /** Move the human/subject cutout (center, as fractions). */
+  onMoveSubject?: (x: number, y: number) => void;
   rootRef: React.RefObject<HTMLDivElement | null>;
   layout: SummerLayoutMap;
   setGuides: (g: Guide[]) => void;
+}
+
+/** A draggable human/subject cutout composited over the background. */
+function SubjectLayer({
+  subject,
+  interaction,
+}: {
+  subject: SummerSubject;
+  interaction?: Interaction;
+}): ReactElement {
+  const [dragging, setDragging] = useState(false);
+  const draggable = !!interaction?.onMoveSubject;
+  const onPointerDown =
+    draggable && interaction
+      ? (e: React.PointerEvent) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const root = interaction.rootRef.current;
+          if (!root) return;
+          const rect = root.getBoundingClientRect();
+          const startX = e.clientX;
+          const startY = e.clientY;
+          const origX = subject.x;
+          const origY = subject.y;
+          setDragging(true);
+          const move = (ev: PointerEvent) => {
+            if (rect.width === 0 || rect.height === 0) return;
+            const dx = (ev.clientX - startX) / rect.width;
+            const dy = (ev.clientY - startY) / rect.height;
+            const nx = Math.max(0, Math.min(1, origX + dx));
+            const ny = Math.max(0, Math.min(1, origY + dy));
+            interaction.onMoveSubject?.(nx, ny);
+          };
+          const up = () => {
+            setDragging(false);
+            window.removeEventListener("pointermove", move);
+            window.removeEventListener("pointerup", up);
+            window.removeEventListener("pointercancel", up);
+          };
+          window.addEventListener("pointermove", move);
+          window.addEventListener("pointerup", up);
+          window.addEventListener("pointercancel", up);
+        }
+      : undefined;
+
+  return (
+    <div
+      onPointerDown={onPointerDown}
+      style={{
+        position: "absolute",
+        left: `${subject.x * 100}%`,
+        top: `${subject.y * 100}%`,
+        width: `${subject.scale * 100}%`,
+        transform: "translate(-50%, -50%)",
+        cursor: draggable ? "move" : undefined,
+        outline: dragging ? "2px dashed rgba(255,255,255,0.95)" : undefined,
+        outlineOffset: 3,
+        touchAction: draggable ? "none" : undefined,
+      }}
+    >
+      <img
+        src={subject.src}
+        alt=""
+        crossOrigin="anonymous"
+        draggable={false}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "auto",
+          pointerEvents: "none",
+          userSelect: "none",
+          filter: "drop-shadow(0 18px 40px rgba(0,0,0,0.45))",
+        }}
+      />
+    </div>
+  );
 }
 
 interface RenderProps {
@@ -258,6 +337,8 @@ function CanvasInner({
       )}
       <div style={{ position: "absolute", inset: 0, background: theme.palette.scrim }} />
 
+      {content.subject && <SubjectLayer subject={content.subject} interaction={interaction} />}
+
       {content.headline && (
         <ElementBox k="headline" layout={content.layout.headline} interaction={interaction}>
           <h1
@@ -376,10 +457,12 @@ export function ScaledCanvasPreview({
   selected,
   onSelect,
   onMove,
+  onMoveSubject,
 }: RenderProps & {
   selected?: SummerElementKey | null;
   onSelect?: (k: SummerElementKey | null) => void;
   onMove?: (k: SummerElementKey, x: number, y: number) => void;
+  onMoveSubject?: (x: number, y: number) => void;
 }): ReactElement {
   const wrapRef = useRef<HTMLDivElement>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -399,7 +482,7 @@ export function ScaledCanvasPreview({
 
   const interaction: Interaction | undefined =
     onSelect && onMove
-      ? { selected: selected ?? null, onSelect, onMove, rootRef: nodeRef, layout: content.layout, setGuides }
+      ? { selected: selected ?? null, onSelect, onMove, onMoveSubject, rootRef: nodeRef, layout: content.layout, setGuides }
       : undefined;
 
   return (

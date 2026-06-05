@@ -11,9 +11,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Sparkles, Loader2, Download, Trash2, Copy, ChevronDown, ImagePlus, X, Link2, Plus, Upload } from "lucide-react";
+import { Sparkles, Loader2, Download, Trash2, Copy, ChevronDown, ImagePlus, X, Link2, Plus, Upload, UserPlus } from "lucide-react";
 import {
   SUMMER_THEMES,
+  SUMMER_GRADIENTS,
   formatsForSection,
   parseImageCopies,
   defaultContent,
@@ -27,6 +28,7 @@ import {
   type SummerElementKey,
   type SummerColors,
   type SummerOverlay,
+  type SummerSubject,
 } from "./summerThemes";
 import { ScaledCanvasPreview, SummerCanvasNode } from "./SummerCanvas";
 import { useSummerAssets, addSummerAsset } from "./summerStore";
@@ -145,6 +147,16 @@ async function nodeToPng(node: HTMLElement, format: SummerFormat, fontEmbedCSS: 
   });
 }
 
+/** Read a File / Blob into a data URL. */
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 /** Request one themed background image for a brief at a given format. */
 async function requestImage(
   themeId: SummerThemeId,
@@ -188,6 +200,9 @@ export function SummerOfAiWorkspace({
   const [refImages, setRefImages] = useState<string[]>([]);
   const refInputRef = useRef<HTMLInputElement | null>(null);
   const bgInputRef = useRef<HTMLInputElement | null>(null);
+  const subjectInputRef = useRef<HTMLInputElement | null>(null);
+  const [subjectLoading, setSubjectLoading] = useState(false);
+  const [removeBg, setRemoveBg] = useState(true);
   const [genError, setGenError] = useState<string | null>(null);
 
   // Google-Doc import state.
@@ -290,6 +305,75 @@ export function SummerOfAiWorkspace({
       if (activeCard) updateCard(activeCard.id, (c) => ({ ...c, content: { ...c.content, overlay: { ...c.content.overlay, ...patch } } }));
     },
     [activeCard, updateCard]
+  );
+
+  // Pick a gradient background (and clear any full-bleed image so it shows).
+  const setGradient = useCallback(
+    (css: string | null) => {
+      if (activeCard) patchContent(activeCard.id, { gradient: css, bgImage: null });
+    },
+    [activeCard, patchContent]
+  );
+
+  // ── Human / subject cutout ──────────────────────────────────────────────────
+  const setSubject = useCallback(
+    (s: SummerSubject | null) => {
+      if (activeCard) patchContent(activeCard.id, { subject: s });
+    },
+    [activeCard, patchContent]
+  );
+
+  const patchSubjectFor = useCallback(
+    (id: string, patch: Partial<SummerSubject>) => {
+      updateCard(id, (c) => (c.content.subject ? { ...c, content: { ...c.content, subject: { ...c.content.subject, ...patch } } } : c));
+    },
+    [updateCard]
+  );
+
+  const moveSubjectFor = useCallback(
+    (id: string, x: number, y: number) => patchSubjectFor(id, { x, y }),
+    [patchSubjectFor]
+  );
+
+  const setSubjectScale = useCallback(
+    (scale: number) => {
+      if (activeCard) patchSubjectFor(activeCard.id, { scale });
+    },
+    [activeCard, patchSubjectFor]
+  );
+
+  // Upload a human image → optionally remove its background → place it as the
+  // active card's subject layer (over the gradient). Drag/resize it afterwards.
+  const uploadSubject = useCallback(
+    async (files: FileList | null) => {
+      if (!files || files.length === 0 || !activeCard) return;
+      const file = Array.from(files).find((f) => f.type.startsWith("image/"));
+      if (!file) {
+        setGenError("That file isn't an image — pick a PNG, JPG or WebP.");
+        return;
+      }
+      setSubjectLoading(true);
+      try {
+        let dataUrl = await blobToDataUrl(file);
+        if (removeBg) {
+          const { removeBackground } = await import("@imgly/background-removal");
+          const blob = await removeBackground(dataUrl, { output: { format: "image/png" } });
+          dataUrl = await blobToDataUrl(blob);
+        }
+        const existing = activeCard.content.subject;
+        patchContent(activeCard.id, {
+          subject: existing
+            ? { ...existing, src: dataUrl }
+            : { src: dataUrl, x: 0.72, y: 0.6, scale: 0.5 },
+        });
+        setGenError(null);
+      } catch {
+        setGenError("Couldn't process that image — try a different file.");
+      } finally {
+        setSubjectLoading(false);
+      }
+    },
+    [activeCard, removeBg, patchContent]
   );
 
   const resetLayout = useCallback(() => {
@@ -942,6 +1026,92 @@ export function SummerOfAiWorkspace({
                     </button>
                   )}
 
+                  {/* Gradient backgrounds (on-brand hazy presets) */}
+                  <div className="mt-[16px]">
+                    <div className={labelCls}>Gradient background</div>
+                    <div className="grid grid-cols-4 gap-[8px]">
+                      {SUMMER_GRADIENTS[themeId].map((g) => {
+                        const on = activeContent?.gradient === g.css && !activeContent?.bgImage;
+                        return (
+                          <button
+                            key={g.id}
+                            onClick={() => setGradient(g.css)}
+                            title={g.label}
+                            className={`h-[46px] rounded-[10px] cursor-pointer transition-all ${
+                              on ? "ring-2 ring-[#FFD000] ring-offset-2 ring-offset-[#0b1220]" : "ring-1 ring-white/[0.12] hover:ring-white/[0.3]"
+                            }`}
+                            style={{ background: g.css }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Human / subject cutout — compose a person over the gradient */}
+                  <div className="mt-[16px]">
+                    <div className={labelCls}>Person (cutout)</div>
+                    <input
+                      ref={subjectInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        void uploadSubject(e.target.files);
+                        e.target.value = "";
+                      }}
+                    />
+                    {!activeContent?.subject ? (
+                      <>
+                        <button
+                          onClick={() => subjectInputRef.current?.click()}
+                          disabled={subjectLoading}
+                          className="w-full py-[10px] rounded-[10px] text-[12.5px] font-semibold cursor-pointer bg-white/[0.06] border border-white/[0.14] text-white hover:bg-white/[0.1] transition-colors flex items-center justify-center gap-[7px] disabled:opacity-50 disabled:cursor-wait"
+                        >
+                          {subjectLoading ? <Loader2 className="w-[15px] h-[15px] animate-spin" /> : <UserPlus className="w-[15px] h-[15px]" />}
+                          {subjectLoading ? "Processing…" : "Upload person"}
+                        </button>
+                        <label className="flex items-center gap-[7px] mt-[8px] text-[12px] text-[#94A3B8] cursor-pointer select-none">
+                          <input type="checkbox" checked={removeBg} onChange={(e) => setRemoveBg(e.target.checked)} className="cursor-pointer" />
+                          Remove background automatically
+                        </label>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex items-center gap-[8px]">
+                          <button
+                            onClick={() => subjectInputRef.current?.click()}
+                            disabled={subjectLoading}
+                            className="flex-1 py-[9px] rounded-[10px] text-[12px] cursor-pointer bg-white/[0.06] border border-white/[0.14] text-white hover:bg-white/[0.1] transition-colors flex items-center justify-center gap-[6px] disabled:opacity-50 disabled:cursor-wait"
+                          >
+                            {subjectLoading ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Upload className="w-[14px] h-[14px]" />}
+                            Replace
+                          </button>
+                          <button
+                            onClick={() => setSubject(null)}
+                            className="py-[9px] px-[12px] rounded-[10px] text-[12px] cursor-pointer bg-transparent border border-white/[0.14] text-[#94A3B8] hover:text-white hover:border-white/[0.25] transition-colors flex items-center justify-center gap-[6px]"
+                          >
+                            <Trash2 className="w-[14px] h-[14px]" /> Remove
+                          </button>
+                        </div>
+                        <div className="mt-[12px]">
+                          <div className="flex items-center justify-between mb-[6px]">
+                            <span className="text-[12px] text-[#94A3B8]">Size</span>
+                            <span className="text-[11px] text-[#6B7A93]">{Math.round(activeContent.subject.scale * 100)}%</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={15}
+                            max={120}
+                            value={Math.round(activeContent.subject.scale * 100)}
+                            onChange={(e) => setSubjectScale(Number(e.target.value) / 100)}
+                            className="w-full cursor-pointer accent-[#FFD000]"
+                          />
+                        </div>
+                        <div className="text-[11px] text-[#6B7A93] mt-[8px] leading-[1.45]">Drag the person on the preview to reposition.</div>
+                      </>
+                    )}
+                  </div>
+
                   {/* Image overlay */}
                   <div className="mt-[16px]">
                     <div className={labelCls}>Image overlay</div>
@@ -1082,6 +1252,7 @@ export function SummerOfAiWorkspace({
                           selected={isActive ? selected : null}
                           onSelect={isActive ? setSelected : undefined}
                           onMove={isActive ? (k, x, y) => moveElementFor(card.id, k, x, y) : undefined}
+                          onMoveSubject={isActive ? (x, y) => moveSubjectFor(card.id, x, y) : undefined}
                         />
                         {card.generating && (
                           <div className="absolute inset-0 flex items-center justify-center rounded-[8px]" style={{ background: "rgba(0,0,0,0.55)" }}>

@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Sparkles, Loader2, Download, Trash2, Check, Copy, Images, ChevronDown, ImagePlus, X, Link2, Plus, Upload } from "lucide-react";
+import { Sparkles, Loader2, Download, Trash2, Copy, ChevronDown, ImagePlus, X, Link2, Plus, Upload } from "lucide-react";
 import {
   SUMMER_THEMES,
   formatsForSection,
@@ -29,7 +29,7 @@ import {
   type SummerOverlay,
 } from "./summerThemes";
 import { ScaledCanvasPreview, SummerCanvasNode } from "./SummerCanvas";
-import { useSummerAssets, addSummerAsset, removeSummerAsset } from "./summerStore";
+import { useSummerAssets, addSummerAsset } from "./summerStore";
 import { getFontEmbedCSS } from "./fontEmbed";
 import { fontDefFor, getGoogleFontEmbedCSS } from "./googleFonts";
 import { SummerFontPicker } from "./SummerFontPicker";
@@ -175,23 +175,19 @@ async function requestImage(
 export function SummerOfAiWorkspace({
   themeId,
   section,
-  setSection,
 }: {
   themeId: SummerThemeId;
   section: SummerSection;
-  setSection: (s: SummerSection) => void;
 }) {
   const theme = SUMMER_THEMES[themeId];
 
   const [{ cards, active }, setStacks] = useState<{ cards: CardMap; active: ActiveMap }>(() => initCards(themeId));
   const [selected, setSelected] = useState<SummerElementKey | null>(null);
 
-  // Reference images + asset-tab prompt (shared across the workspace).
+  // Reference images (shared across the workspace).
   const [refImages, setRefImages] = useState<string[]>([]);
   const refInputRef = useRef<HTMLInputElement | null>(null);
   const bgInputRef = useRef<HTMLInputElement | null>(null);
-  const [assetPrompt, setAssetPrompt] = useState<string>(theme.sampleImagePrompt);
-  const [assetGenerating, setAssetGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
   // Google-Doc import state.
@@ -215,7 +211,6 @@ export function SummerOfAiWorkspace({
     setStacks(initCards(themeId));
     setSelected(null);
     setRefImages([]);
-    setAssetPrompt(SUMMER_THEMES[themeId].sampleImagePrompt);
     setGenError(null);
     setDocUrl("");
     setImportMsg(null);
@@ -228,13 +223,12 @@ export function SummerOfAiWorkspace({
     batchJobRef.current += 1;
   }, [section]);
 
-  const isContent = section !== "assets";
-  const contentSection = (isContent ? section : "emailers") as ContentSection;
+  const contentSection = section as ContentSection;
   const sectionCards = cards[contentSection];
   const activeId = active[contentSection];
   const activeCard = sectionCards.find((c) => c.id === activeId) ?? sectionCards[0];
 
-  const sectionFormats = useMemo(() => (isContent ? formatsForSection(contentSection) : []), [isContent, contentSection]);
+  const sectionFormats = useMemo(() => formatsForSection(contentSection), [contentSection]);
   const activeFormat = activeCard ? formatByKey(activeCard.formatKey) ?? sectionFormats[0] : sectionFormats[0];
   const activeContent = activeCard?.content;
 
@@ -463,24 +457,6 @@ export function SummerOfAiWorkspace({
     }
   }, [docUrl, activeFormat, contentSection, themeId, runBatch]);
 
-  // Generate a standalone asset (Asset Library tab) from the shared prompt.
-  const generateAsset = useCallback(async () => {
-    const prompt = assetPrompt.trim();
-    if (!prompt) return;
-    const fmt = formatsForSection("social")[0]!; // square library asset
-    setAssetGenerating(true);
-    setGenError(null);
-    try {
-      const dataUrl = await requestImage(themeId, prompt, fmt, refImages);
-      const { persisted } = addSummerAsset(themeId, dataUrl, prompt);
-      if (!persisted) setGenError("Image added but your library storage is full — older assets may not survive a reload.");
-    } catch (err) {
-      setGenError((err as Error).message || "generation failed");
-    } finally {
-      setAssetGenerating(false);
-    }
-  }, [assetPrompt, themeId, refImages]);
-
   // ── Reference uploads ─────────────────────────────────────────────────────
   const addRefFiles = useCallback(async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -590,14 +566,12 @@ export function SummerOfAiWorkspace({
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        if (section === "assets") {
-          if (!assetGenerating) void generateAsset();
-        } else if (activeCard && !activeCard.generating) {
+        if (activeCard && !activeCard.generating) {
           void generateActive();
         }
       }
     },
-    [section, assetGenerating, generateAsset, activeCard, generateActive]
+    [activeCard, generateActive]
   );
 
   // Reference-image uploader: thumbnails of any uploaded references + an add
@@ -670,33 +644,7 @@ export function SummerOfAiWorkspace({
           </div>
         </div>
 
-        {section === "assets" ? (
-          <div>
-            <div className={labelCls}>Generate a new {theme.name} asset</div>
-            <textarea
-              style={{ ...inputStyle, resize: "vertical", minHeight: 72 }}
-              value={assetPrompt}
-              onChange={(e) => setAssetPrompt(e.target.value)}
-              onKeyDown={onPromptKeyDown}
-              placeholder="Describe the subject…  (⌘/Ctrl+Enter to generate)"
-            />
-            {referenceUploader()}
-            <button
-              onClick={() => void generateAsset()}
-              disabled={assetGenerating}
-              className="mt-[10px] w-full flex items-center justify-center gap-[8px] py-[12px] rounded-[12px] font-bold text-[13px] cursor-pointer border-none disabled:opacity-70 disabled:cursor-not-allowed transition-opacity"
-              style={{ background: p.gradient, color: "#fff" }}
-            >
-              {assetGenerating ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-              {assetGenerating ? "Generating…" : "Generate asset"}
-            </button>
-            {genError && <div className="text-[#ff9b9b] text-[12px] mt-[8px] leading-[1.45]">{genError}</div>}
-            <p className="text-[11px] text-[#64748B] mt-[14px] leading-[1.5]">
-              Every asset is locked to the {theme.name} visual style and saved to this theme's library.
-            </p>
-          </div>
-        ) : (
-          <>
+        <>
             {/* Import from a Google Doc → one design per IMAGE COPY brief */}
             <div className="pb-[18px] border-b border-white/[0.07]">
               <div className={labelCls}>Import from Google Doc</div>
@@ -1055,26 +1003,11 @@ export function SummerOfAiWorkspace({
               </>
             )}
           </>
-        )}
       </div>
 
       {/* RIGHT — preview stack / asset library */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-[20px] md:p-[30px]">
-        {section === "assets" ? (
-          <AssetGrid
-            assets={assets}
-            accent={p.accent}
-            accentInk={accentInk}
-            onUse={(url) => {
-              setSection("social");
-              setStacks((prev) => {
-                const aid = prev.active.social;
-                return { ...prev, cards: { ...prev.cards, social: prev.cards.social.map((c) => (c.id === aid ? { ...c, content: { ...c.content, bgImage: url } } : c)) } };
-              });
-            }}
-          />
-        ) : (
-          <>
+        <>
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-[18px] gap-[12px] flex-wrap">
               <div className="text-[13px] text-[#94A3B8]">
@@ -1175,7 +1108,6 @@ export function SummerOfAiWorkspace({
               </button>
             </div>
           </>
-        )}
       </div>
 
       {/* Hidden full-size export nodes for every card in the section */}
@@ -1209,58 +1141,3 @@ function stackWidth(format: SummerFormat): number {
   return 600; // wide
 }
 
-function AssetGrid({
-  assets,
-  accent,
-  accentInk,
-  onUse,
-}: {
-  assets: ReturnType<typeof useSummerAssets>;
-  accent: string;
-  accentInk: string;
-  onUse: (url: string) => void;
-}) {
-  if (assets.length === 0) {
-    return (
-      <div className="border border-dashed border-white/[0.16] rounded-[18px] py-[70px] px-[20px] text-center text-[#7C8BA5]">
-        <Images size={34} className="mx-auto mb-[12px] opacity-60" />
-        <div className="text-[15px] text-[#CBD5E1]">No assets yet</div>
-        <div className="text-[12.5px] mt-[6px] text-[#5C6B85]">Generate your first on-brand image from the panel on the left.</div>
-      </div>
-    );
-  }
-  return (
-    <div className="grid gap-[16px]" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))" }}>
-      {assets.map((a) => (
-        <div key={a.id} className="rounded-[14px] overflow-hidden border border-white/[0.1]" style={{ background: "rgba(0,0,0,0.3)" }}>
-          <div className="aspect-square bg-black">
-            <img src={a.dataUrl} alt={a.prompt} className="w-full h-full object-cover" />
-          </div>
-          <div className="p-[12px]">
-            <div
-              className="text-[12px] text-[#94A3B8] leading-[1.4] mb-[10px]"
-              style={{ minHeight: 34, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
-            >
-              {a.prompt}
-            </div>
-            <div className="flex gap-[8px]">
-              <button
-                onClick={() => onUse(a.dataUrl)}
-                className="flex-1 flex items-center justify-center gap-[6px] py-[8px] rounded-[8px] font-bold text-[13px] cursor-pointer border-none"
-                style={{ background: accent, color: accentInk }}
-              >
-                <Check size={14} /> Use
-              </button>
-              <button
-                onClick={() => removeSummerAsset(a.id)}
-                className="py-[8px] px-[10px] rounded-[8px] bg-transparent border border-white/[0.16] text-[#94A3B8] cursor-pointer hover:text-white transition-colors"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}

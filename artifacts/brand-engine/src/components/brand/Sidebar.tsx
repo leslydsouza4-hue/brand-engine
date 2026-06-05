@@ -25,14 +25,13 @@ import {
   Check,
   PlayCircle,
   Scissors,
-  Share2,
-  Images
+  Share2
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useBrandMode, BRAND_THEMES, type BrandMode } from "./brandModeStore";
 import { SUMMER_THEMES, SUMMER_THEME_ORDER, SUMMER_SECTIONS, type SummerSection } from "./summerThemes";
 
-const SUMMER_SECTION_ICON = { emailers: Mail, ads: Megaphone, social: Share2, assets: Images } as const;
+const SUMMER_SECTION_ICON = { emailers: Mail, ads: Megaphone, social: Share2 } as const;
 
 const BASE = import.meta.env.BASE_URL;
 

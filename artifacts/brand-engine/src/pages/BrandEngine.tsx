@@ -134,9 +134,9 @@ export default function BrandEngine() {
         {currentMode === "image-library" && <LevelUpImageLibraryWorkspace />}
         {currentMode === "social-composer" && <LevelUpComposerWorkspace />}
 
-        {currentMode === "summer-sun-drunk" && <SummerOfAiWorkspace themeId="sun-drunk" section={summerSection} setSection={setSummerSection} />}
-        {currentMode === "summer-electric" && <SummerOfAiWorkspace themeId="electric" section={summerSection} setSection={setSummerSection} />}
-        {currentMode === "summer-feral" && <SummerOfAiWorkspace themeId="feral" section={summerSection} setSection={setSummerSection} />}
+        {currentMode === "summer-sun-drunk" && <SummerOfAiWorkspace themeId="sun-drunk" section={summerSection} />}
+        {currentMode === "summer-electric" && <SummerOfAiWorkspace themeId="electric" section={summerSection} />}
+        {currentMode === "summer-feral" && <SummerOfAiWorkspace themeId="feral" section={summerSection} />}
       </div>
       <FeatureRequestBubble />
       <TutorialPopup currentMode={currentMode} />

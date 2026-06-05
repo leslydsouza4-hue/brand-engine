@@ -8,7 +8,7 @@
 
 export type SummerThemeId = "sun-drunk" | "electric" | "feral";
 
-export type SummerSection = "emailers" | "ads" | "social" | "assets";
+export type SummerSection = "emailers" | "ads" | "social";
 
 export interface SummerPalette {
   /** Page / canvas background. */
@@ -276,7 +276,7 @@ export type SummerFormatKind = "email" | "ad" | "social";
 export interface SummerFormat {
   key: string;
   label: string;
-  section: Exclude<SummerSection, "assets">;
+  section: SummerSection;
   kind: SummerFormatKind;
   width: number;
   height: number;
@@ -304,7 +304,6 @@ export const SUMMER_SECTIONS: { id: SummerSection; label: string }[] = [
   { id: "emailers", label: "Emailers" },
   { id: "ads", label: "Ads" },
   { id: "social", label: "Social Posts" },
-  { id: "assets", label: "Asset Library" },
 ];
 
 export function formatsForSection(section: SummerSection): SummerFormat[] {

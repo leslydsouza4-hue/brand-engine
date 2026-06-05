@@ -27,6 +27,7 @@ import { AffiliateBlurbWorkspace } from "@/components/brand/AffiliateBlurbWorksp
 import { LevelUpImageLibraryWorkspace } from "@/components/brand/LevelUpImageLibraryWorkspace";
 import { LevelUpComposerWorkspace } from "@/components/brand/LevelUpComposerWorkspace";
 import { SummerOfAiWorkspace } from "@/components/brand/SummerOfAiWorkspace";
+import type { SummerSection } from "@/components/brand/summerThemes";
 import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
 import { TutorialPopup } from "@/components/brand/TutorialPopup";
 import { WelcomeIntro, hasSeenIntro } from "@/components/brand/WelcomeIntro";
@@ -38,6 +39,7 @@ export default function BrandEngine() {
     return VALID_MODES.includes(h) ? h : "templates";
   };
   const [currentMode, _setCurrentMode] = useState(() => parseHash());
+  const [summerSection, setSummerSection] = useState<SummerSection>("emailers");
   const setCurrentMode = (mode: string) => {
     _setCurrentMode(mode);
     window.location.hash = mode === "templates" ? "" : mode;
@@ -98,7 +100,7 @@ export default function BrandEngine() {
       <div className="absolute inset-0 brand-app-noise pointer-events-none z-0"></div>
       
       <div className="w-0 md:w-[220px] shrink-0 overflow-visible">
-        <Sidebar currentMode={currentMode} setMode={setCurrentMode} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar currentMode={currentMode} setMode={setCurrentMode} summerSection={summerSection} setSummerSection={setSummerSection} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">
@@ -132,9 +134,9 @@ export default function BrandEngine() {
         {currentMode === "image-library" && <LevelUpImageLibraryWorkspace />}
         {currentMode === "social-composer" && <LevelUpComposerWorkspace />}
 
-        {currentMode === "summer-sun-drunk" && <SummerOfAiWorkspace themeId="sun-drunk" />}
-        {currentMode === "summer-electric" && <SummerOfAiWorkspace themeId="electric" />}
-        {currentMode === "summer-feral" && <SummerOfAiWorkspace themeId="feral" />}
+        {currentMode === "summer-sun-drunk" && <SummerOfAiWorkspace themeId="sun-drunk" section={summerSection} setSection={setSummerSection} />}
+        {currentMode === "summer-electric" && <SummerOfAiWorkspace themeId="electric" section={summerSection} setSection={setSummerSection} />}
+        {currentMode === "summer-feral" && <SummerOfAiWorkspace themeId="feral" section={summerSection} setSection={setSummerSection} />}
       </div>
       <FeatureRequestBubble />
       <TutorialPopup currentMode={currentMode} />

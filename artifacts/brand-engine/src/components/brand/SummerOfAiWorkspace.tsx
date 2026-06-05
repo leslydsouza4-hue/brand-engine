@@ -11,10 +11,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Sparkles, Loader2, Download, Trash2, Check, Copy, Mail, Megaphone, Share2, Images, ChevronDown, ImagePlus, X, Link2, Plus, Upload } from "lucide-react";
+import { Sparkles, Loader2, Download, Trash2, Check, Copy, Images, ChevronDown, ImagePlus, X, Link2, Plus, Upload } from "lucide-react";
 import {
   SUMMER_THEMES,
-  SUMMER_SECTIONS,
   formatsForSection,
   parseImageCopies,
   defaultContent,
@@ -110,8 +109,6 @@ const ELEMENT_LABELS: [SummerElementKey, string][] = [
   ["cta", "Button"],
 ];
 
-const SECTION_ICON = { emailers: Mail, ads: Megaphone, social: Share2, assets: Images } as const;
-
 function triggerDownload(dataUrl: string, name: string): void {
   const a = document.createElement("a");
   a.href = dataUrl;
@@ -175,9 +172,16 @@ async function requestImage(
   return j.dataUrl;
 }
 
-export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
+export function SummerOfAiWorkspace({
+  themeId,
+  section,
+  setSection,
+}: {
+  themeId: SummerThemeId;
+  section: SummerSection;
+  setSection: (s: SummerSection) => void;
+}) {
   const theme = SUMMER_THEMES[themeId];
-  const [section, setSection] = useState<SummerSection>("emailers");
 
   const [{ cards, active }, setStacks] = useState<{ cards: CardMap; active: ActiveMap }>(() => initCards(themeId));
   const [selected, setSelected] = useState<SummerElementKey | null>(null);
@@ -663,35 +667,6 @@ export function SummerOfAiWorkspace({ themeId }: { themeId: SummerThemeId }) {
               {theme.name}
             </h1>
             <p className="m-0 text-[11.5px] text-[#94A3B8] leading-[1.35] truncate">{theme.tagline}</p>
-          </div>
-        </div>
-
-        {/* Section selector */}
-        <div>
-          <div className={labelCls}>Section</div>
-          <div className="grid grid-cols-4 gap-[6px]">
-            {SUMMER_SECTIONS.map((s) => {
-              const Icon = SECTION_ICON[s.id];
-              const isActive = s.id === section;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setSection(s.id)}
-                  className="flex flex-col items-center justify-center gap-[5px] py-[11px] px-[3px] rounded-[11px] cursor-pointer transition-all border"
-                  style={
-                    isActive
-                      ? { background: `${p.accent}24`, borderColor: `${p.accent}8c`, boxShadow: `0 0 18px -6px ${p.accent}` }
-                      : { background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.09)" }
-                  }
-                >
-                  <Icon size={16} color={isActive ? p.accent : "#94A3B8"} />
-                  <span className="text-[9.5px] font-bold leading-[1.1] text-center" style={{ color: isActive ? "#fff" : "#CBD5E1" }}>
-                    {s.label.split(" ")[0]}
-                  </span>
-                </button>
-              );
-            })}
           </div>
         </div>
 

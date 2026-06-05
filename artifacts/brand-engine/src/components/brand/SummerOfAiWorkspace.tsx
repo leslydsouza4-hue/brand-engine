@@ -761,9 +761,9 @@ export function SummerOfAiWorkspace({
                 onClick={() => setLeftTab(t.id)}
                 className="flex-1 flex items-center justify-center gap-[7px] py-[9px] rounded-[10px] text-[12.5px] font-semibold transition-all cursor-pointer"
                 style={{
-                  background: on ? p.gradient : "transparent",
-                  color: on ? "#fff" : "#94A3B8",
-                  boxShadow: on ? `0 8px 20px -10px ${p.accent}` : "none",
+                  background: on ? p.accent : "transparent",
+                  color: on ? accentInk : "#94A3B8",
+                  boxShadow: on ? `0 8px 22px -12px ${p.accent}` : "none",
                 }}
               >
                 <t.icon size={14} />

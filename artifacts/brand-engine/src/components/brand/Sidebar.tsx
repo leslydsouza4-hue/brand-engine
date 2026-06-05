@@ -95,7 +95,7 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
       `}>
         <div className="pt-[22px] px-[20px] pb-[12px] flex items-center gap-[11px] relative shrink-0">
           <div className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center shrink-0 relative bg-white/[0.04] backdrop-blur-[12px] border border-white/[0.08]">
-            <img src={theme.logoIconUrl} alt={theme.name} className="w-[18px] h-[18px] object-contain" />
+            <img src={BRAND_THEMES.highlevel.logoIconUrl} alt="HighLevel" className="w-[18px] h-[18px] object-contain" />
           </div>
           <div className="text-[17px] font-bold text-white tracking-[-0.4px] flex-1">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
           <button onClick={onClose} className="md:hidden w-[28px] h-[28px] flex items-center justify-center rounded-[8px] text-[#94A3B8] hover:text-white hover:bg-white/10 transition-all cursor-pointer">

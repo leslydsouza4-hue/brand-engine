@@ -30,14 +30,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useBrandMode, BRAND_THEMES, type BrandMode } from "./brandModeStore";
-import { SUMMER_THEMES, SUMMER_THEME_ORDER, SUMMER_SECTIONS, type SummerThemeId, type SummerSection } from "./summerThemes";
-
-/** Launch timeline shown on each Summer theme tab. */
-const SUMMER_TIMELINE: Record<SummerThemeId, { month: string; dates: string }> = {
-  "sun-drunk": { month: "June", dates: "Jun 1 – 30" },
-  electric: { month: "July", dates: "Jul 1 – 31" },
-  feral: { month: "August", dates: "Aug 1 – 31" },
-};
+import { SUMMER_THEMES, SUMMER_THEME_ORDER, SUMMER_SECTIONS, type SummerSection } from "./summerThemes";
 
 const SUMMER_SECTION_ICON = { emailers: Mail, ads: Megaphone, social: Share2, assets: Images } as const;
 
@@ -260,75 +253,43 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
         )}
         {isSummer && (
           <>
-          <div className="px-[12px] mb-[12px] relative">
-            <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[10px]">Campaign Themes</div>
-            <div className="flex flex-col gap-[8px]">
-              {SUMMER_THEME_ORDER.map((id) => {
-                const st = SUMMER_THEMES[id];
-                const mode = `summer-${id}`;
-                const active = currentMode === mode;
-                const tl = SUMMER_TIMELINE[id];
-                const ac = st.palette.accent;
-                return (
-                  <button
-                    key={id}
-                    onClick={() => handleSetMode(mode)}
-                    className="group w-full text-left rounded-[14px] cursor-pointer transition-all duration-200 overflow-hidden border"
-                    style={{
-                      background: active
-                        ? `linear-gradient(135deg, ${ac}22, rgba(255,255,255,0.02))`
-                        : 'rgba(255,255,255,0.025)',
-                      borderColor: active ? `${ac}80` : 'rgba(255,255,255,0.07)',
-                      boxShadow: active ? `0 8px 26px -12px ${ac}, inset 0 1px 0 rgba(255,255,255,0.05)` : 'none',
-                    }}
+          {SUMMER_THEME_ORDER.map((id) => {
+            const st = SUMMER_THEMES[id];
+            const mode = `summer-${id}`;
+            const themeActive = currentMode === mode;
+            const ac = st.palette.accent;
+            return (
+              <div key={id} className="px-[12px] mb-[10px] relative">
+                <div className="flex items-center gap-[8px] pt-[8px] px-[12px] pb-[10px]">
+                  <span
+                    aria-hidden
+                    className="w-[8px] h-[8px] rounded-full shrink-0"
+                    style={{ background: ac, boxShadow: themeActive ? `0 0 0 3px ${ac}33` : 'none' }}
+                  />
+                  <span
+                    className="text-[10px] font-semibold uppercase tracking-[1.4px]"
+                    style={{ color: themeActive ? ac : '#94a3b880' }}
                   >
-                    {/* top accent bar */}
-                    <span aria-hidden className="block h-[3px] w-full" style={{ background: active ? ac : `${ac}66` }} />
-                    <div className="px-[13px] py-[11px]">
-                      <div className="flex items-center gap-[9px]">
-                        <span
-                          aria-hidden
-                          className="w-[11px] h-[11px] rounded-full shrink-0"
-                          style={{ background: ac, boxShadow: active ? `0 0 0 4px ${ac}33` : 'none' }}
-                        />
-                        <span className={`flex-1 text-[15px] font-bold tracking-[-0.2px] truncate ${active ? 'text-white' : 'text-[#CBD5E1] group-hover:text-white'}`}>
-                          {st.name}
-                        </span>
-                        {active && <Check className="w-[15px] h-[15px] shrink-0" strokeWidth={2.6} style={{ color: ac }} />}
-                      </div>
-                      <div className="flex items-center gap-[7px] mt-[8px] mb-[6px]">
-                        <span
-                          className="text-[9px] font-bold uppercase tracking-[0.1em] px-[7px] py-[2px] rounded-[5px]"
-                          style={{ color: active ? '#0A0F1C' : ac, background: active ? ac : `${ac}1f`, border: `1px solid ${ac}55` }}
-                        >
-                          {tl.month}
-                        </span>
-                        <span className="text-[10.5px] font-medium text-[#94A3B8] tabular-nums">{tl.dates}</span>
-                      </div>
-                      <p className="m-0 text-[10.5px] leading-[1.4] text-[#94A3B8] line-clamp-2">{st.tagline}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-          <div className="px-[12px] mb-[10px] relative">
-            <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[4px] px-[12px] pb-[10px]">Sections</div>
-            {SUMMER_SECTIONS.map((s) => {
-              const Icon = SUMMER_SECTION_ICON[s.id];
-              const active = summerSection === s.id;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setSummerSection?.(s.id)}
-                  className={`${btnBase} cursor-pointer ${active ? activeClass : inactiveClass}`}
-                >
-                  <Icon className={iconCls(active)} />
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
+                    {st.name}
+                  </span>
+                </div>
+                {SUMMER_SECTIONS.map((s) => {
+                  const Icon = SUMMER_SECTION_ICON[s.id];
+                  const active = themeActive && summerSection === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => { handleSetMode(mode); setSummerSection?.(s.id); }}
+                      className={`${btnBase} cursor-pointer ${active ? activeClass : inactiveClass}`}
+                    >
+                      <Icon className={iconCls(active)} />
+                      {s.label}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
           </>
         )}
         {!isLU && !isSummer && <>

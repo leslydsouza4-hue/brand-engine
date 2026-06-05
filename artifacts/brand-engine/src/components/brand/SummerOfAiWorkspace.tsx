@@ -1183,7 +1183,8 @@ export function SummerOfAiWorkspace({
 
                   {/* Gradient wash — directional scrim so content on one side pops */}
                   {(() => {
-                    const wash = activeContent.wash ?? { color: "black" as const, opacity: 0, direction: "left" as const };
+                    const wash = activeContent.wash ?? { color: "#000000", opacity: 0, direction: "left" as const };
+                    const washSwatches = ["#000000", "#FFFFFF", p.accent, "#0B1530", "#1E3A8A", "#7C2D12", "#831843", "#064E3B"];
                     const dirs: { id: "left" | "right" | "top" | "bottom"; label: string }[] = [
                       { id: "left", label: "Left" },
                       { id: "right", label: "Right" },
@@ -1213,23 +1214,39 @@ export function SummerOfAiWorkspace({
                             );
                           })}
                         </div>
+                        <div className="flex items-center gap-[6px] flex-wrap mb-[10px]">
+                          {washSwatches.map((c) => {
+                            const on = wash.color.toLowerCase() === c.toLowerCase();
+                            return (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={() => setWash({ color: c, opacity: wash.opacity === 0 ? 0.6 : wash.opacity })}
+                                className="w-[28px] h-[28px] rounded-[8px] cursor-pointer transition-transform"
+                                style={{ background: c, border: on ? `2px solid ${p.accent}` : "1px solid rgba(255,255,255,0.22)" }}
+                                aria-label={`${c} wash`}
+                                title={`${c} wash`}
+                              />
+                            );
+                          })}
+                          <label
+                            className="w-[28px] h-[28px] rounded-[8px] cursor-pointer relative overflow-hidden flex items-center justify-center"
+                            style={{
+                              border: "1px solid rgba(255,255,255,0.22)",
+                              background: "conic-gradient(from 0deg, #ff0000, #ffea00, #00ff2f, #00d9ff, #5b2bff, #ff00c8, #ff0000)",
+                            }}
+                            title="Custom color"
+                          >
+                            <input
+                              type="color"
+                              value={/^#[0-9a-fA-F]{6}$/.test(wash.color) ? wash.color : "#000000"}
+                              onChange={(e) => setWash({ color: e.target.value, opacity: wash.opacity === 0 ? 0.6 : wash.opacity })}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              aria-label="Custom wash color"
+                            />
+                          </label>
+                        </div>
                         <div className="flex items-center gap-[10px]">
-                          <div className="flex gap-[5px] shrink-0">
-                            {(["black", "white"] as const).map((c) => {
-                              const on = wash.color === c;
-                              return (
-                                <button
-                                  key={c}
-                                  type="button"
-                                  onClick={() => setWash({ color: c, opacity: wash.opacity === 0 ? 0.6 : wash.opacity })}
-                                  className="w-[30px] h-[30px] rounded-[8px] cursor-pointer transition-transform"
-                                  style={{ background: c === "black" ? "#0A0A0A" : "#FFFFFF", border: on ? `2px solid ${p.accent}` : "1px solid rgba(255,255,255,0.22)" }}
-                                  aria-label={`${c} wash`}
-                                  title={`${c} wash`}
-                                />
-                              );
-                            })}
-                          </div>
                           <input
                             type="range"
                             min={0}
@@ -1244,7 +1261,7 @@ export function SummerOfAiWorkspace({
                           <span className="text-[11px] tabular-nums text-[#8C9AAE] w-[42px] text-right">{Math.round(wash.opacity * 100)}%</span>
                         </div>
                         <p className="mt-[6px] text-[11px] text-[#8C9AAE] leading-[1.4]">
-                          A {wash.color} gradient fading from the {wash.direction} into the image — keeps that side dark so your headline and copy stand out.
+                          A gradient fading from the {wash.direction} into the image — keeps that side tinted so your headline and copy stand out.
                         </p>
                       </div>
                     );

@@ -118,7 +118,8 @@ export type SummerWashDirection = "left" | "right" | "top" | "bottom";
  * that side pop without flattening the whole photo.
  */
 export interface SummerWash {
-  color: "black" | "white";
+  /** CSS hex color (e.g. "#000000", "#FFFFFF", or any brand color). */
+  color: string;
   /** 0..1 strength at the starting edge. 0 = no wash. */
   opacity: number;
   /** Edge the wash is strongest at. */
@@ -480,7 +481,7 @@ export function defaultContent(themeId: SummerThemeId): SummerContent {
     },
     layout: defaultLayout(),
     overlay: { color: "black", opacity: 0 },
-    wash: { color: "black", opacity: 0, direction: "left" },
+    wash: { color: "#000000", opacity: 0, direction: "left" },
     gradient: null,
     subject: null,
     logo: { show: true, variant: DEFAULT_LOGO_VARIANT[themeId] },

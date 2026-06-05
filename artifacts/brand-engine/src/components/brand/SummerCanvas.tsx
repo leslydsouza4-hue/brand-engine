@@ -144,9 +144,22 @@ function bgLayer(theme: SummerThemeDef, content: SummerContent): ReactElement {
   return <div style={{ position: "absolute", inset: 0, background: content.gradient ?? theme.palette.gradient }} />;
 }
 
+/** Parse a hex color (or "black"/"white" keyword) into an "r,g,b" string. */
+function washRgb(color: string): string {
+  if (color === "white") return "255,255,255";
+  if (color === "black") return "0,0,0";
+  let hex = color.replace("#", "").trim();
+  if (hex.length === 3) hex = hex.split("").map((ch) => ch + ch).join("");
+  if (hex.length !== 6 || /[^0-9a-fA-F]/.test(hex)) return "0,0,0";
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+}
+
 /** CSS for the directional gradient wash (strong at `direction`, clear by ~75%). */
 function washGradient(wash: SummerWash): string {
-  const rgb = wash.color === "white" ? "255,255,255" : "0,0,0";
+  const rgb = washRgb(wash.color);
   const stop = `rgba(${rgb},${wash.opacity})`;
   const toward =
     wash.direction === "left"

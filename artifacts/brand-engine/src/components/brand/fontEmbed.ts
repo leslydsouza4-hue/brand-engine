@@ -4,6 +4,9 @@ import poppins500 from "../../assets/fonts/Poppins-500.woff2";
 import poppins600 from "../../assets/fonts/Poppins-600.woff2";
 import poppins700 from "../../assets/fonts/Poppins-700.woff2";
 import poppins800 from "../../assets/fonts/Poppins-800.woff2";
+import poppins400i from "../../assets/fonts/Poppins-400i.woff2";
+import poppins600i from "../../assets/fonts/Poppins-600i.woff2";
+import poppins700i from "../../assets/fonts/Poppins-700i.woff2";
 import inter400 from "../../assets/fonts/Inter-400.woff2";
 import inter500 from "../../assets/fonts/Inter-500.woff2";
 import inter600 from "../../assets/fonts/Inter-600.woff2";
@@ -14,6 +17,7 @@ interface FontFace {
   family: string;
   weight: number;
   url: string;
+  style?: "normal" | "italic";
 }
 
 const FONT_FACES: FontFace[] = [
@@ -23,6 +27,9 @@ const FONT_FACES: FontFace[] = [
   { family: "Poppins", weight: 600, url: poppins600 },
   { family: "Poppins", weight: 700, url: poppins700 },
   { family: "Poppins", weight: 800, url: poppins800 },
+  { family: "Poppins", weight: 400, url: poppins400i, style: "italic" },
+  { family: "Poppins", weight: 600, url: poppins600i, style: "italic" },
+  { family: "Poppins", weight: 700, url: poppins700i, style: "italic" },
   { family: "Inter", weight: 400, url: inter400 },
   { family: "Inter", weight: 500, url: inter500 },
   { family: "Inter", weight: 600, url: inter600 },
@@ -56,7 +63,7 @@ export async function getFontEmbedCSS(): Promise<string> {
     FONT_FACES.map(async (f) => {
       try {
         const dataUrl = await toDataUrl(f.url);
-        return `@font-face{font-family:'${f.family}';font-style:normal;font-weight:${f.weight};font-display:swap;src:url(${dataUrl}) format('woff2');}`;
+        return `@font-face{font-family:'${f.family}';font-style:${f.style ?? "normal"};font-weight:${f.weight};font-display:swap;src:url(${dataUrl}) format('woff2');}`;
       } catch (err) {
         // Skip a single failed font rather than aborting the whole export.
         console.warn(`fontEmbed: skipping ${f.family} ${f.weight}`, err);

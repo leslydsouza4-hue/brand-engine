@@ -28,6 +28,7 @@ import {
   type SummerElementKey,
   type SummerColors,
   type SummerOverlay,
+  type SummerWash,
   type SummerSubject,
 } from "./summerThemes";
 import { ScaledCanvasPreview, SummerCanvasNode } from "./SummerCanvas";
@@ -307,6 +308,17 @@ export function SummerOfAiWorkspace({
     [activeCard, updateCard]
   );
 
+  const setWash = useCallback(
+    (patch: Partial<SummerWash>) => {
+      if (activeCard)
+        updateCard(activeCard.id, (c) => ({
+          ...c,
+          content: { ...c.content, wash: { ...(c.content.wash ?? { color: "black", opacity: 0, direction: "left" }), ...patch } },
+        }));
+    },
+    [activeCard, updateCard]
+  );
+
   // Pick a gradient background (and clear any full-bleed image so it shows).
   const setGradient = useCallback(
     (css: string | null) => {
@@ -426,7 +438,7 @@ export function SummerOfAiWorkspace({
         const list = prev.cards[contentSection];
         const src = list.find((c) => c.id === id);
         if (!src) return prev;
-        const copy: SummerCard = { ...src, id: uid(), content: { ...src.content, colors: { ...src.content.colors }, layout: { ...src.content.layout }, overlay: { ...src.content.overlay }, logo: { ...src.content.logo } }, generating: false, error: null };
+        const copy: SummerCard = { ...src, id: uid(), content: { ...src.content, colors: { ...src.content.colors }, layout: { ...src.content.layout }, overlay: { ...src.content.overlay }, wash: { ...src.content.wash }, logo: { ...src.content.logo } }, generating: false, error: null };
         const idx = list.findIndex((c) => c.id === id);
         const next = [...list.slice(0, idx + 1), copy, ...list.slice(idx + 1)];
         return { cards: { ...prev.cards, [contentSection]: next }, active: { ...prev.active, [contentSection]: copy.id } };
@@ -465,7 +477,7 @@ export function SummerOfAiWorkspace({
     try {
       const dataUrl = await requestImage(themeId, prompt, activeFormat, refImages);
       const { persisted } = addSummerAsset(themeId, dataUrl, prompt);
-      setStacks((prev) => ({ ...prev, cards: { ...prev.cards, [sec]: prev.cards[sec].map((c) => (c.id === id ? { ...c, generating: false, content: { ...c.content, bgImage: dataUrl } } : c)) } }));
+      setStacks((prev) => ({ ...prev, cards: { ...prev.cards, [sec]: prev.cards[sec].map((c) => (c.id === id ? { ...c, generating: false, content: { ...c.content, bgImage: dataUrl, bgScale: 1 } } : c)) } }));
       if (!persisted) setGenError("Image added but your library storage is full — older assets may not survive a reload.");
     } catch (err) {
       const msg = (err as Error).message || "generation failed";
@@ -486,7 +498,7 @@ export function SummerOfAiWorkspace({
           const dataUrl = await requestImage(themeId, card.imagePrompt, fmt, refImages);
           if (stale()) return;
           addSummerAsset(themeId, dataUrl, card.imagePrompt);
-          setStacks((prev) => ({ ...prev, cards: { ...prev.cards, [sec]: prev.cards[sec].map((c) => (c.id === card.id ? { ...c, generating: false, content: { ...c.content, bgImage: dataUrl } } : c)) } }));
+          setStacks((prev) => ({ ...prev, cards: { ...prev.cards, [sec]: prev.cards[sec].map((c) => (c.id === card.id ? { ...c, generating: false, content: { ...c.content, bgImage: dataUrl, bgScale: 1 } } : c)) } }));
         } catch (err) {
           if (stale()) return;
           const msg = (err as Error).message || "failed";
@@ -582,7 +594,7 @@ export function SummerOfAiWorkspace({
           reader.onerror = () => reject(reader.error);
           reader.readAsDataURL(file);
         });
-        patchContent(activeCard.id, { bgImage: dataUrl });
+        patchContent(activeCard.id, { bgImage: dataUrl, bgScale: 1 });
         setGenError(null);
       } catch {
         setGenError("Couldn't read that image — try a different file.");
@@ -1018,12 +1030,31 @@ export function SummerOfAiWorkspace({
 
                   {genError && <div className="text-[#ff9b9b] text-[12px] mt-[8px] leading-[1.45]">{genError}</div>}
                   {activeContent.bgImage && (
-                    <button
-                      onClick={() => set("bgImage", null)}
-                      className="mt-[8px] w-full py-[9px] rounded-[10px] text-[12.5px] cursor-pointer bg-transparent border border-white/[0.14] text-[#94A3B8] hover:text-white hover:border-white/[0.25] transition-colors"
-                    >
-                      Clear background (use gradient)
-                    </button>
+                    <>
+                      <div className="mt-[12px]">
+                        <div className="flex items-center justify-between mb-[6px]">
+                          <span className="text-[12px] text-[#94A3B8]">Image zoom</span>
+                          <span className="text-[11px] tabular-nums text-[#6B7A93]">{Math.round((activeContent.bgScale ?? 1) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={100}
+                          max={250}
+                          value={Math.round((activeContent.bgScale ?? 1) * 100)}
+                          onChange={(e) => set("bgScale", Number(e.target.value) / 100)}
+                          className="w-full cursor-pointer"
+                          style={{ accentColor: p.accent }}
+                          aria-label="Background image zoom"
+                        />
+                        <p className="mt-[5px] text-[11px] text-[#8C9AAE] leading-[1.4]">Zoom in to crop the uploaded image tighter.</p>
+                      </div>
+                      <button
+                        onClick={() => { set("bgImage", null); set("bgScale", 1); }}
+                        className="mt-[8px] w-full py-[9px] rounded-[10px] text-[12.5px] cursor-pointer bg-transparent border border-white/[0.14] text-[#94A3B8] hover:text-white hover:border-white/[0.25] transition-colors"
+                      >
+                        Clear background (use gradient)
+                      </button>
+                    </>
                   )}
 
                   {/* Gradient backgrounds (on-brand hazy presets) */}
@@ -1150,6 +1181,75 @@ export function SummerOfAiWorkspace({
                     </p>
                   </div>
 
+                  {/* Gradient wash — directional scrim so content on one side pops */}
+                  {(() => {
+                    const wash = activeContent.wash ?? { color: "black" as const, opacity: 0, direction: "left" as const };
+                    const dirs: { id: "left" | "right" | "top" | "bottom"; label: string }[] = [
+                      { id: "left", label: "Left" },
+                      { id: "right", label: "Right" },
+                      { id: "top", label: "Top" },
+                      { id: "bottom", label: "Bottom" },
+                    ];
+                    return (
+                      <div className="mt-[16px]">
+                        <div className={labelCls}>Gradient wash</div>
+                        <div className="grid grid-cols-4 gap-[6px] mb-[10px]">
+                          {dirs.map((d) => {
+                            const on = wash.direction === d.id;
+                            return (
+                              <button
+                                key={d.id}
+                                type="button"
+                                onClick={() => setWash({ direction: d.id, opacity: wash.opacity === 0 ? 0.6 : wash.opacity })}
+                                className="py-[7px] rounded-[8px] text-[11.5px] font-semibold cursor-pointer transition-colors"
+                                style={{
+                                  background: on ? p.accent : "rgba(255,255,255,0.06)",
+                                  color: on ? "#0B1220" : "#D7DEEA",
+                                  border: on ? `1px solid ${p.accent}` : "1px solid rgba(255,255,255,0.14)",
+                                }}
+                              >
+                                {d.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="flex items-center gap-[10px]">
+                          <div className="flex gap-[5px] shrink-0">
+                            {(["black", "white"] as const).map((c) => {
+                              const on = wash.color === c;
+                              return (
+                                <button
+                                  key={c}
+                                  type="button"
+                                  onClick={() => setWash({ color: c, opacity: wash.opacity === 0 ? 0.6 : wash.opacity })}
+                                  className="w-[30px] h-[30px] rounded-[8px] cursor-pointer transition-transform"
+                                  style={{ background: c === "black" ? "#0A0A0A" : "#FFFFFF", border: on ? `2px solid ${p.accent}` : "1px solid rgba(255,255,255,0.22)" }}
+                                  aria-label={`${c} wash`}
+                                  title={`${c} wash`}
+                                />
+                              );
+                            })}
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={0.95}
+                            step={0.05}
+                            value={wash.opacity}
+                            onChange={(e) => setWash({ opacity: parseFloat(e.target.value) })}
+                            className="flex-1 cursor-pointer"
+                            style={{ accentColor: p.accent }}
+                            aria-label="Wash strength"
+                          />
+                          <span className="text-[11px] tabular-nums text-[#8C9AAE] w-[42px] text-right">{Math.round(wash.opacity * 100)}%</span>
+                        </div>
+                        <p className="mt-[6px] text-[11px] text-[#8C9AAE] leading-[1.4]">
+                          A {wash.color} gradient fading from the {wash.direction} into the image — keeps that side dark so your headline and copy stand out.
+                        </p>
+                      </div>
+                    );
+                  })()}
+
                   {assets.length > 0 && (
                     <div className="mt-[14px]">
                       <div className={labelCls}>From library</div>
@@ -1158,7 +1258,7 @@ export function SummerOfAiWorkspace({
                           <button
                             key={a.id}
                             type="button"
-                            onClick={() => set("bgImage", a.dataUrl)}
+                            onClick={() => patchContent(activeCard.id, { bgImage: a.dataUrl, bgScale: 1 })}
                             title={a.prompt}
                             className="relative aspect-square rounded-[8px] overflow-hidden cursor-pointer p-0 bg-black"
                             style={{ border: activeContent.bgImage === a.dataUrl ? `2px solid ${p.accent}` : "1px solid rgba(255,255,255,0.12)" }}

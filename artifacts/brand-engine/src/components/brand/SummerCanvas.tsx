@@ -17,6 +17,7 @@ import {
   type SummerLayoutMap,
   type SummerSubject,
   type SummerThemeDef,
+  type SummerWash,
 } from "./summerThemes";
 import { fontDefFor, fontStackFor, headingTypography } from "./googleFonts";
 
@@ -120,16 +121,42 @@ function computeSnap(
 
 function bgLayer(theme: SummerThemeDef, content: SummerContent): ReactElement {
   if (content.bgImage) {
+    const scale = content.bgScale ?? 1;
     return (
-      <img
-        src={content.bgImage}
-        alt=""
-        crossOrigin="anonymous"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-      />
+      <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+        <img
+          src={content.bgImage}
+          alt=""
+          crossOrigin="anonymous"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transform: scale !== 1 ? `scale(${scale})` : undefined,
+            transformOrigin: "center center",
+          }}
+        />
+      </div>
     );
   }
   return <div style={{ position: "absolute", inset: 0, background: content.gradient ?? theme.palette.gradient }} />;
+}
+
+/** CSS for the directional gradient wash (strong at `direction`, clear by ~75%). */
+function washGradient(wash: SummerWash): string {
+  const rgb = wash.color === "white" ? "255,255,255" : "0,0,0";
+  const stop = `rgba(${rgb},${wash.opacity})`;
+  const toward =
+    wash.direction === "left"
+      ? "to right"
+      : wash.direction === "right"
+        ? "to left"
+        : wash.direction === "top"
+          ? "to bottom"
+          : "to top";
+  return `linear-gradient(${toward}, ${stop} 0%, rgba(${rgb},0) 75%)`;
 }
 
 interface Interaction {
@@ -322,6 +349,7 @@ function CanvasInner({
   const headType = headingTypography(fontDef);
   const sz = (k: SummerElementKey) => content.layout[k].size ?? 1;
   const overlay = content.overlay ?? { color: "black" as const, opacity: 0 };
+  const wash: SummerWash = content.wash ?? { color: "black", opacity: 0, direction: "left" };
   return (
     <>
       {bgLayer(theme, content)}
@@ -334,6 +362,9 @@ function CanvasInner({
             opacity: overlay.opacity,
           }}
         />
+      )}
+      {wash.opacity > 0 && (
+        <div style={{ position: "absolute", inset: 0, background: washGradient(wash) }} />
       )}
       <div style={{ position: "absolute", inset: 0, background: theme.palette.scrim }} />
 

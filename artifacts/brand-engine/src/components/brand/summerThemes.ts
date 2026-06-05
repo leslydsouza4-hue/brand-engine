@@ -109,6 +109,22 @@ export interface SummerOverlay {
   opacity: number;
 }
 
+/** Side the directional gradient wash starts strong from (fading to clear). */
+export type SummerWashDirection = "left" | "right" | "top" | "bottom";
+
+/**
+ * Directional gradient wash that darkens (or lightens) one side of the image
+ * and fades to transparent toward the opposite side — used to make text on
+ * that side pop without flattening the whole photo.
+ */
+export interface SummerWash {
+  color: "black" | "white";
+  /** 0..1 strength at the starting edge. 0 = no wash. */
+  opacity: number;
+  /** Edge the wash is strongest at. */
+  direction: SummerWashDirection;
+}
+
 /** An uploaded human / subject cutout composited over the background. */
 export interface SummerSubject {
   /** Image source (data URL — ideally a transparent PNG cutout). */
@@ -422,6 +438,8 @@ export interface SummerContent {
   subtext: string;
   cta: string;
   bgImage: string | null;
+  /** Zoom multiplier for the uploaded/generated background image (1 = fit). */
+  bgScale: number;
   /** Selected heading font style. */
   headlineFont: string;
   /** Per-element text colors. */
@@ -430,6 +448,8 @@ export interface SummerContent {
   layout: SummerLayoutMap;
   /** Flat black/white wash over the background. */
   overlay: SummerOverlay;
+  /** Directional gradient wash to make content on one side stand out. */
+  wash: SummerWash;
   /** Chosen gradient background (CSS). null = use the theme's default gradient. */
   gradient: string | null;
   /** Uploaded human/subject cutout composited over the background. */
@@ -452,6 +472,7 @@ export function defaultContent(themeId: SummerThemeId): SummerContent {
     subtext: t.copy.subtext,
     cta: t.copy.cta,
     bgImage: null,
+    bgScale: 1,
     headlineFont: "Poppins",
     colors: {
       headline: "#FFFFFF",
@@ -459,6 +480,7 @@ export function defaultContent(themeId: SummerThemeId): SummerContent {
     },
     layout: defaultLayout(),
     overlay: { color: "black", opacity: 0 },
+    wash: { color: "black", opacity: 0, direction: "left" },
     gradient: null,
     subject: null,
     logo: { show: true, variant: DEFAULT_LOGO_VARIANT[themeId] },

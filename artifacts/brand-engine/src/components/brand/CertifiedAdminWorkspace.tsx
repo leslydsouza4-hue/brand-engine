@@ -7,7 +7,7 @@ import { getFontEmbedCSS } from "./fontEmbed";
 const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/certified-admin/bg.jpg`;
 const BADGE_URL = `${BASE}assets/certified-admin/badge.png`;
-const LOGO_URL = `${BASE}assets/logos/Lockup=Full Horizontal, Color=AllWhite.png`;
+const LOGO_URL = `${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png`;
 
 const CARD_SIZE = 1080;
 
@@ -102,6 +102,7 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
           fontSize: "11.5cqw",
           lineHeight: 1.0,
           letterSpacing: "-0.01em",
+          textAlign: "left",
         }}
       >
         Certified<br />Admin
@@ -139,7 +140,7 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
       </div>
 
       {/* Profile circle + badge */}
-      <div style={{ position: "absolute", right: "5.5cqw", top: "50%", transform: "translateY(-50%)", width: "44cqw", height: "44cqw" }}>
+      <div style={{ position: "absolute", right: "6.5cqw", top: "50%", transform: "translateY(-50%)", width: "37cqw", height: "37cqw" }}>
         <div
           style={{
             width: "100%",
@@ -162,7 +163,7 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
           <img
             src={BADGE_URL}
             alt="Certified Admin badge"
-            style={{ position: "absolute", bottom: "-1cqw", right: "-1cqw", width: "15cqw", height: "15cqw", objectFit: "contain", filter: "drop-shadow(0 0.4cqw 1cqw rgba(0,0,0,0.4))" }}
+            style={{ position: "absolute", bottom: "-1cqw", right: "-1cqw", width: "13cqw", height: "13cqw", objectFit: "contain", filter: "drop-shadow(0 0.4cqw 1cqw rgba(0,0,0,0.4))" }}
           />
         )}
       </div>

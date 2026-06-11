@@ -16,6 +16,8 @@ interface AdminCard {
   name: string;
   directory: string;
   photo: string | null;
+  photoX: number;
+  photoY: number;
   showBadge: boolean;
 }
 
@@ -24,7 +26,11 @@ function newId() {
 }
 
 function makeCard(): AdminCard {
-  return { id: newId(), name: "First Last", directory: "directory.gohighlevel.com", photo: null, showBadge: true };
+  return { id: newId(), name: "First Last", directory: "directory.gohighlevel.com", photo: null, photoX: 50, photoY: 50, showBadge: true };
+}
+
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.min(hi, Math.max(lo, n));
 }
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -68,7 +74,42 @@ function safeName(s: string): string {
 }
 
 /** The fixed Certified Admin graphic. All sizing in cqw so it scales to its container. */
-function CertifiedAdminCard({ card }: { card: AdminCard }) {
+function CertifiedAdminCard({
+  card,
+  interactive = false,
+  onMovePhoto,
+}: {
+  card: AdminCard;
+  interactive?: boolean;
+  onMovePhoto?: (x: number, y: number) => void;
+}) {
+  const circleRef = useRef<HTMLDivElement | null>(null);
+  const canDrag = interactive && !!card.photo && !!onMovePhoto;
+
+  const startDrag = (e: React.PointerEvent) => {
+    if (!canDrag || !circleRef.current) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const rect = circleRef.current.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const baseX = card.photoX;
+    const baseY = card.photoY;
+    const move = (ev: PointerEvent) => {
+      const dx = ((ev.clientX - startX) / rect.width) * 100;
+      const dy = ((ev.clientY - startY) / rect.height) * 100;
+      onMovePhoto!(clamp(baseX - dx, 0, 100), clamp(baseY - dy, 0, 100));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  };
+
   return (
     <div
       style={{
@@ -147,6 +188,7 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
       {/* Profile circle + badge */}
       <div style={{ position: "absolute", right: "6.5cqw", top: "50%", transform: "translateY(-50%)", width: "37cqw", height: "37cqw" }}>
         <div
+          ref={circleRef}
           style={{
             width: "100%",
             height: "100%",
@@ -154,10 +196,24 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
             overflow: "hidden",
             background: "linear-gradient(135deg, #14315C 0%, #0A1B33 100%)",
             boxShadow: "0 0 0 0.6cqw rgba(124,200,255,0.9), 0 0 5cqw rgba(91,168,255,0.55)",
+            touchAction: canDrag ? "none" : undefined,
           }}
         >
           {card.photo ? (
-            <img src={card.photo} alt={card.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img
+              src={card.photo}
+              alt={card.name}
+              draggable={false}
+              onPointerDown={startDrag}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: `${card.photoX}% ${card.photoY}%`,
+                cursor: canDrag ? "grab" : undefined,
+                userSelect: "none",
+              }}
+            />
           ) : (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#5B86C0", fontSize: "3.4cqw", fontWeight: 500, textAlign: "center", padding: "0 4cqw" }}>
               Add a Certified Admin photo
@@ -168,7 +224,7 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
           <img
             src={BADGE_URL}
             alt="Certified Admin badge"
-            style={{ position: "absolute", bottom: "-1cqw", right: "-1cqw", width: "17cqw", height: "17cqw", objectFit: "contain", filter: "drop-shadow(0 0.4cqw 1cqw rgba(0,0,0,0.4))" }}
+            style={{ position: "absolute", bottom: "-4cqw", right: "-1cqw", width: "17cqw", height: "17cqw", objectFit: "contain", filter: "drop-shadow(0 0.4cqw 1cqw rgba(0,0,0,0.4))" }}
           />
         )}
       </div>
@@ -234,7 +290,7 @@ export function CertifiedAdminWorkspace() {
         const blob = await removeBackground(dataUrl, { output: { format: "image/png" } });
         dataUrl = await blobToDataUrl(blob);
       }
-      updateCard(id, { photo: dataUrl });
+      updateCard(id, { photo: dataUrl, photoX: 50, photoY: 50 });
     } catch (err) {
       console.error("Photo processing failed:", err);
     } finally {
@@ -358,6 +414,17 @@ export function CertifiedAdminWorkspace() {
                 <input type="checkbox" checked={removeBg} onChange={(e) => setRemoveBg(e.target.checked)} className="accent-[#2896FB]" />
                 Remove background automatically
               </label>
+              {active.photo && (
+                <div className="flex items-center justify-between gap-[8px] mt-[10px]">
+                  <p className="text-[10.5px] text-[#64748B] m-0">Drag the photo inside the circle to reposition it.</p>
+                  <button
+                    onClick={() => updateCard(active.id, { photoX: 50, photoY: 50 })}
+                    className="shrink-0 text-[11px] font-medium text-[#7CC8FF] hover:text-white transition-colors cursor-pointer"
+                  >
+                    Reset position
+                  </button>
+                </div>
+              )}
             </div>
 
             <label className="flex items-center justify-between gap-[8px] text-[13px] text-white cursor-pointer select-none">
@@ -390,7 +457,11 @@ export function CertifiedAdminWorkspace() {
                   onClick={() => setActiveId(card.id)}
                   className={`relative block w-full rounded-[18px] overflow-hidden transition-all cursor-pointer ${isActive ? "ring-2 ring-[#2896FB] ring-offset-2 ring-offset-transparent" : "ring-1 ring-white/[0.08] hover:ring-white/[0.2]"}`}
                 >
-                  <CertifiedAdminCard card={card} />
+                  <CertifiedAdminCard
+                    card={card}
+                    interactive={isActive}
+                    onMovePhoto={(x, y) => updateCard(card.id, { photoX: x, photoY: y })}
+                  />
                   {busy === card.id && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Loader2 size={28} className="animate-spin text-white" /></div>
                   )}

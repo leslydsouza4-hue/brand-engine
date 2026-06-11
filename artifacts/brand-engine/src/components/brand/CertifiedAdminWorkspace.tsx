@@ -160,7 +160,7 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
             <img src={card.photo} alt={card.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#5B86C0", fontSize: "3.4cqw", fontWeight: 500, textAlign: "center", padding: "0 4cqw" }}>
-              Add a profile photo
+              Add a Certified Admin photo
             </div>
           )}
         </div>
@@ -168,7 +168,7 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
           <img
             src={BADGE_URL}
             alt="Certified Admin badge"
-            style={{ position: "absolute", bottom: "-1cqw", right: "-1cqw", width: "13cqw", height: "13cqw", objectFit: "contain", filter: "drop-shadow(0 0.4cqw 1cqw rgba(0,0,0,0.4))" }}
+            style={{ position: "absolute", bottom: "-1cqw", right: "-1cqw", width: "17cqw", height: "17cqw", objectFit: "contain", filter: "drop-shadow(0 0.4cqw 1cqw rgba(0,0,0,0.4))" }}
           />
         )}
       </div>
@@ -344,7 +344,7 @@ export function CertifiedAdminWorkspace() {
             </div>
 
             <div>
-              <label className={labelCls}>Profile photo</label>
+              <label className={labelCls}>Certified Admin photo</label>
               <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(e) => { handlePhoto(active.id, e.target.files); e.target.value = ""; }} />
               <button
                 onClick={() => fileInputRef.current?.click()}

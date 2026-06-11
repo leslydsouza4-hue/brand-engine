@@ -26,7 +26,7 @@ function newId() {
 }
 
 function makeCard(): AdminCard {
-  return { id: newId(), name: "First Last", directory: "directory.gohighlevel.com", photo: null, photoX: 50, photoY: 50, showBadge: true };
+  return { id: newId(), name: "Certified Admin Name", directory: "directory.gohighlevel.com", photo: null, photoX: 50, photoY: 50, showBadge: true };
 }
 
 function clamp(n: number, lo: number, hi: number): number {
@@ -384,7 +384,7 @@ export function CertifiedAdminWorkspace() {
                 className={inputCls}
                 value={active.name}
                 onChange={(e) => updateCard(active.id, { name: e.target.value })}
-                placeholder="First Last"
+                placeholder="Certified Admin Name"
               />
               <p className="text-[10.5px] text-[#64748B] mt-[6px]">Tip: put the first and last name on separate words — it wraps to two lines like the reference.</p>
             </div>

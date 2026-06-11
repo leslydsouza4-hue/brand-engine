@@ -503,6 +503,18 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
             <span className="text-[7px] font-medium bg-white/5 px-[5px] py-[1px] rounded-[4px] ml-auto text-[#64748B] uppercase tracking-[0.5px]">Soon</span>
           </div>
         </div>
+
+        <div className="px-[12px] mb-[10px] relative">
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Certified Admin</div>
+
+          <button
+            onClick={() => handleSetMode('certified-admin-graphics')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'certified-admin-graphics' ? activeClass : inactiveClass}`}
+          >
+            <Award className={iconCls(currentMode === 'certified-admin-graphics')} />
+            Certified Admin Graphics
+          </button>
+        </div>
         </>}
 
         </div>

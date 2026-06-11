@@ -26,12 +26,13 @@ import { AffiliateBlurbWorkspace } from "@/components/brand/AffiliateBlurbWorksp
 import { LevelUpImageLibraryWorkspace } from "@/components/brand/LevelUpImageLibraryWorkspace";
 import { LevelUpComposerWorkspace } from "@/components/brand/LevelUpComposerWorkspace";
 import { SummerOfAiWorkspace } from "@/components/brand/SummerOfAiWorkspace";
+import { CertifiedAdminWorkspace } from "@/components/brand/CertifiedAdminWorkspace";
 import type { SummerSection } from "@/components/brand/summerThemes";
 import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
 import { WelcomeIntro, hasSeenIntro } from "@/components/brand/WelcomeIntro";
 
 export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-blurb", "summer-sun-drunk", "summer-electric", "summer-feral"];
+  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -63,7 +64,7 @@ export default function BrandEngine() {
   useEffect(() => {
     const luOnly = ["image-library", "social-composer"];
     const summerOnly = ["summer-sun-drunk", "summer-electric", "summer-feral"];
-    const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "highly-cutout", "growth-flywheel", "affiliate-leaderboard", "affiliate-blurb"];
+    const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "highly-cutout", "growth-flywheel", "affiliate-leaderboard", "affiliate-blurb", "certified-admin-graphics"];
     const notHl = [...luOnly, ...summerOnly];
     const notLu = [...hlOnly, ...summerOnly];
     if (brandMode === "levelup26" && notLu.includes(currentMode)) setCurrentMode("image-library");
@@ -128,6 +129,8 @@ export default function BrandEngine() {
 
         {currentMode === "affiliate-leaderboard" && <LeaderBoardWorkspace />}
         {currentMode === "affiliate-blurb" && <AffiliateBlurbWorkspace />}
+
+        {currentMode === "certified-admin-graphics" && <CertifiedAdminWorkspace />}
 
         {currentMode === "image-library" && <LevelUpImageLibraryWorkspace />}
         {currentMode === "social-composer" && <LevelUpComposerWorkspace />}

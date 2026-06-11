@@ -97,12 +97,16 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
           left: "6.5cqw",
           top: "23cqw",
           width: "48cqw",
-          color: "#9CC6FB",
           fontWeight: 700,
-          fontSize: "11.5cqw",
+          fontSize: "10.5cqw",
           lineHeight: 1.0,
           letterSpacing: "-0.01em",
           textAlign: "left",
+          backgroundImage: "linear-gradient(180deg, #9CC6FB 0%, #FFFFFF 100%)",
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          color: "transparent",
         }}
       >
         Certified<br />Admin
@@ -113,12 +117,13 @@ function CertifiedAdminCard({ card }: { card: AdminCard }) {
         style={{
           position: "absolute",
           left: "6.5cqw",
-          top: "52cqw",
+          top: "49cqw",
           width: "46cqw",
           color: "#FFFFFF",
           fontWeight: 600,
           fontSize: "5.6cqw",
           lineHeight: 1.12,
+          textAlign: "left",
           wordBreak: "break-word",
         }}
       >

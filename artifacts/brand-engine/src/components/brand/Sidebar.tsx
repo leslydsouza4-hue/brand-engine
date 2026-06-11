@@ -512,7 +512,7 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
             className={`${btnBase} cursor-pointer ${currentMode === 'certified-admin-graphics' ? activeClass : inactiveClass}`}
           >
             <Award className={iconCls(currentMode === 'certified-admin-graphics')} />
-            Certified Admin Graphics
+            <span className="whitespace-nowrap">Certified Admin</span>
           </button>
         </div>
         </>}

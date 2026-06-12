@@ -174,14 +174,15 @@ function CertifiedAdminCard({
         style={{
           position: "absolute",
           left: "6.5cqw",
-          top: "49cqw",
+          top: "51cqw",
           width: "46cqw",
           color: "#FFFFFF",
           fontWeight: 600,
-          fontSize: "5.6cqw",
-          lineHeight: 1.12,
+          fontSize: "4.9cqw",
+          lineHeight: 1.14,
           textAlign: "left",
           wordBreak: "break-word",
+          whiteSpace: "pre-line",
         }}
       >
         {card.name || " "}
@@ -541,13 +542,14 @@ export function CertifiedAdminWorkspace() {
 
             <div>
               <label className={labelCls}>Name</label>
-              <input
-                className={inputCls}
+              <textarea
+                className={`${inputCls} resize-none leading-[1.3]`}
+                rows={2}
                 value={active.name}
                 onChange={(e) => updateCard(active.id, { name: e.target.value })}
-                placeholder="Certified Admin Name"
+                placeholder={"Certified Admin\nName"}
               />
-              <p className="text-[10.5px] text-[#64748B] mt-[6px]">Tip: put the first and last name on separate words — it wraps to two lines like the reference.</p>
+              <p className="text-[10.5px] text-[#64748B] mt-[6px]">Tip: press Enter to split a long name onto two lines.</p>
             </div>
 
             <div>

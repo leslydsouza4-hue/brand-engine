@@ -33,6 +33,21 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.min(hi, Math.max(lo, n));
 }
 
+const BULK_LIMIT = 30;
+
+/** Turn a Drive filename ("Jane_Doe.png" / "jane-doe.jpg") into a person name. */
+function nameFromFilename(fn: string): string {
+  const base = fn.replace(/\.[^.]+$/, "");
+  const cleaned = base.replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+  return cleaned || "Certified Admin Name";
+}
+
+async function urlToDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return blobToDataUrl(await res.blob());
+}
+
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -238,6 +253,9 @@ export function CertifiedAdminWorkspace() {
   const [removeBg, setRemoveBg] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
   const [zipping, setZipping] = useState(false);
+  const [driveUrl, setDriveUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
   const exportRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -277,6 +295,61 @@ export function CertifiedAdminWorkspace() {
       if (id === activeId) setActiveId(next[0].id);
       return next;
     });
+  };
+
+  const importFromDrive = async () => {
+    const url = driveUrl.trim();
+    if (!url || importing) return;
+    setImporting(true);
+    setImportMsg("Reading folder…");
+    try {
+      const r = await fetch("/api/levelup/drive/list", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ folderUrl: url }),
+      });
+      if (!r.ok) {
+        const e = (await r.json().catch(() => ({}))) as { error?: string };
+        throw new Error(e.error || `HTTP ${r.status}`);
+      }
+      const data = (await r.json()) as { files: { name: string; fullUrl: string }[] };
+      const all = data.files ?? [];
+      if (all.length === 0) throw new Error("No images found in that folder. Make sure it's shared as 'anyone with the link'.");
+      const files = all.slice(0, BULK_LIMIT);
+      const removeBackground = removeBg
+        ? (await import("@imgly/background-removal")).removeBackground
+        : null;
+      const newCards: AdminCard[] = [];
+      let failed = 0;
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        setImportMsg(`Processing ${i + 1} of ${files.length}…`);
+        try {
+          let dataUrl = await urlToDataUrl(f.fullUrl);
+          if (removeBackground) {
+            const blob = await removeBackground(dataUrl, { output: { format: "image/png" } });
+            dataUrl = await blobToDataUrl(blob);
+          }
+          newCards.push({ ...makeCard(), name: nameFromFilename(f.name), photo: dataUrl });
+        } catch (err) {
+          failed++;
+          console.error("Drive image import failed:", f.name, err);
+        }
+      }
+      if (newCards.length === 0) throw new Error("Could not load any images from that folder.");
+      setCards((prev) => {
+        const pristine = prev.length === 1 && !prev[0].photo && prev[0].name === "Certified Admin Name";
+        return pristine ? newCards : [...prev, ...newCards];
+      });
+      setActiveId(newCards[0].id);
+      const skipped = all.length > BULK_LIMIT ? ` (folder had ${all.length}; limited to ${BULK_LIMIT})` : "";
+      const failedNote = failed > 0 ? `, ${failed} skipped` : "";
+      setImportMsg(`Imported ${newCards.length} card${newCards.length > 1 ? "s" : ""}${failedNote}${skipped}.`);
+    } catch (err) {
+      setImportMsg((err as Error).message || "Import failed");
+    } finally {
+      setImporting(false);
+    }
   };
 
   const handlePhoto = async (id: string, files: FileList | null) => {
@@ -368,6 +441,46 @@ export function CertifiedAdminWorkspace() {
           {zipping ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
           {zipping ? "Preparing ZIP…" : `Download all (${cards.length}) ZIP`}
         </button>
+
+        <div className="h-px bg-white/[0.06]" />
+
+        {/* Bulk import from Google Drive */}
+        <div className="flex flex-col gap-[10px] rounded-[14px] border border-white/[0.08] bg-white/[0.03] p-[14px]">
+          <div className="text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B]">
+            Bulk from Google Drive
+          </div>
+          <p className="m-0 text-[11.5px] text-[#94A3B8] leading-[1.4]">
+            Paste a public folder link. Each photo's filename becomes the person's name. Up to {BULK_LIMIT} cards.
+          </p>
+          <input
+            className={inputCls}
+            placeholder="https://drive.google.com/drive/folders/…"
+            value={driveUrl}
+            onChange={(e) => setDriveUrl(e.target.value)}
+            disabled={importing}
+          />
+          <label className="flex items-center gap-[8px] text-[11.5px] text-[#94A3B8] cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={removeBg}
+              onChange={(e) => setRemoveBg(e.target.checked)}
+              disabled={importing}
+              className="accent-[#2896FB]"
+            />
+            Remove photo backgrounds (slower for large batches)
+          </label>
+          <button
+            onClick={importFromDrive}
+            disabled={importing || !driveUrl.trim()}
+            className="w-full flex items-center justify-center gap-[8px] py-[10px] rounded-[12px] text-[13px] font-semibold text-white bg-white/[0.08] hover:bg-white/[0.12] disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            {importing ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+            {importing ? "Importing…" : "Import & generate"}
+          </button>
+          {importMsg && (
+            <p className="m-0 text-[11px] text-[#94A3B8] leading-[1.4]">{importMsg}</p>
+          )}
+        </div>
 
         <div className="h-px bg-white/[0.06]" />
 

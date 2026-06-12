@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { toPng } from "html-to-image";
 import JSZip from "jszip";
-import { Award, Plus, Download, Upload, Loader2, Trash2, Copy } from "lucide-react";
+import { Award, Plus, Download, Upload, Loader2, Trash2, Copy, Eraser } from "lucide-react";
 import { getFontEmbedCSS } from "./fontEmbed";
 
 const BASE = import.meta.env.BASE_URL;
@@ -18,6 +18,7 @@ interface AdminCard {
   photo: string | null;
   photoX: number;
   photoY: number;
+  photoScale: number;
   showBadge: boolean;
 }
 
@@ -26,7 +27,7 @@ function newId() {
 }
 
 function makeCard(): AdminCard {
-  return { id: newId(), name: "Certified Admin Name", directory: "directory.gohighlevel.com", photo: null, photoX: 50, photoY: 50, showBadge: true };
+  return { id: newId(), name: "Certified Admin Name", directory: "directory.gohighlevel.com", photo: null, photoX: 50, photoY: 50, photoScale: 1, showBadge: true };
 }
 
 function clamp(n: number, lo: number, hi: number): number {
@@ -209,7 +210,7 @@ function CertifiedAdminCard({
             height: "100%",
             borderRadius: "50%",
             overflow: "hidden",
-            background: "linear-gradient(135deg, #14315C 0%, #0A1B33 100%)",
+            background: "#FFFFFF",
             boxShadow: "0 0 0 0.6cqw rgba(124,200,255,0.9), 0 0 5cqw rgba(91,168,255,0.55)",
             touchAction: canDrag ? "none" : undefined,
           }}
@@ -225,12 +226,14 @@ function CertifiedAdminCard({
                 height: "100%",
                 objectFit: "cover",
                 objectPosition: `${card.photoX}% ${card.photoY}%`,
+                transform: `scale(${card.photoScale})`,
+                transformOrigin: "center",
                 cursor: canDrag ? "grab" : undefined,
                 userSelect: "none",
               }}
             />
           ) : (
-            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#5B86C0", fontSize: "3.4cqw", fontWeight: 500, textAlign: "center", padding: "0 4cqw" }}>
+            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#2B5C9E", fontSize: "3.4cqw", fontWeight: 500, textAlign: "center", padding: "0 4cqw" }}>
               Add a Certified Admin photo
             </div>
           )}
@@ -256,6 +259,8 @@ export function CertifiedAdminWorkspace() {
   const [driveUrl, setDriveUrl] = useState("");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [removingAll, setRemovingAll] = useState(false);
+  const [bgMsg, setBgMsg] = useState<string | null>(null);
   const exportRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -364,11 +369,52 @@ export function CertifiedAdminWorkspace() {
         const blob = await removeBackground(dataUrl, { output: { format: "image/png" } });
         dataUrl = await blobToDataUrl(blob);
       }
-      updateCard(id, { photo: dataUrl, photoX: 50, photoY: 50 });
+      updateCard(id, { photo: dataUrl, photoX: 50, photoY: 50, photoScale: 1 });
     } catch (err) {
       console.error("Photo processing failed:", err);
     } finally {
       setBusy(null);
+    }
+  };
+
+  const removeCardBg = async (id: string) => {
+    const card = cards.find((c) => c.id === id);
+    if (!card?.photo || busy === id) return;
+    setBusy(id);
+    try {
+      const { removeBackground } = await import("@imgly/background-removal");
+      const blob = await removeBackground(card.photo, { output: { format: "image/png" } });
+      updateCard(id, { photo: await blobToDataUrl(blob) });
+    } catch (err) {
+      console.error("Background removal failed:", err);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const removeAllBg = async () => {
+    if (removingAll) return;
+    const targets = cards.filter((c) => c.photo);
+    if (targets.length === 0) return;
+    setRemovingAll(true);
+    setBgMsg(null);
+    try {
+      const { removeBackground } = await import("@imgly/background-removal");
+      for (let i = 0; i < targets.length; i++) {
+        const c = targets[i];
+        setBgMsg(`Removing background ${i + 1} of ${targets.length}…`);
+        setBusy(c.id);
+        try {
+          const blob = await removeBackground(c.photo!, { output: { format: "image/png" } });
+          updateCard(c.id, { photo: await blobToDataUrl(blob) });
+        } catch (err) {
+          console.error("Background removal failed:", c.name, err);
+        }
+      }
+      setBgMsg(`Done — backgrounds removed for ${targets.length} photo${targets.length > 1 ? "s" : ""}.`);
+    } finally {
+      setBusy(null);
+      setRemovingAll(false);
     }
   };
 
@@ -443,6 +489,17 @@ export function CertifiedAdminWorkspace() {
           {zipping ? "Preparing ZIP…" : `Download all (${cards.length}) ZIP`}
         </button>
 
+        {/* Remove all backgrounds */}
+        <button
+          onClick={removeAllBg}
+          disabled={removingAll || !cards.some((c) => c.photo)}
+          className="w-full flex items-center justify-center gap-[8px] py-[10px] rounded-[12px] text-[12.5px] font-medium text-white bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-50 transition-colors cursor-pointer"
+        >
+          {removingAll ? <Loader2 size={14} className="animate-spin" /> : <Eraser size={14} />}
+          {removingAll ? (bgMsg ?? "Removing…") : "Remove all backgrounds"}
+        </button>
+        {bgMsg && !removingAll && <p className="m-0 -mt-[10px] text-[11px] text-[#94A3B8]">{bgMsg}</p>}
+
         <div className="h-px bg-white/[0.06]" />
 
         {/* Bulk import from Google Drive */}
@@ -516,18 +573,43 @@ export function CertifiedAdminWorkspace() {
               </button>
               <label className="flex items-center gap-[8px] mt-[10px] text-[12px] text-[#94A3B8] cursor-pointer select-none">
                 <input type="checkbox" checked={removeBg} onChange={(e) => setRemoveBg(e.target.checked)} className="accent-[#2896FB]" />
-                Remove background automatically
+                Remove background on upload
               </label>
               {active.photo && (
-                <div className="flex items-center justify-between gap-[8px] mt-[10px]">
-                  <p className="text-[10.5px] text-[#64748B] m-0">Drag the photo inside the circle to reposition it.</p>
+                <>
                   <button
-                    onClick={() => updateCard(active.id, { photoX: 50, photoY: 50 })}
-                    className="shrink-0 text-[11px] font-medium text-[#7CC8FF] hover:text-white transition-colors cursor-pointer"
+                    onClick={() => removeCardBg(active.id)}
+                    disabled={busy === active.id || removingAll}
+                    className="w-full mt-[10px] flex items-center justify-center gap-[8px] py-[10px] rounded-[12px] text-[12.5px] font-medium text-white bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-50 transition-colors cursor-pointer"
                   >
-                    Reset position
+                    {busy === active.id ? <Loader2 size={14} className="animate-spin" /> : <Eraser size={14} />}
+                    Remove background
                   </button>
-                </div>
+                  <div className="mt-[14px]">
+                    <div className="flex items-center justify-between mb-[6px]">
+                      <span className="text-[11px] font-semibold uppercase tracking-[1px] text-[#94A3B8]">Photo size</span>
+                      <span className="text-[11px] text-[#94A3B8]">{Math.round(active.photoScale * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0.5}
+                      max={3}
+                      step={0.01}
+                      value={active.photoScale}
+                      onChange={(e) => updateCard(active.id, { photoScale: Number(e.target.value) })}
+                      className="w-full accent-[#2896FB] cursor-pointer"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-[8px] mt-[10px]">
+                    <p className="text-[10.5px] text-[#64748B] m-0">Drag the photo inside the circle to reposition it.</p>
+                    <button
+                      onClick={() => updateCard(active.id, { photoX: 50, photoY: 50, photoScale: 1 })}
+                      className="shrink-0 text-[11px] font-medium text-[#7CC8FF] hover:text-white transition-colors cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </>
               )}
             </div>
 

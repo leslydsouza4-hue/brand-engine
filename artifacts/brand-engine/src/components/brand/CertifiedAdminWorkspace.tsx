@@ -316,20 +316,13 @@ export function CertifiedAdminWorkspace() {
       const all = data.files ?? [];
       if (all.length === 0) throw new Error("No images found in that folder. Make sure it's shared as 'anyone with the link'.");
       const files = all.slice(0, BULK_LIMIT);
-      const removeBackground = removeBg
-        ? (await import("@imgly/background-removal")).removeBackground
-        : null;
       const newCards: AdminCard[] = [];
       let failed = 0;
       for (let i = 0; i < files.length; i++) {
         const f = files[i];
         setImportMsg(`Processing ${i + 1} of ${files.length}…`);
         try {
-          let dataUrl = await urlToDataUrl(f.fullUrl);
-          if (removeBackground) {
-            const blob = await removeBackground(dataUrl, { output: { format: "image/png" } });
-            dataUrl = await blobToDataUrl(blob);
-          }
+          const dataUrl = await urlToDataUrl(f.fullUrl);
           newCards.push({ ...makeCard(), name: nameFromFilename(f.name), photo: dataUrl });
         } catch (err) {
           failed++;
@@ -459,16 +452,6 @@ export function CertifiedAdminWorkspace() {
             onChange={(e) => setDriveUrl(e.target.value)}
             disabled={importing}
           />
-          <label className="flex items-center gap-[8px] text-[11.5px] text-[#94A3B8] cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={removeBg}
-              onChange={(e) => setRemoveBg(e.target.checked)}
-              disabled={importing}
-              className="accent-[#2896FB]"
-            />
-            Remove photo backgrounds (slower for large batches)
-          </label>
           <button
             onClick={importFromDrive}
             disabled={importing || !driveUrl.trim()}

@@ -316,19 +316,27 @@ export function CertifiedAdminWorkspace() {
       const all = data.files ?? [];
       if (all.length === 0) throw new Error("No images found in that folder. Make sure it's shared as 'anyone with the link'.");
       const files = all.slice(0, BULK_LIMIT);
-      const newCards: AdminCard[] = [];
+      const results: (AdminCard | null)[] = new Array(files.length).fill(null);
       let failed = 0;
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i];
-        setImportMsg(`Processing ${i + 1} of ${files.length}…`);
-        try {
-          const dataUrl = await urlToDataUrl(f.fullUrl);
-          newCards.push({ ...makeCard(), name: nameFromFilename(f.name), photo: dataUrl });
-        } catch (err) {
-          failed++;
-          console.error("Drive image import failed:", f.name, err);
+      let done = 0;
+      let next = 0;
+      const CONCURRENCY = 8;
+      const worker = async () => {
+        for (let i = next++; i < files.length; i = next++) {
+          const f = files[i];
+          try {
+            const dataUrl = await urlToDataUrl(f.fullUrl);
+            results[i] = { ...makeCard(), name: nameFromFilename(f.name), photo: dataUrl };
+          } catch (err) {
+            failed++;
+            console.error("Drive image import failed:", f.name, err);
+          }
+          done++;
+          setImportMsg(`Processing ${done} of ${files.length}…`);
         }
-      }
+      };
+      await Promise.all(Array.from({ length: Math.min(CONCURRENCY, files.length) }, worker));
+      const newCards = results.filter((c): c is AdminCard => c !== null);
       if (newCards.length === 0) throw new Error("Could not load any images from that folder.");
       setCards((prev) => {
         const pristine = prev.length === 1 && !prev[0].photo && prev[0].name === "Certified Admin Name";

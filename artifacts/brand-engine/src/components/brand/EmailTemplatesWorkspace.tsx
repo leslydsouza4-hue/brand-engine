@@ -1321,7 +1321,7 @@ export function EmailTemplatesWorkspace() {
             <input
               type="range"
               min={22}
-              max={88}
+              max={160}
               step={1}
               value={activeEmail.headlineSizeOverride || 88}
               onChange={(e) => patchActive({ headlineSizeOverride: parseInt(e.target.value, 10), headlineOffset: { x: 0, y: 0 } })}

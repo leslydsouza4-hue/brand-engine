@@ -167,12 +167,12 @@ function HorizontalTemplate({
         )}
         <div>
           <span style={{
-            fontSize: headlineEm(1.24, headline), fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(1.24, headline), fontWeight: 700, lineHeight: 1.02,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
             letterSpacing: "-0.02em",
-            display: "inline",
+            display: "block",
           }}>
             {headline ? headline.split("\n").map((line, i, arr) => (
               <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
@@ -405,12 +405,12 @@ function VerticalTemplate({
         </div>
         <div style={{ textAlign: "center", marginTop: "0.4em" }}>
           <span style={{
-            fontSize: headlineEm(2.9, headline), fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(2.9, headline), fontWeight: 700, lineHeight: 1.02,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
             letterSpacing: "-0.02em",
-            display: "inline",
+            display: "block",
           }}>
             {headline ? headline.split("\n").map((line, i, arr) => (
               <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
@@ -612,12 +612,12 @@ function PortraitTemplate({
       }}>
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: headlineSize, fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineSize, fontWeight: 700, lineHeight: 1.02,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
             letterSpacing: "-0.02em",
-            display: "inline",
+            display: "block",
           }}>
             {headline ? headline.split("\n").map((line, i, arr) => (
               <span key={i}>{line}{i < arr.length - 1 && <br />}</span>
@@ -817,12 +817,12 @@ function QuickLinksTemplate({
       }}>
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: headlineEm(2.1, headline), fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(2.1, headline), fontWeight: 700, lineHeight: 1.02,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
             letterSpacing: "-0.02em",
-            display: "inline",
+            display: "block",
           }}>
             {headline ? headline.split("\n").map((line, i, arr) => (
               <span key={i}>{line}{i < arr.length - 1 && <br />}</span>

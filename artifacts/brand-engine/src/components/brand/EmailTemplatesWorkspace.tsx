@@ -1288,6 +1288,21 @@ export function EmailTemplatesWorkspace() {
             placeholder="Type or paste your headline..."
             className="w-full py-[10px] px-[12px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[10px] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)] font-['Poppins'] resize-none transition-colors leading-[1.4] placeholder:text-[#475569]"
           />
+          <div className="mt-[8px]">
+            <div className="flex items-center justify-between mb-[4px]">
+              <span className="text-[10px] text-[#64748B]">Headline size</span>
+              <span className="text-[10px] text-[#64748B]">{activeEmail.headlineSizeOverride && activeEmail.headlineSizeOverride > 0 ? `${activeEmail.headlineSizeOverride}px max` : "Auto"}</span>
+            </div>
+            <input
+              type="range"
+              min={22}
+              max={88}
+              step={1}
+              value={activeEmail.headlineSizeOverride || 88}
+              onChange={(e) => patchActive({ headlineSizeOverride: parseInt(e.target.value, 10) })}
+              className="w-full email-scale-slider cursor-pointer"
+            />
+          </div>
           <div className="flex items-center justify-end gap-[4px] mt-[8px]">
             <input
               type="color"

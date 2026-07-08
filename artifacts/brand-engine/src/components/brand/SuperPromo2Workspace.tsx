@@ -246,6 +246,13 @@ function HorizontalTemplate({
         )}
       </div>
 
+      {/* Bottom scrim (subtle): darkens the speaker photo behind the name/title so text stays legible */}
+      <div style={{
+        position: "absolute", right: 0, bottom: 0, width: "50%",
+        height: "34%", zIndex: 2, pointerEvents: "none",
+        background: "linear-gradient(to top, rgba(4,10,34,0.6) 0%, rgba(4,10,34,0.32) 45%, rgba(4,10,34,0) 100%)",
+      }} />
+
       <div style={{
         position: "absolute", right: "3%", bottom: "8%",
         width: "42%",

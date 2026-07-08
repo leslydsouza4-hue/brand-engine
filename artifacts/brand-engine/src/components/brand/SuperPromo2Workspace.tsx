@@ -60,6 +60,13 @@ interface ImageSettings {
   offsetY: number;
 }
 
+/** Shrink the headline as it gets longer so date/day/replay chips don't get pushed too far down. */
+function headlineEm(base: number, headline: string): string {
+  const len = headline.replace(/\n/g, " ").trim().length;
+  const scale = len <= 45 ? 1 : len <= 65 ? 0.88 : len <= 90 ? 0.78 : 0.7;
+  return `${(base * scale).toFixed(3)}em`;
+}
+
 function HorizontalTemplate({
   config,
   headline,
@@ -73,6 +80,7 @@ function HorizontalTemplate({
   guestImage,
   hostSettings,
   guestSettings,
+  blueTint,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -86,6 +94,7 @@ function HorizontalTemplate({
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   const { variant } = config;
   const showDate = variant === "dates" || variant === "cta";
@@ -132,7 +141,7 @@ function HorizontalTemplate({
         </div>
         <div>
           <span style={{
-            fontSize: "1.24em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(1.24, headline), fontWeight: 700, lineHeight: 1.08,
             color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
@@ -225,6 +234,7 @@ function HorizontalTemplate({
             <img src={guestImage} alt="" crossOrigin="anonymous" style={{
               maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              filter: blueTint ? "sepia(0.28) hue-rotate(175deg) saturate(1.35) brightness(0.97)" : undefined,
               WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
               maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
             }} />
@@ -265,6 +275,7 @@ function VerticalTemplate({
   guestImage,
   hostSettings,
   guestSettings,
+  blueTint,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -278,6 +289,7 @@ function VerticalTemplate({
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   const { variant } = config;
   const showDate = variant === "dates";
@@ -325,7 +337,7 @@ function VerticalTemplate({
         </div>
         <div style={{ textAlign: "center", marginTop: "0.4em" }}>
           <span style={{
-            fontSize: "2.03em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(2.03, headline), fontWeight: 700, lineHeight: 1.08,
             color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
@@ -384,6 +396,7 @@ function VerticalTemplate({
             <img src={guestImage} alt="" crossOrigin="anonymous" style={{
               maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              filter: blueTint ? "sepia(0.28) hue-rotate(175deg) saturate(1.35) brightness(0.97)" : undefined,
               WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
               maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
             }} />
@@ -422,6 +435,7 @@ function PortraitTemplate({
   guestImage,
   hostSettings,
   guestSettings,
+  blueTint,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -435,12 +449,13 @@ function PortraitTemplate({
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   const { variant } = config;
   const showDate = variant === "dates";
   const showReplays = variant === "replays";
   const contentTop = (showDate || showReplays) ? "15%" : "21%";
-  const headlineSize = variant === "nodate" ? "2.02em" : "2.0em";
+  const headlineSize = headlineEm(variant === "nodate" ? 2.02 : 2.0, headline);
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
@@ -543,6 +558,7 @@ function PortraitTemplate({
             <img src={guestImage} alt="" crossOrigin="anonymous" style={{
               maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              filter: blueTint ? "sepia(0.28) hue-rotate(175deg) saturate(1.35) brightness(0.97)" : undefined,
               WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
               maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
             }} />
@@ -581,6 +597,7 @@ function QuickLinksTemplate({
   guestImage,
   hostSettings,
   guestSettings,
+  blueTint,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -594,6 +611,7 @@ function QuickLinksTemplate({
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   const { variant } = config;
   const showDate = variant === "dates";
@@ -643,7 +661,7 @@ function QuickLinksTemplate({
       }}>
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: "1.47em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(1.47, headline), fontWeight: 700, lineHeight: 1.08,
             color: "#FFFFFF",
             letterSpacing: "-0.02em",
             display: "inline",
@@ -702,6 +720,7 @@ function QuickLinksTemplate({
             <img src={guestImage} alt="" crossOrigin="anonymous" style={{
               maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
+              filter: blueTint ? "sepia(0.28) hue-rotate(175deg) saturate(1.35) brightness(0.97)" : undefined,
               WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
               maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
             }} />
@@ -741,6 +760,7 @@ function TemplatePreview(props: {
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   if (props.config.size === "vertical") return <VerticalTemplate {...props} />;
   if (props.config.size === "portrait") return <PortraitTemplate {...props} />;
@@ -756,6 +776,7 @@ export function SuperPromo2Workspace() {
   const [guestTitle, setGuestTitle] = useState("");
   const [guestImage, setGuestImage] = useState<string | null>(null);
   const [guestSettings, setGuestSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
+  const [blueTint, setBlueTint] = useState(false);
   const [isLoadingGuest, setIsLoadingGuest] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [originalGuestImage, setOriginalGuestImage] = useState<string | null>(null);
@@ -1100,6 +1121,11 @@ export function SuperPromo2Workspace() {
           </div>
           {renderImageUpload("Speaker Image", guestImage, isLoadingGuest, guestFileRef, handleGuestUpload, () => { setGuestImage(null); setOriginalGuestImage(null); setGuestSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (guestFileRef.current) guestFileRef.current.value = ""; }, guestSettings, setGuestSettings)}
 
+          <label className="flex items-center gap-[8px] text-[11px] text-[#94A3B8] cursor-pointer select-none">
+            <input type="checkbox" checked={blueTint} onChange={(e) => setBlueTint(e.target.checked)} className="accent-[#2896FB]" />
+            Blue tint on photo (match background)
+          </label>
+
           <div className="flex flex-col gap-[6px] mt-[4px]">
             <button onClick={() => exportTemplate(currentConfig.id, previewRef.current || undefined)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">
               {isExporting === currentConfig.id ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
@@ -1117,7 +1143,7 @@ export function SuperPromo2Workspace() {
         {!showGallery ? (
           <LivePreview>
             <div className={`w-full ${currentConfig.size === "horizontal" ? "max-w-[560px]" : currentConfig.size === "vertical" ? "max-w-[320px]" : currentConfig.size === "portrait" ? "max-w-[380px]" : "max-w-[440px]"}`} ref={previewRef}>
-              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} />
+              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} blueTint={blueTint} />
             </div>
           </LivePreview>
         ) : (
@@ -1140,7 +1166,7 @@ export function SuperPromo2Workspace() {
                 {TEMPLATES.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} />
+                      <TemplatePreview config={t} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} blueTint={blueTint} />
                     </div>
                     <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
                       <div>

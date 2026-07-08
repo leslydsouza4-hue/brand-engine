@@ -703,12 +703,11 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     // Headline is the hero — keep it bold and readable.
     // Floor at 22px so it never gets tiny; ceiling allows bold growth when text is short.
     const HEADLINE_MIN = 22;
-    // A manual override acts as a ceiling: we still shrink below it if the text
-    // would otherwise be clipped, so words never get cut off.
-    const HEADLINE_MAX = email.headlineSizeOverride && email.headlineSizeOverride > 0
+    const HEADLINE_MAX = 88;
+    const manual = email.headlineSizeOverride && email.headlineSizeOverride > 0
       ? email.headlineSizeOverride
-      : 88;
-    let lo = HEADLINE_MIN, hi = HEADLINE_MAX, best = Math.min(HEADLINE_MIN, HEADLINE_MAX);
+      : null;
+    let lo = HEADLINE_MIN, hi = HEADLINE_MAX, best = HEADLINE_MIN;
     const subSizeFor = (size: number) =>
       email.subheadSizeOverride && email.subheadSizeOverride > 0
         ? email.subheadSizeOverride
@@ -739,17 +738,23 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
       const maxW = Math.max(headlineW, subW, ctaW);
       return { w: maxW, h: totalH };
     };
-    while (lo <= hi) {
-      const mid = Math.floor((lo + hi) / 2);
-      const { w, h } = measure(mid);
-      if (w <= containerWidth && h <= availableHeight) {
-        best = mid;
-        lo = mid + 1;
-      } else {
-        hi = mid - 1;
+    if (manual) {
+      // Manual size is exact — the user asked for it, so apply it as-is
+      // (text wraps within the column; no auto-shrink).
+      best = manual;
+    } else {
+      while (lo <= hi) {
+        const mid = Math.floor((lo + hi) / 2);
+        const { w, h } = measure(mid);
+        if (w <= containerWidth && h <= availableHeight) {
+          best = mid;
+          lo = mid + 1;
+        } else {
+          hi = mid - 1;
+        }
       }
     }
-    // Force-apply at min so subhead/CTA inline styles match the rendered headline
+    // Force-apply so subhead/CTA inline styles match the rendered headline
     measure(best);
     setHeadlineFontPx(best);
   }, [email.headline, email.subhead, email.cta, email.imageSource, email.headlineSizeOverride, email.subheadSizeOverride, email.showSubhead]);
@@ -1316,12 +1321,12 @@ export function EmailTemplatesWorkspace() {
           <div className="mt-[8px]">
             <div className="flex items-center justify-between mb-[4px]">
               <span className="text-[10px] text-[#64748B]">Headline size</span>
-              <span className="text-[10px] text-[#64748B]">{activeEmail.headlineSizeOverride && activeEmail.headlineSizeOverride > 0 ? `${activeEmail.headlineSizeOverride}px max` : "Auto"}</span>
+              <span className="text-[10px] text-[#64748B]">{activeEmail.headlineSizeOverride && activeEmail.headlineSizeOverride > 0 ? `${activeEmail.headlineSizeOverride}px` : "Auto"}</span>
             </div>
             <input
               type="range"
               min={22}
-              max={160}
+              max={280}
               step={1}
               value={activeEmail.headlineSizeOverride || 88}
               onChange={(e) => patchActive({ headlineSizeOverride: parseInt(e.target.value, 10), headlineOffset: { x: 0, y: 0 } })}

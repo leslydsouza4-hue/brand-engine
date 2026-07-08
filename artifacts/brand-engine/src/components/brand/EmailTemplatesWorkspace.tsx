@@ -778,6 +778,22 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     ? email.subheadSizeOverride
     : Math.max(14, Math.min(42, Math.round(headlineFontPx * 0.55)));
 
+  // When a big manual headline pushes the text block past the bottom edge,
+  // shift the whole block up so subhead/CTA stay visible instead of clipping.
+  const textColRef = useRef<HTMLDivElement>(null);
+  const [colShift, setColShift] = useState(0);
+  useEffect(() => {
+    const col = textColRef.current;
+    const pv = previewRef.current;
+    if (!col || !pv) return;
+    const pvH = pv.clientHeight;
+    const topPx = pvH * 0.28;
+    const overflow = topPx + col.scrollHeight - pvH * 0.96;
+    // Never shift above 6% from the top
+    const maxShift = topPx - pvH * 0.06;
+    setColShift(overflow > 0 ? Math.min(overflow, maxShift) : 0);
+  }, [headlineFontPx, subheadFontPx, email.headline, email.subhead, email.cta, email.showSubhead, email.imageSource]);
+
   const handleImgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!previewRef.current) return;
     e.preventDefault();
@@ -910,11 +926,13 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
           />
 
           <div
+            ref={textColRef}
             className="absolute z-[4] flex flex-col"
             style={{
               top: "28%",
               left: "5%",
               width: email.imageSource === "none" ? "90%" : "52%",
+              transform: colShift ? `translateY(-${colShift}px)` : undefined,
             }}
           >
             <SelectableText

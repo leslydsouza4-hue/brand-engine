@@ -373,6 +373,11 @@ function SelectableText({
         style={{
           fontSize: `${fontPx}px`,
           letterSpacing: isHead ? "-0.5px" : undefined,
+          // Gradient text (background-clip: text) only paints inside the element's
+          // box; with tight line-height, Poppins ascenders/descenders poke outside
+          // and get visually chopped. Padding extends the paint box to cover them.
+          padding: isHead ? "0.1em 0.02em 0.18em" : undefined,
+          margin: isHead ? "-0.1em -0.02em -0.18em" : undefined,
           whiteSpace: "pre-wrap",
           cursor: isActive ? (isEditing ? "text" : "default") : "default",
           minHeight: isActive && !text ? `${fontPx}px` : undefined,
@@ -386,6 +391,8 @@ function SelectableText({
             fontSize: `${fontPx}px`,
             color: "rgba(255,255,255,0.25)",
             letterSpacing: isHead ? "-0.5px" : undefined,
+            padding: isHead ? "0.1em 0.02em 0.18em" : undefined,
+            margin: isHead ? "-0.1em -0.02em -0.18em" : undefined,
           }}
         >
           {isHead ? "Your headline here" : "Your subheadline here"}

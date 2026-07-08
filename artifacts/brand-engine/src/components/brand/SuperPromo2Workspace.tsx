@@ -26,6 +26,15 @@ interface TemplateConfig {
   size: SizeMode;
 }
 
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 const TEMPLATES: TemplateConfig[] = [
   { id: "hz-dates", name: "Horizontal - Dates", shortName: "Dates", width: 1920, height: 1080, variant: "dates", size: "horizontal" },
   { id: "hz-cta", name: "Horizontal - CTA", shortName: "CTA", width: 1920, height: 1080, variant: "cta", size: "horizontal" },
@@ -827,6 +836,8 @@ export function SuperPromo2Workspace() {
   const [showGallery, setShowGallery] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [isExportingAll, setIsExportingAll] = useState(false);
+  const [exportProgress, setExportProgress] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const hostName = "";
   const hostTitle = "";
@@ -852,7 +863,7 @@ export function SuperPromo2Workspace() {
       try {
         const { removeBackground } = await import("@imgly/background-removal");
         const blob = await removeBackground(src, { model: "medium", output: { format: "image/png" } });
-        setGuestImage(URL.createObjectURL(blob));
+        setGuestImage(await blobToDataUrl(blob));
       } catch {
         setGuestImage(src);
       } finally {
@@ -870,7 +881,7 @@ export function SuperPromo2Workspace() {
     try {
       const { removeBackground } = await import("@imgly/background-removal");
       const blob = await removeBackground(src, { model: "medium", output: { format: "image/png" } });
-      setGuestImage(URL.createObjectURL(blob));
+      setGuestImage(await blobToDataUrl(blob));
     } catch {
     } finally {
       setIsRemovingBg(false);
@@ -919,7 +930,7 @@ export function SuperPromo2Workspace() {
       const dataUrl = await toPng(el, {
         width: el.offsetWidth, height: el.offsetHeight,
         pixelRatio: config.width / el.offsetWidth,
-        cacheBust: true, skipAutoScale: true,
+        skipAutoScale: true, skipFonts: true,
         style: { borderRadius: "0" },
       });
       const blob = dataUrlToBlob(dataUrl);
@@ -936,29 +947,47 @@ export function SuperPromo2Workspace() {
 
   const exportAllZip = useCallback(async () => {
     setIsExportingAll(true);
+    setExportError(null);
     try {
       const container = galleryRef.current || document;
       const zip = new JSZip();
+      let done = 0;
+      let failed = 0;
       for (const t of TEMPLATES) {
         const el = container.querySelector(`[data-template-id="${t.id}"]`) as HTMLElement;
         if (!el) continue;
+        setExportProgress(`${done + 1} of ${TEMPLATES.length}`);
         const origRadius = stripOuterRadius(el);
-        const dataUrl = await toPng(el, {
-          width: el.offsetWidth, height: el.offsetHeight,
-          pixelRatio: t.width / el.offsetWidth,
-          cacheBust: true, skipAutoScale: true,
-          style: { borderRadius: "0" },
-        });
-        restoreOuterRadius(el, origRadius);
-        zip.file(`${t.name.replace(/\s+/g, "_")}_${t.width}x${t.height}.png`, dataUrl.split(",")[1], { base64: true });
-        await new Promise((r) => setTimeout(r, 200));
+        try {
+          const dataUrl = await toPng(el, {
+            width: el.offsetWidth, height: el.offsetHeight,
+            pixelRatio: t.width / el.offsetWidth,
+            skipAutoScale: true, skipFonts: true,
+            style: { borderRadius: "0" },
+          });
+          zip.file(`${t.name.replace(/\s+/g, "_")}_${t.width}x${t.height}.png`, dataUrl.split(",")[1], { base64: true });
+        } catch (err) {
+          console.error(`ZIP render failed for ${t.id}:`, err);
+          failed++;
+        } finally {
+          restoreOuterRadius(el, origRadius);
+        }
+        done++;
       }
+      if (Object.keys(zip.files).length === 0) {
+        setExportError("Export failed — no images could be rendered. Try re-uploading the speaker photo.");
+        return;
+      }
+      setExportProgress("Zipping...");
       const blob = await zip.generateAsync({ type: "blob" });
       triggerDownload(blob, `SuperPromo_${guestName.trim().replace(/\s+/g, "_") || "export"}.zip`);
+      if (failed > 0) setExportError(`${failed} of ${TEMPLATES.length} images failed to render and were skipped.`);
     } catch (err) {
       console.error("ZIP error:", err);
+      setExportError("ZIP export failed. Please try again.");
     } finally {
       setIsExportingAll(false);
+      setExportProgress(null);
     }
   }, [guestName, triggerDownload, stripOuterRadius, restoreOuterRadius]);
 
@@ -1208,10 +1237,15 @@ export function SuperPromo2Workspace() {
                   <button onClick={() => setShowGallery(false)} className="h-[32px] px-[14px] rounded-[8px] bg-[rgba(255,255,255,0.06)] border-none text-[#94A3B8] text-[11px] font-medium flex items-center gap-[5px] cursor-pointer hover:bg-[rgba(255,255,255,0.1)] transition-all">Back to Editor</button>
                   <button onClick={exportAllZip} disabled={isExportingAll} className="h-[32px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center gap-[5px] cursor-pointer hover:shadow-[0_4px_16px_rgba(40,150,251,0.3)] transition-all disabled:opacity-50">
                     {isExportingAll ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <PackageOpen className="w-[12px] h-[12px]" />}
-                    {isExportingAll ? "Creating ZIP..." : "Download All (ZIP)"}
+                    {isExportingAll ? (exportProgress ? `Rendering ${exportProgress}` : "Creating ZIP...") : "Download All (ZIP)"}
                   </button>
                 </div>
               </div>
+              {exportError && (
+                <div className="mb-[16px] px-[14px] py-[10px] rounded-[10px] bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.3)] text-[#FCA5A5] text-[11px]">
+                  {exportError}
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-[16px]">
                 {TEMPLATES.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">

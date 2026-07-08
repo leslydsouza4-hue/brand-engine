@@ -787,6 +787,10 @@ export function SuperPromo2Workspace() {
   const [guestSettings, setGuestSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
   const [blueTint, setBlueTint] = useState(false);
   const [headlineScale, setHeadlineScale] = useState(1);
+  // Per-template headline scale overrides (keyed by template id) for the gallery;
+  // falls back to the global slider value when a template has no override.
+  const [scaleOverrides, setScaleOverrides] = useState<Record<string, number>>({});
+  const scaleFor = (id: string) => scaleOverrides[id] ?? headlineScale;
   const [isLoadingGuest, setIsLoadingGuest] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [originalGuestImage, setOriginalGuestImage] = useState<string | null>(null);
@@ -1184,7 +1188,16 @@ export function SuperPromo2Workspace() {
                 {TEMPLATES.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} blueTint={blueTint} headlineScale={headlineScale} />
+                      <TemplatePreview config={t} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} blueTint={blueTint} headlineScale={scaleFor(t.id)} />
+                    </div>
+                    <div className="px-[14px] py-[8px] border-t border-[rgba(255,255,255,0.04)]">
+                      <div className="flex items-center justify-between text-[9px] text-[#64748B] mb-[3px]">
+                        <span>Headline size</span>
+                        <span>{Math.round(scaleFor(t.id) * 100)}%{scaleOverrides[t.id] !== undefined && (
+                          <button onClick={() => setScaleOverrides(prev => { const n = { ...prev }; delete n[t.id]; return n; })} className="ml-[6px] text-[#2896FB] bg-transparent border-none cursor-pointer text-[9px] p-0 hover:underline">Reset</button>
+                        )}</span>
+                      </div>
+                      <input type="range" min={0.6} max={1.5} step={0.02} value={scaleFor(t.id)} onChange={(e) => setScaleOverrides(prev => ({ ...prev, [t.id]: Number(e.target.value) }))} className="w-full accent-[#2896FB]" />
                     </div>
                     <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
                       <div>

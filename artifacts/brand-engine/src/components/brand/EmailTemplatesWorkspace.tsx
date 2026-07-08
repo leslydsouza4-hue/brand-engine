@@ -670,7 +670,10 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     if (!email.headline && !email.subhead) { setHeadlineFontPx(34); return; }
 
     const cta = ctaRef.current;
-    const containerWidth = el.parentElement?.clientWidth || 600;
+    // Measure against the fixed text column (52%/90% of the banner), not the
+    // fit-content wrapper, whose width follows the current text and feeds back.
+    const previewW = previewRef.current?.clientWidth || 1000;
+    const containerWidth = Math.round(previewW * (email.imageSource === "none" ? 0.90 : 0.52));
     const previewH = previewRef.current?.clientHeight || 540;
     // Text block sits at 28% top → ~70% of preview height available
     const availableHeight = Math.max(140, previewH * 0.70);
@@ -1299,7 +1302,7 @@ export function EmailTemplatesWorkspace() {
               max={88}
               step={1}
               value={activeEmail.headlineSizeOverride || 88}
-              onChange={(e) => patchActive({ headlineSizeOverride: parseInt(e.target.value, 10) })}
+              onChange={(e) => patchActive({ headlineSizeOverride: parseInt(e.target.value, 10), headlineOffset: { x: 0, y: 0 } })}
               className="w-full email-scale-slider cursor-pointer"
             />
           </div>

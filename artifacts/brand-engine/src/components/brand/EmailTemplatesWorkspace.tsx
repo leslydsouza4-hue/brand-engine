@@ -669,12 +669,6 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     if (!el) return;
     if (!email.headline && !email.subhead) { setHeadlineFontPx(34); return; }
 
-    // If user manually overrode the headline size, just use it as-is.
-    if (email.headlineSizeOverride && email.headlineSizeOverride > 0) {
-      setHeadlineFontPx(email.headlineSizeOverride);
-      return;
-    }
-
     const cta = ctaRef.current;
     const containerWidth = el.parentElement?.clientWidth || 600;
     const previewH = previewRef.current?.clientHeight || 540;
@@ -686,8 +680,12 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     // Headline is the hero — keep it bold and readable.
     // Floor at 22px so it never gets tiny; ceiling allows bold growth when text is short.
     const HEADLINE_MIN = 22;
-    const HEADLINE_MAX = 88;
-    let lo = HEADLINE_MIN, hi = HEADLINE_MAX, best = HEADLINE_MIN;
+    // A manual override acts as a ceiling: we still shrink below it if the text
+    // would otherwise be clipped, so words never get cut off.
+    const HEADLINE_MAX = email.headlineSizeOverride && email.headlineSizeOverride > 0
+      ? email.headlineSizeOverride
+      : 88;
+    let lo = HEADLINE_MIN, hi = HEADLINE_MAX, best = Math.min(HEADLINE_MIN, HEADLINE_MAX);
     const subSizeFor = (size: number) =>
       email.subheadSizeOverride && email.subheadSizeOverride > 0
         ? email.subheadSizeOverride
@@ -884,12 +882,11 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
           />
 
           <div
-            className="absolute z-[4] flex flex-col overflow-hidden"
+            className="absolute z-[4] flex flex-col"
             style={{
               top: "28%",
               left: "5%",
               width: email.imageSource === "none" ? "90%" : "52%",
-              maxHeight: "68%",
             }}
           >
             <SelectableText

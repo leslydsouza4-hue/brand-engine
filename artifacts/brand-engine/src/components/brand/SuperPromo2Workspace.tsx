@@ -581,6 +581,13 @@ function PortraitTemplate({
         )}
       </div>
 
+      {/* Bottom scrim: darkens the speaker photo behind the name/title so text stays legible */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        height: "22%", zIndex: 2, pointerEvents: "none",
+        background: "linear-gradient(to top, rgba(4,10,34,0.88) 0%, rgba(4,10,34,0.55) 45%, rgba(4,10,34,0) 100%)",
+      }} />
+
       <div style={{
         position: "absolute", bottom: "3%", left: "6%", right: "6%",
         zIndex: 3, textAlign: "center",
@@ -744,6 +751,13 @@ function QuickLinksTemplate({
           <img src={SILHOUETTE_URL} alt="" crossOrigin="anonymous" style={{ maxWidth: "65%", maxHeight: "100%", objectFit: "contain", objectPosition: "bottom center", opacity: 0.35 }} />
         )}
       </div>
+
+      {/* Bottom scrim: darkens the speaker photo behind the name/title so text stays legible */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0,
+        height: "22%", zIndex: 2, pointerEvents: "none",
+        background: "linear-gradient(to top, rgba(4,10,34,0.88) 0%, rgba(4,10,34,0.55) 45%, rgba(4,10,34,0) 100%)",
+      }} />
 
       <div style={{
         position: "absolute", bottom: "3%", left: "6%", right: "6%",

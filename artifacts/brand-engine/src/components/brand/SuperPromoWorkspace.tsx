@@ -57,6 +57,13 @@ interface ImageSettings {
   offsetY: number;
 }
 
+/** Shrink the headline as it gets longer so date/day/replay chips don't get pushed too far down. */
+function headlineEm(base: number, headline: string): string {
+  const len = headline.replace(/\n/g, " ").trim().length;
+  const scale = len <= 45 ? 1 : len <= 65 ? 0.88 : len <= 90 ? 0.78 : 0.7;
+  return `${(base * scale).toFixed(3)}em`;
+}
+
 function HorizontalTemplate({
   config,
   headline,
@@ -70,6 +77,7 @@ function HorizontalTemplate({
   guestImage,
   hostSettings,
   guestSettings,
+  blueTint,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -83,6 +91,7 @@ function HorizontalTemplate({
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   const { variant } = config;
   const showDate = variant === "dates" || variant === "cta";
@@ -158,7 +167,7 @@ function HorizontalTemplate({
         )}
         <div>
           <span style={{
-            fontSize: "1.24em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(1.24, headline), fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
@@ -258,15 +267,16 @@ function HorizontalTemplate({
           borderRadius: "50%",
           border: "0.15em solid rgba(255,255,255,0.2)",
           overflow: "hidden",
+          position: "relative",
           background: hostImage ? "transparent" : "rgba(255,255,255,0.15)",
           boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
           flexShrink: 0,
         }}>
           {hostImage ? (
-            <img src={hostImage} alt="" crossOrigin="anonymous" style={{
+            <><img src={hostImage} alt="" crossOrigin="anonymous" style={{
               width: "100%", height: "100%", objectFit: "cover",
               transform: `scale(${hostSettings.scale}) translate(${hostSettings.offsetX}%, ${hostSettings.offsetY}%)`,
-            }} />
+            }} />{blueTint && <div style={{ position: "absolute", inset: 0, background: "rgba(37,99,235,0.28)", pointerEvents: "none" }} />}</>
           ) : (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
@@ -289,15 +299,16 @@ function HorizontalTemplate({
           borderRadius: "50%",
           border: "0.15em solid rgba(255,255,255,0.2)",
           overflow: "hidden",
+          position: "relative",
           background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
           boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
           flexShrink: 0,
         }}>
           {guestImage ? (
-            <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+            <><img src={guestImage} alt="" crossOrigin="anonymous" style={{
               width: "100%", height: "100%", objectFit: "cover",
               transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-            }} />
+            }} />{blueTint && <div style={{ position: "absolute", inset: 0, background: "rgba(37,99,235,0.28)", pointerEvents: "none" }} />}</>
           ) : (
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
@@ -326,6 +337,7 @@ function VerticalTemplate({
   guestImage,
   hostSettings,
   guestSettings,
+  blueTint,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -339,6 +351,7 @@ function VerticalTemplate({
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   const { variant } = config;
   const showDate = variant === "dates";
@@ -392,7 +405,7 @@ function VerticalTemplate({
         </div>
         <div style={{ textAlign: "center", marginTop: "0.4em" }}>
           <span style={{
-            fontSize: "2.9em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(2.9, headline), fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
@@ -461,15 +474,16 @@ function VerticalTemplate({
             borderRadius: "50%",
             border: "0.15em solid rgba(255,255,255,0.2)",
             overflow: "hidden",
+            position: "relative",
             background: hostImage ? "transparent" : "rgba(255,255,255,0.15)",
             boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
             flexShrink: 0,
           }}>
             {hostImage ? (
-              <img src={hostImage} alt="" crossOrigin="anonymous" style={{
+              <><img src={hostImage} alt="" crossOrigin="anonymous" style={{
                 width: "100%", height: "100%", objectFit: "cover",
                 transform: `scale(${hostSettings.scale}) translate(${hostSettings.offsetX}%, ${hostSettings.offsetY}%)`,
-              }} />
+              }} />{blueTint && <div style={{ position: "absolute", inset: 0, background: "rgba(37,99,235,0.28)", pointerEvents: "none" }} />}</>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
@@ -488,15 +502,16 @@ function VerticalTemplate({
             borderRadius: "50%",
             border: "0.15em solid rgba(255,255,255,0.2)",
             overflow: "hidden",
+            position: "relative",
             background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
             boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
             flexShrink: 0,
           }}>
             {guestImage ? (
-              <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+              <><img src={guestImage} alt="" crossOrigin="anonymous" style={{
                 width: "100%", height: "100%", objectFit: "cover",
                 transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              }} />
+              }} />{blueTint && <div style={{ position: "absolute", inset: 0, background: "rgba(37,99,235,0.28)", pointerEvents: "none" }} />}</>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
@@ -525,6 +540,7 @@ function PortraitTemplate({
   guestImage,
   hostSettings,
   guestSettings,
+  blueTint,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -538,12 +554,13 @@ function PortraitTemplate({
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   const { variant } = config;
   const showDate = variant === "dates";
   const showReplays = variant === "replays";
   const contentTop = (showDate || showReplays) ? "18%" : "24%";
-  const headlineSize = variant === "nodate" ? "2.52em" : "2.5em";
+  const headlineSize = headlineEm(variant === "nodate" ? 2.52 : 2.5, headline);
   const containerRef = useRef<HTMLDivElement>(null);
   useContainerFontSize(containerRef, 0.045);
 
@@ -664,15 +681,16 @@ function PortraitTemplate({
             borderRadius: "50%",
             border: "0.15em solid rgba(255,255,255,0.2)",
             overflow: "hidden",
+            position: "relative",
             background: hostImage ? "transparent" : "rgba(255,255,255,0.15)",
             boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
             flexShrink: 0,
           }}>
             {hostImage ? (
-              <img src={hostImage} alt="" crossOrigin="anonymous" style={{
+              <><img src={hostImage} alt="" crossOrigin="anonymous" style={{
                 width: "100%", height: "100%", objectFit: "cover",
                 transform: `scale(${hostSettings.scale}) translate(${hostSettings.offsetX}%, ${hostSettings.offsetY}%)`,
-              }} />
+              }} />{blueTint && <div style={{ position: "absolute", inset: 0, background: "rgba(37,99,235,0.28)", pointerEvents: "none" }} />}</>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
@@ -691,15 +709,16 @@ function PortraitTemplate({
             borderRadius: "50%",
             border: "0.15em solid rgba(255,255,255,0.2)",
             overflow: "hidden",
+            position: "relative",
             background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
             boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
             flexShrink: 0,
           }}>
             {guestImage ? (
-              <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+              <><img src={guestImage} alt="" crossOrigin="anonymous" style={{
                 width: "100%", height: "100%", objectFit: "cover",
                 transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              }} />
+              }} />{blueTint && <div style={{ position: "absolute", inset: 0, background: "rgba(37,99,235,0.28)", pointerEvents: "none" }} />}</>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
@@ -728,6 +747,7 @@ function QuickLinksTemplate({
   guestImage,
   hostSettings,
   guestSettings,
+  blueTint,
 }: {
   config: TemplateConfig;
   headline: string;
@@ -741,6 +761,7 @@ function QuickLinksTemplate({
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   const { variant } = config;
   const showDate = variant === "dates";
@@ -796,7 +817,7 @@ function QuickLinksTemplate({
       }}>
         <div style={{ textAlign: "center" }}>
           <span style={{
-            fontSize: "2.1em", fontWeight: 700, lineHeight: 1.08,
+            fontSize: headlineEm(2.1, headline), fontWeight: 700, lineHeight: 1.08,
             background: "linear-gradient(135deg, #62E8FF 0%, #FFFFFF 100%)",
             WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             color: "transparent",
@@ -865,15 +886,16 @@ function QuickLinksTemplate({
             borderRadius: "50%",
             border: "0.15em solid rgba(255,255,255,0.2)",
             overflow: "hidden",
+            position: "relative",
             background: hostImage ? "transparent" : "rgba(255,255,255,0.15)",
             boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
             flexShrink: 0,
           }}>
             {hostImage ? (
-              <img src={hostImage} alt="" crossOrigin="anonymous" style={{
+              <><img src={hostImage} alt="" crossOrigin="anonymous" style={{
                 width: "100%", height: "100%", objectFit: "cover",
                 transform: `scale(${hostSettings.scale}) translate(${hostSettings.offsetX}%, ${hostSettings.offsetY}%)`,
-              }} />
+              }} />{blueTint && <div style={{ position: "absolute", inset: 0, background: "rgba(37,99,235,0.28)", pointerEvents: "none" }} />}</>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
@@ -892,15 +914,16 @@ function QuickLinksTemplate({
             borderRadius: "50%",
             border: "0.15em solid rgba(255,255,255,0.2)",
             overflow: "hidden",
+            position: "relative",
             background: guestImage ? "transparent" : "rgba(255,255,255,0.15)",
             boxShadow: "0 0 1.5em 0.5em rgba(130,200,255,0.35)",
             flexShrink: 0,
           }}>
             {guestImage ? (
-              <img src={guestImage} alt="" crossOrigin="anonymous" style={{
+              <><img src={guestImage} alt="" crossOrigin="anonymous" style={{
                 width: "100%", height: "100%", objectFit: "cover",
                 transform: `scale(${guestSettings.scale}) translate(${guestSettings.offsetX}%, ${guestSettings.offsetY}%)`,
-              }} />
+              }} />{blueTint && <div style={{ position: "absolute", inset: 0, background: "rgba(37,99,235,0.28)", pointerEvents: "none" }} />}</>
             ) : (
               <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="40%" height="40%" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
@@ -930,6 +953,7 @@ function TemplatePreview(props: {
   guestImage: string | null;
   hostSettings: ImageSettings;
   guestSettings: ImageSettings;
+  blueTint: boolean;
 }) {
   if (props.config.size === "vertical") return <VerticalTemplate {...props} />;
   if (props.config.size === "portrait") return <PortraitTemplate {...props} />;
@@ -949,6 +973,7 @@ export function SuperPromoWorkspace() {
   const [guestImage, setGuestImage] = useState<string | null>(null);
   const [hostSettings, setHostSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
   const [guestSettings, setGuestSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
+  const [blueTint, setBlueTint] = useState(false);
   const [isLoadingHost, setIsLoadingHost] = useState(false);
   const [isLoadingGuest, setIsLoadingGuest] = useState(false);
   const [sizeMode, setSizeMode] = useState<SizeMode>("horizontal");
@@ -1269,6 +1294,11 @@ export function SuperPromoWorkspace() {
           </div>
           {renderImageUpload("Guest Image", guestImage, isLoadingGuest, guestFileRef, handleGuestUpload, () => { setGuestImage(null); setGuestSettings({ scale: 1, offsetX: 0, offsetY: 0 }); if (guestFileRef.current) guestFileRef.current.value = ""; }, guestSettings, setGuestSettings)}
 
+          <label className="flex items-center gap-[8px] text-[11px] text-[#94A3B8] cursor-pointer select-none">
+            <input type="checkbox" checked={blueTint} onChange={(e) => setBlueTint(e.target.checked)} className="accent-[#2896FB]" />
+            Blue tint on photos (match background)
+          </label>
+
           <div className="flex flex-col gap-[6px] mt-[4px]">
             <button onClick={() => exportTemplate(currentConfig.id, previewRef.current || undefined)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">
               {isExporting === currentConfig.id ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
@@ -1286,7 +1316,7 @@ export function SuperPromoWorkspace() {
         {!showGallery ? (
           <LivePreview>
             <div className={`w-full ${currentConfig.size === "horizontal" ? "max-w-[560px]" : currentConfig.size === "vertical" ? "max-w-[320px]" : currentConfig.size === "portrait" ? "max-w-[380px]" : "max-w-[440px]"}`} ref={previewRef}>
-              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} />
+              <TemplatePreview config={currentConfig} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} blueTint={blueTint} />
             </div>
           </LivePreview>
         ) : (
@@ -1309,7 +1339,7 @@ export function SuperPromoWorkspace() {
                 {TEMPLATES.map((t) => (
                   <div key={t.id} className="rounded-[14px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)] overflow-hidden">
                     <div className="p-[10px]">
-                      <TemplatePreview config={t} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} />
+                      <TemplatePreview config={t} headline={headline} dateText={dateText} ctaText={ctaText} hostName={hostName} hostTitle={hostTitle} hostImage={hostImage} guestName={guestName} guestTitle={guestTitle} guestImage={guestImage} hostSettings={hostSettings} guestSettings={guestSettings} blueTint={blueTint} />
                     </div>
                     <div className="flex items-center justify-between px-[14px] py-[10px] border-t border-[rgba(255,255,255,0.04)]">
                       <div>

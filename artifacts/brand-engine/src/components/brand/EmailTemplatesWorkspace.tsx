@@ -31,6 +31,7 @@ interface EmailItem {
   subheadColor?: string | null;
   headlineOffset?: { x: number; y: number };
   subheadOffset?: { x: number; y: number };
+  showSubhead?: boolean;
 }
 
 const newEmail = (): EmailItem => ({
@@ -52,6 +53,7 @@ const newEmail = (): EmailItem => ({
   subheadColor: null,
   headlineOffset: { x: 0, y: 0 },
   subheadOffset: { x: 0, y: 0 },
+  showSubhead: true,
 });
 
 interface ParsedSection {
@@ -637,6 +639,16 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
 
   // Switching active email clears text selection
   useEffect(() => { setTextSel({ fields: [], editing: null }); }, [email.id]);
+  // Clear any stale subhead selection/edit state when the subhead is hidden.
+  useEffect(() => {
+    if (email.showSubhead === false) {
+      setTextSel(prev =>
+        prev.fields.includes("subhead") || prev.editing === "subhead"
+          ? { fields: prev.fields.filter(f => f !== "subhead"), editing: prev.editing === "subhead" ? null : prev.editing }
+          : prev
+      );
+    }
+  }, [email.showSubhead]);
   useEffect(() => { if (!isActive) setTextSel({ fields: [], editing: null }); }, [isActive]);
 
   const modeFor = (kind: TextField): TextMode =>
@@ -667,7 +679,8 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     const el = headlineRef.current;
     const sub = subheadRef.current;
     if (!el) return;
-    if (!email.headline && !email.subhead) { setHeadlineFontPx(34); return; }
+    const subheadVisible = email.showSubhead !== false;
+    if (!email.headline && !(subheadVisible && email.subhead)) { setHeadlineFontPx(34); return; }
 
     const cta = ctaRef.current;
     // Measure against the fixed text column (52%/90% of the banner), not the
@@ -698,7 +711,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
       const headlineH = email.headline ? el.scrollHeight : 0;
       const headlineW = email.headline ? el.scrollWidth : 0;
       let subH = 0, subW = 0;
-      if (sub && email.subhead) {
+      if (sub && subheadVisible && email.subhead) {
         sub.style.fontSize = `${subSizeFor(size)}px`;
         subH = sub.scrollHeight;
         subW = sub.scrollWidth;
@@ -732,7 +745,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
     // Force-apply at min so subhead/CTA inline styles match the rendered headline
     measure(best);
     setHeadlineFontPx(best);
-  }, [email.headline, email.subhead, email.cta, email.imageSource, email.headlineSizeOverride, email.subheadSizeOverride]);
+  }, [email.headline, email.subhead, email.cta, email.imageSource, email.headlineSizeOverride, email.subheadSizeOverride, email.showSubhead]);
 
   // Sync contentEditable DOM when headline/subhead change from the outside
   // (e.g., switching active email, sidebar typing) but never while focused, to avoid caret jumps.
@@ -905,6 +918,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
               onPatch={onPatch}
               textRef={headlineRef}
             />
+            {email.showSubhead !== false && (
             <div className="mt-[14px]">
               <SelectableText
                 kind="subhead"
@@ -920,6 +934,7 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
                 textRef={subheadRef}
               />
             </div>
+            )}
             {email.cta && (
               <div
                 ref={ctaRef}
@@ -1328,7 +1343,15 @@ export function EmailTemplatesWorkspace() {
 
         <div>
           <div className="flex items-center justify-between mb-[8px]">
-            <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B]">Subheadline</div>
+            <label className="flex items-center gap-[6px] cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={activeEmail.showSubhead !== false}
+                onChange={(e) => patchActive({ showSubhead: e.target.checked })}
+                className="accent-[#2896FB]"
+              />
+              <span className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B]">Subheadline</span>
+            </label>
             <div className="text-[9px] text-[#475569] normal-case tracking-normal">Click preview to edit</div>
           </div>
           <textarea

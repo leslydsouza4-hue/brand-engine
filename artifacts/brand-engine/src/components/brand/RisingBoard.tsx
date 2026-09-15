@@ -19,9 +19,9 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         alt="Highly Mascot"
         className="absolute"
         style={{
-          left: "2%",
-          bottom: "2%",
-          height: "25%",
+          left: "1%",
+          bottom: "1%",
+          height: "32.5%",
           objectFit: "contain",
           filter: "drop-shadow(0 1cqw 2cqw rgba(0,0,0,0.5))",
           zIndex: 10,
@@ -29,11 +29,11 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       />
 
       {/* Title */}
-      <div className="absolute text-center" style={{ top: "10%", left: "5%", right: "5%" }}>
+      <div className="absolute text-center" style={{ top: "6%", left: "5%", right: "5%" }}>
         <div
           className="font-['Poppins'] font-bold whitespace-nowrap"
           style={{
-            fontSize: "2.72cqw",
+            fontSize: "3.15cqw",
             lineHeight: 1.3,
             paddingBottom: "0.4cqw",
             letterSpacing: "-0.01em",
@@ -47,7 +47,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         >
           Rising Affiliate Leaderboard
         </div>
-        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.6cqw", letterSpacing: "0.2em", marginTop: "0.5cqw" }}>
+        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.8cqw", letterSpacing: "0.2em", marginTop: "0.3cqw" }}>
           {month || "—"}
         </div>
       </div>
@@ -56,23 +56,23 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <div
         className="absolute grid"
         style={{
-          top: "27%",
-          left: "16%",
+          top: "25%",
+          left: "4%",
           right: "4%",
-          bottom: "12%",
-          gridTemplateColumns: "40% 50%",
-          columnGap: "3%",
+          bottom: "10%",
+          gridTemplateColumns: "minmax(0, 40.8fr) minmax(0, 48fr)",
+          columnGap: "3.2cqw",
         }}
       >
         {/* Left Column (1-3) */}
-        <div className="flex flex-col justify-center" style={{ gap: "4cqw" }}>
+        <div className="flex flex-col" style={{ gap: "1.15cqw" }}>
           {top3.map((r, i) => (
             <RisingRow key={r.id} r={r} rank={i + 1} prominent />
           ))}
         </div>
         
         {/* Right Column (4-10) */}
-        <div className="flex flex-col justify-center" style={{ gap: "0.7cqw" }}>
+        <div className="flex flex-col" style={{ gap: "0.7cqw" }}>
           {rest.map((r, i) => (
             <RisingRow key={r.id} r={r} rank={i + 4} />
           ))}
@@ -86,7 +86,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
           bottom: "4%",
           left: "0",
           right: "0",
-          fontSize: "1cqw",
+           fontSize: "1.3cqw",
         }}
       >
         Meet with your Affiliate Manager
@@ -103,9 +103,11 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
     <div
       className="flex items-center w-full"
       style={{
-        gap: prominent ? "0.8cqw" : "1cqw",
+        gap: prominent ? "1.1cqw" : "1.3cqw",
         background: "linear-gradient(90deg, rgba(0,25,50,0.6) 0%, rgba(0,25,50,0.2) 100%)",
-        padding: prominent ? "1cqw 1cqw" : "0.35cqw 1cqw",
+        padding: prominent ? "0.9cqw 1.3cqw" : "0.5cqw 1.3cqw",
+        height: prominent ? "6.8cqw" : "4.55cqw",
+        flexShrink: 0,
         borderRadius: "1cqw",
         borderLeft: prominent ? "0.3cqw solid #00B8D9" : "0.2cqw solid #00B8D9",
         boxShadow: "inset 0 0 1cqw rgba(0, 184, 217, 0.1)",
@@ -113,7 +115,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
     >
       <div
         className="shrink-0 flex items-center justify-center"
-        style={{ width: prominent ? "4.5cqw" : "3.5cqw", height: prominent ? "4.5cqw" : "3.5cqw" }}
+        style={{ width: prominent ? "5cqw" : "3.5cqw", height: prominent ? "5cqw" : "3.5cqw" }}
       >
         {medal ? (
           <img src={medal} alt="" className="max-w-full max-h-full object-contain filter drop-shadow-md" />
@@ -121,7 +123,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
           <div
             className="font-['Bebas_Neue'] text-center"
             style={{
-              fontSize: prominent ? "2.8cqw" : "2.2cqw",
+              fontSize: prominent ? "2.8cqw" : "2.4cqw",
               color: "#00B8D9",
               letterSpacing: "0.02em",
             }}
@@ -131,22 +133,22 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
         )}
       </div>
 
-      <div className="flex-1 min-w-0 flex items-baseline justify-between font-['Poppins']">
+      <div className="flex-1 min-w-0 flex items-center justify-between font-['Poppins']" style={{ gap: "1.2cqw" }}>
         <div
           className="truncate font-bold text-white"
           style={{
-            fontSize: prominent ? "1.65cqw" : "1.55cqw",
+            fontSize: prominent ? "1.95cqw" : "1.8cqw",
             letterSpacing: "-0.01em",
             textShadow: "0 2px 4px rgba(0,0,0,0.5)",
           }}
         >
           {r.name || "—"}
         </div>
-        <div className="flex flex-col items-end shrink-0 ml-2">
+        <div className="flex flex-col items-end shrink-0">
           <div
             className="font-bold"
             style={{
-              fontSize: prominent ? "1.45cqw" : "1.3cqw",
+              fontSize: prominent ? "1.65cqw" : "1.5cqw",
               color: "#00B8D9",
             }}
           >
@@ -155,7 +157,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
           <div
             className="font-semibold text-white/50"
             style={{
-              fontSize: prominent ? "0.9cqw" : "0.7cqw",
+              fontSize: prominent ? "0.95cqw" : "0.85cqw",
               letterSpacing: "0.05em",
             }}
           >

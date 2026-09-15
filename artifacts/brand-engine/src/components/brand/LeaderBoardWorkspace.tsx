@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Download, Loader2, Upload, X, User as UserIcon, GripVertical, Check, ChevronDown } from "lucide-react";
 import { useExport } from "./useExport";
 import { LivePreview } from "./LivePreview";
+import { RisingBoard } from "./RisingBoard";
 import bgAsset from "@assets/Group_1_1778888276448.png";
 import bgCommander from "@assets/Commander-Leaderboard-Mar.-2026-(1)_1778885211192.png";
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
@@ -31,10 +32,11 @@ import photoClay from "@assets/image_1778887313620.png";
 import photoMatt from "@assets/image_1778887339817.png";
 import comboBg from "@assets/image222_1780516914399.png";
 
-interface Affiliate {
+export interface Affiliate {
   id: string;
   name: string;
   avatar: string | null;
+  mrr?: string;
 }
 
 const HIGHLEVEL_SEED: Affiliate[] = [
@@ -68,13 +70,27 @@ const COMMANDER_SEED: Affiliate[] = COMMANDER_ROSTER.map((p, i) => ({
   avatar: p.avatar,
 }));
 
-type SingleBoard = "highlevel" | "commander";
+type SingleBoard = "highlevel" | "commander" | "rising";
 type BoardKey = SingleBoard | "combo";
 const BOARD_LABELS: Record<BoardKey, string> = {
   highlevel: "Top HighLevel Affiliates",
   commander: "Commander Leader Board",
+  rising: "Rising Affiliate Leaderboard",
   combo: "Commander + Affiliate",
 };
+
+const RISING_SEED: Affiliate[] = [
+  { id: "r1", name: "Affiliate Name", mrr: "$8,420", avatar: null },
+  { id: "r2", name: "Affiliate Name", mrr: "$6,315", avatar: null },
+  { id: "r3", name: "Affiliate Name", mrr: "$5,280", avatar: null },
+  { id: "r4", name: "Affiliate Name", mrr: "$4,960", avatar: null },
+  { id: "r5", name: "Affiliate Name", mrr: "$4,210", avatar: null },
+  { id: "r6", name: "Affiliate Name", mrr: "$3,865", avatar: null },
+  { id: "r7", name: "Affiliate Name", mrr: "$3,240", avatar: null },
+  { id: "r8", name: "Affiliate Name", mrr: "$2,980", avatar: null },
+  { id: "r9", name: "Affiliate Name", mrr: "$2,710", avatar: null },
+  { id: "r10", name: "Affiliate Name", mrr: "$2,415", avatar: null },
+];
 
 // Combo board = Commander (7) on the left + Affiliate (10) on the right, over one boxless bg image.
 const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 7).map((p, i) => ({
@@ -92,6 +108,7 @@ export function LeaderBoardWorkspace() {
   const [boards, setBoards] = useState<Record<SingleBoard, Affiliate[]>>({
     highlevel: HIGHLEVEL_SEED,
     commander: COMMANDER_SEED,
+    rising: RISING_SEED,
   });
   const [comboCmdr, setComboCmdr] = useState<Affiliate[]>(COMBO_CMDR_SEED);
   const [comboAff, setComboAff] = useState<Affiliate[]>(COMBO_AFF_SEED);
@@ -109,6 +126,7 @@ export function LeaderBoardWorkspace() {
   }, [boardOpen]);
   const [commanderMonthYear, setCommanderMonthYear] = useState("MARCH 2026");
   const [highlevelMonthYear, setHighlevelMonthYear] = useState("MARCH 2026");
+  const [risingMonthYear, setRisingMonthYear] = useState("MARCH 2026");
   const previewRef = useRef<HTMLDivElement>(null);
   const { isExporting, handleExport } = useExport();
 
@@ -172,11 +190,12 @@ export function LeaderBoardWorkspace() {
             <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[8px]">Month / Year</div>
             <input
               type="text"
-              value={isCombo ? comboMonthYear : isCommander ? commanderMonthYear : highlevelMonthYear}
+              value={isCombo ? comboMonthYear : isCommander ? commanderMonthYear : board === "rising" ? risingMonthYear : highlevelMonthYear}
               onChange={e => {
                 const v = e.target.value.toUpperCase();
                 if (isCombo) setComboMonthYear(v);
                 else if (isCommander) setCommanderMonthYear(v);
+                else if (board === "rising") setRisingMonthYear(v);
                 else setHighlevelMonthYear(v);
               }}
               placeholder="MARCH 2026"
@@ -189,7 +208,14 @@ export function LeaderBoardWorkspace() {
               <EditableRows title="Affiliate (1–10)" rows={comboAff} onChange={setComboAff} />
             </>
           ) : (
-            <EditableRows key={board} title={`${BOARD_LABELS[board]} (1–10)`} rows={singleRows} onChange={setSingleRows} />
+            <EditableRows 
+              key={board} 
+              title={board === "rising" ? "RISING AFFILIATES (1–10)" : `${BOARD_LABELS[board]} (1–10)`} 
+              rows={singleRows} 
+              onChange={setSingleRows} 
+              noAvatar={board === "rising"}
+              showMrr={board === "rising"}
+            />
           )}
 
           <button
@@ -219,6 +245,8 @@ export function LeaderBoardWorkspace() {
         >
             {isCombo ? (
               <ComboBoard cmdr={comboCmdr} aff={comboAff} month={comboMonthYear} />
+            ) : board === "rising" ? (
+              <RisingBoard rows={boards.rising} month={risingMonthYear} />
             ) : (
             <>
             {/* Background */}
@@ -476,10 +504,14 @@ function EditableRows({
   title,
   rows,
   onChange,
+  noAvatar,
+  showMrr,
 }: {
   title: string;
   rows: Affiliate[];
   onChange: (next: Affiliate[]) => void;
+  noAvatar?: boolean;
+  showMrr?: boolean;
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -546,7 +578,7 @@ function EditableRows({
             <div className="w-[26px] h-[26px] rounded-[7px] flex items-center justify-center text-[11px] font-black text-white shrink-0 bg-[rgba(40,150,251,0.18)] border border-[rgba(40,150,251,0.35)]">
               {i + 1}
             </div>
-            {r.avatar ? (
+            {!noAvatar && (r.avatar ? (
               <img
                 src={r.avatar}
                 alt=""
@@ -565,14 +597,24 @@ function EditableRows({
                   onChange={e => e.target.files?.[0] && onAvatar(r.id, e.target.files[0])}
                 />
               </label>
-            )}
-            <input
-              value={r.name}
-              onChange={e => update(r.id, { name: e.target.value })}
-              placeholder="Name"
-              className="flex-1 min-w-0 py-[7px] px-[8px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-[7px] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)]"
-            />
-            {r.avatar && (
+            ))}
+            <div className="flex-1 min-w-0 flex flex-col gap-[4px]">
+              <input
+                value={r.name}
+                onChange={e => update(r.id, { name: e.target.value })}
+                placeholder="Name"
+                className="w-full py-[7px] px-[8px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.06)] rounded-[7px] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(40,150,251,0.4)]"
+              />
+              {showMrr && (
+                <input
+                  value={r.mrr || ""}
+                  onChange={e => update(r.id, { mrr: e.target.value })}
+                  placeholder="New MRR (e.g. $8,420)"
+                  className="w-full py-[5px] px-[8px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)] rounded-[7px] text-[11px] text-[#94A3B8] outline-none focus:border-[rgba(40,150,251,0.3)] font-mono"
+                />
+              )}
+            </div>
+            {!noAvatar && r.avatar && (
               <div className="flex flex-col gap-[4px] shrink-0">
                 <label
                   className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center bg-[rgba(40,150,251,0.12)] border border-[rgba(40,150,251,0.25)] hover:bg-[rgba(40,150,251,0.2)] cursor-pointer text-[#7CC8FF]"

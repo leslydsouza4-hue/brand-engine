@@ -1,0 +1,245 @@
+We need to add a NEW leaderboard template inside the existing Affiliate > Leader Board section of Brand Engine.
+
+IMPORTANT:
+Do NOT redesign the Brand Engine UI.
+Do NOT modify or break the existing "Top HighLevel Affiliates" or Commander leaderboard templates.
+Reuse the existing leaderboard architecture/components/state/export logic wherever possible.
+Only add the new board type and its specific design/content behavior.
+
+NEW BOARD NAME:
+Rising Affiliate Leaderboard
+
+--------------------------------------------------
+1. BOARD DROPDOWN
+--------------------------------------------------
+
+Inside the existing BOARD dropdown, add:
+
+"Rising Affiliate Leaderboard"
+
+The existing leaderboard options must continue working exactly as they do now.
+
+When "Rising Affiliate Leaderboard" is selected, dynamically switch the editor controls and Live Preview to the new Rising template.
+
+--------------------------------------------------
+2. PURPOSE
+--------------------------------------------------
+
+This leaderboard recognizes NEW / emerging HighLevel affiliates generating the most NEW MRR during the selected month.
+
+It is meant to feel like an earlier, more attainable milestone before the regular Affiliate and Commander Leaderboards.
+
+--------------------------------------------------
+3. EDITOR FIELDS
+--------------------------------------------------
+
+Keep:
+
+MONTH / YEAR
+- Same editable Month / Year field already used by the current leaderboard.
+
+Create a section heading:
+
+RISING AFFILIATES (1–10)
+
+Create 10 sortable entries.
+
+Each entry should contain:
+
+- Drag/reorder handle
+- Rank number: 1–10
+- Affiliate Name text input
+- New MRR text/number input
+- Remove/reset control if the current leaderboard system already supports it
+
+IMPORTANT:
+DO NOT include headshot/image upload controls for this board.
+
+Suggested default placeholder values:
+
+1. Affiliate Name — $8,420
+2. Affiliate Name — $6,315
+3. Affiliate Name — $5,280
+4. Affiliate Name — $4,960
+5. Affiliate Name — $4,210
+6. Affiliate Name — $3,865
+7. Affiliate Name — $3,240
+8. Affiliate Name — $2,980
+9. Affiliate Name — $2,710
+10. Affiliate Name — $2,415
+
+The MRR field should be easy to edit every month.
+
+--------------------------------------------------
+4. LIVE PREVIEW DESIGN
+--------------------------------------------------
+
+Use the SAME overall visual family as the current Top HighLevel Affiliates leaderboard.
+
+Do NOT create a completely different poster.
+
+Keep:
+- Same canvas dimensions / aspect ratio
+- Same dark navy HighLevel visual language
+- Same typography family
+- Same clean leaderboard structure
+- Same rounded frame treatment
+- Same two-column layout if possible: 1–3 prominently on left and 4–10 on right
+- Same general Brand Engine quality/style
+
+BUT create a visually distinct "Rising" variant using TEAL.
+
+Primary visual difference:
+Rising Affiliate Leaderboard = teal/cyan accent.
+
+Use teal in:
+- Outer border glow
+- Small highlights
+- Rank elements
+- Gradient accents
+- Supporting graphic details
+
+Keep the overall background predominantly dark blue/navy so it still clearly belongs to the HighLevel leaderboard family.
+
+Do NOT make the whole design bright teal.
+
+--------------------------------------------------
+5. TITLE
+--------------------------------------------------
+
+Live preview title should read:
+
+Rising Affiliate Leaderboard
+
+Then display the selected month/year nearby.
+
+Example:
+
+Rising Affiliate Leaderboard
+MARCH 2026
+
+Do not hardcode March 2026.
+
+It must update from the Month / Year editor field.
+
+--------------------------------------------------
+6. NO HEADSHOTS
+--------------------------------------------------
+
+This board specifically must NOT display affiliate headshots.
+
+For positions 1, 2 and 3:
+Use premium rank treatments / medals similar to the existing leaderboard.
+
+For positions 4–10:
+Use simple clean rank numbers/icons.
+
+No circular empty avatar placeholders should remain.
+
+The text layout should automatically use the extra space created by removing avatars.
+
+--------------------------------------------------
+7. NEW MRR
+--------------------------------------------------
+
+Display each person's New MRR beside their name in a visually secondary way.
+
+Example:
+
+1   Affiliate Name                $8,420
+                                  NEW MRR
+
+Keep the affiliate NAME more visually important than the MRR value.
+
+If space becomes tight, use:
+
+Affiliate Name     $8,420
+
+Do not let the MRR labels clutter the layout.
+
+--------------------------------------------------
+8. HIGHLY MASCOT
+--------------------------------------------------
+
+Keep the use of Highly consistent with the existing leaderboard template.
+
+For the Rising template, use ONE Highly mascot/pose as a decorative supporting visual near the bottom-left area.
+
+Do NOT put a different Highly mascot beside every affiliate.
+
+If the existing Highly asset can be reused, reuse it.
+
+Do not generate or replace the existing asset with a fake/new mascot.
+
+--------------------------------------------------
+9. CTA
+--------------------------------------------------
+
+Add a small secondary footer CTA:
+
+"Meet with your Affiliate Manager"
+
+This should be subtle and should NOT compete with the leaderboard itself.
+
+If the current leaderboard artwork does not have enough space, keep this as a small footer line rather than a large button.
+
+--------------------------------------------------
+10. REUSABILITY
+--------------------------------------------------
+
+This must behave like a reusable Brand Engine template.
+
+User should be able to:
+
+- Select Rising Affiliate Leaderboard
+- Change Month / Year
+- Edit all 10 affiliate names
+- Edit New MRR for all 10 affiliates
+- Reorder entries if existing leaderboard reorder logic supports it
+- See all changes instantly in Live Preview
+- Export/download using the EXISTING leaderboard export flow
+
+Do not create a separate page or new navigation item.
+
+This belongs INSIDE:
+Affiliate > Leader Board
+
+--------------------------------------------------
+11. STATE / CODE QUALITY
+--------------------------------------------------
+
+Please inspect the existing leaderboard implementation first.
+
+Reuse existing:
+- Components
+- State patterns
+- Canvas/rendering implementation
+- Export logic
+- Font loading
+- Existing HighLevel/Highly assets
+
+Create board-specific config/data rather than duplicating the entire leaderboard code if possible.
+
+The implementation should make it easy to add more leaderboard variants later.
+
+Do not change unrelated Brand Engine features.
+
+--------------------------------------------------
+12. FINAL CHECK
+--------------------------------------------------
+
+After implementation test:
+
+1. Top HighLevel Affiliates still works exactly as before.
+2. Commander Leaderboard still works exactly as before.
+3. Rising Affiliate Leaderboard appears in the board dropdown.
+4. Rising has no headshot upload fields.
+5. All 10 names are editable.
+6. All 10 New MRR values are editable.
+7. Month/year updates the preview.
+8. Teal Rising design renders correctly.
+9. Preview does not overflow/crop.
+10. Existing export/download works.
+11. Switching between leaderboard types does not lose/break state unexpectedly.
+
+Before making changes, inspect the current Leader Board code and reuse its existing implementation instead of rebuilding it from scratch.

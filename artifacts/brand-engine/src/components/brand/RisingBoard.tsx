@@ -21,7 +21,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         style={{
           left: "1%",
           bottom: "1%",
-          height: "32.5%",
+          height: "28.5%",
           objectFit: "contain",
           filter: "drop-shadow(0 1cqw 2cqw rgba(0,0,0,0.5))",
           zIndex: 10,
@@ -103,19 +103,18 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
     <div
       className="flex items-center w-full"
       style={{
-        gap: prominent ? "1.1cqw" : "1.3cqw",
-        background: "linear-gradient(90deg, rgba(0,25,50,0.6) 0%, rgba(0,25,50,0.2) 100%)",
-        padding: prominent ? "0.9cqw 1.3cqw" : "0.5cqw 1.3cqw",
+         gap: prominent ? "1.1cqw" : "1.8cqw",
+         background: "rgba(5, 18, 38, 0.9)",
+         padding: prominent ? "0.9cqw 2cqw 0.9cqw 1.3cqw" : "0.5cqw 2cqw 0.5cqw 1.3cqw",
         height: prominent ? "6.8cqw" : "4.55cqw",
         flexShrink: 0,
         borderRadius: "1cqw",
-        borderLeft: prominent ? "0.3cqw solid #00B8D9" : "0.2cqw solid #00B8D9",
-        boxShadow: "inset 0 0 1cqw rgba(0, 184, 217, 0.1)",
+         border: "1px solid rgba(150, 200, 230, 0.12)",
       }}
     >
       <div
         className="shrink-0 flex items-center justify-center"
-        style={{ width: prominent ? "5cqw" : "3.5cqw", height: prominent ? "5cqw" : "3.5cqw" }}
+        style={{ width: prominent ? "4.6cqw" : "3.5cqw", height: prominent ? "4.6cqw" : "3.5cqw" }}
       >
         {medal ? (
           <img src={medal} alt="" className="max-w-full max-h-full object-contain filter drop-shadow-md" />
@@ -155,9 +154,10 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
             {r.mrr || "$0"}
           </div>
           <div
-            className="font-semibold text-white/50"
+            className="font-semibold"
             style={{
-              fontSize: prominent ? "0.95cqw" : "0.85cqw",
+              fontSize: prominent ? "1.16cqw" : "1.04cqw",
+              color: "#A9BDCF",
               letterSpacing: "0.05em",
             }}
           >

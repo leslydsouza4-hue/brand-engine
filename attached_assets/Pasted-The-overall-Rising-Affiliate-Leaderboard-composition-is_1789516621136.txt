@@ -1,0 +1,129 @@
+The overall Rising Affiliate Leaderboard composition is now good.
+
+DO NOT change the layout or background again.
+
+We only need a visual polish/readability pass.
+
+1. REMOVE THE TEAL CARD SIDE ACCENTS
+
+Remove the bright cyan/teal vertical/bracket-style border currently appearing on the left side of every leaderboard row.
+
+Do not replace it with another bright accent.
+
+The background already contains enough teal.
+
+2. MAKE CARDS MUCH MORE OPAQUE
+
+The leaderboard cards are currently too transparent and the background graphics show through them, hurting readability.
+
+Change all leaderboard cards to a deep navy fill at approximately 88–92% opacity.
+
+The background should barely be visible through the cards.
+
+Use the SAME card treatment for Top 3 and ranks 4–10.
+
+3. CARD BORDER
+
+Add only a very subtle 1px border around cards.
+
+Use a low-opacity cool white / blue border.
+
+Example visual direction:
+rgba(150, 200, 230, 0.12)
+
+DO NOT use bright teal borders.
+
+Cards should feel premium and clean rather than neon outlined.
+
+4. COLOR HIERARCHY
+
+Reduce the amount of teal being used.
+
+Use WHITE for:
+- Affiliate names
+- Main content
+
+Use TEAL only for:
+- Rising Affiliate Leaderboard title/accent
+- Rank numbers 4–10
+- MRR amounts
+- Very small intentional highlights
+
+The background already provides the main teal visual identity.
+
+5. MRR
+
+Make MRR information easier to read.
+
+Keep:
+
+$4,960
+NEW MRR
+
+But increase "NEW MRR" approximately 20–25%.
+
+MRR amount should remain teal.
+NEW MRR should be a muted light gray/blue.
+
+Maintain consistent right alignment across every card.
+
+Add more right padding so MRR values do not sit close to the outer frame.
+
+6. RIGHT COLUMN SPACING
+
+Increase the space between:
+
+Rank number → Affiliate Name
+
+and maintain a consistent structure:
+
+[Rank]    [Affiliate Name]                    [$MRR]
+                                               NEW MRR
+
+Every row from 4–10 must align perfectly.
+
+7. TOP 3
+
+Keep the gold/silver/bronze medal treatment.
+
+Reduce medal size approximately 5–10% if necessary so the medals don't overpower the affiliate names.
+
+Keep Top 3 affiliate names white and MRR teal.
+
+Do not add additional teal decorations to these cards.
+
+8. HIGHLY
+
+Reduce Highly approximately 10–15% from the current size.
+
+Keep him bottom-left.
+
+He should support the composition rather than compete visually with the Top 3.
+
+9. BACKGROUND
+
+DO NOT modify the background image.
+
+DO NOT modify the outer cyan frame.
+
+DO NOT add any additional glow.
+
+The background already contains enough visual energy.
+
+10. IMPORTANT VISUAL GOAL
+
+The content should now feel like a clean professional HighLevel leaderboard placed ON TOP of an energetic teal background.
+
+The leaderboard cards themselves should be calm, dark and highly readable.
+
+Think:
+
+ENERGETIC BACKGROUND
++
+CLEAN DARK UI CARDS
++
+CONTROLLED TEAL ACCENTS
++
+HIGH-CONTRAST WHITE TEXT
+
+Do not redesign anything else.

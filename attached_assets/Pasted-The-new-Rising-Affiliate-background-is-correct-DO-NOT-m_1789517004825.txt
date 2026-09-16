@@ -1,0 +1,224 @@
+The new Rising Affiliate background is correct. DO NOT modify or replace the background.
+
+The leaderboard CONTENT layout is now incorrectly scaled.
+
+Top 3 are much too large, ranks 4–10 are much too small, and the content is colliding visually with the decorative background frame.
+
+Fix ONLY sizing, positioning and spacing.
+
+--------------------------------------------------
+1. CREATE A SAFE CONTENT AREA
+--------------------------------------------------
+
+The decorative teal frame belongs to the BACKGROUND and must remain clearly visible.
+
+All leaderboard content must sit INSIDE the inner frame.
+
+Create approximately:
+
+LEFT SAFE MARGIN: 7%
+RIGHT SAFE MARGIN: 7%
+TOP SAFE AREA: 18%
+BOTTOM SAFE AREA: 10%
+
+Nothing should overlap:
+- top decorative frame
+- side decorative frame
+- bottom decorative frame
+
+The leaderboard should feel intentionally placed inside the background rather than covering it.
+
+--------------------------------------------------
+2. TITLE POSITION
+--------------------------------------------------
+
+Move the title/date slightly downward.
+
+The title is currently too close to the top decorative frame.
+
+Keep:
+
+Rising Affiliate Leaderboard
+MARCH 2026
+
+centered.
+
+Give clear breathing room between:
+background frame
+→ title
+→ date
+→ leaderboard rows
+
+--------------------------------------------------
+3. REDUCE TOP 3 SIZE
+--------------------------------------------------
+
+Ranks 1–3 are currently WAY too large.
+
+Reduce Top 3 card height by approximately 30–35%.
+
+Reduce their width slightly if necessary.
+
+They should still be more important than ranks 4–10, but NOT dramatically oversized.
+
+Target hierarchy:
+
+Normal row height = 1x
+Top 3 row height = approximately 1.3–1.4x
+
+NOT 2x.
+
+Keep Top 3 stacked evenly on the left.
+
+--------------------------------------------------
+4. INCREASE RANKS 4–10
+--------------------------------------------------
+
+Ranks 4–10 are currently too small.
+
+Increase their:
+
+- Card height approximately 20–25%
+- Affiliate name size approximately 10–15%
+- Rank number size approximately 10–15%
+- MRR size approximately 8–10%
+- NEW MRR size slightly
+
+All seven rows must still fit comfortably.
+
+They should be secondary to Top 3, but NOT tiny.
+
+--------------------------------------------------
+5. COLUMN PROPORTIONS
+--------------------------------------------------
+
+Use approximately:
+
+LEFT COLUMN = 52–54%
+RIGHT COLUMN = 46–48%
+
+Do not make the left side overwhelmingly larger.
+
+Keep a clean gap between the two columns.
+
+Visually:
+
+      Rising Affiliate Leaderboard
+              MARCH 2026
+
+
+┌────────────────────┐   ┌─────────────────┐
+│ 🥇 1  Affiliate    │   │ 4  Affiliate    │
+│            $8,420  │   │       $4,960    │
+└────────────────────┘   └─────────────────┘
+
+┌────────────────────┐   ┌─────────────────┐
+│ 🥈 2  Affiliate    │   │ 5  Affiliate    │
+│            $6,315  │   └─────────────────┘
+└────────────────────┘
+                         etc...
+┌────────────────────┐
+│ 🥉 3  Affiliate    │
+│            $5,280  │
+└────────────────────┘
+
+--------------------------------------------------
+6. ALIGN BOTH SECTIONS
+--------------------------------------------------
+
+The first Top 3 card and Rank 4 card should begin at approximately the SAME Y POSITION.
+
+The bottom of Rank 3 and Rank 10 should also finish at approximately the SAME Y POSITION.
+
+This is important.
+
+Both columns should visually occupy the same leaderboard content zone.
+
+LEFT:
+3 larger rows distributed vertically.
+
+RIGHT:
+7 smaller rows distributed vertically.
+
+This will make the composition feel balanced.
+
+--------------------------------------------------
+7. CARD WIDTH
+--------------------------------------------------
+
+Keep Top 3 cards wider than before but do NOT let them dominate the entire canvas.
+
+Right-side cards should also have comfortable width.
+
+Maintain enough internal padding for:
+
+Rank / Medal
+Affiliate Name
+MRR
+
+MRR must never touch the card edge.
+
+--------------------------------------------------
+8. MEDALS
+--------------------------------------------------
+
+Reduce medals slightly from their current size.
+
+The Affiliate Name should remain the primary information.
+
+Medals should indicate hierarchy, not dominate the card.
+
+--------------------------------------------------
+9. CTA
+--------------------------------------------------
+
+Keep:
+
+Meet with your Affiliate Manager
+
+at the bottom center.
+
+Move it slightly upward if necessary so it sits INSIDE the background's inner frame.
+
+It must NOT overlap the decorative bottom border.
+
+--------------------------------------------------
+10. BACKGROUND FRAME VISIBILITY
+--------------------------------------------------
+
+VERY IMPORTANT:
+
+The premium background has intentional decorative details on:
+
+TOP
+LEFT
+RIGHT
+BOTTOM
+
+Do not cover these details with leaderboard cards.
+
+Maintain visible breathing room between the content and the decorative frame on all four sides.
+
+--------------------------------------------------
+11. DO NOT CHANGE
+--------------------------------------------------
+
+Do NOT:
+- change background
+- add Highly
+- add headshots
+- add more graphics
+- change colors
+- change card opacity
+- add glows
+- redesign medals
+- change MRR styling
+
+This is ONLY a proportion + alignment + safe-area correction.
+
+FINAL GOAL:
+
+Top 3 = clearly important, but not huge.
+Ranks 4–10 = clearly readable, not tiny.
+Both columns = same overall vertical footprint.
+Everything = comfortably contained inside the premium background frame.

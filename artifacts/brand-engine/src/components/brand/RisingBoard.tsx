@@ -14,7 +14,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <div className="absolute pointer-events-none" style={{ inset: "2%", border: "0.12cqw solid rgba(50,225,233,0.55)", borderRadius: "1.5cqw", boxShadow: "inset 0 0 2cqw rgba(0,210,220,0.12), 0 0 1cqw rgba(0,210,220,0.2)" }} />
 
       {/* Title */}
-      <div className="absolute text-center" style={{ top: "6%", left: "5%", right: "5%" }}>
+      <div className="absolute text-center" style={{ top: "8%", left: "7%", right: "7%" }}>
         <div
           className="font-['Poppins'] font-bold whitespace-nowrap"
           style={{
@@ -32,7 +32,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         >
           Rising Affiliate Leaderboard
         </div>
-        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.8cqw", letterSpacing: "0.2em", marginTop: "0.3cqw" }}>
+        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.8cqw", lineHeight: 1, letterSpacing: "0.2em", marginTop: "0.3cqw" }}>
           {month || "—"}
         </div>
       </div>
@@ -41,23 +41,23 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <div
         className="absolute grid"
         style={{
-          top: "25%",
-          left: "4%",
-          right: "4%",
-          bottom: "10%",
-          gridTemplateColumns: "minmax(0, 46fr) minmax(0, 42.8fr)",
-          columnGap: "3.2cqw",
+          top: "22%",
+          left: "7%",
+          right: "7%",
+          bottom: "13%",
+          gridTemplateColumns: "minmax(0, 53fr) minmax(0, 47fr)",
+          columnGap: "2.4cqw",
         }}
       >
         {/* Left Column (1-3) */}
-        <div className="flex flex-col" style={{ gap: "1.15cqw" }}>
+        <div className="flex flex-col justify-between">
           {top3.map((r, i) => (
             <RisingRow key={r.id} r={r} rank={i + 1} prominent />
           ))}
         </div>
         
         {/* Right Column (4-10) */}
-        <div className="flex flex-col" style={{ gap: "0.7cqw" }}>
+        <div className="flex flex-col justify-between">
           {rest.map((r, i) => (
             <RisingRow key={r.id} r={r} rank={i + 4} />
           ))}
@@ -68,10 +68,11 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <div
         className="absolute font-['Poppins'] font-semibold text-white/70 tracking-wide text-center"
         style={{
-          bottom: "4%",
-          left: "0",
-          right: "0",
-           fontSize: "1.3cqw",
+          bottom: "9%",
+          left: "7%",
+          right: "7%",
+          fontSize: "1.1cqw",
+          lineHeight: 1.2,
         }}
       >
         Meet with your Affiliate Manager
@@ -92,7 +93,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
          gap: prominent ? "1.1cqw" : "1.8cqw",
          background: "rgba(5, 18, 38, 0.9)",
          padding: prominent ? "0.9cqw 2cqw 0.9cqw 1.3cqw" : "0.5cqw 2cqw 0.5cqw 1.3cqw",
-         height: prominent ? (isFirst ? "11.8cqw" : "11cqw") : "4.55cqw",
+         height: prominent ? (isFirst ? "7.1cqw" : "7cqw") : "5.05cqw",
         flexShrink: 0,
         borderRadius: "1cqw",
          border: "1px solid rgba(150, 200, 230, 0.12)",
@@ -100,7 +101,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
     >
       <div
         className="shrink-0 flex items-center justify-center"
-        style={{ width: prominent ? (isFirst ? "5.3cqw" : "5.1cqw") : "3.5cqw", height: prominent ? (isFirst ? "5.3cqw" : "5.1cqw") : "3.5cqw" }}
+        style={{ width: prominent ? (isFirst ? "4.8cqw" : "4.6cqw") : "3.5cqw", height: prominent ? (isFirst ? "4.8cqw" : "4.6cqw") : "3.5cqw" }}
       >
         {medal ? (
           <img src={medal} alt="" className="max-w-full max-h-full object-contain filter drop-shadow-md" />
@@ -108,7 +109,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
           <div
             className="font-['Bebas_Neue'] text-center"
             style={{
-              fontSize: prominent ? "2.8cqw" : "2.4cqw",
+              fontSize: prominent ? "2.8cqw" : "2.7cqw",
               color: "#00B8D9",
               letterSpacing: "0.02em",
             }}
@@ -122,7 +123,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
         <div
           className="truncate font-bold text-white"
           style={{
-             fontSize: prominent ? (isFirst ? "2.45cqw" : "2.35cqw") : "1.8cqw",
+             fontSize: prominent ? (isFirst ? "2.35cqw" : "2.25cqw") : "2cqw",
             letterSpacing: "-0.01em",
             textShadow: "0 2px 4px rgba(0,0,0,0.5)",
           }}
@@ -133,7 +134,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
           <div
             className="font-bold"
             style={{
-              fontSize: prominent ? (isFirst ? "2.05cqw" : "1.95cqw") : "1.5cqw",
+              fontSize: prominent ? (isFirst ? "2.05cqw" : "1.95cqw") : "1.65cqw",
               color: "#00B8D9",
             }}
           >
@@ -142,7 +143,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
           <div
             className="font-semibold"
             style={{
-              fontSize: prominent ? "1.16cqw" : "1.04cqw",
+              fontSize: prominent ? "1.16cqw" : "1.1cqw",
               color: "#A9BDCF",
               letterSpacing: "0.05em",
             }}

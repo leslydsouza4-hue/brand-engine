@@ -3,8 +3,8 @@ name: Rising leaderboard visual direction
 description: Approved composition and boundaries for future Rising leaderboard styling.
 ---
 
-Preserve the expanded two-column Rising composition; favor calm, opaque navy cards over additional neon accents.
+Favor calm, opaque navy Rising cards over additional neon accents. Size the content to the decorative image's inner frame rather than the canvas edges.
 
-**Why:** The user explicitly approved the expanded composition on 2026-09-16 and requested readability polish only, keeping the energetic background and cyan outer frame unchanged.
+**Why:** The user approved the dark card treatment and replacement background on 2026-09-16, but rejected the oversized Top 3 and content colliding with the new image's decorative frame.
 
-**How to apply:** For subsequent polish, retain the layout, background, and frame unless explicitly asked to change them. Concentrate teal on the title, lower rank numbers, and MRR amounts, with white names.
+**How to apply:** Preserve approved background and card styling unless explicitly asked to change them. Keep both ranking columns aligned at their top and bottom, and prioritize fitting all seven supporting rows inside the frame over literal percentage increases that would overflow. Concentrate teal on the title, lower rank numbers, and MRR amounts, with white names.

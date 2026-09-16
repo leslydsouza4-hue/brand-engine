@@ -377,25 +377,31 @@ export function PartnerHeroWorkspace() {
                 <Move className="w-[13px] h-[13px] text-[#94A3B8]" />
                 <span className="text-[11px] font-semibold text-[#CBD5E1]">Position</span>
               </div>
-              <div className="flex gap-[12px]">
+              <div className="flex flex-col gap-[16px]">
                 <div className="flex-1">
-                  <label htmlFor="pos-x" className="text-[9px] text-[#64748B] mb-[4px] block uppercase tracking-wider">X</label>
+                  <label htmlFor="pos-x" className="text-[11px] text-[#94A3B8] mb-[8px] flex justify-between">X Position <span>{Math.round(posX)}</span></label>
                   <input
                     id="pos-x"
-                    type="number"
+                    type="range"
+                    min={Math.min(posX, MASK.x - (photoImg?.width ?? 0) * baseScale * relativeScale)}
+                    max={Math.max(posX, MASK.x + MASK.w)}
+                    step={1}
                     value={Math.round(posX)}
                     onChange={(e) => setPosX(Number(e.target.value))}
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-[6px] px-[8px] py-[6px] text-[11px] text-white outline-none focus:border-white/30"
+                    className="w-full accent-white"
                   />
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="pos-y" className="text-[9px] text-[#64748B] mb-[4px] block uppercase tracking-wider">Y</label>
+                  <label htmlFor="pos-y" className="text-[11px] text-[#94A3B8] mb-[8px] flex justify-between">Y Position <span>{Math.round(posY)}</span></label>
                   <input
                     id="pos-y"
-                    type="number"
+                    type="range"
+                    min={Math.min(posY, MASK.y - (photoImg?.height ?? 0) * baseScale * relativeScale)}
+                    max={Math.max(posY, MASK.y + MASK.h)}
+                    step={1}
                     value={Math.round(posY)}
                     onChange={(e) => setPosY(Number(e.target.value))}
-                    className="w-full bg-white/[0.04] border border-white/10 rounded-[6px] px-[8px] py-[6px] text-[11px] text-white outline-none focus:border-white/30"
+                    className="w-full accent-white"
                   />
                 </div>
               </div>

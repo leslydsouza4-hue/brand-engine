@@ -1,5 +1,5 @@
 import type { Affiliate } from "./LeaderBoardWorkspace";
-import bgRising from "@assets/1fe1f0ff-e856-4e9a-9a63-80696e4549d0_1789515519458.png";
+import bgRising from "@assets/267ec670-6e5b-4a7e-aaa7-9799fb329bce_1789516902046.png";
 import cMedal1 from "@assets/Asset_3@4x-8_1778887779024.png";
 import cMedal2 from "@assets/Asset_2@4x-8_1778887779024.png";
 import cMedal3 from "@assets/Asset_1@4x-8_1778887779024.png";

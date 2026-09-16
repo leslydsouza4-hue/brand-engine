@@ -21,6 +21,7 @@ import { GrowthFlywheelWorkspace } from "@/components/brand/GrowthFlywheelWorksp
 import { LandingPageWorkspace } from "@/components/brand/LandingPageWorkspace";
 import { SwooshBackgroundWorkspace } from "@/components/brand/SwooshBackgroundWorkspace";
 import { LeaderBoardWorkspace } from "@/components/brand/LeaderBoardWorkspace";
+import { PartnerHeroWorkspace } from "@/components/brand/PartnerHeroWorkspace";
 import { SpotlightSessionsWorkspace } from "@/components/brand/SpotlightSessionsWorkspace";
 import { AffiliateBlurbWorkspace } from "@/components/brand/AffiliateBlurbWorkspace";
 import { LevelUpImageLibraryWorkspace } from "@/components/brand/LevelUpImageLibraryWorkspace";
@@ -32,7 +33,7 @@ import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
 import { WelcomeIntro, hasSeenIntro } from "@/components/brand/WelcomeIntro";
 
 export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
+  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
   const parseHash = () => {
     const h = window.location.hash.replace("#", "");
     return VALID_MODES.includes(h) ? h : "templates";
@@ -64,7 +65,7 @@ export default function BrandEngine() {
   useEffect(() => {
     const luOnly = ["image-library", "social-composer"];
     const summerOnly = ["summer-sun-drunk", "summer-electric", "summer-feral"];
-    const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "highly-cutout", "growth-flywheel", "affiliate-leaderboard", "affiliate-blurb", "certified-admin-graphics"];
+    const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "highly-cutout", "growth-flywheel", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics"];
     const notHl = [...luOnly, ...summerOnly];
     const notLu = [...hlOnly, ...summerOnly];
     if (brandMode === "levelup26" && notLu.includes(currentMode)) setCurrentMode("image-library");
@@ -128,6 +129,7 @@ export default function BrandEngine() {
         {currentMode === "growth-flywheel" && <GrowthFlywheelWorkspace />}
 
         {currentMode === "affiliate-leaderboard" && <LeaderBoardWorkspace />}
+        {currentMode === "affiliate-partner-hero" && <PartnerHeroWorkspace />}
         {currentMode === "affiliate-blurb" && <AffiliateBlurbWorkspace />}
 
         {currentMode === "certified-admin-graphics" && <CertifiedAdminWorkspace />}

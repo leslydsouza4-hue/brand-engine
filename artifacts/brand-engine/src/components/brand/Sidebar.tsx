@@ -410,6 +410,14 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
           </button>
 
           <button
+            onClick={() => handleSetMode('affiliate-partner-hero')}
+            className={`${btnBase} cursor-pointer ${currentMode === 'affiliate-partner-hero' ? activeClass : inactiveClass}`}
+          >
+            <Users className={iconCls(currentMode === 'affiliate-partner-hero')} />
+            <span>Partner Hero Builder</span>
+          </button>
+
+          <button
             disabled
             className={`${btnBase} opacity-40 cursor-not-allowed ${inactiveClass}`}
             title="Coming soon"

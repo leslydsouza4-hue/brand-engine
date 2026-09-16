@@ -1,5 +1,7 @@
 # Memory Index
 
+- [Canvas alpha comparison](canvas-alpha-comparison.md) — compare alpha and black/white composites, not raw hidden RGB, when verifying locked PNG artwork.
+
 - [Rising visual direction](rising-visual-direction.md) — preserve approved dark cards/background; fit balanced columns inside the image's decorative frame.
 
 - [Closed-loop RDP](closed-loop-rdp.md) — appending start point to RDP-simplify a closed contour collapses it to 1 node; split at two extreme vertices instead.

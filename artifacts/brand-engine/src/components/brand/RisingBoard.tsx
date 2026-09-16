@@ -14,7 +14,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <div className="absolute pointer-events-none" style={{ inset: "2%", border: "0.12cqw solid rgba(50,225,233,0.55)", borderRadius: "1.5cqw", boxShadow: "inset 0 0 2cqw rgba(0,210,220,0.12), 0 0 1cqw rgba(0,210,220,0.2)" }} />
 
       {/* Title */}
-      <div className="absolute text-center" style={{ top: "8%", left: "7%", right: "7%" }}>
+      <div className="absolute text-center" style={{ top: "9%", left: "7%", right: "7%" }}>
         <div
           className="font-['Poppins'] font-bold whitespace-nowrap"
           style={{
@@ -41,23 +41,23 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <div
         className="absolute grid"
         style={{
-          top: "22%",
+          top: "25%",
           left: "7%",
           right: "7%",
-          bottom: "13%",
+          bottom: "16%",
           gridTemplateColumns: "minmax(0, 53fr) minmax(0, 47fr)",
           columnGap: "2.4cqw",
         }}
       >
         {/* Left Column (1-3) */}
-        <div className="flex flex-col justify-between">
+        <div className="flex flex-col justify-center" style={{ gap: "0.833333cqw", width: "96%", justifySelf: "center" }}>
           {top3.map((r, i) => (
             <RisingRow key={r.id} r={r} rank={i + 1} prominent />
           ))}
         </div>
         
         {/* Right Column (4-10) */}
-        <div className="flex flex-col justify-between">
+        <div className="flex flex-col justify-center" style={{ gap: "0.3cqw" }}>
           {rest.map((r, i) => (
             <RisingRow key={r.id} r={r} rank={i + 4} />
           ))}
@@ -68,7 +68,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <div
         className="absolute font-['Poppins'] font-semibold text-white/70 tracking-wide text-center"
         style={{
-          bottom: "9%",
+          bottom: "11%",
           left: "7%",
           right: "7%",
           fontSize: "1.1cqw",
@@ -92,8 +92,8 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
       style={{
          gap: prominent ? "1.1cqw" : "1.8cqw",
          background: "rgba(5, 18, 38, 0.9)",
-         padding: prominent ? "0.9cqw 2cqw 0.9cqw 1.3cqw" : "0.5cqw 2cqw 0.5cqw 1.3cqw",
-         height: prominent ? (isFirst ? "7.1cqw" : "7cqw") : "5.05cqw",
+         padding: "0.3cqw 2cqw 0.3cqw 1.3cqw",
+         height: prominent ? "5.4cqw" : "4.4cqw",
         flexShrink: 0,
         borderRadius: "1cqw",
          border: "1px solid rgba(150, 200, 230, 0.12)",

@@ -58,7 +58,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
 function Mrr({ value, prominent = false }: { value?: string; prominent?: boolean }) {
   return (
     <div className="flex flex-col items-end shrink-0 font-['Poppins']">
-      <div className="font-bold" style={{ fontSize: prominent ? "1.85cqw" : "1.5cqw", color: "#00B8D9", lineHeight: 1.1 }}>
+      <div className="font-bold" style={{ fontSize: prominent ? "3cqw" : "1.5cqw", color: "#00B8D9", lineHeight: 1.1 }}>
         {value || "$0"}
       </div>
       <div className="font-semibold" style={{ fontSize: "0.95cqw", color: "#A9BDCF", letterSpacing: "0.05em", lineHeight: 1.1 }}>

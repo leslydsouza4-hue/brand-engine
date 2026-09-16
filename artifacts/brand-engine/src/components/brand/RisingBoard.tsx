@@ -39,17 +39,23 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         </div>
       </div>
 
-      <div className="absolute grid" style={{ top: "26%", bottom: "10%", left: "7%", right: "7%", gridTemplateColumns: "minmax(0, 50fr) minmax(0, 47fr)", columnGap: "3%" }}>
-        <div className="flex flex-col justify-center" style={{ gap: "1cqw" }}>
+      <div className="absolute grid items-start" style={{ top: "23.6%", left: "5%", right: "7%", gridTemplateColumns: "minmax(0, 45.15fr) minmax(0, 40.42fr)", columnGap: "2.43cqw" }}>
+        <div className="flex flex-col" style={{ gap: "1cqw" }}>
           {rows.slice(0, 3).map((r, i) => (
             <TopCard key={r.id} row={r} rank={i + 1} />
           ))}
         </div>
-        <div className="flex flex-col justify-center" style={{ gap: "0.5cqw" }}>
+        <div className="flex flex-col" style={{ gap: "0.86cqw" }}>
           {rows.slice(3, 10).map((r, i) => (
             <SupportingCard key={r.id} row={r} rank={i + 4} />
           ))}
         </div>
+      </div>
+      <div
+        className="absolute font-['Poppins'] font-semibold text-white/70 tracking-wide text-center"
+        style={{ bottom: "7%", left: "7%", right: "7%", fontSize: "1.1cqw", lineHeight: 1.2 }}
+      >
+        Meet with your Affiliate Manager
       </div>
     </>
   );

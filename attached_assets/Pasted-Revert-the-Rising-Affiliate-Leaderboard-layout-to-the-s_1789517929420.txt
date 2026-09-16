@@ -1,0 +1,92 @@
+Revert the Rising Affiliate Leaderboard layout to the simple two-column structure.
+
+DO NOT change the current background.
+DO NOT redesign anything else.
+
+LAYOUT:
+
+LEFT COLUMN:
+1
+2
+3
+
+RIGHT COLUMN:
+4
+5
+6
+7
+8
+9
+10
+
+TOP 3:
+- Keep ranks 1–3 stacked vertically on the left.
+- Make them moderately larger than ranks 4–10, but NOT huge.
+- Keep the three cards grouped together with consistent gaps.
+- Do NOT stretch them vertically across the canvas.
+- Medal on left, Affiliate Name in middle, MRR on right.
+
+RIGHT SIDE:
+- Keep ranks 4–10 stacked vertically.
+- Make these rows large enough to be clearly readable.
+- Use consistent card height and gaps.
+- Keep rank, name and MRR aligned perfectly.
+
+BALANCE:
+- Left column approximately 47% width.
+- Right column approximately 47% width.
+- Approximately 6% clean gap between columns.
+- Both groups should sit comfortably inside the background safe area.
+- Do not force the bottom of rank 3 to align with rank 10.
+- Vertically center each group naturally.
+
+TITLE FONT CHANGE:
+
+Change ONLY:
+
+"Rising Affiliate Leaderboard"
+
+to BEBAS NEUE.
+
+Use Bebas Neue Bold/SemiBold appearance.
+Slight letter spacing.
+Keep the teal/cyan title color.
+
+Do NOT use Bebas for:
+- Affiliate names
+- MRR
+- Month/year
+- CTA
+- Rank numbers
+
+Keep those in the existing font.
+
+Keep:
+MARCH 2026
+
+exactly as currently styled.
+
+IMPORTANT:
+Do not change the background.
+Do not add Highly.
+Do not add headshots.
+Do not add graphics.
+Do not add more effects.
+Do not create a new grid layout.
+
+Final structure should simply be:
+
+              RISING AFFILIATE LEADERBOARD
+                       MARCH 2026
+
+     [ 🥇 1  Affiliate    $MRR ]     [ 4   Affiliate   $MRR ]
+     [ 🥈 2  Affiliate    $MRR ]     [ 5   Affiliate   $MRR ]
+     [ 🥉 3  Affiliate    $MRR ]     [ 6   Affiliate   $MRR ]
+                                      [ 7   Affiliate   $MRR ]
+                                      [ 8   Affiliate   $MRR ]
+                                      [ 9   Affiliate   $MRR ]
+                                      [ 10  Affiliate   $MRR ]
+
+                 Meet with your Affiliate Manager
+
+Only implement these changes.

@@ -19,12 +19,12 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
 
       <div className="absolute text-center" style={{ top: "9%", left: "7%", right: "7%" }}>
         <div
-          className="font-['Poppins'] font-bold whitespace-nowrap"
+          className="font-['Bebas_Neue'] font-semibold uppercase whitespace-nowrap"
           style={{
             fontSize: "3.15cqw",
             lineHeight: 1.3,
             paddingBottom: "0.4cqw",
-            letterSpacing: "-0.01em",
+            letterSpacing: "0.04em",
             background: "linear-gradient(180deg, #A8F0FF 0%, #00B8D9 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -39,23 +39,23 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         </div>
       </div>
 
-      <div className="absolute flex flex-col" style={{ top: "23.3%", left: "7%", right: "7%" }}>
-        <div className="grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "1.1cqw", height: "9cqw" }}>
+      <div className="absolute grid" style={{ top: "24%", bottom: "15%", left: "7%", right: "7%", gridTemplateColumns: "minmax(0, 47fr) minmax(0, 47fr)", columnGap: "6%" }}>
+        <div className="flex flex-col justify-center" style={{ gap: "0.833333cqw" }}>
           {rows.slice(0, 3).map((r, i) => (
             <TopCard key={r.id} row={r} rank={i + 1} />
           ))}
         </div>
-        <div className="flex flex-wrap justify-center" style={{ marginTop: "1.666667cqw", gap: "0.833333cqw" }}>
+        <div className="flex flex-col justify-center" style={{ gap: "0.3cqw" }}>
           {rows.slice(3, 10).map((r, i) => (
             <SupportingCard key={r.id} row={r} rank={i + 4} />
           ))}
         </div>
-        <div
-          className="font-['Poppins'] font-semibold text-white/70 tracking-wide text-center"
-          style={{ marginTop: "1.4cqw", fontSize: "1.1cqw", lineHeight: 1.2 }}
-        >
-          Meet with your Affiliate Manager
-        </div>
+      </div>
+      <div
+        className="absolute font-['Poppins'] font-semibold text-white/70 tracking-wide text-center"
+        style={{ bottom: "10%", left: "7%", right: "7%", fontSize: "1.1cqw", lineHeight: 1.2 }}
+      >
+        Meet with your Affiliate Manager
       </div>
     </>
   );
@@ -64,7 +64,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
 function Mrr({ value, prominent = false }: { value?: string; prominent?: boolean }) {
   return (
     <div className="flex flex-col items-end shrink-0 font-['Poppins']">
-      <div className="font-bold" style={{ fontSize: prominent ? "1.45cqw" : "1.4cqw", color: "#00B8D9", lineHeight: 1.1 }}>
+      <div className="font-bold" style={{ fontSize: prominent ? "1.65cqw" : "1.5cqw", color: "#00B8D9", lineHeight: 1.1 }}>
         {value || "$0"}
       </div>
       <div className="font-semibold" style={{ fontSize: "0.95cqw", color: "#A9BDCF", letterSpacing: "0.05em", lineHeight: 1.1 }}>
@@ -76,7 +76,7 @@ function Mrr({ value, prominent = false }: { value?: string; prominent?: boolean
 
 function TopCard({ row, rank }: { row: Affiliate; rank: number }) {
   return (
-    <div className="flex items-center h-full min-w-0" style={{ ...cardStyle, padding: "1cqw 1.1cqw", gap: "0.8cqw" }}>
+    <div className="flex items-center min-w-0 shrink-0" style={{ ...cardStyle, height: "5.6cqw", padding: "0.6cqw 1.3cqw", gap: "1cqw" }}>
       <img
         src={[cMedal1, cMedal2, cMedal3][rank - 1]}
         alt={`Rank ${rank}`}
@@ -85,7 +85,7 @@ function TopCard({ row, rank }: { row: Affiliate; rank: number }) {
       />
       <div
         className="min-w-0 flex-1 font-bold text-white font-['Poppins']"
-        style={{ fontSize: "1.55cqw", lineHeight: 1.2, letterSpacing: "-0.01em", overflowWrap: "anywhere", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
+        style={{ fontSize: "2cqw", lineHeight: 1.2, letterSpacing: "-0.01em", overflowWrap: "anywhere", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
       >
         {row.name || "—"}
       </div>
@@ -97,16 +97,16 @@ function TopCard({ row, rank }: { row: Affiliate; rank: number }) {
 function SupportingCard({ row, rank }: { row: Affiliate; rank: number }) {
   return (
     <div
-      className="flex flex-col justify-between"
-      style={{ ...cardStyle, width: "calc((100% - 2.5cqw) / 4)", height: "8.5cqw", padding: "1.2cqw", gap: "0.65cqw", flexShrink: 0 }}
+      className="flex items-center"
+      style={{ ...cardStyle, height: "4.5cqw", padding: "0.6cqw 1.3cqw", gap: "1cqw", flexShrink: 0 }}
     >
-      <div className="flex items-center" style={{ gap: "0.65cqw" }}>
+      <div className="flex flex-1 min-w-0 items-center" style={{ gap: "1cqw" }}>
         <div className="font-['Bebas_Neue'] text-center shrink-0" style={{ width: "2.2cqw", fontSize: "2.7cqw", color: "#00B8D9", lineHeight: 1 }}>
           {rank}
         </div>
         <div
           className="min-w-0 font-bold text-white font-['Poppins']"
-          style={{ fontSize: "1.45cqw", lineHeight: 1.2, letterSpacing: "-0.01em", overflowWrap: "anywhere", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
+          style={{ fontSize: "1.8cqw", lineHeight: 1.2, letterSpacing: "-0.01em", overflowWrap: "anywhere", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
         >
           {row.name || "—"}
         </div>

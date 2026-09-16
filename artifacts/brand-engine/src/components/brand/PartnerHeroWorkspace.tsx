@@ -16,13 +16,12 @@ import partnerHeroTemplate from "@assets/Group_1171275389_1789596609906.png";
 const W = 2340;
 const H = 1617;
 
-// Full blue card bounds: no inset strip below the partner.
+// Shared bounds of the yellow, green, and blue card stack.
 const MASK = {
-  x: 85,
-  y: 541,
-  w: 900,
-  h: 644,
-  r: 54
+  x: 0,
+  y: 285,
+  w: 1040,
+  h: 900
 };
 
 type PhotoBounds = { x: number; y: number; w: number; h: number };
@@ -50,18 +49,28 @@ function visiblePhotoBounds(img: HTMLImageElement): PhotoBounds {
   return { x: left, y: top, w: right - left + 1, h: bottom - top + 1 };
 }
 
-function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h - r);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
+function createCardStackMask(template: HTMLImageElement) {
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Unable to prepare card mask.");
+  ctx.drawImage(template, 0, 0, W, H);
+  const pixels = ctx.getImageData(0, 0, W, H);
+  // Use the actual saturated card pixels, preserving their rounded/rotated
+  // outline. Pale orbit lines, icons, and the logo are not part of this mask.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      const r = pixels.data[i], g = pixels.data[i + 1], b = pixels.data[i + 2];
+      const insideStack = x < MASK.w && y >= MASK.y && y < MASK.y + MASK.h;
+      if (!insideStack || g < 100 || Math.max(r, g, b) - Math.min(r, g, b) < 60) {
+        pixels.data[i + 3] = 0;
+      }
+    }
+  }
+  ctx.putImageData(pixels, 0, 0);
+  return canvas;
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -77,6 +86,8 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 export function PartnerHeroWorkspace() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const cardMaskRef = useRef<HTMLCanvasElement | null>(null);
+  const photoLayerRef = useRef<HTMLCanvasElement | null>(null);
   const jobRef = useRef(0);
   
   const [baseImg, setBaseImg] = useState<HTMLImageElement | null>(null);
@@ -107,7 +118,12 @@ export function PartnerHeroWorkspace() {
   useEffect(() => {
     let active = true;
     loadImage(partnerHeroTemplate)
-      .then(img => { if (active) setBaseImg(img); })
+      .then(img => {
+        if (active) {
+          cardMaskRef.current = createCardStackMask(img);
+          setBaseImg(img);
+        }
+      })
       .catch(() => { if (active) setStatusMsg("Failed to load base template."); });
     return () => { active = false; };
   }, []);
@@ -121,20 +137,28 @@ export function PartnerHeroWorkspace() {
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(baseImg, 0, 0, W, H);
 
-    if (photoImg && photoBounds) {
-      ctx.save();
-      drawRoundedRect(ctx, MASK.x, MASK.y, MASK.w, MASK.h, MASK.r);
-      ctx.clip();
+    if (photoImg && photoBounds && cardMaskRef.current) {
+      const layer = photoLayerRef.current ?? document.createElement("canvas");
+      if (!photoLayerRef.current) {
+        layer.width = W;
+        layer.height = H;
+        photoLayerRef.current = layer;
+      }
+      const layerCtx = layer.getContext("2d");
+      if (!layerCtx) return;
+      layerCtx.clearRect(0, 0, W, H);
       
       const drawScale = baseScale * relativeScale;
       const dw = photoBounds.w * drawScale;
       const dh = photoBounds.h * drawScale;
       
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(photoImg, photoBounds.x, photoBounds.y, photoBounds.w, photoBounds.h, posX, posY, dw, dh);
-      
-      ctx.restore();
+      layerCtx.imageSmoothingEnabled = true;
+      layerCtx.imageSmoothingQuality = "high";
+      layerCtx.drawImage(photoImg, photoBounds.x, photoBounds.y, photoBounds.w, photoBounds.h, posX, posY, dw, dh);
+      layerCtx.globalCompositeOperation = "destination-in";
+      layerCtx.drawImage(cardMaskRef.current, 0, 0);
+      layerCtx.globalCompositeOperation = "source-over";
+      ctx.drawImage(layer, 0, 0);
     }
   }, [baseImg, photoImg, photoBounds, baseScale, relativeScale, posX, posY]);
 

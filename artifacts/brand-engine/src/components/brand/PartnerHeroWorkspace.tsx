@@ -10,7 +10,7 @@ import {
 import { addExport, createThumbnail } from "./exportStore";
 import { PhotoroomLink } from "./PhotoroomLink";
 
-const BASE = import.meta.env.BASE_URL;
+import partnerHeroTemplate from "@assets/Group_1171275389_1789596609906.png";
 
 // Template resolution
 const W = 2340;
@@ -106,7 +106,7 @@ export function PartnerHeroWorkspace() {
 
   useEffect(() => {
     let active = true;
-    loadImage(`${BASE}assets/partner-hero-base.png`)
+    loadImage(partnerHeroTemplate)
       .then(img => { if (active) setBaseImg(img); })
       .catch(() => { if (active) setStatusMsg("Failed to load base template."); });
     return () => { active = false; };

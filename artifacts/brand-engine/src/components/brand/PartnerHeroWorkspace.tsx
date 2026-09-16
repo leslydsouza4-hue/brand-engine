@@ -16,14 +16,39 @@ const BASE = import.meta.env.BASE_URL;
 const W = 2340;
 const H = 1617;
 
-// Mask bounds inside the blue card area
+// Full blue card bounds: no inset strip below the partner.
 const MASK = {
-  x: 90,
-  y: 548,
-  w: 890,
-  h: 627,
-  r: 50
+  x: 85,
+  y: 541,
+  w: 900,
+  h: 644,
+  r: 54
 };
+
+type PhotoBounds = { x: number; y: number; w: number; h: number };
+
+function visiblePhotoBounds(img: HTMLImageElement): PhotoBounds {
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("Unable to read photo pixels.");
+  ctx.drawImage(img, 0, 0);
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  let left = canvas.width, top = canvas.height, right = -1, bottom = -1;
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      if (data[(y * canvas.width + x) * 4 + 3] > 8) {
+        left = Math.min(left, x);
+        right = Math.max(right, x);
+        top = Math.min(top, y);
+        bottom = Math.max(bottom, y);
+      }
+    }
+  }
+  if (right < left) throw new Error("No visible subject found.");
+  return { x: left, y: top, w: right - left + 1, h: bottom - top + 1 };
+}
 
 function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath();
@@ -56,6 +81,7 @@ export function PartnerHeroWorkspace() {
   
   const [baseImg, setBaseImg] = useState<HTMLImageElement | null>(null);
   const [photoImg, setPhotoImg] = useState<HTMLImageElement | null>(null);
+  const [photoBounds, setPhotoBounds] = useState<PhotoBounds | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const currentPhotoUrl = useRef<string | null>(null);
   
@@ -95,35 +121,45 @@ export function PartnerHeroWorkspace() {
     ctx.clearRect(0, 0, W, H);
     ctx.drawImage(baseImg, 0, 0, W, H);
 
-    if (photoImg) {
+    if (photoImg && photoBounds) {
       ctx.save();
       drawRoundedRect(ctx, MASK.x, MASK.y, MASK.w, MASK.h, MASK.r);
       ctx.clip();
       
       const drawScale = baseScale * relativeScale;
-      const dw = photoImg.width * drawScale;
-      const dh = photoImg.height * drawScale;
+      const dw = photoBounds.w * drawScale;
+      const dh = photoBounds.h * drawScale;
       
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(photoImg, posX, posY, dw, dh);
+      ctx.drawImage(photoImg, photoBounds.x, photoBounds.y, photoBounds.w, photoBounds.h, posX, posY, dw, dh);
       
       ctx.restore();
     }
-  }, [baseImg, photoImg, baseScale, relativeScale, posX, posY]);
+  }, [baseImg, photoImg, photoBounds, baseScale, relativeScale, posX, posY]);
 
   useEffect(() => {
     render();
   }, [render]);
 
   const fitPhoto = (img: HTMLImageElement) => {
-    const scaleX = MASK.w / img.width;
-    const scaleY = MASK.h / img.height;
-    const containScale = Math.min(scaleX, scaleY);
-    setBaseScale(containScale);
+    const bounds = visiblePhotoBounds(img);
+    const fitScale = MASK.h / bounds.h;
+    setPhotoBounds(bounds);
+    setBaseScale(fitScale);
     setRelativeScale(1);
-    setPosX(MASK.x + (MASK.w - img.width * containScale) / 2);
-    setPosY(MASK.y + (MASK.h - img.height * containScale) / 2);
+    setPosX(MASK.x + (MASK.w - bounds.w * fitScale) / 2);
+    setPosY(MASK.y + MASK.h - bounds.h * fitScale);
+  };
+
+  const updateScale = (next: number) => {
+    if (!photoBounds) return;
+    const clamped = Math.min(4, Math.max(0.25, next));
+    const delta = baseScale * (relativeScale - clamped);
+    // Zoom around the bottom center, rather than lifting the torso off the card.
+    setPosX(x => x + photoBounds.w * delta / 2);
+    setPosY(y => y + photoBounds.h * delta);
+    setRelativeScale(clamped);
   };
 
   const cleanupCurrentUrl = () => {
@@ -158,11 +194,11 @@ export function PartnerHeroWorkspace() {
         URL.revokeObjectURL(blobUrl);
         return;
       }
+      fitPhoto(img);
       cleanupCurrentUrl();
       currentPhotoUrl.current = blobUrl;
       setPhotoUrl(blobUrl);
       setPhotoImg(img);
-      fitPhoto(img);
     } catch {
       if (job === jobRef.current) setStatusMsg("Couldn't read that image.");
       URL.revokeObjectURL(blobUrl);
@@ -186,6 +222,7 @@ export function PartnerHeroWorkspace() {
       let newImg;
       try {
         newImg = await loadImage(newBlobUrl);
+        if (job === jobRef.current) fitPhoto(newImg);
       } catch {
         URL.revokeObjectURL(newBlobUrl);
         throw new Error("Decode failed");
@@ -295,7 +332,7 @@ export function PartnerHeroWorkspace() {
   const onWheel = (e: React.WheelEvent) => {
     if (!photoImg || processing) return;
     if (e.deltaY !== 0) {
-      setRelativeScale(s => Math.min(4, Math.max(0.25, s * (1 - e.deltaY * 0.001))));
+      updateScale(relativeScale * (1 - e.deltaY * 0.001));
     }
   };
 
@@ -369,7 +406,7 @@ export function PartnerHeroWorkspace() {
                 max={4}
                 step={0.01}
                 value={relativeScale}
-                onChange={(e) => setRelativeScale(Number(e.target.value))}
+                onChange={(e) => updateScale(Number(e.target.value))}
                 className="w-full accent-white"
               />
 
@@ -383,7 +420,7 @@ export function PartnerHeroWorkspace() {
                   <input
                     id="pos-x"
                     type="range"
-                    min={Math.min(posX, MASK.x - (photoImg?.width ?? 0) * baseScale * relativeScale)}
+                    min={Math.min(posX, MASK.x - (photoBounds?.w ?? 0) * baseScale * relativeScale)}
                     max={Math.max(posX, MASK.x + MASK.w)}
                     step={1}
                     value={Math.round(posX)}
@@ -396,7 +433,7 @@ export function PartnerHeroWorkspace() {
                   <input
                     id="pos-y"
                     type="range"
-                    min={Math.min(posY, MASK.y - (photoImg?.height ?? 0) * baseScale * relativeScale)}
+                    min={Math.min(posY, MASK.y - (photoBounds?.h ?? 0) * baseScale * relativeScale)}
                     max={Math.max(posY, MASK.y + MASK.h)}
                     step={1}
                     value={Math.round(posY)}

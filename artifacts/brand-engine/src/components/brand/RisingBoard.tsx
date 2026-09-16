@@ -13,21 +13,6 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <img src={bgRising} alt="" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute pointer-events-none" style={{ inset: "2%", border: "0.12cqw solid rgba(50,225,233,0.55)", borderRadius: "1.5cqw", boxShadow: "inset 0 0 2cqw rgba(0,210,220,0.12), 0 0 1cqw rgba(0,210,220,0.2)" }} />
 
-      {/* Mascot bottom left */}
-      <img
-        src={`${import.meta.env.BASE_URL}assets/highly/highly-waving.png`}
-        alt="Highly Mascot"
-        className="absolute"
-        style={{
-          left: "1%",
-          bottom: "1%",
-          height: "28.5%",
-          objectFit: "contain",
-          filter: "drop-shadow(0 1cqw 2cqw rgba(0,0,0,0.5))",
-          zIndex: 10,
-        }}
-      />
-
       {/* Title */}
       <div className="absolute text-center" style={{ top: "6%", left: "5%", right: "5%" }}>
         <div
@@ -60,7 +45,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
           left: "4%",
           right: "4%",
           bottom: "10%",
-          gridTemplateColumns: "minmax(0, 40.8fr) minmax(0, 48fr)",
+          gridTemplateColumns: "minmax(0, 46fr) minmax(0, 42.8fr)",
           columnGap: "3.2cqw",
         }}
       >
@@ -97,6 +82,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
 
 function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number; prominent?: boolean }) {
   const isTop3 = rank <= 3;
+  const isFirst = prominent && rank === 1;
   const medal = isTop3 ? [cMedal1, cMedal2, cMedal3][rank - 1] : null;
 
   return (
@@ -106,7 +92,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
          gap: prominent ? "1.1cqw" : "1.8cqw",
          background: "rgba(5, 18, 38, 0.9)",
          padding: prominent ? "0.9cqw 2cqw 0.9cqw 1.3cqw" : "0.5cqw 2cqw 0.5cqw 1.3cqw",
-        height: prominent ? "6.8cqw" : "4.55cqw",
+         height: prominent ? (isFirst ? "11.8cqw" : "11cqw") : "4.55cqw",
         flexShrink: 0,
         borderRadius: "1cqw",
          border: "1px solid rgba(150, 200, 230, 0.12)",
@@ -114,7 +100,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
     >
       <div
         className="shrink-0 flex items-center justify-center"
-        style={{ width: prominent ? "4.6cqw" : "3.5cqw", height: prominent ? "4.6cqw" : "3.5cqw" }}
+        style={{ width: prominent ? (isFirst ? "5.3cqw" : "5.1cqw") : "3.5cqw", height: prominent ? (isFirst ? "5.3cqw" : "5.1cqw") : "3.5cqw" }}
       >
         {medal ? (
           <img src={medal} alt="" className="max-w-full max-h-full object-contain filter drop-shadow-md" />
@@ -136,7 +122,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
         <div
           className="truncate font-bold text-white"
           style={{
-            fontSize: prominent ? "1.95cqw" : "1.8cqw",
+             fontSize: prominent ? (isFirst ? "2.45cqw" : "2.35cqw") : "1.8cqw",
             letterSpacing: "-0.01em",
             textShadow: "0 2px 4px rgba(0,0,0,0.5)",
           }}
@@ -147,7 +133,7 @@ function RisingRow({ r, rank, prominent = false }: { r: Affiliate; rank: number;
           <div
             className="font-bold"
             style={{
-              fontSize: prominent ? "1.65cqw" : "1.5cqw",
+              fontSize: prominent ? (isFirst ? "2.05cqw" : "1.95cqw") : "1.5cqw",
               color: "#00B8D9",
             }}
           >

@@ -4,11 +4,11 @@ import {
   Loader2,
   Download,
   Info,
-  ExternalLink,
   Move,
   Maximize2
 } from "lucide-react";
 import { addExport, createThumbnail } from "./exportStore";
+import { PhotoroomLink } from "./PhotoroomLink";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -300,12 +300,12 @@ export function PartnerHeroWorkspace() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-[24px] h-full">
+    <div className="flex flex-col lg:flex-row gap-[28px] min-h-full p-[20px] xl:p-[28px]">
       {/* Left Control Panel */}
-      <div className="w-full lg:w-[320px] shrink-0 flex flex-col gap-[16px]">
+      <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-[24px]">
         <div>
-          <h2 className="text-[16px] font-bold text-white leading-tight mb-[4px]">Partner Hero Builder</h2>
-          <p className="text-[11px] text-[#94A3B8] leading-[1.4]">
+          <h2 className="text-[18px] font-bold text-white leading-tight mb-[10px]">Partner Hero Builder</h2>
+          <p className="text-[12px] text-[#94A3B8] leading-[1.6]">
             Composite a partner photo into the transparent hero card.
           </p>
         </div>
@@ -337,28 +337,24 @@ export function PartnerHeroWorkspace() {
           </div>
         )}
 
-        {photoUrl && (
-          <>
             {/* Background Removal */}
-            <div className="flex flex-col gap-[8px] bg-white/[0.02] border border-white/[0.06] rounded-[14px] p-[12px]">
+            <div className="flex flex-col gap-[12px] bg-white/[0.02] border border-white/[0.06] rounded-[14px] p-[16px]">
               <button
                 onClick={handleRemoveBackground}
-                disabled={processing}
-                className="w-full py-[9px] rounded-[10px] bg-[rgba(40,150,251,0.1)] border border-[rgba(40,150,251,0.3)] text-[#2896FB] text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:bg-[rgba(40,150,251,0.15)] disabled:opacity-50"
+                disabled={processing || !photoUrl}
+                className="w-full py-[12px] rounded-[10px] bg-[rgba(40,150,251,0.1)] border border-[rgba(40,150,251,0.3)] text-[#2896FB] text-[12px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:bg-[rgba(40,150,251,0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {processing ? <Loader2 className="w-[13px] h-[13px] animate-spin" /> : <Loader2 className="w-[13px] h-[13px]" style={{ transform: "rotate(45deg)" }} />}
                 {processing ? "Removing Background..." : "Remove Background"}
               </button>
-              <a
-                href="https://www.photoroom.com/tools/background-remover"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-[8px] rounded-[10px] text-[#94A3B8] text-[10px] font-medium flex items-center justify-center gap-[4px] hover:text-white transition-colors"
-              >
-                Need a cleaner cutout? Use PhotoRoom <ExternalLink className="w-[10px] h-[10px]" />
-              </a>
+              <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+                {photoUrl ? "Remove the photo background to create a transparent partner cutout." : "Upload a partner photo to enable automatic background removal."}
+              </p>
+              <PhotoroomLink />
             </div>
 
+        {photoUrl && (
+          <>
             {/* Transform Controls */}
             <div className="flex flex-col gap-[12px] bg-white/[0.02] border border-white/[0.06] rounded-[14px] p-[14px]">
               <div className="flex items-center gap-[6px] mb-[2px]">

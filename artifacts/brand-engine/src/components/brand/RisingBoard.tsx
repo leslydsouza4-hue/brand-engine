@@ -17,7 +17,13 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
       <img src={bgRising} alt="" className="absolute inset-0 w-full h-full object-cover" />
       <div className="absolute pointer-events-none" style={{ inset: "2%", border: "0.12cqw solid rgba(50,225,233,0.55)", borderRadius: "1.5cqw", boxShadow: "inset 0 0 2cqw rgba(0,210,220,0.12), 0 0 1cqw rgba(0,210,220,0.2)" }} />
 
-      <div className="absolute text-center" style={{ top: "7%", left: "7%", right: "7%" }}>
+      <img
+        src={`${import.meta.env.BASE_URL}assets/logos/Lockup=Full Horizontal, Color=Light.png`}
+        alt="HighLevel"
+        className="absolute object-contain"
+        style={{ top: "3.8%", left: "42.5%", width: "15%", height: "2.6cqw" }}
+      />
+      <div className="absolute text-center" style={{ top: "9.5%", left: "7%", right: "7%" }}>
         <div
           className="font-['Bebas_Neue'] font-semibold uppercase whitespace-nowrap"
           style={{
@@ -39,7 +45,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         </div>
       </div>
 
-      <div className="absolute grid items-stretch" style={{ top: "23.6%", left: "5%", right: "7%", gridTemplateColumns: "minmax(0, 45.15fr) minmax(0, 40.42fr)", columnGap: "2.43cqw" }}>
+      <div className="absolute grid items-stretch" style={{ top: "26.5%", left: "5%", right: "7%", gridTemplateColumns: "minmax(0, 45.15fr) minmax(0, 40.42fr)", columnGap: "2.43cqw" }}>
         <div className="grid" style={{ gridTemplateRows: "repeat(3, minmax(0, 1fr))", gap: "1cqw" }}>
           {rows.slice(0, 3).map((r, i) => (
             <TopCard key={r.id} row={r} rank={i + 1} />
@@ -52,19 +58,6 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         </div>
       </div>
     </>
-  );
-}
-
-function Mrr({ value, prominent = false }: { value?: string; prominent?: boolean }) {
-  return (
-    <div className="flex flex-col items-end shrink-0 font-['Poppins']">
-      <div className="font-bold" style={{ fontSize: prominent ? "3cqw" : "1.5cqw", color: "#00B8D9", lineHeight: 1.1 }}>
-        {value || "$0"}
-      </div>
-      <div className="font-semibold" style={{ fontSize: "0.95cqw", color: "#A9BDCF", letterSpacing: "0.05em", lineHeight: 1.1 }}>
-        NEW MRR
-      </div>
-    </div>
   );
 }
 
@@ -83,7 +76,6 @@ function TopCard({ row, rank }: { row: Affiliate; rank: number }) {
       >
         {row.name || "—"}
       </div>
-      <Mrr value={row.mrr} prominent />
     </div>
   );
 }
@@ -105,7 +97,6 @@ function SupportingCard({ row, rank }: { row: Affiliate; rank: number }) {
           {row.name || "—"}
         </div>
       </div>
-      <Mrr value={row.mrr} />
     </div>
   );
 }

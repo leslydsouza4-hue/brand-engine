@@ -79,18 +79,11 @@ const BOARD_LABELS: Record<BoardKey, string> = {
   combo: "Commander + Affiliate",
 };
 
-const RISING_SEED: Affiliate[] = [
-  { id: "r1", name: "Affiliate Name", mrr: "$8,420", avatar: null },
-  { id: "r2", name: "Affiliate Name", mrr: "$6,315", avatar: null },
-  { id: "r3", name: "Affiliate Name", mrr: "$5,280", avatar: null },
-  { id: "r4", name: "Affiliate Name", mrr: "$4,960", avatar: null },
-  { id: "r5", name: "Affiliate Name", mrr: "$4,210", avatar: null },
-  { id: "r6", name: "Affiliate Name", mrr: "$3,865", avatar: null },
-  { id: "r7", name: "Affiliate Name", mrr: "$3,240", avatar: null },
-  { id: "r8", name: "Affiliate Name", mrr: "$2,980", avatar: null },
-  { id: "r9", name: "Affiliate Name", mrr: "$2,710", avatar: null },
-  { id: "r10", name: "Affiliate Name", mrr: "$2,415", avatar: null },
-];
+const RISING_SEED: Affiliate[] = Array.from({ length: 10 }, (_, i) => ({
+  id: `r${i + 1}`,
+  name: "Affiliate Name",
+  avatar: null,
+}));
 
 // Combo board = Commander (7) on the left + Affiliate (10) on the right, over one boxless bg image.
 const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 7).map((p, i) => ({
@@ -214,7 +207,6 @@ export function LeaderBoardWorkspace() {
               rows={singleRows} 
               onChange={setSingleRows} 
               noAvatar={board === "rising"}
-              showMrr={board === "rising"}
             />
           )}
 

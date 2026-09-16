@@ -8,3 +8,9 @@ Favor calm, opaque navy Rising cards over additional neon accents. Size the cont
 **Why:** The user approved the dark card treatment and replacement background on 2026-09-16, but rejected the oversized Top 3 and content colliding with the new image's decorative frame.
 
 **How to apply:** Preserve approved background and card styling unless explicitly asked to change them. Layout and alignment preferences have changed during iteration, so follow the latest request rather than restoring a previously preferred grid or centering rule. Keep fixed small gaps within groups; do not stretch three cards across a full-height column merely to match seven rows. Preserve breathing room rather than filling every vertical space.
+
+Do not reintroduce individual affiliate MRR amounts on the Rising board.
+
+**Why:** The user explicitly clarified that actual partner MRR numbers cannot be included; earlier requests to enlarge those numbers were superseded.
+
+**How to apply:** Keep the public leaderboard focused on names and ranks, including its editor and exported images.

@@ -21,7 +21,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         <div
           className="font-['Bebas_Neue'] font-semibold uppercase whitespace-nowrap"
           style={{
-            fontSize: "3.15cqw",
+            fontSize: "3.78cqw",
             lineHeight: 1.3,
             paddingBottom: "0.4cqw",
             letterSpacing: "0.04em",
@@ -34,28 +34,22 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
         >
           Rising Affiliate Leaderboard
         </div>
-        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "1.8cqw", lineHeight: 1, letterSpacing: "0.2em", marginTop: "0.3cqw" }}>
+        <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "2.16cqw", lineHeight: 1, letterSpacing: "0.2em", marginTop: "0.3cqw" }}>
           {month || "—"}
         </div>
       </div>
 
-      <div className="absolute grid" style={{ top: "24%", bottom: "15%", left: "7%", right: "7%", gridTemplateColumns: "minmax(0, 47fr) minmax(0, 47fr)", columnGap: "6%" }}>
-        <div className="flex flex-col justify-center" style={{ gap: "0.833333cqw" }}>
+      <div className="absolute grid" style={{ top: "26%", bottom: "10%", left: "7%", right: "7%", gridTemplateColumns: "minmax(0, 50fr) minmax(0, 47fr)", columnGap: "3%" }}>
+        <div className="flex flex-col justify-center" style={{ gap: "1cqw" }}>
           {rows.slice(0, 3).map((r, i) => (
             <TopCard key={r.id} row={r} rank={i + 1} />
           ))}
         </div>
-        <div className="flex flex-col justify-center" style={{ gap: "0.3cqw" }}>
+        <div className="flex flex-col justify-center" style={{ gap: "0.5cqw" }}>
           {rows.slice(3, 10).map((r, i) => (
             <SupportingCard key={r.id} row={r} rank={i + 4} />
           ))}
         </div>
-      </div>
-      <div
-        className="absolute font-['Poppins'] font-semibold text-white/70 tracking-wide text-center"
-        style={{ bottom: "10%", left: "7%", right: "7%", fontSize: "1.1cqw", lineHeight: 1.2 }}
-      >
-        Meet with your Affiliate Manager
       </div>
     </>
   );
@@ -64,7 +58,7 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
 function Mrr({ value, prominent = false }: { value?: string; prominent?: boolean }) {
   return (
     <div className="flex flex-col items-end shrink-0 font-['Poppins']">
-      <div className="font-bold" style={{ fontSize: prominent ? "1.65cqw" : "1.5cqw", color: "#00B8D9", lineHeight: 1.1 }}>
+      <div className="font-bold" style={{ fontSize: prominent ? "1.85cqw" : "1.5cqw", color: "#00B8D9", lineHeight: 1.1 }}>
         {value || "$0"}
       </div>
       <div className="font-semibold" style={{ fontSize: "0.95cqw", color: "#A9BDCF", letterSpacing: "0.05em", lineHeight: 1.1 }}>
@@ -76,16 +70,16 @@ function Mrr({ value, prominent = false }: { value?: string; prominent?: boolean
 
 function TopCard({ row, rank }: { row: Affiliate; rank: number }) {
   return (
-    <div className="flex items-center min-w-0 shrink-0" style={{ ...cardStyle, height: "5.6cqw", padding: "0.6cqw 1.3cqw", gap: "1cqw" }}>
+    <div className="flex items-center min-w-0 shrink-0" style={{ ...cardStyle, height: "6.5cqw", padding: "0.6cqw 1.5cqw", gap: "1cqw" }}>
       <img
         src={[cMedal1, cMedal2, cMedal3][rank - 1]}
         alt={`Rank ${rank}`}
         className="shrink-0 object-contain filter drop-shadow-md"
-        style={{ width: "3.6cqw", height: "4cqw" }}
+        style={{ width: "4.14cqw", height: "4.6cqw" }}
       />
       <div
         className="min-w-0 flex-1 font-bold text-white font-['Poppins']"
-        style={{ fontSize: "2cqw", lineHeight: 1.2, letterSpacing: "-0.01em", overflowWrap: "anywhere", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
+        style={{ fontSize: "2.25cqw", lineHeight: 1.2, letterSpacing: "-0.01em", overflowWrap: "anywhere", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
       >
         {row.name || "—"}
       </div>

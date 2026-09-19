@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Affiliate } from "./LeaderBoardWorkspace";
-import bgRising from "@assets/1fe1f0ff-e856-4e9a-9a63-80696e4549d0_1789517422806.png";
+import bgRising from "@assets/image_1789777984354.png";
 import cMedal1 from "@assets/Asset_3@4x-8_1778887779024.png";
 import cMedal2 from "@assets/Asset_2@4x-8_1778887779024.png";
 import cMedal3 from "@assets/Asset_1@4x-8_1778887779024.png";
@@ -15,7 +15,6 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
   return (
     <>
       <img src={bgRising} alt="" className="absolute inset-0 w-full h-full object-cover" />
-      <div className="absolute pointer-events-none" style={{ inset: "2%", border: "0.12cqw solid rgba(50,225,233,0.55)", borderRadius: "1.5cqw", boxShadow: "inset 0 0 2cqw rgba(0,210,220,0.12), 0 0 1cqw rgba(0,210,220,0.2)" }} />
 
       <img
         src={`${import.meta.env.BASE_URL}assets/logos/Lockup=Full Horizontal, Color=Light.png`}

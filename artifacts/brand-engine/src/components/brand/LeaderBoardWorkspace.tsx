@@ -234,10 +234,10 @@ export function LeaderBoardWorkspace() {
           data-export-name={board === "rising" ? "Activation Leaderboard" : "Leader Board"}
           className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)] w-full"
           style={{
-            aspectRatio: isCombo ? "1536 / 1024" : isCommander ? "2068 / 1324" : "1920 / 1080",
+            aspectRatio: isCombo ? "1536 / 1024" : isCommander ? "2068 / 1324" : board === "rising" ? "1564 / 1006" : "1920 / 1080",
             background: "#000",
             containerType: "inline-size",
-            maxWidth: "min(100%, calc((100vh - 200px) * " + (isCombo ? "1.5" : isCommander ? "1.562" : "1.778") + "))",
+            maxWidth: "min(100%, calc((100vh - 200px) * " + (isCombo ? "1.5" : isCommander ? "1.562" : board === "rising" ? String(1564 / 1006) : "1.778") + "))",
           }}
         >
             {isCombo ? (

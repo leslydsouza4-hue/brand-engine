@@ -75,7 +75,7 @@ type BoardKey = SingleBoard | "combo";
 const BOARD_LABELS: Record<BoardKey, string> = {
   highlevel: "Top HighLevel Affiliates",
   commander: "Commander Leader Board",
-  rising: "Rising Affiliate Leaderboard",
+  rising: "Activation Leaderboard",
   combo: "Commander + Affiliate",
 };
 
@@ -195,6 +195,11 @@ export function LeaderBoardWorkspace() {
               className="w-full py-[9px] px-[10px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-[8px] text-[13px] font-semibold text-white outline-none focus:border-[rgba(40,150,251,0.4)] uppercase tracking-[0.1em]"
             />
           </div>
+          {board === "rising" && (
+            <p className="text-[12px] leading-relaxed text-[#94A3B8]">
+              A first milestone for new affiliates. Drag names into rank order using your monthly new MRR results. Revenue amounts are not displayed or included in the PNG.
+            </p>
+          )}
           {isCombo ? (
             <>
               <EditableRows title="Commander (1–7)" rows={comboCmdr} onChange={setComboCmdr} />
@@ -203,7 +208,7 @@ export function LeaderBoardWorkspace() {
           ) : (
             <EditableRows 
               key={board} 
-              title={board === "rising" ? "RISING AFFILIATES (1–10)" : `${BOARD_LABELS[board]} (1–10)`} 
+              title={board === "rising" ? "NEW AFFILIATES (1–10)" : `${BOARD_LABELS[board]} (1–10)`} 
               rows={singleRows} 
               onChange={setSingleRows} 
               noAvatar={board === "rising"}
@@ -226,7 +231,7 @@ export function LeaderBoardWorkspace() {
         <div
           ref={previewRef}
           data-export-preview
-          data-export-name="Leader Board"
+          data-export-name={board === "rising" ? "Activation Leaderboard" : "Leader Board"}
           className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)] w-full"
           style={{
             aspectRatio: isCombo ? "1536 / 1024" : isCommander ? "2068 / 1324" : "1920 / 1080",

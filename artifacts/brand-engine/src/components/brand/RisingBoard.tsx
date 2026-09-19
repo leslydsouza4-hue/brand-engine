@@ -38,14 +38,17 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
             filter: "drop-shadow(0 0.15cqw 0.35cqw rgba(0,0,0,0.45))",
           }}
         >
-          Rising Affiliate Leaderboard
+          Activation Leaderboard
         </div>
         <div className="font-['Bebas_Neue'] text-white" style={{ fontSize: "2.16cqw", lineHeight: 1, letterSpacing: "0.2em", marginTop: "0.3cqw" }}>
           {month || "—"}
         </div>
+        <div className="font-['Poppins'] text-white/80" style={{ fontSize: "1.1cqw", lineHeight: 1.3, marginTop: "0.35cqw" }}>
+          Celebrating new affiliates driving growth this month.
+        </div>
       </div>
 
-      <div className="absolute grid items-stretch" style={{ top: "26.5%", left: "5%", right: "7%", gridTemplateColumns: "minmax(0, 45.15fr) minmax(0, 40.42fr)", columnGap: "2.43cqw" }}>
+      <div className="absolute grid items-stretch" style={{ top: "28%", left: "5%", right: "7%", gridTemplateColumns: "minmax(0, 45.15fr) minmax(0, 40.42fr)", columnGap: "2.43cqw" }}>
         <div className="grid" style={{ gridTemplateRows: "repeat(3, minmax(0, 1fr))", gap: "1cqw" }}>
           {rows.slice(0, 3).map((r, i) => (
             <TopCard key={r.id} row={r} rank={i + 1} />

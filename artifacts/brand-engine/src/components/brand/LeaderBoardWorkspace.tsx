@@ -75,7 +75,7 @@ type BoardKey = SingleBoard | "combo";
 const BOARD_LABELS: Record<BoardKey, string> = {
   highlevel: "Top HighLevel Affiliates",
   commander: "Commander Leader Board",
-  rising: "Activation Leaderboard",
+  rising: "Rising Affiliate Leaderboard",
   combo: "Commander + Affiliate",
 };
 
@@ -208,7 +208,7 @@ export function LeaderBoardWorkspace() {
           ) : (
             <EditableRows 
               key={board} 
-              title={board === "rising" ? "NEW AFFILIATES (1–10)" : `${BOARD_LABELS[board]} (1–10)`} 
+              title={board === "rising" ? "RISING AFFILIATES (1–10)" : `${BOARD_LABELS[board]} (1–10)`} 
               rows={singleRows} 
               onChange={setSingleRows} 
               noAvatar={board === "rising"}
@@ -231,7 +231,7 @@ export function LeaderBoardWorkspace() {
         <div
           ref={previewRef}
           data-export-preview
-          data-export-name={board === "rising" ? "Activation Leaderboard" : "Leader Board"}
+          data-export-name={board === "rising" ? "Rising Affiliate Leaderboard" : "Leader Board"}
           className="relative rounded-[14px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.55)] w-full"
           style={{
             aspectRatio: isCombo ? "1536 / 1024" : isCommander ? "2068 / 1324" : board === "rising" ? "1564 / 1006" : "1920 / 1080",

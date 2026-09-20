@@ -85,8 +85,8 @@ const RISING_SEED: Affiliate[] = Array.from({ length: 10 }, (_, i) => ({
   avatar: null,
 }));
 
-// Combo board = Commander (7) on the left + Affiliate (10) on the right, over one boxless bg image.
-const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 7).map((p, i) => ({
+// Combo board = Commander (10) on the left + Affiliate (10) on the right, over one boxless bg image.
+const COMBO_CMDR_SEED: Affiliate[] = COMMANDER_ROSTER.slice(0, 10).map((p, i) => ({
   id: `xc${i + 1}`,
   name: p.name,
   avatar: p.avatar,
@@ -202,7 +202,7 @@ export function LeaderBoardWorkspace() {
           )}
           {isCombo ? (
             <>
-              <EditableRows title="Commander (1–7)" rows={comboCmdr} onChange={setComboCmdr} />
+              <EditableRows title="Commander (1–10)" rows={comboCmdr} onChange={setComboCmdr} />
               <EditableRows title="Affiliate (1–10)" rows={comboAff} onChange={setComboAff} />
             </>
           ) : (
@@ -659,7 +659,7 @@ function comboRowGeom(n: number, i: number) {
 }
 
 function ComboBoard({ cmdr, aff, month }: { cmdr: Affiliate[]; aff: Affiliate[]; month: string }) {
-  const cmdrRows = cmdr.slice(0, 7);
+  const cmdrRows = cmdr.slice(0, 10);
   const affRows = aff.slice(0, 10);
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -845,7 +845,7 @@ function ComboSlot({
       }}
     >
       <ComboRankBadge rank={rank} />
-      <Avatar src={r.avatar ?? null} name={r.name ?? ""} sizeCqw={3.6} ringColor="#A9C1DB" />
+      <Avatar src={r.avatar ?? null} name={r.name ?? ""} sizeCqw={3.1} ringColor="#A9C1DB" />
       <div
         className="flex-1 min-w-0 truncate"
         style={{

@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import BrandEngine from "@/pages/BrandEngine";
+import AuthPage from "@/pages/AuthPage";
 import { ClerkProvider, SignIn, SignUp, useAuth } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { useEffect } from "react";
@@ -39,14 +40,14 @@ function Router() {
   return (
     <Switch>
       <Route path="/sign-in/*?">
-        <div className="flex h-screen items-center justify-center brand-app-bg text-white" style={{ background: "var(--brand-bg-deep, #09090b)" }}>
+        <AuthPage>
           <SignIn routing="path" path={signInPath} signUpUrl={signUpPath} />
-        </div>
+        </AuthPage>
       </Route>
       <Route path="/sign-up/*?">
-        <div className="flex h-screen items-center justify-center brand-app-bg text-white" style={{ background: "var(--brand-bg-deep, #09090b)" }}>
+        <AuthPage>
           <SignUp routing="path" path={signUpPath} signInUrl={signInPath} />
-        </div>
+        </AuthPage>
       </Route>
       <Route path="/" component={BrandEngine} />
       <Route component={NotFound} />
@@ -80,18 +81,21 @@ function App() {
           colorDanger: "#ef4444"
         },
         elements: {
-          cardBox: { backgroundColor: "#111115", width: "440px", maxWidth: "100%", borderRadius: "16px" },
-          card: { backgroundColor: "#111115", color: "#f4f4f5" },
-          headerTitle: "text-white font-semibold",
-          headerSubtitle: "text-zinc-400",
-          socialButtonsBlockButton: "bg-white/[0.04] border-white/[0.08] text-white hover:bg-white/[0.08]",
-          socialButtonsBlockButtonText: "text-white font-medium",
-          dividerLine: "bg-white/[0.08]",
-          dividerText: "text-zinc-500",
-          formFieldLabel: "text-zinc-300",
-          formFieldInput: "bg-black border-white/[0.08] text-white focus:border-[#00B2A9]",
-          footerActionText: "text-zinc-400",
-          footerActionLink: "text-[#00B2A9] hover:text-[#00B2A9]/80",
+          cardBox: { backgroundColor: "#111115", width: "100%", maxWidth: "100%", borderRadius: "16px", border: "1px solid rgba(255, 255, 255, 0.05)" },
+          card: { backgroundColor: "#111115", color: "#f4f4f5", boxShadow: "none" },
+          headerTitle: { color: "#ffffff", fontWeight: 600, fontSize: "1.5rem" },
+          headerSubtitle: { color: "#a1a1aa" },
+          socialButtonsBlockButton: { backgroundColor: "rgba(255, 255, 255, 0.03)", borderColor: "rgba(255, 255, 255, 0.08)", color: "#ffffff", padding: "12px" },
+          socialButtonsBlockButtonText: { color: "#ffffff", fontWeight: 500 },
+          socialButtonsProviderIcon: { filter: "brightness(1) invert(0)" },
+          dividerLine: { backgroundColor: "rgba(255, 255, 255, 0.08)" },
+          dividerText: { color: "#71717a" },
+          formFieldLabel: { color: "#d4d4d8" },
+          formFieldInput: { backgroundColor: "#09090b", borderColor: "rgba(255, 255, 255, 0.08)", color: "#ffffff" },
+          footerActionText: { color: "#a1a1aa" },
+          footerActionLink: { color: "#00B2A9" },
+          identityPreviewText: { color: "#ffffff" },
+          identityPreviewEditButtonIcon: { color: "#00B2A9" },
         }
       }}
     >

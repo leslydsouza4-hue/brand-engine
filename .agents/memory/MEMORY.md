@@ -1,5 +1,7 @@
 # Memory Index
 
+- [Shared session boundaries](shared-session-boundaries.md) — team-private explicit saves, complete builder state coverage, and programmatic sign-in test routing.
+
 - [Canvas alpha comparison](canvas-alpha-comparison.md) — compare alpha and black/white composites, not raw hidden RGB, when verifying locked PNG artwork.
 
 - [Rising visual direction](rising-visual-direction.md) — preserve approved dark cards/background; fit balanced columns inside the image's decorative frame.

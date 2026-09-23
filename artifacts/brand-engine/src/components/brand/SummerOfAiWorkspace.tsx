@@ -36,6 +36,7 @@ import { useSummerAssets, addSummerAsset } from "./summerStore";
 import { getFontEmbedCSS } from "./fontEmbed";
 import { fontDefFor, getGoogleFontEmbedCSS } from "./googleFonts";
 import { SummerFontPicker } from "./SummerFontPicker";
+import { useSessionState } from "./sessions/useSessionState";
 
 /** Content sections that hold a stack of design cards (everything but assets). */
 const CONTENT_SECTIONS = ["emailers", "ads", "social", "community"] as const;
@@ -194,23 +195,26 @@ export function SummerOfAiWorkspace({
 }) {
   const theme = SUMMER_THEMES[themeId];
 
-  const [{ cards, active }, setStacks] = useState<{ cards: CardMap; active: ActiveMap }>(() => initCards(themeId));
+  const [{ cards, active }, setStacks] = useSessionState<{ cards: CardMap; active: ActiveMap }>(
+    `summerOfAi.${themeId}.stacks`,
+    () => initCards(themeId),
+  );
   const [selected, setSelected] = useState<SummerElementKey | null>(null);
 
   // Reference images (shared across the workspace).
-  const [refImages, setRefImages] = useState<string[]>([]);
+  const [refImages, setRefImages] = useSessionState<string[]>(`summerOfAi.${themeId}.referenceImages`, []);
   const refInputRef = useRef<HTMLInputElement | null>(null);
   const bgInputRef = useRef<HTMLInputElement | null>(null);
   const subjectInputRef = useRef<HTMLInputElement | null>(null);
   const [subjectLoading, setSubjectLoading] = useState(false);
-  const [removeBg, setRemoveBg] = useState(true);
+  const [removeBg, setRemoveBg] = useSessionState(`summerOfAi.${themeId}.removeBackground`, true);
   const [genError, setGenError] = useState<string | null>(null);
 
   // Left control-panel tab.
   const [leftTab, setLeftTab] = useState<"content" | "design" | "background">("content");
 
   // Google-Doc import state.
-  const [docUrl, setDocUrl] = useState("");
+  const [docUrl, setDocUrl] = useSessionState(`summerOfAi.${themeId}.docUrl`, "");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
@@ -225,22 +229,14 @@ export function SummerOfAiWorkspace({
   const exportRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const cardRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
-  // Reset everything whenever the theme changes.
-  useEffect(() => {
-    setStacks(initCards(themeId));
-    setSelected(null);
-    setRefImages([]);
-    setGenError(null);
-    setDocUrl("");
-    setImportMsg(null);
-    batchJobRef.current += 1; // invalidate any in-flight batch
-  }, [themeId]);
-
   // Navigating to another section abandons any in-flight import/batch so its
   // late-resolving writes can't land after the user has moved on.
   useEffect(() => {
     batchJobRef.current += 1;
-  }, [section]);
+    return () => {
+      batchJobRef.current += 1;
+    };
+  }, [section, themeId]);
 
   const contentSection = section as ContentSection;
   const sectionCards = cards[contentSection];

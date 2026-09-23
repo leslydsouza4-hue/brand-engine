@@ -5,6 +5,7 @@ import JSZip from "jszip";
 import { useExport } from "./useExport";
 import { HIGHLY_POSES, BUNDLE_ASSETS } from "./highlyData";
 import { PhotoroomLink } from "./PhotoroomLink";
+import { useSessionState } from "./sessions/useSessionState";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_URL = `${BASE}assets/email-templates/BG_BLUE.jpg`;
@@ -1075,8 +1076,8 @@ function EmailPreview({ email, index, isActive, isExporting, onSelect, onPatch, 
 }
 
 export function EmailTemplatesWorkspace() {
-  const [emails, setEmails] = useState<EmailItem[]>(() => [newEmail()]);
-  const [activeId, setActiveId] = useState<string>(emails[0]!.id);
+  const [emails, setEmails] = useSessionState<EmailItem[]>("emailTemplates.emails", () => [newEmail()]);
+  const [activeId, setActiveId] = useSessionState<string>("emailTemplates.activeEmailId", emails[0]!.id);
   const [isZipping, setIsZipping] = useState(false);
   const [bgRemovingId, setBgRemovingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -1152,7 +1153,7 @@ export function EmailTemplatesWorkspace() {
     }, 50);
   };
 
-  const [docUrl, setDocUrl] = useState("");
+  const [docUrl, setDocUrl] = useSessionState("emailTemplates.docUrl", "");
   const [isImporting, setIsImporting] = useState(false);
   const [importMsg, setImportMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 

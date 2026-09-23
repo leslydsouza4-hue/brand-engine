@@ -6,6 +6,7 @@ import { DownloadButton } from "./DownloadButton";
 import { BatchExportQueue } from "./BatchExportQueue";
 import { useExport, type QueuedThumbnail } from "./useExport";
 import { PhotoroomLink } from "./PhotoroomLink";
+import { useSessionState } from "./sessions/useSessionState";
 
 interface TeamMember {
   id: string;
@@ -86,16 +87,16 @@ export function DidYouKnowWorkspace() {
   const { isExporting, handleExport, captureToQueue } = useExport();
   const [batchQueue, setBatchQueue] = useState<QueuedThumbnail[]>([]);
 
-  const [layout, setLayout] = useState<ThumbnailLayout>("text-left");
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
-  const [activeImage, setActiveImage] = useState<string | null>(null);
-  const [headlineWhite, setHeadlineWhite] = useState("");
-  const [headlineHighlight, setHeadlineHighlight] = useState("");
-  const [badgeStyle, setBadgeStyle] = useState(0);
+  const [layout, setLayout] = useSessionState<ThumbnailLayout>("didYouKnow.layout", "text-left");
+  const [selectedMember, setSelectedMember] = useSessionState<string | null>("didYouKnow.selectedMember", null);
+  const [activeImage, setActiveImage] = useSessionState<string | null>("didYouKnow.activeImage", null);
+  const [headlineWhite, setHeadlineWhite] = useSessionState("didYouKnow.headlineWhite", "");
+  const [headlineHighlight, setHeadlineHighlight] = useSessionState("didYouKnow.headlineHighlight", "");
+  const [badgeStyle, setBadgeStyle] = useSessionState("didYouKnow.badgeStyle", 0);
 
-  const [personX, setPersonX] = useState(78);
-  const [personY, setPersonY] = useState(55);
-  const [personScale, setPersonScale] = useState(95);
+  const [personX, setPersonX] = useSessionState("didYouKnow.personX", 78);
+  const [personY, setPersonY] = useSessionState("didYouKnow.personY", 55);
+  const [personScale, setPersonScale] = useSessionState("didYouKnow.personScale", 95);
 
   const handleLayoutChange = (l: ThumbnailLayout) => {
     setLayout(l);
@@ -106,13 +107,13 @@ export function DidYouKnowWorkspace() {
 
   const [isDragging, setIsDragging] = useState(false);
 
-  const [screenshotImage, setScreenshotImage] = useState<string | null>(null);
-  const [screenshotOpacity, setScreenshotOpacity] = useState(40);
-  const [screenshotScale, setScreenshotScale] = useState(85);
-  const [screenshotRadius, setScreenshotRadius] = useState(16);
-  const [screenshotOffsetX, setScreenshotOffsetX] = useState(0);
-  const [screenshotOffsetY, setScreenshotOffsetY] = useState(0);
-  const [screenshotStyle, setScreenshotStyle] = useState<"glow" | "float" | "neon" | "minimal" | "tilt" | "shadow" | "cinematic" | "glass">("glow");
+  const [screenshotImage, setScreenshotImage] = useSessionState<string | null>("didYouKnow.screenshotImage", null);
+  const [screenshotOpacity, setScreenshotOpacity] = useSessionState("didYouKnow.screenshotOpacity", 40);
+  const [screenshotScale, setScreenshotScale] = useSessionState("didYouKnow.screenshotScale", 85);
+  const [screenshotRadius, setScreenshotRadius] = useSessionState("didYouKnow.screenshotRadius", 16);
+  const [screenshotOffsetX, setScreenshotOffsetX] = useSessionState("didYouKnow.screenshotOffsetX", 0);
+  const [screenshotOffsetY, setScreenshotOffsetY] = useSessionState("didYouKnow.screenshotOffsetY", 0);
+  const [screenshotStyle, setScreenshotStyle] = useSessionState<"glow" | "float" | "neon" | "minimal" | "tilt" | "shadow" | "cinematic" | "glass">("didYouKnow.screenshotStyle", "glow");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -179,7 +180,7 @@ export function DidYouKnowWorkspace() {
 
   const textRef = useRef<HTMLDivElement>(null);
   const [headlineFontPx, setHeadlineFontPx] = useState(30);
-  const [headlineMaxLines, setHeadlineMaxLines] = useState<"auto" | 1 | 2 | 3 | 4>("auto");
+  const [headlineMaxLines, setHeadlineMaxLines] = useSessionState<"auto" | 1 | 2 | 3 | 4>("didYouKnow.headlineMaxLines", "auto");
 
   useEffect(() => {
     const el = textRef.current;
@@ -639,6 +640,7 @@ export function DidYouKnowWorkspace() {
       <LivePreview>
         <div
           ref={previewRef}
+          data-session-preview
           data-export-preview
           data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; const t = (headlineWhite || headlineHighlight).trim(); return t ? `Did You Know - ${t.substring(0,40)} ${datePart}` : `Did You Know Thumbnail ${datePart}`; })()}
           className={`w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}

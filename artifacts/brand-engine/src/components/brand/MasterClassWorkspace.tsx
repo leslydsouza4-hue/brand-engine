@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useLayoutEffect, type RefObject } from "react";
+import { useSessionState } from "./sessions/useSessionState";
 import {
   UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw, PackageOpen
 } from "lucide-react";
@@ -1455,75 +1456,51 @@ function TemplatePreview(props: {
   return <HorizontalTemplate {...props} />;
 }
 
-const STORAGE_KEY = "masterclass-workspace-state";
-
-function loadSaved<T>(key: string, fallback: T): T {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return fallback;
-    const data = JSON.parse(raw);
-    return key in data ? data[key] : fallback;
-  } catch { return fallback; }
-}
-
-function saveToDisk(patch: Record<string, unknown>) {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    Object.assign(data, patch);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch { /* ignore */ }
-}
-
-function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const [val, setValRaw] = useState<T>(() => loadSaved(key, fallback));
-  const setVal = useCallback((v: T | ((prev: T) => T)) => {
-    setValRaw((prev) => {
-      const next = typeof v === "function" ? (v as (p: T) => T)(prev) : v;
-      saveToDisk({ [key]: next });
-      return next;
-    });
-  }, [key]);
-  return [val, setVal];
-}
-
 export function MasterClassWorkspace() {
-  const [headline, setHeadline] = usePersistedState("headline", "");
-  const [subheadline, setSubheadline] = usePersistedState("subheadline", "");
-  const [dateText, setDateText] = usePersistedState("dateText", "");
-  const [guestName, setGuestName] = usePersistedState("guestName", "");
-  const [guestRole, setGuestRole] = usePersistedState("guestRole", "Guest");
-  // personImage holds a blob: URL from URL.createObjectURL — those URLs are
-  // only valid for the document that created them, so we MUST NOT persist
-  // them. After a refresh the stale blob URL would 404 and break exports.
-  const [personImage, setPersonImage] = useState<string | null>(null);
-  const [imgSettingsByGroup, setImgSettingsByGroup] = usePersistedState<Record<string, ImageSettings>>("imgSettingsByGroup", {});
+  const [headline, setHeadline] = useSessionState("masterclass.headline", "");
+  const [subheadline, setSubheadline] = useSessionState("masterclass.subheadline", "");
+  const [dateText, setDateText] = useSessionState("masterclass.dateText", "");
+  const [guestName, setGuestName] = useSessionState("masterclass.guestName", "");
+  const [guestRole, setGuestRole] = useSessionState("masterclass.guestRole", "Guest");
+  const [personImage, setPersonImage] = useSessionState<string | null>("masterclass.personImage", null);
+  const [imgSettingsByGroup, setImgSettingsByGroup] = useSessionState<Record<string, ImageSettings>>("masterclass.imgSettingsByGroup", {});
   const [isRemovingBg, setIsRemovingBg] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = usePersistedState("selectedTemplate", "horizontal-dates");
+  const [selectedTemplate, setSelectedTemplate] = useSessionState("masterclass.selectedTemplate", "horizontal-dates");
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [isExportingAll, setIsExportingAll] = useState(false);
   const [zipProgress, setZipProgress] = useState<{ current: number; total: number } | null>(null);
   const [showGallery, setShowGallery] = useState(false);
   // Per-template selection in the gallery: which templates to include in the
   // bulk ZIP. Defaults to all templates; user can uncheck any they don't want.
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(TEMPLATES.map((t) => t.id)));
+  const [selectedIdList, setSelectedIdList] = useSessionState<string[]>(
+    "masterclass.selectedTemplateIds",
+    () => TEMPLATES.map((t) => t.id),
+  );
+  const selectedIds = new Set(selectedIdList);
   const toggleSelected = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
+    setSelectedIdList((prev) => {
+      if (prev.includes(id)) return prev.filter((selectedId) => selectedId !== id);
+      return [...prev, id];
     });
   }, []);
   const selectAllTemplates = useCallback(() => {
-    setSelectedIds(new Set(TEMPLATES.map((t) => t.id)));
+    setSelectedIdList(TEMPLATES.map((t) => t.id));
   }, []);
   const selectNoTemplates = useCallback(() => {
-    setSelectedIds(new Set());
+    setSelectedIdList([]);
   }, []);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showGallery) return;
+    const graphic = previewRef.current?.querySelector(":scope > [data-template-id]");
+    if (!graphic) return;
+    graphic.setAttribute("data-session-preview", "");
+    return () => graphic.removeAttribute("data-session-preview");
+  }, [selectedTemplate, showGallery]);
 
   const blobToDataUrl = (blob: Blob): Promise<string> =>
     new Promise((resolve, reject) => {

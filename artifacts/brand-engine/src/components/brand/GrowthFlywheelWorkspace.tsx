@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useSessionState } from "./sessions/useSessionState";
 import {
   ChevronDown,
   ChevronUp,
@@ -242,12 +243,12 @@ const THEME_VARS: Record<SlideTheme, Record<string, string>> = {
 };
 
 export function GrowthFlywheelWorkspace() {
-  const [stages, setStages] = useState<Stage[]>(INITIAL_STAGES);
-  const [hero, setHero] = useState<HeroContent>(INITIAL_HERO);
+  const [stages, setStages] = useSessionState<Stage[]>("growthFlywheel.stages", INITIAL_STAGES);
+  const [hero, setHero] = useSessionState<HeroContent>("growthFlywheel.hero", INITIAL_HERO);
   const [openSection, setOpenSection] = useState<EditTarget>("hero");
-  const [exportFormat, setExportFormat] = useState<"pdf" | "png">("pdf");
-  const [exportScope, setExportScope] = useState<ExportScope>("slide");
-  const [theme, setTheme] = useState<SlideTheme>("light");
+  const [exportFormat, setExportFormat] = useSessionState<"pdf" | "png">("growthFlywheel.exportFormat", "pdf");
+  const [exportScope, setExportScope] = useSessionState<ExportScope>("growthFlywheel.exportScope", "slide");
+  const [theme, setTheme] = useSessionState<SlideTheme>("growthFlywheel.theme", "light");
   const [isExporting, setIsExporting] = useState(false);
 
   const activeThemeMap = STAGE_THEME;

@@ -4,6 +4,7 @@ import { toPng } from "html-to-image";
 import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
 import { PhotoroomLink } from "./PhotoroomLink";
+import { useSessionState } from "./sessions/useSessionState";
 
 const BASE = import.meta.env.BASE_URL;
 type SwooshVariant = "gradient" | "turquoise";
@@ -31,33 +32,6 @@ const DOWNLOAD_H = 1350;
 const PREVIEW_W = 1920;
 const PREVIEW_H = 1080;
 const PREVIEW_RATIO = PREVIEW_W / PREVIEW_H;
-
-// Persisted state helper (same pattern as MasterClassWorkspace). The version
-// suffix is bumped whenever defaults change so existing users get the new
-// defaults instead of stale localStorage values.
-function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const STORAGE_KEY = `brandEngine.swooshBackground.v12.${key}`;
-  const [v, setV] = useState<T>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw == null ? fallback : (JSON.parse(raw) as T);
-    } catch {
-      return fallback;
-    }
-  });
-  const setAndPersist: (v: T | ((prev: T) => T)) => void = (next) => {
-    setV((prev) => {
-      const nv = typeof next === "function" ? (next as (p: T) => T)(prev) : next;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(nv));
-      } catch {
-        /* ignore quota errors */
-      }
-      return nv;
-    });
-  };
-  return [v, setAndPersist];
-}
 
 // Fit a child to its parent while preserving the canvas aspect ratio.
 function useFitParent(ref: RefObject<HTMLDivElement | null>, ratio: number) {
@@ -646,7 +620,7 @@ function SwooshComposition({
 type ExportKind = "complete" | "swoosh";
 
 export function SwooshBackgroundWorkspace() {
-  const [personImage, setPersonImage] = useState<string | null>(null);
+  const [personImage, setPersonImage] = useSessionState<string | null>("swooshBackground.personImage", null);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   // We track *which* export is in flight so the right button shows a
   // spinner while leaving the other one usable. `null` = idle.
@@ -654,14 +628,14 @@ export function SwooshBackgroundWorkspace() {
   const isExporting = exportKind !== null;
   // Swoosh placement is fixed — only the human + front opacity are tunable.
   const swoosh: SwooshSettings = DEFAULT_SWOOSH;
-  const [swooshVariant, setSwooshVariant] = usePersistedState<SwooshVariant>("swooshVariant", "gradient");
+  const [swooshVariant, setSwooshVariant] = useSessionState<SwooshVariant>("swooshBackground.swooshVariant", "gradient");
   const swooshSrc = SWOOSH_VARIANTS[swooshVariant]?.src ?? SWOOSH_VARIANTS.gradient.src;
-  const [human, setHuman] = usePersistedState<HumanSettings>("human", DEFAULT_HUMAN);
+  const [human, setHuman] = useSessionState<HumanSettings>("swooshBackground.human", DEFAULT_HUMAN);
   // Speaker name shown on the LEFT side of the Slide preview, paired with
   // the HighLevel logo. Only appears in the "Complete" download — the
   // transparent Swoosh PNG stays branding-free so it can be dropped onto
   // any background.
-  const [speakerName, setSpeakerName] = usePersistedState<string>("speakerName", "");
+  const [speakerName, setSpeakerName] = useSessionState<string>("swooshBackground.speakerName", "");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);

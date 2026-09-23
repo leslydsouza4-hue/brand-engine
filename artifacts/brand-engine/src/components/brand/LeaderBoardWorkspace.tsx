@@ -3,6 +3,7 @@ import { Download, Loader2, Upload, X, User as UserIcon, GripVertical, Check, Ch
 import { useExport } from "./useExport";
 import { LivePreview } from "./LivePreview";
 import { RisingBoard } from "./RisingBoard";
+import { useSessionState } from "./sessions/useSessionState";
 import bgAsset from "@assets/Group_1_1778888276448.png";
 import bgCommander from "@assets/Commander-Leaderboard-Mar.-2026-(1)_1778885211192.png";
 import medal1 from "@assets/1lugarrrrr_1778871874914.png";
@@ -98,15 +99,15 @@ const COMBO_AFF_SEED: Affiliate[] = HIGHLEVEL_SEED.slice(0, 10).map((p, i) => ({
 }));
 
 export function LeaderBoardWorkspace() {
-  const [boards, setBoards] = useState<Record<SingleBoard, Affiliate[]>>({
+  const [boards, setBoards] = useSessionState<Record<SingleBoard, Affiliate[]>>("leaderBoard.boards", {
     highlevel: HIGHLEVEL_SEED,
     commander: COMMANDER_SEED,
     rising: RISING_SEED,
   });
-  const [comboCmdr, setComboCmdr] = useState<Affiliate[]>(COMBO_CMDR_SEED);
-  const [comboAff, setComboAff] = useState<Affiliate[]>(COMBO_AFF_SEED);
-  const [comboMonthYear, setComboMonthYear] = useState("FEBRUARY 2026");
-  const [board, setBoard] = useState<BoardKey>("highlevel");
+  const [comboCmdr, setComboCmdr] = useSessionState<Affiliate[]>("leaderBoard.comboCommanders", COMBO_CMDR_SEED);
+  const [comboAff, setComboAff] = useSessionState<Affiliate[]>("leaderBoard.comboAffiliates", COMBO_AFF_SEED);
+  const [comboMonthYear, setComboMonthYear] = useSessionState("leaderBoard.comboMonthYear", "FEBRUARY 2026");
+  const [board, setBoard] = useSessionState<BoardKey>("leaderBoard.activeBoard", "highlevel");
   const [boardOpen, setBoardOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -117,9 +118,9 @@ export function LeaderBoardWorkspace() {
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, [boardOpen]);
-  const [commanderMonthYear, setCommanderMonthYear] = useState("MARCH 2026");
-  const [highlevelMonthYear, setHighlevelMonthYear] = useState("MARCH 2026");
-  const [risingMonthYear, setRisingMonthYear] = useState("MARCH 2026");
+  const [commanderMonthYear, setCommanderMonthYear] = useSessionState("leaderBoard.commanderMonthYear", "MARCH 2026");
+  const [highlevelMonthYear, setHighlevelMonthYear] = useSessionState("leaderBoard.highlevelMonthYear", "MARCH 2026");
+  const [risingMonthYear, setRisingMonthYear] = useSessionState("leaderBoard.risingMonthYear", "MARCH 2026");
   const previewRef = useRef<HTMLDivElement>(null);
   const { isExporting, handleExport } = useExport();
 

@@ -11,6 +11,30 @@ tags:
   - name: health
     description: Health operations
 paths:
+  /session-teams:
+    $ref: "./saved-sessions.yaml#/paths/teams"
+  /session-teams/{teamId}/members:
+    $ref: "./saved-sessions.yaml#/paths/members"
+  /session-teams/{teamId}/members/{userId}:
+    $ref: "./saved-sessions.yaml#/paths/member"
+  /session-teams/{teamId}/invites:
+    $ref: "./saved-sessions.yaml#/paths/invites"
+  /session-teams/{teamId}/invites/{inviteId}:
+    $ref: "./saved-sessions.yaml#/paths/invite"
+  /session-teams/{teamId}/sessions:
+    $ref: "./saved-sessions.yaml#/paths/sessions"
+  /session-teams/{teamId}/sessions/{id}:
+    $ref: "./saved-sessions.yaml#/paths/session"
+  /session-teams/{teamId}/sessions/{id}/versions:
+    $ref: "./saved-sessions.yaml#/paths/versions"
+  /session-teams/{teamId}/sessions/{id}/versions/{revision}:
+    $ref: "./saved-sessions.yaml#/paths/version"
+  /session-teams/{teamId}/assets:
+    $ref: "./saved-sessions.yaml#/paths/assets"
+  /session-teams/{teamId}/assets/{assetId}/complete:
+    $ref: "./saved-sessions.yaml#/paths/complete"
+  /session-teams/{teamId}/assets/{assetId}:
+    $ref: "./saved-sessions.yaml#/paths/asset"
   /healthz:
     get:
       operationId: healthCheck

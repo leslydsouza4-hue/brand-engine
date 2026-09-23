@@ -30,6 +30,10 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useBrandMode, BRAND_THEMES, type BrandMode } from "./brandModeStore";
 import { SUMMER_THEMES, SUMMER_THEME_ORDER, SUMMER_SECTIONS, type SummerSection } from "./summerThemes";
+import { useAuth, useUser, useClerk } from "@clerk/react";
+import { useSessions } from "@/components/brand/sessions/SessionProvider";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LogOut } from "lucide-react";
 
 const SUMMER_SECTION_ICON = { emailers: Mail, ads: Megaphone, social: Share2, community: Users } as const;
 
@@ -51,9 +55,10 @@ interface SidebarProps {
   setSummerSection?: (s: SummerSection) => void;
   mobileOpen?: boolean;
   onClose?: () => void;
+  onOpenLibrary?: () => void;
 }
 
-export function Sidebar({ currentMode, setMode, summerSection = "emailers", setSummerSection, mobileOpen, onClose }: SidebarProps) {
+export function Sidebar({ currentMode, setMode, summerSection = "emailers", setSummerSection, mobileOpen, onClose, onOpenLibrary }: SidebarProps) {
   const [brandMode, setBrandMode] = useBrandMode();
   const theme = BRAND_THEMES[brandMode];
   const handleSetMode = (mode: string) => {
@@ -292,6 +297,16 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
           </>
         )}
         {!isLU && !isSummer && <>
+        <div className="px-[12px] mb-[10px] relative">
+          <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Library</div>
+          <button
+            onClick={() => onOpenLibrary?.()}
+            className={`${btnBase} cursor-pointer text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]`}
+          >
+            <FolderOpen className={iconCls(false)} />
+            Saved Sessions
+          </button>
+        </div>
         <div className="px-[12px] mb-[10px] relative">
           <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">Create</div>
 
@@ -550,8 +565,45 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
             <MessageSquarePlus className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'feature-requests' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60'}`} />
             Feature Requests
           </button>
+          
+          <UserSidebarMenu />
         </div>
       </nav>
     </>
+  );
+}
+
+function UserSidebarMenu() {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const { confirmNavigation } = useSessions();
+
+  if (!user) return null;
+
+  const handleSignOut = () => {
+    if (confirmNavigation()) {
+      signOut({ redirectUrl: "/" });
+    }
+  };
+
+  return (
+    <div className="mt-4 pt-4 border-t border-white/5">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="w-full flex items-center gap-[12px] py-[8px] px-[12px] rounded-[16px] cursor-pointer transition-all duration-250 hover:bg-white/5 text-left">
+            <img src={user.imageUrl} alt={user.fullName || "User"} className="w-[28px] h-[28px] rounded-full object-cover shrink-0" />
+            <div className="flex-1 overflow-hidden">
+              <div className="text-[13px] font-medium text-white truncate">{user.fullName || user.primaryEmailAddress?.emailAddress}</div>
+              <div className="text-[11px] text-[#94A3B8] truncate">{user.primaryEmailAddress?.emailAddress}</div>
+            </div>
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="top" className="w-[220px] bg-[#18181b] border-white/10 text-zinc-300">
+          <DropdownMenuItem onClick={handleSignOut} className="focus:bg-red-500/20 focus:text-red-400 text-red-400 cursor-pointer py-2">
+            <LogOut className="w-4 h-4 mr-2" /> Sign Out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

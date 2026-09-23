@@ -1,0 +1,345 @@
+paths:
+  teams:
+    get:
+      operationId: listSessionTeams
+      summary: List teams and accept invitations matching Clerk-verified email addresses
+      responses:
+        "200":
+          description: Teams and authenticated user
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [teams, user]
+                properties:
+                  teams:
+                    type: array
+                    items: { $ref: "#/schemas/Team" }
+                  user:
+                    type: object
+                    required: [id, name]
+                    properties:
+                      id: { type: string }
+                      name: { type: string }
+        default: { $ref: "#/responses/Error" }
+    post:
+      operationId: createSessionTeam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 160 }
+      responses:
+        "201":
+          description: Team created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [team]
+                properties:
+                  team: { $ref: "#/schemas/Team" }
+        default: { $ref: "#/responses/Error" }
+  members:
+    parameters: [{ $ref: "#/parameters/teamId" }]
+    get:
+      operationId: listSessionTeamMembers
+      responses:
+        "200":
+          description: Team membership
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [members, invites]
+                properties:
+                  members:
+                    type: array
+                    items:
+                      type: object
+                      required: [userId, name, role]
+                      properties:
+                        userId: { type: string }
+                        name: { type: string }
+                        role: { type: string, enum: [admin, member] }
+                  invites:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, email]
+                      properties:
+                        id: { type: string }
+                        email: { type: string }
+        default: { $ref: "#/responses/Error" }
+  member:
+    parameters:
+      - { $ref: "#/parameters/teamId" }
+      - { name: userId, in: path, required: true, schema: { type: string } }
+    delete:
+      operationId: removeSessionTeamMember
+      responses:
+        "200": { $ref: "#/responses/Ok" }
+        default: { $ref: "#/responses/Error" }
+  invites:
+    parameters: [{ $ref: "#/parameters/teamId" }]
+    post:
+      operationId: inviteSessionTeamMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        "200": { $ref: "#/responses/Ok" }
+        default: { $ref: "#/responses/Error" }
+  invite:
+    parameters:
+      - { $ref: "#/parameters/teamId" }
+      - { name: inviteId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      operationId: revokeSessionTeamInvite
+      responses:
+        "200": { $ref: "#/responses/Ok" }
+        default: { $ref: "#/responses/Error" }
+  sessions:
+    parameters: [{ $ref: "#/parameters/teamId" }]
+    get:
+      operationId: listSavedSessions
+      parameters:
+        - { name: archived, in: query, schema: { type: boolean, default: false } }
+      responses:
+        "200":
+          description: Session summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessions]
+                properties:
+                  sessions:
+                    type: array
+                    items: { $ref: "#/schemas/SessionSummary" }
+        default: { $ref: "#/responses/Error" }
+    post:
+      operationId: createSavedSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/schemas/SaveSession" }
+      responses:
+        "201": { $ref: "#/responses/Session" }
+        default: { $ref: "#/responses/Error" }
+  session:
+    parameters: [{ $ref: "#/parameters/teamId" }, { $ref: "#/parameters/id" }]
+    get:
+      operationId: getSavedSession
+      responses:
+        "200": { $ref: "#/responses/Session" }
+        default: { $ref: "#/responses/Error" }
+    put:
+      operationId: updateSavedSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "#/schemas/SaveSession" }
+                - type: object
+                  required: [revision]
+                  properties:
+                    revision: { type: integer, minimum: 1 }
+      responses:
+        "200": { $ref: "#/responses/Session" }
+        "409": { $ref: "#/responses/Error" }
+        default: { $ref: "#/responses/Error" }
+    patch:
+      operationId: patchSavedSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [revision]
+              properties:
+                revision: { type: integer, minimum: 1 }
+                name: { type: string, minLength: 1, maxLength: 160 }
+                archived: { type: boolean }
+      responses:
+        "200": { $ref: "#/responses/Session" }
+        "409": { $ref: "#/responses/Error" }
+        default: { $ref: "#/responses/Error" }
+  versions:
+    parameters: [{ $ref: "#/parameters/teamId" }, { $ref: "#/parameters/id" }]
+    get:
+      operationId: listSavedSessionVersions
+      responses:
+        "200":
+          description: Immutable history
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [versions]
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      type: object
+                      required: [revision, name, updatedAt, updatedByName]
+                      properties:
+                        revision: { type: integer }
+                        name: { type: string }
+                        updatedAt: { type: string, format: date-time }
+                        updatedByName: { type: string }
+        default: { $ref: "#/responses/Error" }
+  version:
+    parameters:
+      - { $ref: "#/parameters/teamId" }
+      - { $ref: "#/parameters/id" }
+      - { name: revision, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      operationId: getSavedSessionVersion
+      responses:
+        "200": { $ref: "#/responses/Session" }
+        default: { $ref: "#/responses/Error" }
+  assets:
+    parameters: [{ $ref: "#/parameters/teamId" }]
+    post:
+      operationId: requestSessionAssetUpload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [name, contentType, size]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 160 }
+                contentType: { type: string, enum: [image/png, image/jpeg, image/webp, image/gif, image/svg+xml] }
+                size: { type: integer, minimum: 1, maximum: 26214400 }
+      responses:
+        "201":
+          description: Direct presigned PUT destination
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [assetId, uploadURL]
+                properties:
+                  assetId: { type: string }
+                  uploadURL: { type: string }
+        default: { $ref: "#/responses/Error" }
+  complete:
+    parameters: [{ $ref: "#/parameters/teamId" }, { $ref: "#/parameters/assetId" }]
+    post:
+      operationId: completeSessionAssetUpload
+      responses:
+        "200":
+          description: Verified private image
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [assetId]
+                properties:
+                  assetId: { type: string }
+        default: { $ref: "#/responses/Error" }
+  asset:
+    parameters: [{ $ref: "#/parameters/teamId" }, { $ref: "#/parameters/assetId" }]
+    get:
+      operationId: getSessionAsset
+      responses:
+        "200":
+          description: Private image stream (no-store, nosniff and sandbox CSP)
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        default: { $ref: "#/responses/Error" }
+parameters:
+  teamId: { name: teamId, in: path, required: true, schema: { type: string, format: uuid } }
+  id: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+  assetId: { name: assetId, in: path, required: true, schema: { type: string, format: uuid } }
+schemas:
+  Team:
+    type: object
+    required: [id, name, role]
+    properties:
+      id: { type: string }
+      name: { type: string }
+      role: { type: string, enum: [admin, member] }
+  SaveSession:
+    type: object
+    required: [name, workspaceType, schemaVersion, state]
+    properties:
+      name: { type: string, minLength: 1, maxLength: 160 }
+      workspaceType: { type: string, pattern: "^[a-zA-Z0-9_-]{1,80}$" }
+      schemaVersion: { type: integer, enum: [1] }
+      state: { type: object, additionalProperties: true }
+      thumbnailAssetId: { type: [string, "null"], format: uuid }
+  SessionSummary:
+    type: object
+    required: [id, teamId, name, workspaceType, schemaVersion, revision, createdByName, updatedByName, createdAt, updatedAt, archived, thumbnailAssetId]
+    properties:
+      id: { type: string }
+      teamId: { type: string }
+      name: { type: string }
+      workspaceType: { type: string }
+      schemaVersion: { type: integer }
+      revision: { type: integer }
+      createdByName: { type: string }
+      updatedByName: { type: string }
+      createdAt: { type: string, format: date-time }
+      updatedAt: { type: string, format: date-time }
+      archived: { type: boolean }
+      thumbnailAssetId: { type: [string, "null"] }
+  Session:
+    allOf:
+      - { $ref: "#/schemas/SessionSummary" }
+      - type: object
+        required: [state]
+        properties:
+          state: { type: object, additionalProperties: true }
+responses:
+  Session:
+    description: Full saved session
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [session]
+          properties:
+            session: { $ref: "#/schemas/Session" }
+  Ok:
+    description: Success
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [ok]
+          properties:
+            ok: { type: boolean, enum: [true] }
+  Error:
+    description: "400 validation; 401 unauthenticated; 403 forbidden; 404 missing; 409 stale revision; 413 oversized state"
+    content:
+      application/json:
+        schema:
+          type: object
+          required: [error]
+          properties:
+            error: { type: string }
+            code: { type: string }

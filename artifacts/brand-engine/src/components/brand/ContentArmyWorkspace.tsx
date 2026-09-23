@@ -6,6 +6,7 @@ import { DownloadButton } from "./DownloadButton";
 import { BatchExportQueue } from "./BatchExportQueue";
 import { useExport, type QueuedThumbnail } from "./useExport";
 import { PhotoroomLink } from "./PhotoroomLink";
+import { useSessionState } from "./sessions/useSessionState";
 
 interface TeamMember {
   id: string;
@@ -80,18 +81,18 @@ export function ContentArmyWorkspace() {
   const { isExporting, handleExport, captureToQueue } = useExport();
   const [batchQueue, setBatchQueue] = useState<QueuedThumbnail[]>([]);
 
-  const [layout, setLayout] = useState<ThumbnailLayout>("classic");
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
-  const [activeImage, setActiveImage] = useState<string | null>(null);
-  const [headline, setHeadline] = useState("");
-  const [headlineMaxLines, setHeadlineMaxLines] = useState<"auto" | 1 | 2 | 3>("auto");
+  const [layout, setLayout] = useSessionState<ThumbnailLayout>("contentArmy.layout", "classic");
+  const [selectedMember, setSelectedMember] = useSessionState<string | null>("contentArmy.selectedMember", null);
+  const [activeImage, setActiveImage] = useSessionState<string | null>("contentArmy.activeImage", null);
+  const [headline, setHeadline] = useSessionState("contentArmy.headline", "");
+  const [headlineMaxLines, setHeadlineMaxLines] = useSessionState<"auto" | 1 | 2 | 3>("contentArmy.headlineMaxLines", "auto");
   const [headlineFontPx, setHeadlineFontPx] = useState<number | null>(null);
-  const [subtext, setSubtext] = useState("");
-  const [stripText, setStripText] = useState("");
+  const [subtext, setSubtext] = useSessionState("contentArmy.subtext", "");
+  const [stripText, setStripText] = useSessionState("contentArmy.stripText", "");
 
-  const [personX, setPersonX] = useState(75);
-  const [personY, setPersonY] = useState(50);
-  const [personScale, setPersonScale] = useState(95);
+  const [personX, setPersonX] = useSessionState("contentArmy.personX", 75);
+  const [personY, setPersonY] = useSessionState("contentArmy.personY", 50);
+  const [personScale, setPersonScale] = useSessionState("contentArmy.personScale", 95);
 
   const handleLayoutChange = (l: ThumbnailLayout) => {
     setLayout(l);
@@ -101,19 +102,19 @@ export function ContentArmyWorkspace() {
   };
   const [isDragging, setIsDragging] = useState(false);
 
-  const [screenshotImage, setScreenshotImage] = useState<string | null>(null);
-  const [screenshotOpacity, setScreenshotOpacity] = useState(40);
-  const [screenshotScale, setScreenshotScale] = useState(85);
-  const [screenshotRadius, setScreenshotRadius] = useState(16);
-  const [screenshotOffsetX, setScreenshotOffsetX] = useState(0);
-  const [screenshotOffsetY, setScreenshotOffsetY] = useState(0);
-  const [screenshotStyle, setScreenshotStyle] = useState<"glow" | "float" | "neon" | "minimal" | "tilt" | "shadow" | "cinematic" | "glass">("glow");
+  const [screenshotImage, setScreenshotImage] = useSessionState<string | null>("contentArmy.screenshotImage", null);
+  const [screenshotOpacity, setScreenshotOpacity] = useSessionState("contentArmy.screenshotOpacity", 40);
+  const [screenshotScale, setScreenshotScale] = useSessionState("contentArmy.screenshotScale", 85);
+  const [screenshotRadius, setScreenshotRadius] = useSessionState("contentArmy.screenshotRadius", 16);
+  const [screenshotOffsetX, setScreenshotOffsetX] = useSessionState("contentArmy.screenshotOffsetX", 0);
+  const [screenshotOffsetY, setScreenshotOffsetY] = useSessionState("contentArmy.screenshotOffsetY", 0);
+  const [screenshotStyle, setScreenshotStyle] = useSessionState<"glow" | "float" | "neon" | "minimal" | "tilt" | "shadow" | "cinematic" | "glass">("contentArmy.screenshotStyle", "glow");
 
-  const [supportUrl, setSupportUrl] = useState("");
+  const [supportUrl, setSupportUrl] = useSessionState("contentArmy.supportUrl", "");
   const [supportLoading, setSupportLoading] = useState(false);
   const [supportError, setSupportError] = useState<string | null>(null);
   const [supportLoaded, setSupportLoaded] = useState(false);
-  const [supportImages, setSupportImages] = useState<string[]>([]);
+  const [supportImages, setSupportImages] = useSessionState<string[]>("contentArmy.supportImages", []);
   const [supportImagesOpen, setSupportImagesOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -723,7 +724,7 @@ export function ContentArmyWorkspace() {
       </div>
 
       <LivePreview>
-        <div ref={previewRef} data-export-preview data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; return headline.trim() ? `${headline.trim()} ${datePart}` : `Content Army Thumbnail ${datePart}`; })()} className={`w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}>
+        <div ref={previewRef} data-session-preview data-export-preview data-export-name={(() => { const d = new Date(); const datePart = `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`; return headline.trim() ? `${headline.trim()} ${datePart}` : `Content Army Thumbnail ${datePart}`; })()} className={`w-full max-w-[720px] aspect-video relative overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.4)] font-['Poppins'] ${activeImage ? 'cursor-grab' : ''} ${isDragging ? '!cursor-grabbing' : ''}`}>
 
           <img
             src={BG_URL}

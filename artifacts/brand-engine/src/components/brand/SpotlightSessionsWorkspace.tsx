@@ -3,6 +3,7 @@ import { UploadCloud, X, Move, RotateCcw, Loader2, Sparkles } from "lucide-react
 import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
 import { useExport } from "./useExport";
+import { useSessionState } from "./sessions/useSessionState";
 
 const BG_URL = `${import.meta.env.BASE_URL}assets/spotlight/bg.png?v=2`;
 
@@ -11,17 +12,17 @@ export function SpotlightSessionsWorkspace() {
   const previewRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [headline, setHeadline] = useState("Build a System Driven Agency with HighLevel");
-  const [guestName, setGuestName] = useState("NAME HERE");
+  const [headline, setHeadline] = useSessionState("spotlight.headline", "Build a System Driven Agency with HighLevel");
+  const [guestName, setGuestName] = useSessionState("spotlight.guestName", "NAME HERE");
 
-  const [personRaw, setPersonRaw] = useState<string | null>(null);
-  const [personImage, setPersonImage] = useState<string | null>(null);
+  const [personRaw, setPersonRaw] = useSessionState<string | null>("spotlight.personRaw", null);
+  const [personImage, setPersonImage] = useSessionState<string | null>("spotlight.personImage", null);
   const [removingBg, setRemovingBg] = useState(false);
   const [bgError, setBgError] = useState<string | null>(null);
 
-  const [personX, setPersonX] = useState(75);
-  const [personY, setPersonY] = useState(58);
-  const [personScale, setPersonScale] = useState(100);
+  const [personX, setPersonX] = useSessionState("spotlight.personX", 75);
+  const [personY, setPersonY] = useSessionState("spotlight.personY", 58);
+  const [personScale, setPersonScale] = useSessionState("spotlight.personScale", 100);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
 
@@ -247,6 +248,7 @@ export function SpotlightSessionsWorkspace() {
       <LivePreview>
         <div
           ref={previewRef}
+          data-session-preview
           data-export-preview
           data-export-name="Spotlight Sessions"
           className="relative overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)] w-full rounded-[14px]"

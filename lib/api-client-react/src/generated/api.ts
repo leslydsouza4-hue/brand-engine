@@ -5,24 +5,1482 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type {
+  CompleteSessionAssetUpload200,
+  CompleteSessionAssetUploadDefault,
+  CreateSavedSession201,
+  CreateSavedSessionBody,
+  CreateSavedSessionDefault,
+  CreateSessionTeam201,
+  CreateSessionTeamBody,
+  CreateSessionTeamDefault,
+  GetSavedSession200,
+  GetSavedSessionDefault,
+  GetSavedSessionVersion200,
+  GetSavedSessionVersionDefault,
+  GetSessionAssetDefault,
+  HealthStatus,
+  InviteSessionTeamMember200,
+  InviteSessionTeamMemberBody,
+  InviteSessionTeamMemberDefault,
+  ListSavedSessionVersions200,
+  ListSavedSessionVersionsDefault,
+  ListSavedSessions200,
+  ListSavedSessionsDefault,
+  ListSavedSessionsParams,
+  ListSessionTeamMembers200,
+  ListSessionTeamMembersDefault,
+  ListSessionTeams200,
+  ListSessionTeamsDefault,
+  PatchSavedSession200,
+  PatchSavedSession409,
+  PatchSavedSessionBody,
+  PatchSavedSessionDefault,
+  RemoveSessionTeamMember200,
+  RemoveSessionTeamMemberDefault,
+  RequestSessionAssetUpload201,
+  RequestSessionAssetUploadBody,
+  RequestSessionAssetUploadDefault,
+  RevokeSessionTeamInvite200,
+  RevokeSessionTeamInviteDefault,
+  UpdateSavedSession200,
+  UpdateSavedSession409,
+  UpdateSavedSessionBody,
+  UpdateSavedSessionDefault,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary List teams and accept invitations matching Clerk-verified email addresses
+ */
+export const getListSessionTeamsUrl = () => {
+  return `/api/session-teams`;
+};
+
+export const listSessionTeams = async (
+  options?: RequestInit,
+): Promise<ListSessionTeams200> => {
+  return customFetch<ListSessionTeams200>(getListSessionTeamsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListSessionTeamsQueryKey = () => {
+  return [`/api/session-teams`] as const;
+};
+
+export const getListSessionTeamsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSessionTeams>>,
+  TError = ErrorType<ListSessionTeamsDefault>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listSessionTeams>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListSessionTeamsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listSessionTeams>>
+  > = ({ signal }) => listSessionTeams({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSessionTeams>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListSessionTeamsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSessionTeams>>
+>;
+export type ListSessionTeamsQueryError = ErrorType<ListSessionTeamsDefault>;
+
+/**
+ * @summary List teams and accept invitations matching Clerk-verified email addresses
+ */
+
+export function useListSessionTeams<
+  TData = Awaited<ReturnType<typeof listSessionTeams>>,
+  TError = ErrorType<ListSessionTeamsDefault>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listSessionTeams>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListSessionTeamsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getCreateSessionTeamUrl = () => {
+  return `/api/session-teams`;
+};
+
+export const createSessionTeam = async (
+  createSessionTeamBody: CreateSessionTeamBody,
+  options?: RequestInit,
+): Promise<CreateSessionTeam201> => {
+  return customFetch<CreateSessionTeam201>(getCreateSessionTeamUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSessionTeamBody),
+  });
+};
+
+export const getCreateSessionTeamMutationOptions = <
+  TError = ErrorType<CreateSessionTeamDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSessionTeam>>,
+    TError,
+    { data: BodyType<CreateSessionTeamBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createSessionTeam>>,
+  TError,
+  { data: BodyType<CreateSessionTeamBody> },
+  TContext
+> => {
+  const mutationKey = ["createSessionTeam"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createSessionTeam>>,
+    { data: BodyType<CreateSessionTeamBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createSessionTeam(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateSessionTeamMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createSessionTeam>>
+>;
+export type CreateSessionTeamMutationBody = BodyType<CreateSessionTeamBody>;
+export type CreateSessionTeamMutationError =
+  ErrorType<CreateSessionTeamDefault>;
+
+export const useCreateSessionTeam = <
+  TError = ErrorType<CreateSessionTeamDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSessionTeam>>,
+    TError,
+    { data: BodyType<CreateSessionTeamBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createSessionTeam>>,
+  TError,
+  { data: BodyType<CreateSessionTeamBody> },
+  TContext
+> => {
+  return useMutation(getCreateSessionTeamMutationOptions(options));
+};
+
+export const getListSessionTeamMembersUrl = (teamId: string) => {
+  return `/api/session-teams/${teamId}/members`;
+};
+
+export const listSessionTeamMembers = async (
+  teamId: string,
+  options?: RequestInit,
+): Promise<ListSessionTeamMembers200> => {
+  return customFetch<ListSessionTeamMembers200>(
+    getListSessionTeamMembersUrl(teamId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListSessionTeamMembersQueryKey = (teamId: string) => {
+  return [`/api/session-teams/${teamId}/members`] as const;
+};
+
+export const getListSessionTeamMembersQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSessionTeamMembers>>,
+  TError = ErrorType<ListSessionTeamMembersDefault>,
+>(
+  teamId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listSessionTeamMembers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListSessionTeamMembersQueryKey(teamId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listSessionTeamMembers>>
+  > = ({ signal }) =>
+    listSessionTeamMembers(teamId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!teamId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSessionTeamMembers>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListSessionTeamMembersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSessionTeamMembers>>
+>;
+export type ListSessionTeamMembersQueryError =
+  ErrorType<ListSessionTeamMembersDefault>;
+
+export function useListSessionTeamMembers<
+  TData = Awaited<ReturnType<typeof listSessionTeamMembers>>,
+  TError = ErrorType<ListSessionTeamMembersDefault>,
+>(
+  teamId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listSessionTeamMembers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListSessionTeamMembersQueryOptions(teamId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getRemoveSessionTeamMemberUrl = (
+  teamId: string,
+  userId: string,
+) => {
+  return `/api/session-teams/${teamId}/members/${userId}`;
+};
+
+export const removeSessionTeamMember = async (
+  teamId: string,
+  userId: string,
+  options?: RequestInit,
+): Promise<RemoveSessionTeamMember200> => {
+  return customFetch<RemoveSessionTeamMember200>(
+    getRemoveSessionTeamMemberUrl(teamId, userId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getRemoveSessionTeamMemberMutationOptions = <
+  TError = ErrorType<RemoveSessionTeamMemberDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeSessionTeamMember>>,
+    TError,
+    { teamId: string; userId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof removeSessionTeamMember>>,
+  TError,
+  { teamId: string; userId: string },
+  TContext
+> => {
+  const mutationKey = ["removeSessionTeamMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof removeSessionTeamMember>>,
+    { teamId: string; userId: string }
+  > = (props) => {
+    const { teamId, userId } = props ?? {};
+
+    return removeSessionTeamMember(teamId, userId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveSessionTeamMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof removeSessionTeamMember>>
+>;
+
+export type RemoveSessionTeamMemberMutationError =
+  ErrorType<RemoveSessionTeamMemberDefault>;
+
+export const useRemoveSessionTeamMember = <
+  TError = ErrorType<RemoveSessionTeamMemberDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof removeSessionTeamMember>>,
+    TError,
+    { teamId: string; userId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof removeSessionTeamMember>>,
+  TError,
+  { teamId: string; userId: string },
+  TContext
+> => {
+  return useMutation(getRemoveSessionTeamMemberMutationOptions(options));
+};
+
+export const getInviteSessionTeamMemberUrl = (teamId: string) => {
+  return `/api/session-teams/${teamId}/invites`;
+};
+
+export const inviteSessionTeamMember = async (
+  teamId: string,
+  inviteSessionTeamMemberBody: InviteSessionTeamMemberBody,
+  options?: RequestInit,
+): Promise<InviteSessionTeamMember200> => {
+  return customFetch<InviteSessionTeamMember200>(
+    getInviteSessionTeamMemberUrl(teamId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(inviteSessionTeamMemberBody),
+    },
+  );
+};
+
+export const getInviteSessionTeamMemberMutationOptions = <
+  TError = ErrorType<InviteSessionTeamMemberDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof inviteSessionTeamMember>>,
+    TError,
+    { teamId: string; data: BodyType<InviteSessionTeamMemberBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof inviteSessionTeamMember>>,
+  TError,
+  { teamId: string; data: BodyType<InviteSessionTeamMemberBody> },
+  TContext
+> => {
+  const mutationKey = ["inviteSessionTeamMember"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof inviteSessionTeamMember>>,
+    { teamId: string; data: BodyType<InviteSessionTeamMemberBody> }
+  > = (props) => {
+    const { teamId, data } = props ?? {};
+
+    return inviteSessionTeamMember(teamId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type InviteSessionTeamMemberMutationResult = NonNullable<
+  Awaited<ReturnType<typeof inviteSessionTeamMember>>
+>;
+export type InviteSessionTeamMemberMutationBody =
+  BodyType<InviteSessionTeamMemberBody>;
+export type InviteSessionTeamMemberMutationError =
+  ErrorType<InviteSessionTeamMemberDefault>;
+
+export const useInviteSessionTeamMember = <
+  TError = ErrorType<InviteSessionTeamMemberDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof inviteSessionTeamMember>>,
+    TError,
+    { teamId: string; data: BodyType<InviteSessionTeamMemberBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof inviteSessionTeamMember>>,
+  TError,
+  { teamId: string; data: BodyType<InviteSessionTeamMemberBody> },
+  TContext
+> => {
+  return useMutation(getInviteSessionTeamMemberMutationOptions(options));
+};
+
+export const getRevokeSessionTeamInviteUrl = (
+  teamId: string,
+  inviteId: string,
+) => {
+  return `/api/session-teams/${teamId}/invites/${inviteId}`;
+};
+
+export const revokeSessionTeamInvite = async (
+  teamId: string,
+  inviteId: string,
+  options?: RequestInit,
+): Promise<RevokeSessionTeamInvite200> => {
+  return customFetch<RevokeSessionTeamInvite200>(
+    getRevokeSessionTeamInviteUrl(teamId, inviteId),
+    {
+      ...options,
+      method: "DELETE",
+    },
+  );
+};
+
+export const getRevokeSessionTeamInviteMutationOptions = <
+  TError = ErrorType<RevokeSessionTeamInviteDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeSessionTeamInvite>>,
+    TError,
+    { teamId: string; inviteId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof revokeSessionTeamInvite>>,
+  TError,
+  { teamId: string; inviteId: string },
+  TContext
+> => {
+  const mutationKey = ["revokeSessionTeamInvite"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof revokeSessionTeamInvite>>,
+    { teamId: string; inviteId: string }
+  > = (props) => {
+    const { teamId, inviteId } = props ?? {};
+
+    return revokeSessionTeamInvite(teamId, inviteId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RevokeSessionTeamInviteMutationResult = NonNullable<
+  Awaited<ReturnType<typeof revokeSessionTeamInvite>>
+>;
+
+export type RevokeSessionTeamInviteMutationError =
+  ErrorType<RevokeSessionTeamInviteDefault>;
+
+export const useRevokeSessionTeamInvite = <
+  TError = ErrorType<RevokeSessionTeamInviteDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof revokeSessionTeamInvite>>,
+    TError,
+    { teamId: string; inviteId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof revokeSessionTeamInvite>>,
+  TError,
+  { teamId: string; inviteId: string },
+  TContext
+> => {
+  return useMutation(getRevokeSessionTeamInviteMutationOptions(options));
+};
+
+export const getListSavedSessionsUrl = (
+  teamId: string,
+  params?: ListSavedSessionsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/session-teams/${teamId}/sessions?${stringifiedParams}`
+    : `/api/session-teams/${teamId}/sessions`;
+};
+
+export const listSavedSessions = async (
+  teamId: string,
+  params?: ListSavedSessionsParams,
+  options?: RequestInit,
+): Promise<ListSavedSessions200> => {
+  return customFetch<ListSavedSessions200>(
+    getListSavedSessionsUrl(teamId, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListSavedSessionsQueryKey = (
+  teamId: string,
+  params?: ListSavedSessionsParams,
+) => {
+  return [
+    `/api/session-teams/${teamId}/sessions`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListSavedSessionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSavedSessions>>,
+  TError = ErrorType<ListSavedSessionsDefault>,
+>(
+  teamId: string,
+  params?: ListSavedSessionsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listSavedSessions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListSavedSessionsQueryKey(teamId, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listSavedSessions>>
+  > = ({ signal }) =>
+    listSavedSessions(teamId, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!teamId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSavedSessions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListSavedSessionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSavedSessions>>
+>;
+export type ListSavedSessionsQueryError = ErrorType<ListSavedSessionsDefault>;
+
+export function useListSavedSessions<
+  TData = Awaited<ReturnType<typeof listSavedSessions>>,
+  TError = ErrorType<ListSavedSessionsDefault>,
+>(
+  teamId: string,
+  params?: ListSavedSessionsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listSavedSessions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListSavedSessionsQueryOptions(
+    teamId,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getCreateSavedSessionUrl = (teamId: string) => {
+  return `/api/session-teams/${teamId}/sessions`;
+};
+
+export const createSavedSession = async (
+  teamId: string,
+  createSavedSessionBody: CreateSavedSessionBody,
+  options?: RequestInit,
+): Promise<CreateSavedSession201> => {
+  return customFetch<CreateSavedSession201>(getCreateSavedSessionUrl(teamId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createSavedSessionBody),
+  });
+};
+
+export const getCreateSavedSessionMutationOptions = <
+  TError = ErrorType<CreateSavedSessionDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSavedSession>>,
+    TError,
+    { teamId: string; data: BodyType<CreateSavedSessionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createSavedSession>>,
+  TError,
+  { teamId: string; data: BodyType<CreateSavedSessionBody> },
+  TContext
+> => {
+  const mutationKey = ["createSavedSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createSavedSession>>,
+    { teamId: string; data: BodyType<CreateSavedSessionBody> }
+  > = (props) => {
+    const { teamId, data } = props ?? {};
+
+    return createSavedSession(teamId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateSavedSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createSavedSession>>
+>;
+export type CreateSavedSessionMutationBody = BodyType<CreateSavedSessionBody>;
+export type CreateSavedSessionMutationError =
+  ErrorType<CreateSavedSessionDefault>;
+
+export const useCreateSavedSession = <
+  TError = ErrorType<CreateSavedSessionDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createSavedSession>>,
+    TError,
+    { teamId: string; data: BodyType<CreateSavedSessionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createSavedSession>>,
+  TError,
+  { teamId: string; data: BodyType<CreateSavedSessionBody> },
+  TContext
+> => {
+  return useMutation(getCreateSavedSessionMutationOptions(options));
+};
+
+export const getGetSavedSessionUrl = (teamId: string, id: string) => {
+  return `/api/session-teams/${teamId}/sessions/${id}`;
+};
+
+export const getSavedSession = async (
+  teamId: string,
+  id: string,
+  options?: RequestInit,
+): Promise<GetSavedSession200> => {
+  return customFetch<GetSavedSession200>(getGetSavedSessionUrl(teamId, id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSavedSessionQueryKey = (teamId: string, id: string) => {
+  return [`/api/session-teams/${teamId}/sessions/${id}`] as const;
+};
+
+export const getGetSavedSessionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSavedSession>>,
+  TError = ErrorType<GetSavedSessionDefault>,
+>(
+  teamId: string,
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSavedSession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSavedSessionQueryKey(teamId, id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSavedSession>>> = ({
+    signal,
+  }) => getSavedSession(teamId, id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(teamId && id),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSavedSession>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSavedSessionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSavedSession>>
+>;
+export type GetSavedSessionQueryError = ErrorType<GetSavedSessionDefault>;
+
+export function useGetSavedSession<
+  TData = Awaited<ReturnType<typeof getSavedSession>>,
+  TError = ErrorType<GetSavedSessionDefault>,
+>(
+  teamId: string,
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSavedSession>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSavedSessionQueryOptions(teamId, id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getUpdateSavedSessionUrl = (teamId: string, id: string) => {
+  return `/api/session-teams/${teamId}/sessions/${id}`;
+};
+
+export const updateSavedSession = async (
+  teamId: string,
+  id: string,
+  updateSavedSessionBody: UpdateSavedSessionBody,
+  options?: RequestInit,
+): Promise<UpdateSavedSession200> => {
+  return customFetch<UpdateSavedSession200>(
+    getUpdateSavedSessionUrl(teamId, id),
+    {
+      ...options,
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(updateSavedSessionBody),
+    },
+  );
+};
+
+export const getUpdateSavedSessionMutationOptions = <
+  TError = ErrorType<UpdateSavedSession409 | UpdateSavedSessionDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSavedSession>>,
+    TError,
+    { teamId: string; id: string; data: BodyType<UpdateSavedSessionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateSavedSession>>,
+  TError,
+  { teamId: string; id: string; data: BodyType<UpdateSavedSessionBody> },
+  TContext
+> => {
+  const mutationKey = ["updateSavedSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateSavedSession>>,
+    { teamId: string; id: string; data: BodyType<UpdateSavedSessionBody> }
+  > = (props) => {
+    const { teamId, id, data } = props ?? {};
+
+    return updateSavedSession(teamId, id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateSavedSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateSavedSession>>
+>;
+export type UpdateSavedSessionMutationBody = BodyType<UpdateSavedSessionBody>;
+export type UpdateSavedSessionMutationError = ErrorType<
+  UpdateSavedSession409 | UpdateSavedSessionDefault
+>;
+
+export const useUpdateSavedSession = <
+  TError = ErrorType<UpdateSavedSession409 | UpdateSavedSessionDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateSavedSession>>,
+    TError,
+    { teamId: string; id: string; data: BodyType<UpdateSavedSessionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateSavedSession>>,
+  TError,
+  { teamId: string; id: string; data: BodyType<UpdateSavedSessionBody> },
+  TContext
+> => {
+  return useMutation(getUpdateSavedSessionMutationOptions(options));
+};
+
+export const getPatchSavedSessionUrl = (teamId: string, id: string) => {
+  return `/api/session-teams/${teamId}/sessions/${id}`;
+};
+
+export const patchSavedSession = async (
+  teamId: string,
+  id: string,
+  patchSavedSessionBody: PatchSavedSessionBody,
+  options?: RequestInit,
+): Promise<PatchSavedSession200> => {
+  return customFetch<PatchSavedSession200>(
+    getPatchSavedSessionUrl(teamId, id),
+    {
+      ...options,
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(patchSavedSessionBody),
+    },
+  );
+};
+
+export const getPatchSavedSessionMutationOptions = <
+  TError = ErrorType<PatchSavedSession409 | PatchSavedSessionDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchSavedSession>>,
+    TError,
+    { teamId: string; id: string; data: BodyType<PatchSavedSessionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof patchSavedSession>>,
+  TError,
+  { teamId: string; id: string; data: BodyType<PatchSavedSessionBody> },
+  TContext
+> => {
+  const mutationKey = ["patchSavedSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof patchSavedSession>>,
+    { teamId: string; id: string; data: BodyType<PatchSavedSessionBody> }
+  > = (props) => {
+    const { teamId, id, data } = props ?? {};
+
+    return patchSavedSession(teamId, id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type PatchSavedSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof patchSavedSession>>
+>;
+export type PatchSavedSessionMutationBody = BodyType<PatchSavedSessionBody>;
+export type PatchSavedSessionMutationError = ErrorType<
+  PatchSavedSession409 | PatchSavedSessionDefault
+>;
+
+export const usePatchSavedSession = <
+  TError = ErrorType<PatchSavedSession409 | PatchSavedSessionDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof patchSavedSession>>,
+    TError,
+    { teamId: string; id: string; data: BodyType<PatchSavedSessionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof patchSavedSession>>,
+  TError,
+  { teamId: string; id: string; data: BodyType<PatchSavedSessionBody> },
+  TContext
+> => {
+  return useMutation(getPatchSavedSessionMutationOptions(options));
+};
+
+export const getListSavedSessionVersionsUrl = (teamId: string, id: string) => {
+  return `/api/session-teams/${teamId}/sessions/${id}/versions`;
+};
+
+export const listSavedSessionVersions = async (
+  teamId: string,
+  id: string,
+  options?: RequestInit,
+): Promise<ListSavedSessionVersions200> => {
+  return customFetch<ListSavedSessionVersions200>(
+    getListSavedSessionVersionsUrl(teamId, id),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListSavedSessionVersionsQueryKey = (
+  teamId: string,
+  id: string,
+) => {
+  return [`/api/session-teams/${teamId}/sessions/${id}/versions`] as const;
+};
+
+export const getListSavedSessionVersionsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listSavedSessionVersions>>,
+  TError = ErrorType<ListSavedSessionVersionsDefault>,
+>(
+  teamId: string,
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listSavedSessionVersions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListSavedSessionVersionsQueryKey(teamId, id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listSavedSessionVersions>>
+  > = ({ signal }) =>
+    listSavedSessionVersions(teamId, id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(teamId && id),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listSavedSessionVersions>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListSavedSessionVersionsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listSavedSessionVersions>>
+>;
+export type ListSavedSessionVersionsQueryError =
+  ErrorType<ListSavedSessionVersionsDefault>;
+
+export function useListSavedSessionVersions<
+  TData = Awaited<ReturnType<typeof listSavedSessionVersions>>,
+  TError = ErrorType<ListSavedSessionVersionsDefault>,
+>(
+  teamId: string,
+  id: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listSavedSessionVersions>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListSavedSessionVersionsQueryOptions(
+    teamId,
+    id,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getGetSavedSessionVersionUrl = (
+  teamId: string,
+  id: string,
+  revision: number,
+) => {
+  return `/api/session-teams/${teamId}/sessions/${id}/versions/${revision}`;
+};
+
+export const getSavedSessionVersion = async (
+  teamId: string,
+  id: string,
+  revision: number,
+  options?: RequestInit,
+): Promise<GetSavedSessionVersion200> => {
+  return customFetch<GetSavedSessionVersion200>(
+    getGetSavedSessionVersionUrl(teamId, id, revision),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetSavedSessionVersionQueryKey = (
+  teamId: string,
+  id: string,
+  revision: number,
+) => {
+  return [
+    `/api/session-teams/${teamId}/sessions/${id}/versions/${revision}`,
+  ] as const;
+};
+
+export const getGetSavedSessionVersionQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSavedSessionVersion>>,
+  TError = ErrorType<GetSavedSessionVersionDefault>,
+>(
+  teamId: string,
+  id: string,
+  revision: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSavedSessionVersion>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetSavedSessionVersionQueryKey(teamId, id, revision);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSavedSessionVersion>>
+  > = ({ signal }) =>
+    getSavedSessionVersion(teamId, id, revision, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(teamId && id && revision),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSavedSessionVersion>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSavedSessionVersionQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSavedSessionVersion>>
+>;
+export type GetSavedSessionVersionQueryError =
+  ErrorType<GetSavedSessionVersionDefault>;
+
+export function useGetSavedSessionVersion<
+  TData = Awaited<ReturnType<typeof getSavedSessionVersion>>,
+  TError = ErrorType<GetSavedSessionVersionDefault>,
+>(
+  teamId: string,
+  id: string,
+  revision: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSavedSessionVersion>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSavedSessionVersionQueryOptions(
+    teamId,
+    id,
+    revision,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+export const getRequestSessionAssetUploadUrl = (teamId: string) => {
+  return `/api/session-teams/${teamId}/assets`;
+};
+
+export const requestSessionAssetUpload = async (
+  teamId: string,
+  requestSessionAssetUploadBody: RequestSessionAssetUploadBody,
+  options?: RequestInit,
+): Promise<RequestSessionAssetUpload201> => {
+  return customFetch<RequestSessionAssetUpload201>(
+    getRequestSessionAssetUploadUrl(teamId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(requestSessionAssetUploadBody),
+    },
+  );
+};
+
+export const getRequestSessionAssetUploadMutationOptions = <
+  TError = ErrorType<RequestSessionAssetUploadDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestSessionAssetUpload>>,
+    TError,
+    { teamId: string; data: BodyType<RequestSessionAssetUploadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof requestSessionAssetUpload>>,
+  TError,
+  { teamId: string; data: BodyType<RequestSessionAssetUploadBody> },
+  TContext
+> => {
+  const mutationKey = ["requestSessionAssetUpload"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof requestSessionAssetUpload>>,
+    { teamId: string; data: BodyType<RequestSessionAssetUploadBody> }
+  > = (props) => {
+    const { teamId, data } = props ?? {};
+
+    return requestSessionAssetUpload(teamId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type RequestSessionAssetUploadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof requestSessionAssetUpload>>
+>;
+export type RequestSessionAssetUploadMutationBody =
+  BodyType<RequestSessionAssetUploadBody>;
+export type RequestSessionAssetUploadMutationError =
+  ErrorType<RequestSessionAssetUploadDefault>;
+
+export const useRequestSessionAssetUpload = <
+  TError = ErrorType<RequestSessionAssetUploadDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof requestSessionAssetUpload>>,
+    TError,
+    { teamId: string; data: BodyType<RequestSessionAssetUploadBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof requestSessionAssetUpload>>,
+  TError,
+  { teamId: string; data: BodyType<RequestSessionAssetUploadBody> },
+  TContext
+> => {
+  return useMutation(getRequestSessionAssetUploadMutationOptions(options));
+};
+
+export const getCompleteSessionAssetUploadUrl = (
+  teamId: string,
+  assetId: string,
+) => {
+  return `/api/session-teams/${teamId}/assets/${assetId}/complete`;
+};
+
+export const completeSessionAssetUpload = async (
+  teamId: string,
+  assetId: string,
+  options?: RequestInit,
+): Promise<CompleteSessionAssetUpload200> => {
+  return customFetch<CompleteSessionAssetUpload200>(
+    getCompleteSessionAssetUploadUrl(teamId, assetId),
+    {
+      ...options,
+      method: "POST",
+    },
+  );
+};
+
+export const getCompleteSessionAssetUploadMutationOptions = <
+  TError = ErrorType<CompleteSessionAssetUploadDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeSessionAssetUpload>>,
+    TError,
+    { teamId: string; assetId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof completeSessionAssetUpload>>,
+  TError,
+  { teamId: string; assetId: string },
+  TContext
+> => {
+  const mutationKey = ["completeSessionAssetUpload"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof completeSessionAssetUpload>>,
+    { teamId: string; assetId: string }
+  > = (props) => {
+    const { teamId, assetId } = props ?? {};
+
+    return completeSessionAssetUpload(teamId, assetId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CompleteSessionAssetUploadMutationResult = NonNullable<
+  Awaited<ReturnType<typeof completeSessionAssetUpload>>
+>;
+
+export type CompleteSessionAssetUploadMutationError =
+  ErrorType<CompleteSessionAssetUploadDefault>;
+
+export const useCompleteSessionAssetUpload = <
+  TError = ErrorType<CompleteSessionAssetUploadDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof completeSessionAssetUpload>>,
+    TError,
+    { teamId: string; assetId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof completeSessionAssetUpload>>,
+  TError,
+  { teamId: string; assetId: string },
+  TContext
+> => {
+  return useMutation(getCompleteSessionAssetUploadMutationOptions(options));
+};
+
+export const getGetSessionAssetUrl = (teamId: string, assetId: string) => {
+  return `/api/session-teams/${teamId}/assets/${assetId}`;
+};
+
+export const getSessionAsset = async (
+  teamId: string,
+  assetId: string,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getGetSessionAssetUrl(teamId, assetId), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSessionAssetQueryKey = (teamId: string, assetId: string) => {
+  return [`/api/session-teams/${teamId}/assets/${assetId}`] as const;
+};
+
+export const getGetSessionAssetQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSessionAsset>>,
+  TError = ErrorType<GetSessionAssetDefault>,
+>(
+  teamId: string,
+  assetId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSessionAsset>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSessionAssetQueryKey(teamId, assetId);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSessionAsset>>> = ({
+    signal,
+  }) => getSessionAsset(teamId, assetId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!(teamId && assetId),
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSessionAsset>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSessionAssetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSessionAsset>>
+>;
+export type GetSessionAssetQueryError = ErrorType<GetSessionAssetDefault>;
+
+export function useGetSessionAsset<
+  TData = Awaited<ReturnType<typeof getSessionAsset>>,
+  TError = ErrorType<GetSessionAssetDefault>,
+>(
+  teamId: string,
+  assetId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSessionAsset>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSessionAssetQueryOptions(teamId, assetId, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * Returns server health status

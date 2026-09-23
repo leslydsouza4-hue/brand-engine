@@ -31,80 +31,99 @@ import { CertifiedAdminWorkspace } from "@/components/brand/CertifiedAdminWorksp
 import type { SummerSection } from "@/components/brand/summerThemes";
 import { useBrandMode, BRAND_THEMES } from "@/components/brand/brandModeStore";
 import { WelcomeIntro, hasSeenIntro } from "@/components/brand/WelcomeIntro";
+import { SaveSessionToolbar } from "@/components/brand/sessions/ui/SaveSessionToolbar";
+import { SessionProvider } from "@/components/brand/sessions/SessionProvider";
+import { useAuth } from "@clerk/react";
 
-export default function BrandEngine() {
-  const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
-  const parseHash = () => {
-    const h = window.location.hash.replace("#", "");
-    return VALID_MODES.includes(h) ? h : "templates";
-  };
-  const [currentMode, _setCurrentMode] = useState(() => parseHash());
-  const [summerSection, setSummerSection] = useState<SummerSection>("emailers");
-  const setCurrentMode = (mode: string) => {
-    _setCurrentMode(mode);
-    window.location.hash = mode === "templates" ? "" : mode;
-  };
+const SESSIONS_SUPPORTED_MODES = [
+  "bizdev-templates", "master-class", "super-promo", "spotlight-sessions", 
+  "content-army", "did-you-know", "email-templates", "zoom-backgrounds", 
+  "events", "affiliate-leaderboard", "affiliate-partner-hero", 
+  "swoosh-backgrounds", "growth-flywheel", 
+  "summer-sun-drunk", "summer-electric", "summer-feral"
+];
+
+
+import { useSessions } from "@/components/brand/sessions/SessionProvider";
+import { useSessionState } from "@/components/brand/sessions/useSessionState";
+import { useRef } from "react";
+
+import { SharedSessionsLibrary } from "@/components/brand/sessions/ui/SharedSessionsLibrary";
+
+const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
+
+function BrandEngineInner({
+  currentMode,
+  sidebarOpen,
+  setSidebarOpen,
+  craftSeedPrompt,
+  sendToCraft,
+  setCraftSeedPrompt,
+  brandMode,
+  setBrandMode,
+  showIntro,
+  setShowIntro,
+  themeVars,
+}: any) {
+  const { navigateWorkspace } = useSessions();
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [summerSection, setSummerSection] = useSessionState<SummerSection>("summer.section", () => "emailers");
+  const prevBrandMode = useRef(brandMode);
+  const prevCurrentMode = useRef(currentMode);
+
   useEffect(() => {
-    const onHashChange = () => _setCurrentMode(parseHash());
+    const onHashChange = (e: HashChangeEvent) => {
+      const h = window.location.hash.replace("#", "");
+      const targetMode = VALID_MODES.includes(h) ? h : "templates";
+      if (targetMode === currentMode) return;
+      
+      if (!navigateWorkspace(targetMode)) {
+        // Revert hash if user declined the dirty prompt
+        const oldHash = new URL(e.oldURL).hash;
+        window.history.replaceState(null, '', oldHash || "#");
+      }
+    };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [craftSeedPrompt, setCraftSeedPrompt] = useState<string | null>(null);
-  const [brandMode] = useBrandMode();
-  const [showIntro, setShowIntro] = useState(() => !hasSeenIntro());
-  useEffect(() => {
-    const onReplay = () => setShowIntro(true);
-    window.addEventListener("brand-engine:replay-intro", onReplay);
-    return () => window.removeEventListener("brand-engine:replay-intro", onReplay);
-  }, []);
+  }, [navigateWorkspace, currentMode]);
 
-  // When the user toggles to LU26 mode while sitting on a HighLevel-only
-  // workspace (or vice versa), bounce them to a sensible default for that
-  // mode so they aren't staring at an empty surface.
   useEffect(() => {
     const luOnly = ["image-library", "social-composer"];
     const summerOnly = ["summer-sun-drunk", "summer-electric", "summer-feral"];
     const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "highly-cutout", "growth-flywheel", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics"];
     const notHl = [...luOnly, ...summerOnly];
     const notLu = [...hlOnly, ...summerOnly];
-    if (brandMode === "levelup26" && notLu.includes(currentMode)) setCurrentMode("image-library");
-    if (brandMode === "highlevel" && notHl.includes(currentMode)) setCurrentMode("templates");
-    if (brandMode === "summer-of-ai" && !summerOnly.includes(currentMode)) setCurrentMode("summer-sun-drunk");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brandMode]);
-
-  const sendToCraft = (prompt: string) => {
-    setCraftSeedPrompt(prompt);
-    setCurrentMode("templates");
-  };
-
-  const activeTheme = BRAND_THEMES[brandMode];
-  // Expose the active brand theme as CSS variables on the root container so
-  // every surface (sidebar chips, focus rings, accents in shared components)
-  // can opt into the live brand palette via var(--brand-*) without each
-  // component having to import the theme object.
-  const themeVars: React.CSSProperties = {
-    background: activeTheme.bgDeep,
-    ['--brand-primary' as never]: activeTheme.primary,
-    ['--brand-accent' as never]: activeTheme.accent,
-    ['--brand-cta' as never]: activeTheme.cta,
-    ['--brand-bg-deep' as never]: activeTheme.bgDeep,
-    ['--brand-bg-panel' as never]: activeTheme.bgPanel,
-    ['--brand-font-heading' as never]: activeTheme.fontHeading,
-    ['--brand-font-body' as never]: activeTheme.fontBody,
-  };
+    
+    let target = currentMode;
+    if (brandMode === "levelup26" && notLu.includes(currentMode)) target = "image-library";
+    if (brandMode === "highlevel" && notHl.includes(currentMode)) target = "templates";
+    if (brandMode === "summer-of-ai" && !summerOnly.includes(currentMode)) target = "summer-sun-drunk";
+    
+    if (target !== currentMode) {
+      navigateWorkspace(target);
+    }
+  }, [brandMode, currentMode, navigateWorkspace]);
 
   return (
     <div data-brand-mode={brandMode} className="flex h-screen w-screen relative brand-app-bg" style={themeVars}>
       <div className="absolute inset-0 brand-app-noise pointer-events-none z-0"></div>
       
       <div className="w-0 md:w-[220px] shrink-0 overflow-visible">
-        <Sidebar currentMode={currentMode} setMode={setCurrentMode} summerSection={summerSection} setSummerSection={setSummerSection} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar currentMode={currentMode} setMode={navigateWorkspace} summerSection={summerSection} setSummerSection={setSummerSection} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onOpenLibrary={() => setLibraryOpen(true)} />
       </div>
       
       <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">
         <Toolbar onMenuToggle={() => setSidebarOpen(true)} />
+
+        {SESSIONS_SUPPORTED_MODES.includes(currentMode) && (
+          <SaveSessionToolbar workspaceType={currentMode} onOpenLibrary={() => setLibraryOpen(true)} />
+        )}
+
+        <SharedSessionsLibrary 
+          open={libraryOpen} 
+          onOpenChange={setLibraryOpen} 
+          activeWorkspaceType={currentMode}
+        />
 
         {currentMode === "brand-brain" && <BrandBrainWorkspace onSendToCraft={sendToCraft} />}
         {currentMode === "templates" && <TemplatesWorkspace seedPrompt={craftSeedPrompt} onConsumeSeed={() => setCraftSeedPrompt(null)} />}
@@ -145,5 +164,77 @@ export default function BrandEngine() {
         <WelcomeIntro onDismiss={() => setShowIntro(false)} />
       )}
     </div>
+  );
+}
+
+export default function BrandEngine() {
+  const parseHash = () => {
+    const h = window.location.hash.replace("#", "");
+    return VALID_MODES.includes(h) ? h : "templates";
+  };
+  const [currentMode, _setCurrentMode] = useState(() => parseHash());
+  const [summerSection, setSummerSection] = useState<SummerSection>("emailers");
+  const setCurrentMode = (mode: string) => {
+    _setCurrentMode(mode);
+    window.location.hash = mode === "templates" ? "" : mode;
+  };
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [craftSeedPrompt, setCraftSeedPrompt] = useState<string | null>(null);
+  const [brandMode] = useBrandMode();
+  const [showIntro, setShowIntro] = useState(() => !hasSeenIntro());
+  
+  useEffect(() => {
+    const onReplay = () => setShowIntro(true);
+    window.addEventListener("brand-engine:replay-intro", onReplay);
+    return () => window.removeEventListener("brand-engine:replay-intro", onReplay);
+  }, []);
+
+  const sendToCraft = (prompt: string) => {
+    setCraftSeedPrompt(prompt);
+    setCurrentMode("templates");
+  };
+
+  const activeTheme = BRAND_THEMES[brandMode];
+  // Expose the active brand theme as CSS variables on the root container so
+  // every surface (sidebar chips, focus rings, accents in shared components)
+  // can opt into the live brand palette via var(--brand-*) without each
+  // component having to import the theme object.
+  const themeVars: React.CSSProperties = {
+    background: activeTheme.bgDeep,
+    ['--brand-primary' as never]: activeTheme.primary,
+    ['--brand-accent' as never]: activeTheme.accent,
+    ['--brand-cta' as never]: activeTheme.cta,
+    ['--brand-bg-deep' as never]: activeTheme.bgDeep,
+    ['--brand-bg-panel' as never]: activeTheme.bgPanel,
+    ['--brand-font-heading' as never]: activeTheme.fontHeading,
+    ['--brand-font-body' as never]: activeTheme.fontBody,
+  };
+
+  const { userId, isLoaded } = useAuth();
+
+  return (
+    <SessionProvider 
+      userId={userId ?? null} 
+      authLoading={!isLoaded} 
+      workspaceType={currentMode} 
+      supportedWorkspaces={SESSIONS_SUPPORTED_MODES} 
+      onWorkspaceChange={setCurrentMode}
+    >
+      <BrandEngineInner
+        currentMode={currentMode}
+        summerSection={summerSection}
+        setSummerSection={setSummerSection}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        craftSeedPrompt={craftSeedPrompt}
+        sendToCraft={sendToCraft}
+        setCraftSeedPrompt={setCraftSeedPrompt}
+        brandMode={brandMode}
+        showIntro={showIntro}
+        setShowIntro={setShowIntro}
+        themeVars={themeVars}
+      />
+    </SessionProvider>
   );
 }

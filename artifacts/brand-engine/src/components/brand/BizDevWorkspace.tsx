@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useSessionState } from "./sessions/useSessionState";
 import {
   UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw, PackageOpen
 } from "lucide-react";
@@ -7,6 +8,7 @@ import JSZip from "jszip";
 import { addExport, createThumbnail } from "./exportStore";
 import { LivePreview } from "./LivePreview";
 import { PhotoroomLink } from "./PhotoroomLink";
+import { getFontEmbedCSS } from "./fontEmbed";
 
 const BASE = import.meta.env.BASE_URL;
 const BG_HORIZONTAL = `${BASE}assets/bizdev/background.png`;
@@ -384,52 +386,21 @@ function TemplatePreview(props: {
   return <SquarePortraitTemplate {...props} />;
 }
 
-const STORAGE_KEY = "bizdev-workspace-state";
-
-function loadSaved<T>(key: string, fallback: T): T {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return fallback;
-    const data = JSON.parse(raw);
-    return key in data ? data[key] : fallback;
-  } catch { return fallback; }
-}
-
-function saveToDisk(patch: Record<string, unknown>) {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    const data = raw ? JSON.parse(raw) : {};
-    Object.assign(data, patch);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch { /* ignore */ }
-}
-
-function usePersistedState<T>(key: string, fallback: T): [T, (v: T | ((prev: T) => T)) => void] {
-  const [val, setValRaw] = useState<T>(() => loadSaved(key, fallback));
-  const setVal = useCallback((v: T | ((prev: T) => T)) => {
-    setValRaw((prev) => {
-      const next = typeof v === "function" ? (v as (p: T) => T)(prev) : v;
-      saveToDisk({ [key]: next });
-      return next;
-    });
-  }, [key]);
-  return [val, setVal];
-}
-
 export function BizDevWorkspace() {
-  const [headline, setHeadline] = usePersistedState("headline", "");
-  const [dateText, setDateText] = usePersistedState("dateText", "");
-  const [guestName, setGuestName] = usePersistedState("guestName", "");
-  const [ctaText, setCtaText] = usePersistedState("ctaText", "");
-  const [personImage, setPersonImage] = usePersistedState<string | null>("personImage", null);
-  const [imgSettings, setImgSettings] = usePersistedState<ImageSettings>("imgSettings", { scale: 1, offsetX: 0, offsetY: 0 });
-  const [pillSettings, setPillSettings] = usePersistedState<PillSettings>("pillSettings", { offsetX: 0, offsetY: 0 });
+  const [headline, setHeadline] = useSessionState("bizdev.headline", "");
+  const [dateText, setDateText] = useSessionState("bizdev.dateText", "");
+  const [guestName, setGuestName] = useSessionState("bizdev.guestName", "");
+  const [ctaText, setCtaText] = useSessionState("bizdev.ctaText", "");
+  const [personImage, setPersonImage] = useSessionState<string | null>("bizdev.personImage", null);
+  const [imgSettings, setImgSettings] = useSessionState<ImageSettings>("bizdev.imgSettings", { scale: 1, offsetX: 0, offsetY: 0 });
+  const [pillSettings, setPillSettings] = useSessionState<PillSettings>("bizdev.pillSettings", { offsetX: 0, offsetY: 0 });
   const [isDraggingPill, setIsDraggingPill] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
-  const [generateDays, setGenerateDays] = usePersistedState("generateDays", true);
-  const [selectedTemplate, setSelectedTemplate] = usePersistedState("selectedTemplate", "horizontal-cta");
+  const [generateDays, setGenerateDays] = useSessionState("bizdev.generateDays", true);
+  const [selectedTemplate, setSelectedTemplate] = useSessionState("bizdev.selectedTemplate", "horizontal-cta");
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [isExportingAll, setIsExportingAll] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [showGallery, setShowGallery] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -437,6 +408,14 @@ export function BizDevWorkspace() {
 
   const previewRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef<{ startX: number; startY: number; startPillX: number; startPillY: number } | null>(null);
+
+  useEffect(() => {
+    if (showGallery) return;
+    const graphic = previewRef.current?.querySelector(":scope > [data-template-id]");
+    if (!graphic) return;
+    graphic.setAttribute("data-session-preview", "");
+    return () => graphic.removeAttribute("data-session-preview");
+  }, [selectedTemplate, showGallery]);
 
   const handlePillDragStart = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -529,7 +508,19 @@ export function BizDevWorkspace() {
       link.click();
       setTimeout(() => document.body.removeChild(link), 200);
     }
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    // Keep popup-backed downloads alive long enough for the preview iframe/browser
+    // to finish reading the blob.
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  }, []);
+
+  const prepareExport = useCallback(async (el: HTMLElement) => {
+    await document.fonts.ready;
+    await Promise.all(Array.from(el.querySelectorAll("img")).map(async (image) => {
+      if (image.src) await image.decode();
+    }));
+    const fontEmbedCSS = await getFontEmbedCSS();
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    return fontEmbedCSS;
   }, []);
 
   const stripRadii = useCallback((root: HTMLElement) => {
@@ -552,52 +543,74 @@ export function BizDevWorkspace() {
   }, []);
 
   const exportTemplate = useCallback(async (templateId: string, containerEl?: HTMLElement) => {
+    setExportError(null);
     const root = containerEl || document;
     const el = root.querySelector(`[data-template-id="${templateId}"]`) as HTMLElement;
-    if (!el) { console.error("exportTemplate: element not found for", templateId); return; }
+    if (!el) {
+      setExportError("The selected graphic is not visible");
+      return;
+    }
     const config = TEMPLATES.find((t) => t.id === templateId);
-    if (!config) return;
+    if (!config) {
+      setExportError("The selected export format is unavailable");
+      return;
+    }
     setIsExporting(templateId);
     const saved = stripRadii(el);
     try {
-      const dataUrl = await toPng(el, {
+      const fontEmbedCSS = await prepareExport(el);
+      const options = {
         width: el.offsetWidth,
         height: el.offsetHeight,
         pixelRatio: config.width / el.offsetWidth,
         cacheBust: true,
         skipAutoScale: true,
         style: { borderRadius: "0" },
-      });
+        fontEmbedCSS,
+      };
+      // A warm pass lets html-to-image settle embedded fonts and decoded images.
+      await toPng(el, options);
+      const dataUrl = await toPng(el, options);
       const blob = dataUrlToBlob(dataUrl);
       const filename = `${config.name.replace(/\s+/g, "_")}_${config.width}x${config.height}.png`;
       triggerDownload(blob, filename);
       createThumbnail(dataUrl).then((thumb) => addExport({ name: filename, source: "Virtual Workshop", format: "png", thumbnail: thumb, dimensions: `${config.width}x${config.height}` }));
     } catch (err) {
       console.error("exportTemplate error:", err);
+      setExportError(err instanceof Error ? err.message : "Unable to export this graphic");
     } finally {
       restoreRadii(saved);
       setIsExporting(null);
     }
-  }, [dataUrlToBlob, triggerDownload, stripRadii, restoreRadii]);
+  }, [dataUrlToBlob, triggerDownload, prepareExport, stripRadii, restoreRadii]);
 
   const exportAllZip = useCallback(async () => {
+    setExportError(null);
     setIsExportingAll(true);
     try {
       const container = galleryRef.current || document;
       const zip = new JSZip();
       for (const t of activeTemplates) {
         const el = container.querySelector(`[data-template-id="${t.id}"]`) as HTMLElement;
-        if (!el) { console.error("ZIP: element not found for", t.id); continue; }
+        if (!el) throw new Error(`${t.name} is not visible for export`);
         const saved = stripRadii(el);
-        const dataUrl = await toPng(el, {
-          width: el.offsetWidth,
-          height: el.offsetHeight,
-          pixelRatio: t.width / el.offsetWidth,
-          cacheBust: true,
-          skipAutoScale: true,
-          style: { borderRadius: "0" },
-        });
-        restoreRadii(saved);
+        let dataUrl: string;
+        try {
+          const fontEmbedCSS = await prepareExport(el);
+          const options = {
+            width: el.offsetWidth,
+            height: el.offsetHeight,
+            pixelRatio: t.width / el.offsetWidth,
+            cacheBust: true,
+            skipAutoScale: true,
+            style: { borderRadius: "0" },
+            fontEmbedCSS,
+          };
+          await toPng(el, options);
+          dataUrl = await toPng(el, options);
+        } finally {
+          restoreRadii(saved);
+        }
         const base64 = dataUrl.split(",")[1];
         zip.file(`${t.name.replace(/\s+/g, "_")}_${t.width}x${t.height}.png`, base64, { base64: true });
         await new Promise((r) => setTimeout(r, 200));
@@ -607,10 +620,11 @@ export function BizDevWorkspace() {
       triggerDownload(blob, zipName);
     } catch (err) {
       console.error("exportAllZip error:", err);
+      setExportError(err instanceof Error ? err.message : "Unable to create the ZIP export");
     } finally {
       setIsExportingAll(false);
     }
-  }, [activeTemplates, guestName, triggerDownload, stripRadii, restoreRadii]);
+  }, [activeTemplates, guestName, triggerDownload, prepareExport, stripRadii, restoreRadii]);
 
   const inputCls = "w-full py-[10px] px-[14px] bg-[rgba(0,0,0,0.15)] border border-[rgba(255,255,255,0.06)] rounded-[12px] font-['Poppins'] text-[13px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.3)] focus:bg-[rgba(0,0,0,0.25)] placeholder:text-[#475569] transition-all";
   const labelCls = "text-[11px] font-semibold uppercase tracking-[1px] text-[#64748B] mb-[6px]";
@@ -797,6 +811,11 @@ export function BizDevWorkspace() {
           </div>
 
           <div className="flex flex-col gap-[6px]">
+            {exportError && (
+              <div role="alert" className="rounded-[8px] border border-[rgba(255,77,77,0.25)] bg-[rgba(255,77,77,0.08)] px-[10px] py-[8px] text-[10px] leading-[1.4] text-[#FF8A8A]">
+                Export failed: {exportError}
+              </div>
+            )}
             <button onClick={() => exportTemplate(currentConfig.id, previewRef.current || undefined)} disabled={isExporting === currentConfig.id} className="w-full py-[11px] rounded-[10px] bg-gradient-to-r from-[#095DC3] to-[#2896FB] border-none text-white text-[11px] font-semibold flex items-center justify-center gap-[6px] cursor-pointer transition-all hover:shadow-[0_4px_24px_rgba(40,150,251,0.3)] disabled:opacity-50">
               {isExporting === currentConfig.id ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Download className="w-[12px] h-[12px]" />}
               Download Current

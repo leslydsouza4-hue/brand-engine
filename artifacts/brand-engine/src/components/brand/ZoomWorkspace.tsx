@@ -1,8 +1,8 @@
-import { useState } from "react";
 import { Check } from "lucide-react";
 import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
 import { useExport } from "./useExport";
+import { useSessionState } from "./sessions/useSessionState";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -14,9 +14,9 @@ const BG_OPTIONS = [
 
 export function ZoomWorkspace() {
   const { isExporting, handleExport } = useExport();
-  const [activeBg, setActiveBg] = useState(BG_OPTIONS[0]);
-  const [name, setName] = useState("");
-  const [designation, setDesignation] = useState("");
+  const [activeBg, setActiveBg] = useSessionState("zoom.activeBackground", BG_OPTIONS[0]);
+  const [name, setName] = useSessionState("zoom.name", "");
+  const [designation, setDesignation] = useSessionState("zoom.designation", "");
 
   const bgUrl = `${BASE}assets/backgrounds-dark/${activeBg.file}`;
 

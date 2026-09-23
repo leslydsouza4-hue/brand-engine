@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Download, Loader2, Edit3, RotateCcw, Sun, Moon, ChevronDown } from "lucide-react";
 import { toPng } from "html-to-image";
 import { addExport, createThumbnail } from "./exportStore";
+import { useSessionState } from "./sessions/useSessionState";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -109,15 +110,15 @@ const ROYAL = "#095DC3";
 export function CustomerJourneyWorkspace() {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [exportFormat, setExportFormat] = useState<"pdf" | "png">("pdf");
+  const [exportFormat, setExportFormat] = useSessionState<"pdf" | "png">("events.exportFormat", "pdf");
   const [isEditing, setIsEditing] = useState(false);
-  const [isDark, setIsDark] = useState(true);
-  const [title, setTitle] = useState(DEFAULT_TITLE);
-  const [subtitle, setSubtitle] = useState(DEFAULT_SUBTITLE);
-  const [phase1Items, setPhase1Items] = useState<PhaseItem[]>(DEFAULT_PHASE1);
-  const [phase2Items, setPhase2Items] = useState<PhaseItem[]>(DEFAULT_PHASE2);
-  const [phase3Items, setPhase3Items] = useState<PhaseItem[]>(DEFAULT_PHASE3);
-  const [quickRef, setQuickRef] = useState<QuickRefRow[]>(DEFAULT_QUICKREF);
+  const [isDark, setIsDark] = useSessionState("events.isDark", true);
+  const [title, setTitle] = useSessionState("events.title", DEFAULT_TITLE);
+  const [subtitle, setSubtitle] = useSessionState("events.subtitle", DEFAULT_SUBTITLE);
+  const [phase1Items, setPhase1Items] = useSessionState<PhaseItem[]>("events.phase1Items", DEFAULT_PHASE1);
+  const [phase2Items, setPhase2Items] = useSessionState<PhaseItem[]>("events.phase2Items", DEFAULT_PHASE2);
+  const [phase3Items, setPhase3Items] = useSessionState<PhaseItem[]>("events.phase3Items", DEFAULT_PHASE3);
+  const [quickRef, setQuickRef] = useSessionState<QuickRefRow[]>("events.quickReference", DEFAULT_QUICKREF);
   const [openPhases, setOpenPhases] = useState<Record<number, boolean>>({ 0: false, 1: false, 2: false });
   const togglePhase = (i: number) => setOpenPhases(prev => ({ ...prev, [i]: !prev[i] }));
 

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { addExport, createThumbnail } from "./exportStore";
 import { PhotoroomLink } from "./PhotoroomLink";
+import { useSessionState } from "./sessions/useSessionState";
 
 import partnerHeroTemplate from "@assets/Group_1171275389_1789596609906.png";
 
@@ -83,6 +84,15 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+}
+
 export function PartnerHeroWorkspace() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -92,18 +102,18 @@ export function PartnerHeroWorkspace() {
   
   const [baseImg, setBaseImg] = useState<HTMLImageElement | null>(null);
   const [photoImg, setPhotoImg] = useState<HTMLImageElement | null>(null);
-  const [photoBounds, setPhotoBounds] = useState<PhotoBounds | null>(null);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoBounds, setPhotoBounds] = useSessionState<PhotoBounds | null>("partnerHero.photoBounds", null);
+  const [photoUrl, setPhotoUrl] = useSessionState<string | null>("partnerHero.photoUrl", null);
   const currentPhotoUrl = useRef<string | null>(null);
   
   const [processing, setProcessing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
   
-  const [baseScale, setBaseScale] = useState(1);
-  const [relativeScale, setRelativeScale] = useState(1);
-  const [posX, setPosX] = useState(MASK.x);
-  const [posY, setPosY] = useState(MASK.y);
+  const [baseScale, setBaseScale] = useSessionState("partnerHero.baseScale", 1);
+  const [relativeScale, setRelativeScale] = useSessionState("partnerHero.relativeScale", 1);
+  const [posX, setPosX] = useSessionState("partnerHero.positionX", MASK.x);
+  const [posY, setPosY] = useSessionState("partnerHero.positionY", MASK.y);
 
   useEffect(() => {
     return () => {
@@ -114,6 +124,24 @@ export function PartnerHeroWorkspace() {
       currentPhotoUrl.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (!photoUrl) {
+      setPhotoImg(null);
+      return;
+    }
+    let active = true;
+    loadImage(photoUrl)
+      .then(img => {
+        if (active) setPhotoImg(img);
+      })
+      .catch(() => {
+        if (active) setStatusMsg("Couldn't read the saved image.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [photoUrl]);
 
   useEffect(() => {
     let active = true;
@@ -210,22 +238,19 @@ export function PartnerHeroWorkspace() {
 
     const job = ++jobRef.current;
     setStatusMsg(null);
-    const blobUrl = URL.createObjectURL(file);
-    
     try {
-      const img = await loadImage(blobUrl);
+      const sourceUrl = await blobToDataUrl(file);
+      const img = await loadImage(sourceUrl);
       if (job !== jobRef.current) {
-        URL.revokeObjectURL(blobUrl);
         return;
       }
       fitPhoto(img);
       cleanupCurrentUrl();
-      currentPhotoUrl.current = blobUrl;
-      setPhotoUrl(blobUrl);
+      currentPhotoUrl.current = sourceUrl;
+      setPhotoUrl(sourceUrl);
       setPhotoImg(img);
     } catch {
       if (job === jobRef.current) setStatusMsg("Couldn't read that image.");
-      URL.revokeObjectURL(blobUrl);
     }
   };
 
@@ -242,24 +267,22 @@ export function PartnerHeroWorkspace() {
       });
       if (job !== jobRef.current) return;
       
-      const newBlobUrl = URL.createObjectURL(blob);
+      const processedUrl = await blobToDataUrl(blob);
       let newImg;
       try {
-        newImg = await loadImage(newBlobUrl);
+        newImg = await loadImage(processedUrl);
         if (job === jobRef.current) fitPhoto(newImg);
       } catch {
-        URL.revokeObjectURL(newBlobUrl);
         throw new Error("Decode failed");
       }
       
       if (job !== jobRef.current) {
-        URL.revokeObjectURL(newBlobUrl);
         return;
       }
       
       cleanupCurrentUrl();
-      currentPhotoUrl.current = newBlobUrl;
-      setPhotoUrl(newBlobUrl);
+      currentPhotoUrl.current = processedUrl;
+      setPhotoUrl(processedUrl);
       setPhotoImg(newImg);
     } catch (err) {
       console.error(err);

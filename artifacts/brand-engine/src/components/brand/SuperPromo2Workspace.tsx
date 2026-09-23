@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useSessionState } from "./sessions/useSessionState";
 import {
   UploadCloud, X, Loader2, Download, Check, Sparkles, ZoomIn, ArrowUpDown, RefreshCw, PackageOpen, Eraser
 } from "lucide-react";
@@ -815,24 +816,24 @@ function TemplatePreview(props: {
 }
 
 export function SuperPromo2Workspace() {
-  const [headline, setHeadline] = useState("");
-  const [dateText, setDateText] = useState("");
-  const [ctaText, setCtaText] = useState("");
-  const [guestName, setGuestName] = useState("");
-  const [guestTitle, setGuestTitle] = useState("");
-  const [guestImage, setGuestImage] = useState<string | null>(null);
-  const [guestSettings, setGuestSettings] = useState<ImageSettings>({ scale: 1, offsetX: 0, offsetY: 0 });
-  const [blueTint, setBlueTint] = useState(false);
-  const [headlineScale, setHeadlineScale] = useState(1);
+  const [headline, setHeadline] = useSessionState("superpromo2.headline", "");
+  const [dateText, setDateText] = useSessionState("superpromo2.dateText", "");
+  const [ctaText, setCtaText] = useSessionState("superpromo2.ctaText", "");
+  const [guestName, setGuestName] = useSessionState("superpromo2.guestName", "");
+  const [guestTitle, setGuestTitle] = useSessionState("superpromo2.guestTitle", "");
+  const [guestImage, setGuestImage] = useSessionState<string | null>("superpromo2.guestImage", null);
+  const [guestSettings, setGuestSettings] = useSessionState<ImageSettings>("superpromo2.guestSettings", { scale: 1, offsetX: 0, offsetY: 0 });
+  const [blueTint, setBlueTint] = useSessionState("superpromo2.blueTint", false);
+  const [headlineScale, setHeadlineScale] = useSessionState("superpromo2.headlineScale", 1);
   // Per-template headline scale overrides (keyed by template id) for the gallery;
   // falls back to the global slider value when a template has no override.
-  const [scaleOverrides, setScaleOverrides] = useState<Record<string, number>>({});
+  const [scaleOverrides, setScaleOverrides] = useSessionState<Record<string, number>>("superpromo2.scaleOverrides", {});
   const scaleFor = (id: string) => scaleOverrides[id] ?? headlineScale;
   const [isLoadingGuest, setIsLoadingGuest] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
-  const [originalGuestImage, setOriginalGuestImage] = useState<string | null>(null);
-  const [sizeMode, setSizeMode] = useState<SizeMode>("horizontal");
-  const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0].id);
+  const [originalGuestImage, setOriginalGuestImage] = useSessionState<string | null>("superpromo2.originalGuestImage", null);
+  const [sizeMode, setSizeMode] = useSessionState<SizeMode>("superpromo2.sizeMode", "horizontal");
+  const [selectedTemplate, setSelectedTemplate] = useSessionState("superpromo2.selectedTemplate", TEMPLATES[0].id);
   const [showGallery, setShowGallery] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const [isExportingAll, setIsExportingAll] = useState(false);
@@ -847,6 +848,14 @@ export function SuperPromo2Workspace() {
   const guestFileRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (showGallery) return;
+    const graphic = previewRef.current?.querySelector(":scope > [data-template-id]");
+    if (!graphic) return;
+    graphic.setAttribute("data-session-preview", "");
+    return () => graphic.removeAttribute("data-session-preview");
+  }, [selectedTemplate, showGallery]);
 
   const filteredTemplates = TEMPLATES.filter((t) => t.size === sizeMode);
   const currentConfig = filteredTemplates.find((t) => t.id === selectedTemplate) || filteredTemplates[0];

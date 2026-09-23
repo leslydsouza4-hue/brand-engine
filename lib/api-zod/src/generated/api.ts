@@ -8,6 +8,319 @@
 import * as zod from "zod";
 
 /**
+ * @summary List teams and accept invitations matching Clerk-verified email addresses
+ */
+export const ListSessionTeamsResponse = zod.object({
+  teams: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      role: zod.enum(["admin", "member"]),
+    }),
+  ),
+  user: zod.object({
+    id: zod.string(),
+    name: zod.string(),
+  }),
+});
+
+export const createSessionTeamBodyNameMax = 160;
+
+export const CreateSessionTeamBody = zod.object({
+  name: zod.string().min(1).max(createSessionTeamBodyNameMax),
+});
+
+export const ListSessionTeamMembersParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+});
+
+export const ListSessionTeamMembersResponse = zod.object({
+  members: zod.array(
+    zod.object({
+      userId: zod.string(),
+      name: zod.string(),
+      role: zod.enum(["admin", "member"]),
+    }),
+  ),
+  invites: zod.array(
+    zod.object({
+      id: zod.string(),
+      email: zod.string(),
+    }),
+  ),
+});
+
+export const RemoveSessionTeamMemberParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  userId: zod.coerce.string(),
+});
+
+export const RemoveSessionTeamMemberResponse = zod.object({
+  ok: zod.literal(true),
+});
+
+export const InviteSessionTeamMemberParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+});
+
+export const InviteSessionTeamMemberBody = zod.object({
+  email: zod.string().email(),
+});
+
+export const InviteSessionTeamMemberResponse = zod.object({
+  ok: zod.literal(true),
+});
+
+export const RevokeSessionTeamInviteParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  inviteId: zod.coerce.string().uuid(),
+});
+
+export const RevokeSessionTeamInviteResponse = zod.object({
+  ok: zod.literal(true),
+});
+
+export const ListSavedSessionsParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+});
+
+export const listSavedSessionsQueryArchivedDefault = false;
+
+export const ListSavedSessionsQueryParams = zod.object({
+  archived: zod.coerce.boolean().default(listSavedSessionsQueryArchivedDefault),
+});
+
+export const ListSavedSessionsResponse = zod.object({
+  sessions: zod.array(
+    zod.object({
+      id: zod.string(),
+      teamId: zod.string(),
+      name: zod.string(),
+      workspaceType: zod.string(),
+      schemaVersion: zod.number(),
+      revision: zod.number(),
+      createdByName: zod.string(),
+      updatedByName: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+      archived: zod.boolean(),
+      thumbnailAssetId: zod.string().nullable(),
+    }),
+  ),
+});
+
+export const CreateSavedSessionParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+});
+
+export const createSavedSessionBodyNameMax = 160;
+
+export const createSavedSessionBodyWorkspaceTypeRegExp = new RegExp(
+  "^[a-zA-Z0-9_-]{1,80}$",
+);
+
+export const CreateSavedSessionBody = zod.object({
+  name: zod.string().min(1).max(createSavedSessionBodyNameMax),
+  workspaceType: zod.string().regex(createSavedSessionBodyWorkspaceTypeRegExp),
+  schemaVersion: zod.literal(1),
+  state: zod.record(zod.string(), zod.unknown()),
+  thumbnailAssetId: zod.string().uuid().nullish(),
+});
+
+export const GetSavedSessionParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  id: zod.coerce.string().uuid(),
+});
+
+export const GetSavedSessionResponse = zod.object({
+  session: zod
+    .object({
+      id: zod.string(),
+      teamId: zod.string(),
+      name: zod.string(),
+      workspaceType: zod.string(),
+      schemaVersion: zod.number(),
+      revision: zod.number(),
+      createdByName: zod.string(),
+      updatedByName: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+      archived: zod.boolean(),
+      thumbnailAssetId: zod.string().nullable(),
+    })
+    .and(
+      zod.object({
+        state: zod.record(zod.string(), zod.unknown()),
+      }),
+    ),
+});
+
+export const UpdateSavedSessionParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  id: zod.coerce.string().uuid(),
+});
+
+export const updateSavedSessionBodyOneNameMax = 160;
+
+export const updateSavedSessionBodyOneWorkspaceTypeRegExp = new RegExp(
+  "^[a-zA-Z0-9_-]{1,80}$",
+);
+
+export const UpdateSavedSessionBody = zod
+  .object({
+    name: zod.string().min(1).max(updateSavedSessionBodyOneNameMax),
+    workspaceType: zod
+      .string()
+      .regex(updateSavedSessionBodyOneWorkspaceTypeRegExp),
+    schemaVersion: zod.literal(1),
+    state: zod.record(zod.string(), zod.unknown()),
+    thumbnailAssetId: zod.string().uuid().nullish(),
+  })
+  .and(
+    zod.object({
+      revision: zod.number().min(1),
+    }),
+  );
+
+export const UpdateSavedSessionResponse = zod.object({
+  session: zod
+    .object({
+      id: zod.string(),
+      teamId: zod.string(),
+      name: zod.string(),
+      workspaceType: zod.string(),
+      schemaVersion: zod.number(),
+      revision: zod.number(),
+      createdByName: zod.string(),
+      updatedByName: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+      archived: zod.boolean(),
+      thumbnailAssetId: zod.string().nullable(),
+    })
+    .and(
+      zod.object({
+        state: zod.record(zod.string(), zod.unknown()),
+      }),
+    ),
+});
+
+export const PatchSavedSessionParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  id: zod.coerce.string().uuid(),
+});
+
+export const patchSavedSessionBodyNameMax = 160;
+
+export const PatchSavedSessionBody = zod.object({
+  revision: zod.number().min(1),
+  name: zod.string().min(1).max(patchSavedSessionBodyNameMax).optional(),
+  archived: zod.boolean().optional(),
+});
+
+export const PatchSavedSessionResponse = zod.object({
+  session: zod
+    .object({
+      id: zod.string(),
+      teamId: zod.string(),
+      name: zod.string(),
+      workspaceType: zod.string(),
+      schemaVersion: zod.number(),
+      revision: zod.number(),
+      createdByName: zod.string(),
+      updatedByName: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+      archived: zod.boolean(),
+      thumbnailAssetId: zod.string().nullable(),
+    })
+    .and(
+      zod.object({
+        state: zod.record(zod.string(), zod.unknown()),
+      }),
+    ),
+});
+
+export const ListSavedSessionVersionsParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  id: zod.coerce.string().uuid(),
+});
+
+export const ListSavedSessionVersionsResponse = zod.object({
+  versions: zod.array(
+    zod.object({
+      revision: zod.number(),
+      name: zod.string(),
+      updatedAt: zod.coerce.date(),
+      updatedByName: zod.string(),
+    }),
+  ),
+});
+
+export const GetSavedSessionVersionParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  id: zod.coerce.string().uuid(),
+  revision: zod.coerce.number().min(1),
+});
+
+export const GetSavedSessionVersionResponse = zod.object({
+  session: zod
+    .object({
+      id: zod.string(),
+      teamId: zod.string(),
+      name: zod.string(),
+      workspaceType: zod.string(),
+      schemaVersion: zod.number(),
+      revision: zod.number(),
+      createdByName: zod.string(),
+      updatedByName: zod.string(),
+      createdAt: zod.coerce.date(),
+      updatedAt: zod.coerce.date(),
+      archived: zod.boolean(),
+      thumbnailAssetId: zod.string().nullable(),
+    })
+    .and(
+      zod.object({
+        state: zod.record(zod.string(), zod.unknown()),
+      }),
+    ),
+});
+
+export const RequestSessionAssetUploadParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+});
+
+export const requestSessionAssetUploadBodyNameMax = 160;
+
+export const requestSessionAssetUploadBodySizeMax = 26214400;
+
+export const RequestSessionAssetUploadBody = zod.object({
+  name: zod.string().min(1).max(requestSessionAssetUploadBodyNameMax),
+  contentType: zod.enum([
+    "image/png",
+    "image/jpeg",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+  ]),
+  size: zod.number().min(1).max(requestSessionAssetUploadBodySizeMax),
+});
+
+export const CompleteSessionAssetUploadParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  assetId: zod.coerce.string().uuid(),
+});
+
+export const CompleteSessionAssetUploadResponse = zod.object({
+  assetId: zod.string(),
+});
+
+export const GetSessionAssetParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  assetId: zod.coerce.string().uuid(),
+});
+
+/**
  * Returns server health status
  * @summary Health check
  */

@@ -8,3 +8,413 @@
 export interface HealthStatus {
   status: string;
 }
+
+export type ListSessionTeams200TeamsItemRole =
+  (typeof ListSessionTeams200TeamsItemRole)[keyof typeof ListSessionTeams200TeamsItemRole];
+
+export const ListSessionTeams200TeamsItemRole = {
+  admin: "admin",
+  member: "member",
+} as const;
+
+export type ListSessionTeams200TeamsItem = {
+  id: string;
+  name: string;
+  role: ListSessionTeams200TeamsItemRole;
+};
+
+export type ListSessionTeams200User = {
+  id: string;
+  name: string;
+};
+
+export type ListSessionTeams200 = {
+  teams: ListSessionTeams200TeamsItem[];
+  user: ListSessionTeams200User;
+};
+
+export type ListSessionTeamsDefault = {
+  error: string;
+  code?: string;
+};
+
+export type CreateSessionTeamBody = {
+  /**
+   * @minLength 1
+   * @maxLength 160
+   */
+  name: string;
+};
+
+export type CreateSessionTeam201TeamRole =
+  (typeof CreateSessionTeam201TeamRole)[keyof typeof CreateSessionTeam201TeamRole];
+
+export const CreateSessionTeam201TeamRole = {
+  admin: "admin",
+  member: "member",
+} as const;
+
+export type CreateSessionTeam201Team = {
+  id: string;
+  name: string;
+  role: CreateSessionTeam201TeamRole;
+};
+
+export type CreateSessionTeam201 = {
+  team: CreateSessionTeam201Team;
+};
+
+export type CreateSessionTeamDefault = {
+  error: string;
+  code?: string;
+};
+
+export type ListSessionTeamMembers200MembersItemRole =
+  (typeof ListSessionTeamMembers200MembersItemRole)[keyof typeof ListSessionTeamMembers200MembersItemRole];
+
+export const ListSessionTeamMembers200MembersItemRole = {
+  admin: "admin",
+  member: "member",
+} as const;
+
+export type ListSessionTeamMembers200MembersItem = {
+  userId: string;
+  name: string;
+  role: ListSessionTeamMembers200MembersItemRole;
+};
+
+export type ListSessionTeamMembers200InvitesItem = {
+  id: string;
+  email: string;
+};
+
+export type ListSessionTeamMembers200 = {
+  members: ListSessionTeamMembers200MembersItem[];
+  invites: ListSessionTeamMembers200InvitesItem[];
+};
+
+export type ListSessionTeamMembersDefault = {
+  error: string;
+  code?: string;
+};
+
+export type RemoveSessionTeamMember200 = {
+  ok: boolean;
+};
+
+export type RemoveSessionTeamMemberDefault = {
+  error: string;
+  code?: string;
+};
+
+export type InviteSessionTeamMemberBody = {
+  email: string;
+};
+
+export type InviteSessionTeamMember200 = {
+  ok: boolean;
+};
+
+export type InviteSessionTeamMemberDefault = {
+  error: string;
+  code?: string;
+};
+
+export type RevokeSessionTeamInvite200 = {
+  ok: boolean;
+};
+
+export type RevokeSessionTeamInviteDefault = {
+  error: string;
+  code?: string;
+};
+
+export type ListSavedSessionsParams = {
+  archived?: boolean;
+};
+
+export type ListSavedSessions200SessionsItem = {
+  id: string;
+  teamId: string;
+  name: string;
+  workspaceType: string;
+  schemaVersion: number;
+  revision: number;
+  createdByName: string;
+  updatedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  archived: boolean;
+  /** @nullable */
+  thumbnailAssetId: string | null;
+};
+
+export type ListSavedSessions200 = {
+  sessions: ListSavedSessions200SessionsItem[];
+};
+
+export type ListSavedSessionsDefault = {
+  error: string;
+  code?: string;
+};
+
+export type CreateSavedSessionBodySchemaVersion =
+  (typeof CreateSavedSessionBodySchemaVersion)[keyof typeof CreateSavedSessionBodySchemaVersion];
+
+export const CreateSavedSessionBodySchemaVersion = {
+  NUMBER_1: 1,
+} as const;
+
+export type CreateSavedSessionBodyState = { [key: string]: unknown };
+
+export type CreateSavedSessionBody = {
+  /**
+   * @minLength 1
+   * @maxLength 160
+   */
+  name: string;
+  /** @pattern ^[a-zA-Z0-9_-]{1,80}$ */
+  workspaceType: string;
+  schemaVersion: CreateSavedSessionBodySchemaVersion;
+  state: CreateSavedSessionBodyState;
+  /** @nullable */
+  thumbnailAssetId?: string | null;
+};
+
+export type CreateSavedSession201Session = {
+  id: string;
+  teamId: string;
+  name: string;
+  workspaceType: string;
+  schemaVersion: number;
+  revision: number;
+  createdByName: string;
+  updatedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  archived: boolean;
+  /** @nullable */
+  thumbnailAssetId: string | null;
+} & {
+  state: { [key: string]: unknown };
+};
+
+export type CreateSavedSession201 = {
+  session: CreateSavedSession201Session;
+};
+
+export type CreateSavedSessionDefault = {
+  error: string;
+  code?: string;
+};
+
+export type GetSavedSession200Session = {
+  id: string;
+  teamId: string;
+  name: string;
+  workspaceType: string;
+  schemaVersion: number;
+  revision: number;
+  createdByName: string;
+  updatedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  archived: boolean;
+  /** @nullable */
+  thumbnailAssetId: string | null;
+} & {
+  state: { [key: string]: unknown };
+};
+
+export type GetSavedSession200 = {
+  session: GetSavedSession200Session;
+};
+
+export type GetSavedSessionDefault = {
+  error: string;
+  code?: string;
+};
+
+export type UpdateSavedSessionBody = {
+  /**
+   * @minLength 1
+   * @maxLength 160
+   */
+  name: string;
+  /** @pattern ^[a-zA-Z0-9_-]{1,80}$ */
+  workspaceType: string;
+  schemaVersion: 1;
+  state: { [key: string]: unknown };
+  /** @nullable */
+  thumbnailAssetId?: string | null;
+} & {
+  /** @minimum 1 */
+  revision: number;
+};
+
+export type UpdateSavedSession200Session = {
+  id: string;
+  teamId: string;
+  name: string;
+  workspaceType: string;
+  schemaVersion: number;
+  revision: number;
+  createdByName: string;
+  updatedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  archived: boolean;
+  /** @nullable */
+  thumbnailAssetId: string | null;
+} & {
+  state: { [key: string]: unknown };
+};
+
+export type UpdateSavedSession200 = {
+  session: UpdateSavedSession200Session;
+};
+
+export type UpdateSavedSession409 = {
+  error: string;
+  code?: string;
+};
+
+export type UpdateSavedSessionDefault = {
+  error: string;
+  code?: string;
+};
+
+export type PatchSavedSessionBody = {
+  /** @minimum 1 */
+  revision: number;
+  /**
+   * @minLength 1
+   * @maxLength 160
+   */
+  name?: string;
+  archived?: boolean;
+};
+
+export type PatchSavedSession200Session = {
+  id: string;
+  teamId: string;
+  name: string;
+  workspaceType: string;
+  schemaVersion: number;
+  revision: number;
+  createdByName: string;
+  updatedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  archived: boolean;
+  /** @nullable */
+  thumbnailAssetId: string | null;
+} & {
+  state: { [key: string]: unknown };
+};
+
+export type PatchSavedSession200 = {
+  session: PatchSavedSession200Session;
+};
+
+export type PatchSavedSession409 = {
+  error: string;
+  code?: string;
+};
+
+export type PatchSavedSessionDefault = {
+  error: string;
+  code?: string;
+};
+
+export type ListSavedSessionVersions200VersionsItem = {
+  revision: number;
+  name: string;
+  updatedAt: string;
+  updatedByName: string;
+};
+
+export type ListSavedSessionVersions200 = {
+  versions: ListSavedSessionVersions200VersionsItem[];
+};
+
+export type ListSavedSessionVersionsDefault = {
+  error: string;
+  code?: string;
+};
+
+export type GetSavedSessionVersion200Session = {
+  id: string;
+  teamId: string;
+  name: string;
+  workspaceType: string;
+  schemaVersion: number;
+  revision: number;
+  createdByName: string;
+  updatedByName: string;
+  createdAt: string;
+  updatedAt: string;
+  archived: boolean;
+  /** @nullable */
+  thumbnailAssetId: string | null;
+} & {
+  state: { [key: string]: unknown };
+};
+
+export type GetSavedSessionVersion200 = {
+  session: GetSavedSessionVersion200Session;
+};
+
+export type GetSavedSessionVersionDefault = {
+  error: string;
+  code?: string;
+};
+
+export type RequestSessionAssetUploadBodyContentType =
+  (typeof RequestSessionAssetUploadBodyContentType)[keyof typeof RequestSessionAssetUploadBodyContentType];
+
+export const RequestSessionAssetUploadBodyContentType = {
+  "image/png": "image/png",
+  "image/jpeg": "image/jpeg",
+  "image/webp": "image/webp",
+  "image/gif": "image/gif",
+  "image/svg+xml": "image/svg+xml",
+} as const;
+
+export type RequestSessionAssetUploadBody = {
+  /**
+   * @minLength 1
+   * @maxLength 160
+   */
+  name: string;
+  contentType: RequestSessionAssetUploadBodyContentType;
+  /**
+   * @minimum 1
+   * @maximum 26214400
+   */
+  size: number;
+};
+
+export type RequestSessionAssetUpload201 = {
+  assetId: string;
+  uploadURL: string;
+};
+
+export type RequestSessionAssetUploadDefault = {
+  error: string;
+  code?: string;
+};
+
+export type CompleteSessionAssetUpload200 = {
+  assetId: string;
+};
+
+export type CompleteSessionAssetUploadDefault = {
+  error: string;
+  code?: string;
+};
+
+export type GetSessionAssetDefault = {
+  error: string;
+  code?: string;
+};

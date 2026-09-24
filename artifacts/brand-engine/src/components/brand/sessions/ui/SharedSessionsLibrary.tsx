@@ -120,9 +120,9 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
       <DialogContent className="max-w-5xl h-[85vh] p-0 gap-0 bg-[#09090b] border-white/10 flex flex-col overflow-hidden text-white">
         <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0">
           <div>
-            <DialogTitle className="text-2xl font-bold font-heading text-white">Shared Sessions</DialogTitle>
+            <DialogTitle className="text-2xl font-bold font-heading text-white">Saved Sessions</DialogTitle>
             <DialogDescription className="text-zinc-400 mt-1">
-              Collaborate on saved projects across your team.
+              All your editable saved sessions across every Brand Engine tool.
             </DialogDescription>
           </div>
           <TeamSelector />

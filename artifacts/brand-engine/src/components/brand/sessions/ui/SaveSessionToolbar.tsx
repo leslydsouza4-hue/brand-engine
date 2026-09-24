@@ -101,7 +101,7 @@ export function SaveSessionToolbar({ workspaceType, onOpenLibrary }: SaveSession
   return (
     <>
       {thumbnailWarning && <div role="status" className="text-xs text-amber-300 px-4 py-1">{thumbnailWarning}</div>}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-[#18181b]/90 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-2xl">
+      <div className="relative z-20 flex shrink-0 flex-wrap items-center justify-end gap-2 bg-[#18181b]/90 border-b border-white/10 px-3 sm:px-4 py-2">
         <div className="flex items-center gap-3 pr-4 border-r border-white/10">
           {isSignedIn ? (
             <Tooltip>

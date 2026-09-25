@@ -25,6 +25,10 @@ import type {
   CreateSessionTeam201,
   CreateSessionTeamBody,
   CreateSessionTeamDefault,
+  DeleteSavedSession200,
+  DeleteSavedSession409,
+  DeleteSavedSessionBody,
+  DeleteSavedSessionDefault,
   GetSavedSession200,
   GetSavedSessionDefault,
   GetSavedSessionVersion200,
@@ -70,7 +74,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 /**
- * @summary List teams and accept invitations matching Clerk-verified email addresses
+ * @summary Return the shared library and authenticated user; no invitation required
  */
 export const getListSessionTeamsUrl = () => {
   return `/api/session-teams`;
@@ -121,7 +125,7 @@ export type ListSessionTeamsQueryResult = NonNullable<
 export type ListSessionTeamsQueryError = ErrorType<ListSessionTeamsDefault>;
 
 /**
- * @summary List teams and accept invitations matching Clerk-verified email addresses
+ * @summary Return the shared library and authenticated user; no invitation required
  */
 
 export function useListSessionTeams<
@@ -762,6 +766,99 @@ export const useCreateSavedSession = <
   TContext
 > => {
   return useMutation(getCreateSavedSessionMutationOptions(options));
+};
+
+/**
+ * @summary Permanently delete a shared session and its history for everyone
+ */
+export const getDeleteSavedSessionUrl = (teamId: string, id: string) => {
+  return `/api/session-teams/${teamId}/sessions/${id}`;
+};
+
+export const deleteSavedSession = async (
+  teamId: string,
+  id: string,
+  deleteSavedSessionBody: DeleteSavedSessionBody,
+  options?: RequestInit,
+): Promise<DeleteSavedSession200> => {
+  return customFetch<DeleteSavedSession200>(
+    getDeleteSavedSessionUrl(teamId, id),
+    {
+      ...options,
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(deleteSavedSessionBody),
+    },
+  );
+};
+
+export const getDeleteSavedSessionMutationOptions = <
+  TError = ErrorType<DeleteSavedSession409 | DeleteSavedSessionDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteSavedSession>>,
+    TError,
+    { teamId: string; id: string; data: BodyType<DeleteSavedSessionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteSavedSession>>,
+  TError,
+  { teamId: string; id: string; data: BodyType<DeleteSavedSessionBody> },
+  TContext
+> => {
+  const mutationKey = ["deleteSavedSession"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteSavedSession>>,
+    { teamId: string; id: string; data: BodyType<DeleteSavedSessionBody> }
+  > = (props) => {
+    const { teamId, id, data } = props ?? {};
+
+    return deleteSavedSession(teamId, id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteSavedSessionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteSavedSession>>
+>;
+export type DeleteSavedSessionMutationBody = BodyType<DeleteSavedSessionBody>;
+export type DeleteSavedSessionMutationError = ErrorType<
+  DeleteSavedSession409 | DeleteSavedSessionDefault
+>;
+
+/**
+ * @summary Permanently delete a shared session and its history for everyone
+ */
+export const useDeleteSavedSession = <
+  TError = ErrorType<DeleteSavedSession409 | DeleteSavedSessionDefault>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteSavedSession>>,
+    TError,
+    { teamId: string; id: string; data: BodyType<DeleteSavedSessionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteSavedSession>>,
+  TError,
+  { teamId: string; id: string; data: BodyType<DeleteSavedSessionBody> },
+  TContext
+> => {
+  return useMutation(getDeleteSavedSessionMutationOptions(options));
 };
 
 export const getGetSavedSessionUrl = (teamId: string, id: string) => {

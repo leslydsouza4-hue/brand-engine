@@ -8,7 +8,7 @@
 import * as zod from "zod";
 
 /**
- * @summary List teams and accept invitations matching Clerk-verified email addresses
+ * @summary Return the shared library and authenticated user; no invitation required
  */
 export const ListSessionTeamsResponse = zod.object({
   teams: zod.array(
@@ -104,6 +104,7 @@ export const ListSavedSessionsResponse = zod.object({
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
       archived: zod.boolean(),
+      archivedAt: zod.coerce.date().nullish(),
       thumbnailAssetId: zod.string().nullable(),
     }),
   ),
@@ -127,6 +128,22 @@ export const CreateSavedSessionBody = zod.object({
   thumbnailAssetId: zod.string().uuid().nullish(),
 });
 
+/**
+ * @summary Permanently delete a shared session and its history for everyone
+ */
+export const DeleteSavedSessionParams = zod.object({
+  teamId: zod.coerce.string().uuid(),
+  id: zod.coerce.string().uuid(),
+});
+
+export const DeleteSavedSessionBody = zod.object({
+  revision: zod.number().min(1),
+});
+
+export const DeleteSavedSessionResponse = zod.object({
+  ok: zod.literal(true),
+});
+
 export const GetSavedSessionParams = zod.object({
   teamId: zod.coerce.string().uuid(),
   id: zod.coerce.string().uuid(),
@@ -146,6 +163,7 @@ export const GetSavedSessionResponse = zod.object({
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
       archived: zod.boolean(),
+      archivedAt: zod.coerce.date().nullish(),
       thumbnailAssetId: zod.string().nullable(),
     })
     .and(
@@ -196,6 +214,7 @@ export const UpdateSavedSessionResponse = zod.object({
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
       archived: zod.boolean(),
+      archivedAt: zod.coerce.date().nullish(),
       thumbnailAssetId: zod.string().nullable(),
     })
     .and(
@@ -232,6 +251,7 @@ export const PatchSavedSessionResponse = zod.object({
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
       archived: zod.boolean(),
+      archivedAt: zod.coerce.date().nullish(),
       thumbnailAssetId: zod.string().nullable(),
     })
     .and(
@@ -277,6 +297,7 @@ export const GetSavedSessionVersionResponse = zod.object({
       createdAt: zod.coerce.date(),
       updatedAt: zod.coerce.date(),
       archived: zod.boolean(),
+      archivedAt: zod.coerce.date().nullish(),
       thumbnailAssetId: zod.string().nullable(),
     })
     .and(

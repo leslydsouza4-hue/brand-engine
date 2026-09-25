@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import sharp from "sharp";
-import { db, pool, sessionTeams, sessionMembers, savedSessions, sessionVersions } from "@workspace/db";
+import { db, pool, sessionTeams, sessionMembers, savedSessions, sessionVersions, sessionAssets } from "@workspace/db";
 import { assetSchema, assertReadyAssets, assertSessionMutationOrigin, collectAssetIds, patchSchema, saveSchema, SessionError } from "../lib/session-validation";
 import { validateImageBytes } from "../lib/session-assets";
-import { recordVersion, requireTeam, reviseSession } from "../routes/saved-sessions";
+import { archiveTimestamp, ARCHIVE_RETENTION_MS, deleteLibrarySessions, recordVersion, requireLibrary, requireTeam, reviseSession } from "../routes/saved-sessions";
 
 after(async () => { await pool.end(); });
 
@@ -39,11 +39,12 @@ test("nested image tags are collected; inline and transient assets are rejected"
   assert.throws(() => collectAssetIds({ invalid: Infinity }));
 });
 
-test("asset references must all be ready and owned by the requested team", () => {
+test("asset references must all be ready; legacy teams are not library boundaries", () => {
   const id = randomUUID(), team = randomUUID();
-  assert.doesNotThrow(() => assertReadyAssets([id], [{ id, teamId: team, ready: true }], team));
-  for (const assets of [[], [{ id, teamId: "other-team", ready: true }], [{ id, teamId: team, ready: false }]])
-    assert.throws(() => assertReadyAssets([id], assets, team), /missing, incomplete, or belongs/);
+  const historical = [{ id, teamId: team, ready: true }];
+  assert.doesNotThrow(() => assertReadyAssets([id], historical));
+  for (const assets of [[], [{ id, teamId: team, ready: false }]])
+    assert.throws(() => assertReadyAssets([id], assets), /missing or incomplete/);
 });
 
 test("request validation rejects excessive files, MIME spoof declarations and author fields", () => {
@@ -83,11 +84,66 @@ test("database: concurrent saves have one winner and immutable complete history"
     const [current] = await db.select().from(savedSessions).where(eq(savedSessions.id, id));
     assert.equal(current.revision, 2);
     assert.equal(current.name, versions.find(v => v.revision === 2)?.snapshot.name);
-    await assert.rejects(db.transaction(tx => reviseSession(tx, randomUUID(), id, 2, { name: "Cross-team attack" }, user)), (e: unknown) => e instanceof SessionError && e.status === 404);
+    const sharedUpdate = await db.transaction(async tx => {
+      await requireLibrary(tx);
+      return reviseSession(tx, randomUUID(), id, 2, { name: "Cross-account shared edit" }, "Another signed-in account");
+    });
+    assert.equal(sharedUpdate.revision, 3);
     await assert.rejects(db.transaction(tx => requireTeam(tx, team, "outsider")), (e: unknown) => e instanceof SessionError && e.status === 403);
     await db.transaction(tx => requireTeam(tx, team, user, true));
     await db.update(sessionMembers).set({ role: "member" }).where(eq(sessionMembers.teamId, team));
     await assert.rejects(db.transaction(tx => requireTeam(tx, team, user, true)), (e: unknown) => e instanceof SessionError && e.status === 403);
+  } finally {
+    await db.delete(sessionTeams).where(eq(sessionTeams.id, team));
+  }
+});
+
+test("archive timer starts once, survives edits, and resets on unarchive", () => {
+  const now = new Date(), earlier = new Date(now.getTime() - 1000);
+  assert.equal(archiveTimestamp({ archived: false, archivedAt: null, updatedAt: earlier }, undefined, now), null);
+  assert.equal(archiveTimestamp({ archived: false, archivedAt: null, updatedAt: earlier }, true, now), now);
+  assert.equal(archiveTimestamp({ archived: true, archivedAt: earlier, updatedAt: now }, true, now), earlier);
+  assert.equal(archiveTimestamp({ archived: true, archivedAt: null, updatedAt: earlier }, undefined, now), earlier);
+  assert.equal(archiveTimestamp({ archived: true, archivedAt: earlier, updatedAt: now }, false, now), null);
+});
+
+test("database: request cleanup expires archived sessions only and preserves shared assets/history", async () => {
+  const team = randomUUID(), active = randomUUID(), expired = randomUUID(), recent = randomUUID(), legacy = randomUUID();
+  const sharedAsset = randomUUID(), removedAsset = randomUUID();
+  const old = new Date(Date.now() - ARCHIVE_RETENTION_MS - 60000);
+  try {
+    await db.insert(sessionTeams).values({ id: team, name: "Retention test" });
+    await db.insert(sessionAssets).values([sharedAsset, removedAsset].map(id => ({
+      id, teamId: team, name: "Test image", contentType: "image/png", size: 1, objectPath: "/test-only", ready: true,
+    })));
+    for (const [id, archived, archivedAt, state] of [
+      [active, false, null, { image: { __brandAsset: sharedAsset } }],
+      [expired, true, old, { image: { __brandAsset: sharedAsset }, other: { __brandAsset: removedAsset } }],
+      [recent, true, new Date(), {}],
+      [legacy, true, null, {}],
+    ] as const) {
+      const [row] = await db.insert(savedSessions).values({
+        id, teamId: team, name: id, workspaceType: "test", schemaVersion: 1, revision: 1,
+        state, archived, archivedAt, updatedAt: old, createdAt: old, createdByName: "Test", updatedByName: "Test",
+      }).returning();
+      await db.transaction(tx => recordVersion(tx, row));
+    }
+    await db.transaction(requireLibrary);
+    const rows = await db.select().from(savedSessions).where(eq(savedSessions.teamId, team));
+    assert.deepEqual(rows.map(row => row.id).sort(), [active, recent].sort());
+    assert.equal((await db.select().from(sessionVersions).where(eq(sessionVersions.sessionId, expired))).length, 0);
+    assert.equal((await db.select().from(sessionAssets).where(eq(sessionAssets.id, sharedAsset))).length, 1);
+    assert.equal((await db.select().from(sessionAssets).where(eq(sessionAssets.id, removedAsset))).length, 0);
+    await db.transaction(async tx => {
+      await requireLibrary(tx);
+      const unarchived = await reviseSession(tx, team, recent, 1, { archived: false }, "Other user");
+      assert.equal(unarchived.archivedAt, null);
+      const archived = await reviseSession(tx, team, recent, 2, { archived: true }, "Other user");
+      assert.ok(archived.archivedAt && archived.archivedAt.getTime() > old.getTime());
+      await deleteLibrarySessions(tx, [active]);
+    });
+    assert.equal((await db.select().from(sessionVersions).where(eq(sessionVersions.sessionId, active))).length, 0);
+    assert.equal((await db.select().from(sessionAssets).where(eq(sessionAssets.id, sharedAsset))).length, 0);
   } finally {
     await db.delete(sessionTeams).where(eq(sessionTeams.id, team));
   }

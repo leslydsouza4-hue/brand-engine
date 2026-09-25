@@ -8,14 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Search, FileImage, MoreVertical, Copy, 
-  Archive, Edit2, FolderOpen, Play, SearchX
+  Archive, Edit2, FolderOpen, Play, SearchX, Trash2
 } from "lucide-react";
 import { 
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
   DropdownMenuTrigger, DropdownMenuSeparator 
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TeamSelector } from "./TeamSelector";
 import { useSessions } from "../SessionProvider";
 import type { SessionSummary } from "../sessionClient";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +35,7 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("active");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const { sessions, currentSession, activeTeamId, open: openSession, archive, rename, list, prepareSignIn, duplicate } = useSessions();
+  const { sessions, currentSession, activeTeamId, open: openSession, archive, rename, list, prepareSignIn, duplicate, deleteSession, error } = useSessions();
   const { toast } = useToast();
   const [openingSessionId, setOpeningSessionId] = useState<string | null>(null);
 
@@ -95,11 +94,21 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
   };
 
   const handleArchiveToggle = async (session: any) => {
+    if (!session.archived && !window.confirm(`Archive "${session.name}" for everyone? It will be permanently deleted after 30 days in the archive. You can unarchive it before then.`)) return;
     try {
       await archive(session.id, session.revision, !session.archived);
-      list(activeTab === "archived");
+      await list(activeTab === "archived");
     } catch (e: any) {
       toast({ title: "Failed to update", description: e.message, variant: "destructive" });
+    }
+  };
+  const handleDelete = async (session: SessionSummary) => {
+    if (!window.confirm(`Permanently delete "${session.name}" and its version history for everyone? This cannot be undone. Any open editor draft on this device will remain unsaved.`)) return;
+    try {
+      await deleteSession(session.id, session.revision);
+      toast({ title: "Session permanently deleted", description: "Removed from the shared library for everyone." });
+    } catch (e: any) {
+      toast({ title: "Failed to delete", description: e.message, variant: "destructive" });
     }
   };
 
@@ -108,7 +117,7 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
     if (newName && newName !== session.name) {
       try {
         await rename(session.id, session.revision, newName);
-        list(activeTab === "archived");
+        await list(activeTab === "archived");
       } catch (e: any) {
         toast({ title: "Failed to rename", description: e.message, variant: "destructive" });
       }
@@ -122,10 +131,9 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
           <div>
             <DialogTitle className="text-2xl font-bold font-heading text-white">Saved Sessions</DialogTitle>
             <DialogDescription className="text-zinc-400 mt-1">
-              All your editable saved sessions across every Brand Engine tool.
+              Shared with everyone who signs in. No invitations needed.
             </DialogDescription>
           </div>
-          <TeamSelector />
         </div>
 
         <div className="flex-1 flex flex-col min-h-0">
@@ -134,9 +142,9 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
               <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
                 <FolderOpen className="w-8 h-8 text-zinc-600" />
               </div>
-              <h3 className="text-xl font-medium text-white mb-2">Sign in to view your library</h3>
+              <h3 className="text-xl font-medium text-white mb-2">Sign in to view the shared library</h3>
               <p className="text-zinc-400 max-w-sm mb-6">
-                You need an account to save sessions and collaborate with your team.
+                Every signed-in account can open, edit, archive, and delete saved sessions.
               </p>
               <Button onClick={handleSignIn} className="bg-[#00B2A9] hover:bg-[#00B2A9]/90 text-white">
                 Sign In
@@ -145,6 +153,8 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
           ) : (
             <>
               <div className="p-6 pb-2 shrink-0 flex flex-col gap-4">
+                <p className="text-xs text-zinc-400">Active sessions never expire. Archived sessions are permanently deleted after 30 days. Unarchive to keep them.</p>
+                {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
                 <div className="flex items-center gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
@@ -222,7 +232,7 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
                             </div>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white -mr-2">
+                                <Button aria-label={`Manage ${session.name}`} variant="ghost" size="icon" className="h-8 w-8 text-zinc-400 hover:text-white -mr-2">
                                   <MoreVertical className="w-4 h-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -246,11 +256,15 @@ export function SharedSessionsLibrary({ open, onOpenChange, activeWorkspaceType 
                                     <Archive className="w-4 h-4 mr-2" /> Archive
                                   </DropdownMenuItem>
                                 )}
+                                <DropdownMenuItem onClick={() => handleDelete(session)} className="focus:bg-red-500/20 focus:text-red-400 text-red-400 cursor-pointer">
+                                  <Trash2 className="w-4 h-4 mr-2" /> Delete permanently
+                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
                           
                           <div className="flex flex-col gap-1.5 text-xs text-zinc-500">
+                            {session.archived && <div className="text-amber-300">Deletes {new Date(new Date(session.archivedAt ?? session.updatedAt).getTime() + 30 * 86400000).toLocaleDateString()}</div>}
                             <div className="flex items-center justify-between">
                               <span>Authored by <span className="text-zinc-300">{session.createdByName || "Unknown"}</span></span>
                               <span>{formatDistanceToNow(new Date(session.updatedAt), { addSuffix: true })}</span>

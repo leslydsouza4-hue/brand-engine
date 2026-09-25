@@ -20,6 +20,7 @@ export const savedSessions = pgTable("saved_sessions", {
   state: jsonb("state").$type<Record<string, unknown>>().notNull(),
   thumbnailAssetId: text("thumbnail_asset_id"),
   archived: boolean("archived").notNull().default(false),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
   createdByName: text("created_by_name").notNull(), updatedByName: text("updated_by_name").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

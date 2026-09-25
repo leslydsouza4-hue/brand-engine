@@ -2,7 +2,7 @@ paths:
   teams:
     get:
       operationId: listSessionTeams
-      summary: List teams and accept invitations matching Clerk-verified email addresses
+      summary: Return the shared library and authenticated user; no invitation required
       responses:
         "200":
           description: Teams and authenticated user
@@ -142,6 +142,18 @@ paths:
         default: { $ref: "#/responses/Error" }
   session:
     parameters: [{ $ref: "#/parameters/teamId" }, { $ref: "#/parameters/id" }]
+    delete:
+      operationId: deleteSavedSession
+      summary: Permanently delete a shared session and its history for everyone
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/schemas/DeleteSession" }
+      responses:
+        "200": { $ref: "#/responses/Ok" }
+        "409": { $ref: "#/responses/Error" }
+        default: { $ref: "#/responses/Error" }
     get:
       operationId: getSavedSession
       responses:
@@ -291,6 +303,12 @@ schemas:
       schemaVersion: { type: integer, enum: [1] }
       state: { type: object, additionalProperties: true }
       thumbnailAssetId: { type: [string, "null"], format: uuid }
+  DeleteSession:
+    type: object
+    additionalProperties: false
+    required: [revision]
+    properties:
+      revision: { type: integer, minimum: 1 }
   SessionSummary:
     type: object
     required: [id, teamId, name, workspaceType, schemaVersion, revision, createdByName, updatedByName, createdAt, updatedAt, archived, thumbnailAssetId]
@@ -306,6 +324,7 @@ schemas:
       createdAt: { type: string, format: date-time }
       updatedAt: { type: string, format: date-time }
       archived: { type: boolean }
+      archivedAt: { type: [string, "null"], format: date-time }
       thumbnailAssetId: { type: [string, "null"] }
   Session:
     allOf:

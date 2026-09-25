@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { clerkClient, getAuth } from "@clerk/express";
-import { and, eq, inArray, desc } from "drizzle-orm";
+import { and, eq, inArray, desc, sql } from "drizzle-orm";
 import { db, sessionTeams, sessionMembers, sessionInvites, savedSessions, sessionVersions, sessionAssets } from "@workspace/db";
 import { z } from "zod";
 import { assetSchema, assertReadyAssets, assertSessionMutationOrigin, collectAssetIds, idSchema, nameSchema, patchSchema, saveSchema, SessionError, updateSchema } from "../lib/session-validation";
@@ -44,37 +44,62 @@ export async function requireTeam(tx: Tx, teamId: string, userId: string, admin 
   return member;
 }
 function teamId(req: Request) { return idSchema.parse(req.params.teamId); }
-async function session(tx: Tx, team: string, id: string) {
-  const [row] = await tx.select().from(savedSessions).where(and(eq(savedSessions.id, id), eq(savedSessions.teamId, team)));
+async function session(tx: Tx, _team: string, id: string) {
+  const [row] = await tx.select().from(savedSessions).where(eq(savedSessions.id, id));
   if (!row) throw new SessionError(404, "Session not found");
   return row;
 }
-async function validateAssets(tx: Tx, team: string, state: unknown, thumbnail?: string | null) {
+export const SHARED_LIBRARY_ID = "00000000-0000-4000-8000-000000000001";
+export const ARCHIVE_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+export function archiveTimestamp(current: { archived: boolean; archivedAt: Date | null; updatedAt: Date }, archived: boolean | undefined, now = new Date()) {
+  if (archived === false) return null;
+  if (current.archived) return current.archivedAt ?? current.updatedAt;
+  return archived === true ? now : null;
+}
+function assetIds(row: { state: unknown; thumbnailAssetId?: string | null }) {
+  return [...collectAssetIds(row.state ?? {}), ...(row.thumbnailAssetId ? [row.thumbnailAssetId] : [])];
+}
+/** Delete snapshots and revoke only assets no surviving session/version references. */
+export async function deleteLibrarySessions(tx: Tx, ids: string[]) {
+  if (!ids.length) return;
+  const removed = await tx.select().from(savedSessions).where(inArray(savedSessions.id, ids));
+  const versions = await tx.select().from(sessionVersions).where(inArray(sessionVersions.sessionId, ids));
+  const candidates = new Set(removed.flatMap(assetIds));
+  for (const { snapshot } of versions) for (const id of assetIds(snapshot as { state: unknown; thumbnailAssetId?: string })) candidates.add(id);
+  await tx.delete(savedSessions).where(inArray(savedSessions.id, ids)); // versions cascade
+  if (!candidates.size) return;
+  const remaining = await tx.select().from(savedSessions);
+  for (const row of remaining) for (const id of assetIds(row)) candidates.delete(id);
+  const history = await tx.select().from(sessionVersions);
+  for (const { snapshot } of history) for (const id of assetIds(snapshot as { state: unknown; thumbnailAssetId?: string })) candidates.delete(id);
+  if (candidates.size) await tx.delete(sessionAssets).where(inArray(sessionAssets.id, [...candidates]));
+}
+/** All library operations share this lock, including expiry, writes and asset reads.
+ * Request-driven cleanup works on autoscale; no always-running timer is required.
+ * Historical archived rows use their last update as the initial archive timestamp.
+ */
+export async function requireLibrary(tx: Tx) {
+  await tx.insert(sessionTeams).values({ id: SHARED_LIBRARY_ID, name: "Shared library" }).onConflictDoNothing();
+  await tx.select().from(sessionTeams).where(eq(sessionTeams.id, SHARED_LIBRARY_ID)).for("update");
+  const expired = await tx.select({ id: savedSessions.id }).from(savedSessions).where(and(
+    eq(savedSessions.archived, true),
+    sql`coalesce(${savedSessions.archivedAt}, ${savedSessions.updatedAt}) <= clock_timestamp() - interval '30 days'`,
+  ));
+  await deleteLibrarySessions(tx, expired.map(row => row.id));
+}
+async function validateAssets(tx: Tx, _team: string, state: unknown, thumbnail?: string | null) {
   const ids = collectAssetIds(state);
   if (thumbnail) ids.push(thumbnail);
-  const assets = ids.length ? await tx.select().from(sessionAssets).where(and(eq(sessionAssets.teamId, team), inArray(sessionAssets.id, ids))) : [];
-  assertReadyAssets(ids, assets, team);
+  const assets = ids.length ? await tx.select().from(sessionAssets).where(inArray(sessionAssets.id, ids)) : [];
+  assertReadyAssets(ids, assets);
 }
 export async function recordVersion(tx: Tx, row: typeof savedSessions.$inferSelect) {
   await tx.insert(sessionVersions).values({ sessionId: row.id, revision: row.revision, snapshot: JSON.parse(JSON.stringify(row)) });
 }
 
 router.get("/session-teams", endpoint(async (_req, res, user) => {
-  const teams = await db.transaction(async tx => {
-    const candidates = user.emails.length ? await tx.select().from(sessionInvites).where(inArray(sessionInvites.email, user.emails)) : [];
-    // Same lock ordering as admin operations: team first, invitation second.
-    for (const team of [...new Set(candidates.map(i => i.teamId))].sort()) {
-      await tx.select().from(sessionTeams).where(eq(sessionTeams.id, team)).for("update");
-      const invites = await tx.select().from(sessionInvites).where(and(eq(sessionInvites.teamId, team), inArray(sessionInvites.email, user.emails))).for("update");
-      for (const invite of invites) {
-        await tx.insert(sessionMembers).values({ teamId: invite.teamId, userId: user.id, name: user.name, role: "member" }).onConflictDoNothing();
-        await tx.delete(sessionInvites).where(eq(sessionInvites.id, invite.id));
-      }
-    }
-    await tx.update(sessionMembers).set({ name: user.name }).where(eq(sessionMembers.userId, user.id));
-    return tx.select({ id: sessionTeams.id, name: sessionTeams.name, role: sessionMembers.role }).from(sessionTeams)
-      .innerJoin(sessionMembers, eq(sessionTeams.id, sessionMembers.teamId)).where(eq(sessionMembers.userId, user.id));
-  });
+  await db.transaction(requireLibrary);
+  const teams = [{ id: SHARED_LIBRARY_ID, name: "Shared library", role: "member" }];
   res.json({ teams, user: { id: user.id, name: user.name } });
 }));
 router.post("/session-teams", endpoint(async (req, res, user) => {
@@ -129,8 +154,8 @@ router.delete("/session-teams/:teamId/members/:userId", endpoint(async (req, res
 router.get("/session-teams/:teamId/sessions", endpoint(async (req, res, user) => {
   const team = teamId(req), archived = z.enum(["true", "false"]).default("false").parse(req.query.archived) === "true";
   const sessions = await db.transaction(async tx => {
-    await requireTeam(tx, team, user.id);
-    const rows = await tx.select().from(savedSessions).where(and(eq(savedSessions.teamId, team), eq(savedSessions.archived, archived))).orderBy(desc(savedSessions.updatedAt));
+    await requireLibrary(tx);
+    const rows = await tx.select().from(savedSessions).where(eq(savedSessions.archived, archived)).orderBy(desc(savedSessions.updatedAt));
     return rows.map(({ state: _state, ...summary }) => summary);
   });
   res.json({ sessions });
@@ -138,9 +163,9 @@ router.get("/session-teams/:teamId/sessions", endpoint(async (req, res, user) =>
 router.post("/session-teams/:teamId/sessions", endpoint(async (req, res, user) => {
   const team = teamId(req), body = saveSchema.parse(req.body);
   const result = await db.transaction(async tx => {
-    await requireTeam(tx, team, user.id);
+    await requireLibrary(tx);
     await validateAssets(tx, team, body.state, body.thumbnailAssetId);
-    const [row] = await tx.insert(savedSessions).values({ ...body, id: randomUUID(), teamId: team, revision: 1, createdByName: user.name, updatedByName: user.name }).returning();
+    const [row] = await tx.insert(savedSessions).values({ ...body, id: randomUUID(), teamId: SHARED_LIBRARY_ID, revision: 1, createdByName: user.name, updatedByName: user.name }).returning();
     await recordVersion(tx, row);
     return row;
   });
@@ -148,14 +173,14 @@ router.post("/session-teams/:teamId/sessions", endpoint(async (req, res, user) =
 }));
 router.get("/session-teams/:teamId/sessions/:id", endpoint(async (req, res, user) => {
   const team = teamId(req), id = idSchema.parse(req.params.id);
-  res.json({ session: await db.transaction(async tx => { await requireTeam(tx, team, user.id); return session(tx, team, id); }) });
+  res.json({ session: await db.transaction(async tx => { await requireLibrary(tx); return session(tx, team, id); }) });
 }));
 
 export async function reviseSession(tx: Tx, team: string, id: string, revision: number, changes: Partial<typeof savedSessions.$inferInsert>, author: string) {
   const current = await session(tx, team, id);
   if (current.revision !== revision) throw new SessionError(409, "Session changed. Reload before saving.", "REVISION_CONFLICT");
-  const [row] = await tx.update(savedSessions).set({ ...changes, revision: revision + 1, updatedByName: author, updatedAt: new Date() })
-    .where(and(eq(savedSessions.id, id), eq(savedSessions.teamId, team), eq(savedSessions.revision, revision))).returning();
+  const [row] = await tx.update(savedSessions).set({ ...changes, archivedAt: archiveTimestamp(current, changes.archived), revision: revision + 1, updatedByName: author, updatedAt: new Date() })
+    .where(and(eq(savedSessions.id, id), eq(savedSessions.revision, revision))).returning();
   if (!row) throw new SessionError(409, "Session changed. Reload before saving.", "REVISION_CONFLICT");
   await recordVersion(tx, row);
   return row;
@@ -166,17 +191,28 @@ for (const method of ["put", "patch"] as const) {
     const body = method === "put" ? updateSchema.parse(req.body) : patchSchema.parse(req.body);
     const { revision, ...changes } = body;
     const result = await db.transaction(async tx => {
-      await requireTeam(tx, team, user.id);
+      await requireLibrary(tx);
       if ("state" in changes) await validateAssets(tx, team, changes.state, changes.thumbnailAssetId);
       return reviseSession(tx, team, id, revision, changes, user.name);
     });
     res.json({ session: result });
   }));
 }
+router.delete("/session-teams/:teamId/sessions/:id", endpoint(async (req, res) => {
+  const team = teamId(req), id = idSchema.parse(req.params.id);
+  const { revision } = z.object({ revision: z.number().int().positive() }).strict().parse(req.body);
+  await db.transaction(async tx => {
+    await requireLibrary(tx);
+    const current = await session(tx, team, id);
+    if (current.revision !== revision) throw new SessionError(409, "Session changed. Refresh before deleting.", "REVISION_CONFLICT");
+    await deleteLibrarySessions(tx, [id]);
+  });
+  res.json({ ok: true });
+}));
 router.get("/session-teams/:teamId/sessions/:id/versions", endpoint(async (req, res, user) => {
   const team = teamId(req), id = idSchema.parse(req.params.id);
   const versions = await db.transaction(async tx => {
-    await requireTeam(tx, team, user.id);
+    await requireLibrary(tx);
     await session(tx, team, id);
     const rows = await tx.select().from(sessionVersions).where(eq(sessionVersions.sessionId, id)).orderBy(desc(sessionVersions.revision));
     return rows.map(({ snapshot: s }) => ({ revision: s.revision, name: s.name, updatedAt: s.updatedAt, updatedByName: s.updatedByName }));
@@ -186,7 +222,7 @@ router.get("/session-teams/:teamId/sessions/:id/versions", endpoint(async (req, 
 router.get("/session-teams/:teamId/sessions/:id/versions/:revision", endpoint(async (req, res, user) => {
   const team = teamId(req), id = idSchema.parse(req.params.id), revision = z.coerce.number().int().positive().parse(req.params.revision);
   const result = await db.transaction(async tx => {
-    await requireTeam(tx, team, user.id);
+    await requireLibrary(tx);
     await session(tx, team, id);
     const [row] = await tx.select().from(sessionVersions).where(and(eq(sessionVersions.sessionId, id), eq(sessionVersions.revision, revision)));
     if (!row) throw new SessionError(404, "Version not found");
@@ -197,10 +233,10 @@ router.get("/session-teams/:teamId/sessions/:id/versions/:revision", endpoint(as
 router.post("/session-teams/:teamId/assets", endpoint(async (req, res, user) => {
   const team = teamId(req), body = assetSchema.parse(req.body);
   const result = await db.transaction(async tx => {
-    await requireTeam(tx, team, user.id);
+    await requireLibrary(tx);
     const uploadURL = await sessionStorage.getObjectEntityUploadURL();
     const assetId = randomUUID();
-    await tx.insert(sessionAssets).values({ ...body, id: assetId, teamId: team, objectPath: sessionStorage.normalizeObjectEntityPath(uploadURL) });
+    await tx.insert(sessionAssets).values({ ...body, id: assetId, teamId: SHARED_LIBRARY_ID, objectPath: sessionStorage.normalizeObjectEntityPath(uploadURL) });
     return { assetId, uploadURL };
   });
   res.status(201).json(result);
@@ -208,8 +244,8 @@ router.post("/session-teams/:teamId/assets", endpoint(async (req, res, user) => 
 router.post("/session-teams/:teamId/assets/:assetId/complete", endpoint(async (req, res, user) => {
   const team = teamId(req), id = idSchema.parse(req.params.assetId);
   await db.transaction(async tx => {
-    await requireTeam(tx, team, user.id);
-    const [asset] = await tx.select().from(sessionAssets).where(and(eq(sessionAssets.teamId, team), eq(sessionAssets.id, id))).for("update");
+    await requireLibrary(tx);
+    const [asset] = await tx.select().from(sessionAssets).where(eq(sessionAssets.id, id)).for("update");
     if (!asset) throw new SessionError(404, "Asset not found");
     if (asset.ready) return;
     const objectPath = await completePrivateImage(asset.objectPath, asset.contentType, asset.size, randomUUID());
@@ -220,8 +256,8 @@ router.post("/session-teams/:teamId/assets/:assetId/complete", endpoint(async (r
 router.get("/session-teams/:teamId/assets/:assetId", endpoint(async (req, res, user) => {
   const team = teamId(req), id = idSchema.parse(req.params.assetId);
   const asset = await db.transaction(async tx => {
-    await requireTeam(tx, team, user.id);
-    const [row] = await tx.select().from(sessionAssets).where(and(eq(sessionAssets.teamId, team), eq(sessionAssets.id, id), eq(sessionAssets.ready, true)));
+    await requireLibrary(tx);
+    const [row] = await tx.select().from(sessionAssets).where(and(eq(sessionAssets.id, id), eq(sessionAssets.ready, true)));
     if (!row) throw new SessionError(404, "Asset not found");
     return row;
   });

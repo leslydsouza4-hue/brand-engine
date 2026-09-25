@@ -15,15 +15,44 @@ export async function uploadSessionAsset(team: string, blob: Blob, name = "sessi
   return assetId;
 }
 
-export function privateAssetId(value: string, team: string): string | null {
+export function privateAssetId(value: string, _team: string): string | null {
   const origin = typeof location === "undefined" ? "http://localhost" : location.origin;
   let url: URL;
   try { url = new URL(value, origin); } catch { return null; }
   if (url.origin !== origin) return null;
   const match = url.pathname.match(/^\/api\/session-teams\/([^/]+)\/assets\/([^/]+)$/);
   if (!match) return null;
-  if (decodeURIComponent(match[1]) !== team) throw new Error("Cannot save assets belonging to another team");
   return decodeURIComponent(match[2]);
+}
+
+/** Preserve images in open drafts before a permanent delete revokes cloud assets.
+ * Returns a synchronous URL replacement so edits made during fetch stay intact.
+ */
+export async function preserveDraftImages(states: Record<string, unknown>[]) {
+  const urls = new Set<string>();
+  function collect(value: unknown) {
+    if (typeof value === "string" && privateAssetId(value, "")) urls.add(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === "object") Object.values(value).forEach(collect);
+  }
+  states.forEach(collect);
+  const portable = new Map<string, string>();
+  await Promise.all([...urls].map(async url => {
+    const response = await fetch(url, { credentials: "same-origin", cache: "no-store" });
+    if (!response.ok) throw new Error("Cannot preserve an open draft image. Close or save that draft before deleting.");
+    const blob = await response.blob();
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 8192) binary += String.fromCharCode(...bytes.subarray(offset, offset + 8192));
+    portable.set(url, `data:${blob.type};base64,${btoa(binary)}`);
+  }));
+  function replace(value: unknown): unknown {
+    if (typeof value === "string") return portable.get(value) ?? value;
+    if (Array.isArray(value)) return value.map(replace);
+    if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, replace(item)]));
+    return value;
+  }
+  return (state: Record<string, unknown>) => replace(state) as Record<string, unknown>;
 }
 
 /** Recursively preserves JSON values, rejecting anything JSON would silently lose. */

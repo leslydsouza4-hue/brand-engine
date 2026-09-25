@@ -55,12 +55,12 @@ export default function AuthPage({ children }: AuthPageProps) {
               <line x1="19" y1="8" x2="19" y2="14"/>
               <line x1="22" y1="11" x2="16" y2="11"/>
             </svg>
-            Team Invitation?
+             One shared library
           </h3>
           <ul className="text-sm text-zinc-400 space-y-3">
             <li className="flex items-start gap-3">
               <span className="text-[#00B2A9] mt-0.5 opacity-70">01</span>
-               Sign in using the email address your team admin invited
+                Sign in or create an account — no invitation needed
             </li>
             <li className="flex items-start gap-3">
               <span className="text-[#00B2A9] mt-0.5 opacity-70">02</span>
@@ -68,7 +68,7 @@ export default function AuthPage({ children }: AuthPageProps) {
             </li>
             <li className="flex items-start gap-3">
               <span className="text-[#00B2A9] mt-0.5 opacity-70">03</span>
-              No Replit account required to access team workspace
+               All signed-in accounts can access saved sessions. No Replit account required.
             </li>
           </ul>
         </div>
@@ -97,10 +97,10 @@ export default function AuthPage({ children }: AuthPageProps) {
           
           <div className="md:hidden mt-4 p-5 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-md">
             <h3 className="text-white text-sm font-medium mb-2 flex items-center gap-2">
-              Team Invitation?
+              One shared library
             </h3>
             <p className="text-xs text-zinc-400 mb-2">
-               Use the email your team admin invited and verify it when prompted. No Replit account required.
+                Every signed-in account can access saved sessions. No invitation or Replit account required.
             </p>
           </div>
         </div>

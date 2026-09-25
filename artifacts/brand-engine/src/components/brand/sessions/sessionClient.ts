@@ -4,6 +4,7 @@ export interface SessionSummary {
   id: string; teamId: string; name: string; workspaceType: string; schemaVersion: 1;
   revision: number; createdByName: string; updatedByName: string;
   createdAt: string; updatedAt: string; archived: boolean; thumbnailAssetId: string | null;
+  archivedAt?: string | null;
 }
 export interface Session extends SessionSummary { state: Record<string, unknown> }
 export interface SessionVersion { revision: number; name: string; updatedAt: string; updatedByName: string }
@@ -33,7 +34,6 @@ export async function duplicateSavedSession(team: string, id: string, name: stri
   const base = `${teamPath(team)}/sessions`;
   const { session: source } = await sessionRequest<{ session: Session }>(`${base}/${encodeURIComponent(id)}`);
   assertScope();
-  if (source.teamId !== team) throw new Error("Cannot duplicate a session from another team");
   if (source.schemaVersion !== 1) throw new Error("Cannot duplicate an unsupported session schema");
   const copyName = (name ?? `${source.name} (Copy)`).trim();
   if (!copyName) throw new Error("Enter a name for the duplicated session");

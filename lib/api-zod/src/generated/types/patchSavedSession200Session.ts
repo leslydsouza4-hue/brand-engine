@@ -19,6 +19,8 @@ export type PatchSavedSession200Session = {
   updatedAt: Date;
   archived: boolean;
   /** @nullable */
+  archivedAt?: Date | null;
+  /** @nullable */
   thumbnailAssetId: string | null;
 } & {
   state: { [key: string]: unknown };

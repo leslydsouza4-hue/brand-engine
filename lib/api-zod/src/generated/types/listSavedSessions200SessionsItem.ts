@@ -19,5 +19,7 @@ export type ListSavedSessions200SessionsItem = {
   updatedAt: Date;
   archived: boolean;
   /** @nullable */
+  archivedAt?: Date | null;
+  /** @nullable */
   thumbnailAssetId: string | null;
 };

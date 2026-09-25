@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { SessionStore, SessionStateContext } from "./sessionStore";
-import { cloneSessionState, persistSessionAssets, resolveSessionAssets, uploadSessionAsset } from "./sessionAssets";
+import { cloneSessionState, persistSessionAssets, preserveDraftImages, resolveSessionAssets, uploadSessionAsset } from "./sessionAssets";
 import { duplicateSavedSession, SessionApiError, sessionRequest, teamPath } from "./sessionClient";
 import type { Session, SessionMembers, SessionSummary, SessionTeam, SessionUser, SessionVersion } from "./sessionClient";
 import { consumeAnonymousDraft, discardAnonymousDraft, preserveAnonymousDraft } from "./anonymousDraft";
@@ -21,6 +21,7 @@ export interface SessionsApi {
   restoreVersion(revision: number): Promise<void>;
   rename(id: string, revision: number, name: string): Promise<Session>;
   archive(id: string, revision: number, archived?: boolean): Promise<Session>;
+  deleteSession(id: string, revision: number): Promise<void>;
   confirmNavigation(): boolean; navigateWorkspace(mode: string): boolean; clearError(): void;
   prepareSignIn(): Promise<void>;
   members(): Promise<SessionMembers>; invite(email: string): Promise<void>;
@@ -79,7 +80,7 @@ export function SessionProvider(props: SessionProviderProps) {
     }
   }
   function requireTeam() {
-    if (!props.userId || !teamRef.current) throw new Error("Sign in and select a team to use saved sessions");
+    if (!props.userId || !teamRef.current) throw new Error("Sign in to use the shared saved sessions library");
     return teamRef.current;
   }
   function confirmNavigation() {
@@ -242,15 +243,47 @@ export function SessionProvider(props: SessionProviderProps) {
   }
   async function patch(id: string, revision: number, changes: { name?: string; archived?: boolean }) {
     return attempt(async () => {
+      if (saveLock.current) throw new Error("Wait for the current save to finish");
       const generation = store.generation;
       const { session } = await sessionRequest<{ session: Session }>(`${teamPath(requireTeam())}/sessions/${encodeURIComponent(id)}`, "PATCH", { revision, ...changes });
       if (!alive(generation)) throw new Error("Team changed while updating session");
       if (alive(generation)) {
         updateSummary(session);
-        for (const entry of store.drafts.values()) if (entry.current?.id === id) entry.current = session;
+        // Metadata operations must not bless a newer remote state as our baseline:
+        // an older open draft still needs a conflict on its next save.
+        for (const entry of store.drafts.values()) if (entry.current?.id === id && entry.current.revision === revision) {
+          entry.current = { ...entry.current, name: session.name, archived: session.archived, archivedAt: session.archivedAt, revision: session.revision, updatedAt: session.updatedAt, updatedByName: session.updatedByName };
+        }
         store.emit();
       }
       return session;
+    });
+  }
+  async function deleteSession(id: string, revision: number) {
+    return attempt(async () => {
+      if (saveLock.current) throw new Error("Wait for the current save to finish");
+      const generation = store.generation;
+      const team = requireTeam();
+      const replaceImages = await preserveDraftImages([...store.drafts.values()].filter(entry => entry.current?.id === id).map(entry => entry.state));
+      if (!alive(generation)) throw new Error("Identity changed before deleting session");
+      await sessionRequest(`${teamPath(team)}/sessions/${encodeURIComponent(id)}`, "DELETE", { revision });
+      if (!alive(generation)) throw new Error("Identity changed while deleting session");
+      operation.current++;
+      listOperation.current++;
+      setSessions(items => items.filter(item => item.id !== id));
+      // Keep every editor field intact, but detach from the deleted cloud record.
+      // Its next explicit save creates a new session instead of reviving the old ID.
+      for (const entry of store.drafts.values()) {
+        const wasDirty = JSON.stringify(entry.state) !== entry.baseline;
+        entry.state = replaceImages(entry.state);
+        if (!wasDirty) entry.baseline = JSON.stringify(entry.state);
+        if (entry.current?.id === id) {
+          entry.current = null;
+          entry.baseline = "";
+        }
+      }
+      clearError();
+      store.emit();
     });
   }
   async function createTeam(name: string) {
@@ -299,7 +332,8 @@ export function SessionProvider(props: SessionProviderProps) {
     if (activeTeamId) void list().catch(() => {});
     const refresh = () => { if (teamRef.current) void list(archivedFilter.current).catch(() => {}); };
     window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
+    const poll = window.setInterval(refresh, 60000);
+    return () => { window.removeEventListener("focus", refresh); window.clearInterval(poll); };
   }, [activeTeamId]);
   useEffect(() => {
     const guard = (event: BeforeUnloadEvent) => {
@@ -313,7 +347,7 @@ export function SessionProvider(props: SessionProviderProps) {
     error, conflict, thumbnailWarning, epoch: store.epoch, currentSession, sessions,
     refreshTeams, createTeam, selectTeam, list, save,
     saveCopy: (name, thumbnail) => save({ name, thumbnail, copy: true }), duplicate,
-    open, history, restoreVersion,
+    open, history, restoreVersion, deleteSession,
     rename: (id, revision, name) => patch(id, revision, { name }),
     archive: (id, revision, archived = true) => patch(id, revision, { archived }),
     confirmNavigation, navigateWorkspace, clearError,

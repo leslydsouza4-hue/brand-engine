@@ -146,6 +146,8 @@ export type ListSavedSessions200SessionsItem = {
   updatedAt: string;
   archived: boolean;
   /** @nullable */
+  archivedAt?: string | null;
+  /** @nullable */
   thumbnailAssetId: string | null;
 };
 
@@ -194,6 +196,8 @@ export type CreateSavedSession201Session = {
   updatedAt: string;
   archived: boolean;
   /** @nullable */
+  archivedAt?: string | null;
+  /** @nullable */
   thumbnailAssetId: string | null;
 } & {
   state: { [key: string]: unknown };
@@ -204,6 +208,25 @@ export type CreateSavedSession201 = {
 };
 
 export type CreateSavedSessionDefault = {
+  error: string;
+  code?: string;
+};
+
+export type DeleteSavedSessionBody = {
+  /** @minimum 1 */
+  revision: number;
+};
+
+export type DeleteSavedSession200 = {
+  ok: boolean;
+};
+
+export type DeleteSavedSession409 = {
+  error: string;
+  code?: string;
+};
+
+export type DeleteSavedSessionDefault = {
   error: string;
   code?: string;
 };
@@ -220,6 +243,8 @@ export type GetSavedSession200Session = {
   createdAt: string;
   updatedAt: string;
   archived: boolean;
+  /** @nullable */
+  archivedAt?: string | null;
   /** @nullable */
   thumbnailAssetId: string | null;
 } & {
@@ -265,6 +290,8 @@ export type UpdateSavedSession200Session = {
   updatedAt: string;
   archived: boolean;
   /** @nullable */
+  archivedAt?: string | null;
+  /** @nullable */
   thumbnailAssetId: string | null;
 } & {
   state: { [key: string]: unknown };
@@ -307,6 +334,8 @@ export type PatchSavedSession200Session = {
   createdAt: string;
   updatedAt: string;
   archived: boolean;
+  /** @nullable */
+  archivedAt?: string | null;
   /** @nullable */
   thumbnailAssetId: string | null;
 } & {
@@ -355,6 +384,8 @@ export type GetSavedSessionVersion200Session = {
   createdAt: string;
   updatedAt: string;
   archived: boolean;
+  /** @nullable */
+  archivedAt?: string | null;
   /** @nullable */
   thumbnailAssetId: string | null;
 } & {

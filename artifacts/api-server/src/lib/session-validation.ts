@@ -70,7 +70,7 @@ export function collectAssetIds(state: unknown): string[] {
   return [...ids];
 }
 
-export function assertReadyAssets(ids: string[], assets: { id: string; teamId: string; ready: boolean }[], teamId: string) {
-  if (ids.some(id => !assets.some(a => a.id === id && a.teamId === teamId && a.ready)))
-    throw new SessionError(400, "Asset is missing, incomplete, or belongs to another team", "INVALID_ASSET");
+export function assertReadyAssets(ids: string[], assets: { id: string; ready: boolean }[]) {
+  if (ids.some(id => !assets.some(a => a.id === id && a.ready)))
+    throw new SessionError(400, "Asset is missing or incomplete", "INVALID_ASSET");
 }

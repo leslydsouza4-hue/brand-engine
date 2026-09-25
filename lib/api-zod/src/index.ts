@@ -4,6 +4,7 @@ export * from "./generated/types";
 // request types. Type-only consumers can use the generated/types barrel.
 export {
   CreateSavedSessionBody,
+  DeleteSavedSessionBody,
   CreateSessionTeamBody,
   InviteSessionTeamMemberBody,
   ListSavedSessionsParams,

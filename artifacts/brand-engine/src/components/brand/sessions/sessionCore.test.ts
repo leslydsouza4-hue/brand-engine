@@ -1,16 +1,36 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cloneSessionState, persistSessionAssets, resolveSessionAssets, privateAssetId } from "./sessionAssets";
+import { cloneSessionState, persistSessionAssets, preserveDraftImages, resolveSessionAssets, privateAssetId } from "./sessionAssets";
 import { SessionStore } from "./sessionStore";
 import { duplicateSavedSession, SessionApiError, sessionRequest } from "./sessionClient";
 import { consumeAnonymousDraft, preserveAnonymousDraft } from "./anonymousDraft";
 import { createSessionFieldLease, initializeSessionField } from "./sessionField";
 
-test("nested private images round-trip and cross-team URLs fail", async () => {
+test("authenticated images round-trip across legacy teams in the shared library", async () => {
   const state = { photos: [{ src: { __brandAsset: "photo-1" } }], static: "/logo.png", title: "Draft" };
   const resolved = resolveSessionAssets(state, "team-1");
   assert.deepEqual(await persistSessionAssets(resolved, "team-1"), state);
-  assert.throws(() => privateAssetId("/api/session-teams/other/assets/asset", "team-1"), /another team/);
+  assert.equal(privateAssetId("/api/session-teams/other/assets/asset", "team-1"), "asset");
+  assert.deepEqual(await persistSessionAssets(resolved, "another-team"), state);
+});
+
+test("deletion preserves open draft images portably without replacing intervening text edits", async () => {
+  const originalFetch = globalThis.fetch;
+  const url = "/api/session-teams/legacy/assets/image";
+  let fetched = 0;
+  globalThis.fetch = async () => {
+    fetched++;
+    return new Response(new Uint8Array([1, 2, 3]), { headers: { "Content-Type": "image/png" } });
+  };
+  try {
+    const replace = await preserveDraftImages([{ photo: url, nested: [url], title: "Before" }]);
+    assert.equal(fetched, 1);
+    assert.deepEqual(replace({ photo: url, title: "Typed while deleting", static: "/logo.svg" }), {
+      photo: "data:image/png;base64,AQID", title: "Typed while deleting", static: "/logo.svg",
+    });
+    globalThis.fetch = async () => new Response(null, { status: 404 });
+    await assert.rejects(preserveDraftImages([{ photo: url }]), /Cannot preserve/);
+  } finally { globalThis.fetch = originalFetch; }
 });
 
 test("JSON validation never silently drops values", () => {
@@ -139,7 +159,7 @@ test("library duplication copies archived persisted state into an active session
   draft.state = { headline: "Unsaved typing" };
   const epoch = store.epoch;
   const source = {
-    id: "original", teamId: "t", name: "Archived source", workspaceType: "spotlight", schemaVersion: 1,
+    id: "original", teamId: "legacy-team", name: "Archived source", workspaceType: "spotlight", schemaVersion: 1,
     state: { headline: "Saved headline", image: { __brandAsset: "asset-1" } },
     thumbnailAssetId: "thumb-1", revision: 9, archived: true,
   };

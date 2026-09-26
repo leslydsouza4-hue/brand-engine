@@ -50,7 +50,7 @@ import { useRef } from "react";
 
 import { SharedSessionsLibrary } from "@/components/brand/sessions/ui/SharedSessionsLibrary";
 
-const VALID_MODES = ["brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
+const VALID_MODES = ["saved-sessions", "brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
 
 function BrandEngineInner({
   currentMode,
@@ -66,7 +66,10 @@ function BrandEngineInner({
   themeVars,
 }: any) {
   const { navigateWorkspace } = useSessions();
-  const [libraryOpen, setLibraryOpen] = useState(false);
+  const previousWorkspace = useRef(brandMode === "levelup26" ? "image-library" : brandMode === "summer-of-ai" ? "summer-sun-drunk" : "templates");
+  useEffect(() => {
+    if (currentMode !== "saved-sessions") previousWorkspace.current = currentMode;
+  }, [currentMode]);
   const [summerSection, setSummerSection] = useSessionState<SummerSection>("summer.section", () => "emailers");
   const prevBrandMode = useRef(brandMode);
   const prevCurrentMode = useRef(currentMode);
@@ -97,7 +100,7 @@ function BrandEngineInner({
     let target = currentMode;
     if (brandMode === "levelup26" && notLu.includes(currentMode)) target = "image-library";
     if (brandMode === "highlevel" && notHl.includes(currentMode)) target = "templates";
-    if (brandMode === "summer-of-ai" && !summerOnly.includes(currentMode)) target = "summer-sun-drunk";
+    if (brandMode === "summer-of-ai" && !summerOnly.includes(currentMode) && currentMode !== "saved-sessions") target = "summer-sun-drunk";
     
     if (target !== currentMode) {
       navigateWorkspace(target);
@@ -105,25 +108,27 @@ function BrandEngineInner({
   }, [brandMode, currentMode, navigateWorkspace]);
 
   return (
-    <div data-brand-mode={brandMode} className="flex h-screen w-screen relative brand-app-bg" style={themeVars}>
+    <div data-brand-mode={brandMode} className="flex h-dvh w-full min-w-0 overflow-hidden relative brand-app-bg" style={themeVars}>
       <div className="absolute inset-0 brand-app-noise pointer-events-none z-0"></div>
       
       <div className="w-0 md:w-[220px] shrink-0 overflow-visible">
-        <Sidebar currentMode={currentMode} setMode={navigateWorkspace} summerSection={summerSection} setSummerSection={setSummerSection} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} onOpenLibrary={() => setLibraryOpen(true)} />
+        <Sidebar currentMode={currentMode} setMode={navigateWorkspace} summerSection={summerSection} setSummerSection={setSummerSection} mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
       
-      <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden relative z-[1]">
         <Toolbar onMenuToggle={() => setSidebarOpen(true)} />
 
         {SESSIONS_SUPPORTED_MODES.includes(currentMode) && (
-          <SaveSessionToolbar workspaceType={currentMode} onOpenLibrary={() => setLibraryOpen(true)} />
+          <SaveSessionToolbar workspaceType={currentMode} onOpenLibrary={() => navigateWorkspace("saved-sessions")} />
         )}
 
-        <SharedSessionsLibrary 
-          open={libraryOpen} 
-          onOpenChange={setLibraryOpen} 
-          activeWorkspaceType={currentMode}
-        />
+        {currentMode === "saved-sessions" && (
+          <SharedSessionsLibrary
+            embedded
+            open
+            onOpenChange={isOpen => { if (!isOpen) navigateWorkspace(previousWorkspace.current); }}
+          />
+        )}
 
         {currentMode === "brand-brain" && <BrandBrainWorkspace onSendToCraft={sendToCraft} />}
         {currentMode === "templates" && <TemplatesWorkspace seedPrompt={craftSeedPrompt} onConsumeSeed={() => setCraftSeedPrompt(null)} />}
@@ -175,13 +180,18 @@ export default function BrandEngine() {
   const [currentMode, _setCurrentMode] = useState(() => parseHash());
   const [summerSection, setSummerSection] = useState<SummerSection>("emailers");
   const setCurrentMode = (mode: string) => {
+    // Shared sessions span brand modes. Loading one must reveal its real builder,
+    // rather than letting the brand-specific default redirect replace it.
+    if (SESSIONS_SUPPORTED_MODES.includes(mode)) {
+      setBrandMode(mode.startsWith("summer-") ? "summer-of-ai" : "highlevel");
+    }
     _setCurrentMode(mode);
     window.location.hash = mode === "templates" ? "" : mode;
   };
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [craftSeedPrompt, setCraftSeedPrompt] = useState<string | null>(null);
-  const [brandMode] = useBrandMode();
+  const [brandMode, setBrandMode] = useBrandMode();
   const [showIntro, setShowIntro] = useState(() => !hasSeenIntro());
   
   useEffect(() => {

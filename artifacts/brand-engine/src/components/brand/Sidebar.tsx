@@ -53,10 +53,9 @@ interface SidebarProps {
   setSummerSection?: (s: SummerSection) => void;
   mobileOpen?: boolean;
   onClose?: () => void;
-  onOpenLibrary?: () => void;
 }
 
-export function Sidebar({ currentMode, setMode, summerSection = "emailers", setSummerSection, mobileOpen, onClose, onOpenLibrary }: SidebarProps) {
+export function Sidebar({ currentMode, setMode, summerSection = "emailers", setSummerSection, mobileOpen, onClose }: SidebarProps) {
   const [brandMode, setBrandMode] = useBrandMode();
   const theme = BRAND_THEMES[brandMode];
   const handleSetMode = (mode: string) => {
@@ -68,6 +67,14 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
 
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const brandMenuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [mobileOpen, onClose]);
   useEffect(() => {
     if (!brandMenuOpen) return;
     const onDoc = (e: MouseEvent) => {
@@ -85,22 +92,22 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
   return (
     <>
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={onClose} />
+        <button aria-label="Close navigation" data-testid="button-sidebar-backdrop" className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={onClose} />
       )}
       <nav className={`
-        bg-[#030b17f0] backdrop-blur-[28px] saturate-[150%] flex flex-col shrink-0 relative z-50 border-r border-white/5
+        bg-[#030b17f0] backdrop-blur-[28px] saturate-[150%] flex-col shrink-0 z-50 border-r border-white/5
         before:content-[''] before:absolute before:inset-0 before:bg-[radial-gradient(ellipse_at_50%_0%,rgba(0,178,169,0.06)_0%,transparent_50%),linear-gradient(180deg,rgba(255,255,255,0.02)_0%,transparent_30%)] before:pointer-events-none
         after:content-[''] after:absolute after:top-0 after:right-0 after:w-[1px] after:h-full after:bg-[linear-gradient(to_bottom,rgba(0,178,169,0.2),rgba(40,150,251,0.08),transparent_80%)]
         fixed inset-y-0 left-0 w-[260px] transition-transform duration-300 ease-out
-        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:relative md:translate-x-0 md:w-[220px] md:h-screen
+        ${mobileOpen ? 'flex translate-x-0' : 'hidden -translate-x-full'}
+        md:flex md:relative md:translate-x-0 md:w-[220px] md:h-screen
       `}>
         <div className="pt-[22px] px-[20px] pb-[12px] flex items-center gap-[11px] relative shrink-0">
           <div className="w-[30px] h-[30px] rounded-[9px] flex items-center justify-center shrink-0 relative bg-white/[0.04] backdrop-blur-[12px] border border-white/[0.08]">
             <img src={BRAND_THEMES.highlevel.logoIconUrl} alt="HighLevel" className="w-[18px] h-[18px] object-contain" />
           </div>
           <div className="text-[17px] font-bold text-white tracking-[-0.4px] flex-1">Brand<span className="text-[#94A3B8] font-normal ml-[1px]">Engine</span></div>
-          <button onClick={onClose} className="md:hidden w-[28px] h-[28px] flex items-center justify-center rounded-[8px] text-[#94A3B8] hover:text-white hover:bg-white/10 transition-all cursor-pointer">
+          <button aria-label="Close navigation" data-testid="button-sidebar-close" onClick={onClose} className="md:hidden w-[28px] h-[28px] flex items-center justify-center rounded-[8px] text-[#94A3B8] hover:text-white hover:bg-white/10 transition-all cursor-pointer">
             <X className="w-[18px] h-[18px]" />
           </button>
         </div>
@@ -544,10 +551,12 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
           </button>
 
           <button 
-            onClick={() => { onClose?.(); onOpenLibrary?.(); }}
-            className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px] text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]`}
+            data-testid="button-sidebar-saved-sessions"
+            aria-current={currentMode === "saved-sessions" ? "page" : undefined}
+            onClick={() => handleSetMode("saved-sessions")}
+            className={`${btnBase} cursor-pointer ${currentMode === "saved-sessions" ? activeClass : inactiveClass}`}
           >
-            <FolderOpen className="w-[18px] h-[18px] shrink-0 transition-all duration-250 opacity-60" />
+            <FolderOpen className={iconCls(currentMode === "saved-sessions")} />
             Saved Sessions
           </button>
 

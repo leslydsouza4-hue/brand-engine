@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Loader2, Search, Trash2, Plus, X, RefreshCw, Sparkles, Folder, Tag as TagIcon, Image as ImageIcon } from "lucide-react";
 import { useLibrary, upsertImages, removeImage, updateImage, setLibraryFolder, clearLibrary, searchLibrary, extractPeopleCount, type LibraryImage } from "./levelUpStore";
 import { BRAND_THEMES } from "./brandModeStore";
+import { useFigmaPhotos } from "./LevelUpFigmaWorkspace";
 
 const theme = BRAND_THEMES.levelup26;
 
@@ -14,6 +15,8 @@ interface DriveFileResp {
 
 export function LevelUpImageLibraryWorkspace() {
   const lib = useLibrary();
+  const { photos: figmaPhotos, error: figmaError } = useFigmaPhotos();
+  const [figmaSelected, setFigmaSelected] = useState<{ name: string; url: string } | null>(null);
   const [folderInput, setFolderInput] = useState(lib.folderUrl ?? "");
   const [ingesting, setIngesting] = useState(false);
   const [ingestError, setIngestError] = useState<string | null>(null);
@@ -145,7 +148,7 @@ export function LevelUpImageLibraryWorkspace() {
           </div>
           <div>
             <div className="text-[18px] font-bold text-white tracking-[-0.3px]">Image Library</div>
-            <div className="text-[12px] text-[#94A3B8]">Public Google Drive folder · auto-tagged for smart search</div>
+            <div className="text-[12px] text-[#94A3B8]">LevelUp Figma assets (partial) · optional public Drive photos</div>
           </div>
         </div>
         <div className="flex flex-col md:flex-row gap-[10px] mt-[14px]">
@@ -183,20 +186,20 @@ export function LevelUpImageLibraryWorkspace() {
         )}
       </div>
 
-      {lib.images.length > 0 && (
+      {(lib.images.length > 0 || figmaPhotos.length > 0) && (
         <div className="px-[28px] pb-[12px] border-b border-white/[0.05]">
           <div className="relative">
             <Search className="absolute left-[14px] top-1/2 -translate-y-1/2 w-[16px] h-[16px] text-[#64748B]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder='Smart search — try "4 guys taking a selfie", "outdoor crowd at sunset", "speaker on stage"'
+              placeholder='Search sourced LevelUp assets or Drive photos — try "speaker on stage"'
               className="w-full bg-white/[0.04] border border-white/[0.08] rounded-[12px] pl-[40px] pr-[14px] py-[12px] text-[13px] text-white placeholder:text-[#64748B] focus:outline-none focus:border-[var(--lu-accent)]"
               style={{ ['--lu-accent' as never]: theme.accent }}
             />
           </div>
           <div className="flex items-center gap-[10px] text-[11px] text-[#64748B] mt-[8px]">
-            <span>{filtered.length} of {lib.images.length} images</span>
+            <span>{filtered.length} Drive images · {figmaPhotos.length} sourced Figma assets</span>
             {peopleHint != null && (
               <span className="px-[8px] py-[2px] rounded-full" style={{ background: `${theme.accent}22`, color: theme.accent }}>
                 Looking for ~{peopleHint} people
@@ -207,12 +210,18 @@ export function LevelUpImageLibraryWorkspace() {
       )}
 
       <div className="flex-1 overflow-y-auto px-[28px] py-[18px]">
+        <div className="text-[11px] font-bold uppercase tracking-[1.4px] text-[#8adff0] mb-3">LevelUp Figma assets · {figmaPhotos.filter(p => `${p.name} ${p.category}`.toLowerCase().includes(search.toLowerCase())).length}</div>
+        <p className="text-xs text-slate-400 mb-3">Partial import: {figmaPhotos.filter(p => /portrait|headshot/i.test(p.category)).length} portraits/headshots and {figmaPhotos.filter(p => !/portrait|headshot/i.test(p.category)).length} logos/backgrounds from the supplied file. The separate 26Photos page could not be enumerated. Add photos using a public Drive folder above.</p>
+        {figmaError && <div role="alert" className="text-amber-300 text-xs mb-3">{figmaError}</div>}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-[12px] mb-6">
+          {figmaPhotos.filter(p => `${p.name} ${p.category}`.toLowerCase().includes(search.toLowerCase())).map((photo, index) => <button key={`${photo.url}-${index}`} data-testid={`button-figma26photo-${index}`} onClick={() => setFigmaSelected(photo)} className="rounded-xl overflow-hidden bg-white/[.04] border border-white/10 hover:border-cyan-300/50 text-left"><img loading="lazy" src={photo.url} alt={photo.name} className="aspect-square w-full object-contain bg-black/20" /><div className="px-2 py-2 text-xs text-white truncate">{photo.name}</div><div className="px-2 pb-2 text-[10px] text-slate-400 truncate">{photo.category}</div></button>)}
+        </div>
+        <div className="text-[11px] font-bold uppercase tracking-[1.4px] text-[#8adff0] mb-3">Drive photos · {filtered.length}</div>
         {lib.images.length === 0 && !ingesting && (
-          <div className="h-full flex items-center justify-center text-center">
+          <div className="flex items-center justify-center text-center py-6">
             <div className="max-w-[420px]">
-              <ImageIcon className="w-[48px] h-[48px] mx-auto mb-[14px] text-[#64748B]" />
-              <div className="text-[16px] font-semibold text-white mb-[6px]">No images yet</div>
-              <div className="text-[13px] text-[#94A3B8]">Paste a public Google Drive folder link above to import every image inside. Each image is auto-tagged so you can search for them in plain English.</div>
+              <ImageIcon className="w-[32px] h-[32px] mx-auto mb-[10px] text-[#64748B]" />
+              <div className="text-[13px] text-[#94A3B8]">For additional photos, paste a public Google Drive folder link above. Sourced LevelUp assets are available without Drive.</div>
             </div>
           </div>
         )}
@@ -245,9 +254,10 @@ export function LevelUpImageLibraryWorkspace() {
         </div>
       </div>
 
+      {figmaSelected && <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-5" onClick={() => setFigmaSelected(null)}><div className="rounded-xl bg-[#100e1c] border border-white/10 p-4 max-w-3xl w-full max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}><div className="flex justify-between gap-3 mb-3 text-white text-sm"><span>{figmaSelected.name}</span><button data-testid="button-close-figma26photo" onClick={() => setFigmaSelected(null)} aria-label="Close"><X size={18} /></button></div><img src={figmaSelected.url} alt={figmaSelected.name} className="max-h-[75vh] object-contain" /></div></div>}
       {selected && (
         <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-[20px]" onClick={() => setSelectedId(null)}>
-          <div className="bg-[#10031F] border border-white/[0.08] rounded-[18px] max-w-[820px] w-full max-h-[88vh] overflow-hidden flex flex-col md:flex-row" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#0a233e] border border-white/[0.08] rounded-[18px] max-w-[820px] w-full max-h-[88vh] overflow-hidden flex flex-col md:flex-row" onClick={(e) => e.stopPropagation()}>
             <div className="md:w-[55%] bg-black flex items-center justify-center">
               <img src={selected.fullUrl} alt={selected.name} className="max-w-full max-h-[88vh] object-contain" />
             </div>

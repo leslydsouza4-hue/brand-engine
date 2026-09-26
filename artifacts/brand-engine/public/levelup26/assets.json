@@ -1,0 +1,208 @@
+{
+  "fileKey": "lh8Atn9ffaALXKgfwj5nUQ",
+  "source": "Figma design file",
+  "collections": {
+    "logos": {
+      "status": "partial",
+      "sourceNodeId": "5001:65570",
+      "notes": "Light and dark LevelUp 2026 wordmarks plus four individually identified lockups were exported from Figma. Other lockup and partner-logo variants on this page have not been exhaustively harvested."
+    },
+    "speakerGraphics": {
+      "status": "partial",
+      "sourceNodeId": "5001:64715",
+      "notes": "Nine individually identified speaker photos, plus the separately linked Gary Vaynerchuk portrait, were extracted from image layers. This is not a complete inventory of the large speaker graphics page."
+    },
+    "communityPosts": {
+      "status": "discovered-not-exported",
+      "sourceNodeId": "5001:65571"
+    },
+    "emails": {
+      "status": "partial",
+      "sourceNodeId": "5001:65816",
+      "notes": "Two separately named headshots from this page were extracted; full email designs were not flattened into generator backgrounds."
+    },
+    "socialCovers": {
+      "status": "partial",
+      "sourceNodeId": "6015:12",
+      "notes": "One reusable dark gradient layer was extracted, without embedded typography."
+    },
+    "26Photos": {
+      "status": "inaccessible",
+      "notes": "The Figma metadata API's document-wide page listing returned only 26 Logos even though separately supplied page IDs resolved correctly. No 26Photos page node ID or enumerable original Image Library folder was supplied; these photographs cannot be claimed as completely imported."
+    },
+    "backgrounds": {
+      "status": "inaccessible",
+      "notes": "No Backgrounds page node ID or original background collection supplied. The single existing dark gradient does not constitute the page collection."
+    },
+    "3DIcons": {
+      "status": "inaccessible",
+      "notes": "No 3D Icons page node ID or original icon collection supplied."
+    },
+    "socialPosts": {
+      "status": "inaccessible",
+      "notes": "No Social Posts page node ID or original post collection supplied."
+    },
+    "socialTemplates": {
+      "status": "inaccessible",
+      "notes": "No Social Templates page node ID or original template collection supplied."
+    },
+    "typography": {
+      "status": "unverified-for-2026",
+      "notes": "A separately provided LevelUp 2025 Illustrator/PDF asset embeds the font metadata MonumentExtended-Regular, family Monument Extended, face Regular, filename MonumentExtended-Regular.otf. This does not prove the font variant(s) used in the 2026 Figma file, nor supply licensed font binaries."
+    },
+    "singleImage9": {
+      "status": "not-exported",
+      "sourceNodeId": "6873:63",
+      "notes": "Large composite image, not a separately editable asset."
+    }
+  },
+  "assets": [
+    {
+      "id": "lu26-logo-light",
+      "name": "LevelUp 2026 white transparent wordmark",
+      "url": "/levelup26/logo-light.png",
+      "kind": "logo",
+      "sourceNodeId": "5351:32"
+    },
+    {
+      "id": "lu26-logo-light-navy",
+      "name": "LevelUp 2026 white wordmark on navy",
+      "url": "/levelup26/logo-light-navy.png",
+      "kind": "logo",
+      "sourceNodeId": "5351:30"
+    },
+    {
+      "id": "lu26-logo-dark",
+      "name": "LevelUp 2026 navy transparent wordmark",
+      "url": "/levelup26/logo-dark.png",
+      "kind": "logo",
+      "sourceNodeId": "5351:45"
+    },
+    {
+      "id": "lu26-logo-full-dark-hl",
+      "name": "LevelUp 2026 full dark logo with HighLevel",
+      "url": "/levelup26/logos/full-dark-hl.png",
+      "kind": "logo",
+      "sourceNodeId": "5352:55"
+    },
+    {
+      "id": "lu26-logo-dark-year-hl",
+      "name": "LevelUp 2026 dark with year and HighLevel large lockup",
+      "url": "/levelup26/logos/dark-year-hl.svg",
+      "kind": "logo",
+      "sourceNodeId": "6237:150"
+    },
+    {
+      "id": "lu26-logo-light-year-hl",
+      "name": "LevelUp 2026 light with year and HighLevel large lockup",
+      "url": "/levelup26/logos/light-year-hl.svg",
+      "kind": "logo",
+      "sourceNodeId": "6237:172"
+    },
+    {
+      "id": "lu26-logo-presented-by-hl",
+      "name": "LevelUp presented by HighLevel without year",
+      "url": "/levelup26/logos/presented-by-hl.svg",
+      "kind": "logo",
+      "sourceNodeId": "6240:322"
+    },
+    {
+      "id": "lu26-gradient-dark",
+      "name": "Dark blue and green background gradient without lettering",
+      "url": "/levelup26/gradient-dark.png",
+      "kind": "background",
+      "sourceNodeId": "6015:525"
+    },
+    {
+      "id": "lu26-alex-schlinsky",
+      "name": "Alex Schlinsky",
+      "url": "/levelup26/alex-schlinsky.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "5012:1288"
+    },
+    {
+      "id": "lu26-yesenia-nelson",
+      "name": "Yesenia Nelson",
+      "url": "/levelup26/yesenia-nelson.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "5137:223"
+    },
+    {
+      "id": "lu26-kaitlyn-lemus-portillo",
+      "name": "Kaitlyn James Lemus Portillo",
+      "url": "/levelup26/kaitlyn-lemus-portillo.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "5222:43"
+    },
+    {
+      "id": "lu26-adley-kinsman",
+      "name": "Adley Kinsman",
+      "url": "/levelup26/adley-kinsman.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "5134:488"
+    },
+    {
+      "id": "lu26-dar-holdsworth",
+      "name": "Dar Holdsworth",
+      "url": "/levelup26/dar-holdsworth.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "5132:177"
+    },
+    {
+      "id": "lu26-kai-stone",
+      "name": "Kai Stone",
+      "url": "/levelup26/kai-stone.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "6274:263"
+    },
+    {
+      "id": "lu26-paige-battcher",
+      "name": "Paige Battcher",
+      "url": "/levelup26/paige-battcher.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "5022:51"
+    },
+    {
+      "id": "lu26-brittainy-long",
+      "name": "Brittainy Long",
+      "url": "/levelup26/brittainy-long.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "5018:2180"
+    },
+    {
+      "id": "lu26-shawn-kanugo",
+      "name": "Shawn Kanungo",
+      "url": "/levelup26/shawn-kanugo.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "6800:245"
+    },
+    {
+      "id": "lu26-gary-vaynerchuk",
+      "name": "Gary Vaynerchuk",
+      "url": "/levelup26/gary-vaynerchuk.png",
+      "kind": "speakerPortrait",
+      "sourceNodeId": "7071:230"
+    },
+    {
+      "id": "lu26-graham-headshot",
+      "name": "Graham headshot",
+      "url": "/levelup26/graham-headshot.png",
+      "kind": "headshot",
+      "sourceNodeId": "6948:529"
+    },
+    {
+      "id": "lu26-atena-headshot",
+      "name": "Atena headshot",
+      "url": "/levelup26/atena-headshot.png",
+      "kind": "headshot",
+      "sourceNodeId": "6948:530"
+    },
+    {
+      "id": "lu26-unnamed-photo",
+      "name": "Unnamed portrait (identity unconfirmed)",
+      "url": "/levelup26/unnamed-photo.png",
+      "kind": "unidentifiedPortrait",
+      "sourceNodeId": "5178:300"
+    }
+  ]
+}

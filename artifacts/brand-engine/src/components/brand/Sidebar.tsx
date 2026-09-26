@@ -20,7 +20,6 @@ import {
   RefreshCw,
   GraduationCap,
   Folder,
-  Wand2,
   ChevronDown,
   Check,
   Scissors,
@@ -128,9 +127,9 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
               {/* Brand icon */}
               {isLU ? (
                 <img
-                  src={`${BASE}assets/levelup26/logo-pill.png`}
-                  alt=""
-                  className="w-[28px] h-[28px] rounded-[7px] shrink-0 object-cover"
+                  src={`${BASE}levelup26/logo-light-navy.png`}
+                  alt="LevelUp 26"
+                  className="w-[58px] h-[28px] rounded-[7px] shrink-0 object-contain bg-[#09233e]"
                   style={{ boxShadow: "0 4px 14px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08)" }}
                 />
               ) : (
@@ -180,9 +179,9 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
                     >
                       {m === "levelup26" ? (
                         <img
-                          src={`${BASE}assets/levelup26/logo-pill.png`}
-                          alt=""
-                          className="w-[24px] h-[24px] rounded-[6px] shrink-0 object-cover"
+                          src={`${BASE}levelup26/logo-light-navy.png`}
+                          alt="LevelUp 26"
+                          className="w-[44px] h-[24px] rounded-[6px] shrink-0 object-contain bg-[#09233e]"
                           style={{ boxShadow: "0 3px 10px rgba(0,0,0,0.4), inset 0 0 0 1px rgba(255,255,255,0.08)" }}
                         />
                       ) : (
@@ -218,47 +217,17 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
         
         <div className="flex-1 overflow-y-auto overflow-x-hidden sidebar-scroll">
         {isLU && (
-          <div className="px-[12px] mb-[10px] relative">
-            <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">LevelUp 26</div>
-            <button
-              onClick={() => handleSetMode('image-library')}
-              className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[10px] rounded-[12px] cursor-pointer border-none transition-all duration-250 ${
-                currentMode === 'image-library'
-                  ? 'bg-white/[0.05] text-white'
-                  : 'text-[#CBD5E1] hover:bg-white/[0.03] hover:text-white hover:translate-x-[2px]'
-              }`}
-            >
-              {currentMode === 'image-library' && (
-                <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-[4px]" style={{ background: `linear-gradient(180deg, ${theme.primary}, ${theme.accent})` }} />
-              )}
-              <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center shrink-0" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.accent})` }}>
-                <Folder className="w-[12px] h-[12px] text-white" />
-              </span>
-              <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">Image Library</span>
-            </button>
-            <button
-              onClick={() => handleSetMode('social-composer')}
-              className={`group relative w-full flex items-center gap-[10px] px-[14px] py-[10px] rounded-[12px] cursor-pointer border-none transition-all duration-250 mt-[2px] ${
-                currentMode === 'social-composer'
-                  ? 'bg-white/[0.05] text-white'
-                  : 'text-[#CBD5E1] hover:bg-white/[0.03] hover:text-white hover:translate-x-[2px]'
-              }`}
-            >
-              {currentMode === 'social-composer' && (
-                <span aria-hidden className="absolute -left-[12px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-[4px]" style={{ background: `linear-gradient(180deg, ${theme.accent}, ${theme.cta})` }} />
-              )}
-              <span className="w-[24px] h-[24px] rounded-[7px] flex items-center justify-center shrink-0" style={{ background: `linear-gradient(135deg, ${theme.accent}, ${theme.cta})` }}>
-                <Wand2 className="w-[12px] h-[12px] text-white" />
-              </span>
-              <span className="flex-1 text-left text-[13px] font-semibold tracking-[-0.1px]">Social Composer</span>
-              <span className="text-[8.5px] font-bold tracking-[0.12em] uppercase px-[6px] py-[2px] rounded-[4px]" style={{ color: theme.cta, background: `${theme.cta}1f`, border: `1px solid ${theme.cta}4d` }}>New</span>
-            </button>
-            <div className="px-[14px] py-[14px] mt-[8px] rounded-[12px] bg-white/[0.02] border border-white/[0.06]">
-              <div className="text-[11px] text-[#94A3B8] leading-[1.5]">
-                A separate brand world for the LevelUp 26 summit. Templates here use the LU26 colors and ingest from your event photo library.
-              </div>
-            </div>
-          </div>
+          <>
+            {([
+              ["Create", [["lu26-speakers", "Speaker Graphics", Mic2], ["social-composer", "Social Posts", Share2], ["lu26-community", "Community Posts", Users]]],
+              ["Email Templates", [["lu26-emails", "Marketing Emails", Mail]]],
+              ["Backgrounds", [["lu26-covers", "Social Covers", MonitorPlay]]],
+              ["Library", [["image-library", "Image Library", Folder]]],
+            ] as const).map(([group, links]) => <div key={group} className="px-[12px] mb-[10px] relative">
+              <div className="text-[10px] font-semibold uppercase tracking-[1.4px] text-[#94a3b880] pt-[8px] px-[12px] pb-[12px]">{group}</div>
+              {links.map(([mode, label, Icon]) => <button key={mode} data-testid={`button-sidebar-${mode}`} onClick={() => handleSetMode(mode)} className={`${btnBase} cursor-pointer ${currentMode === mode ? activeClass : inactiveClass}`}><Icon className={iconCls(currentMode === mode)} />{label}</button>)}
+            </div>)}
+          </>
         )}
         {isSummer && (
           <>
@@ -538,15 +507,17 @@ export function Sidebar({ currentMode, setMode, summerSection = "emailers", setS
         </div>
 
         <div className="mt-auto shrink-0 px-[12px] pt-[12px] pb-[20px] border-t border-white/5">
-          <button 
+          <button
+            data-testid="button-sidebar-brand-directory"
+            aria-current={currentMode === "brand-directory" ? "page" : undefined}
             onClick={() => handleSetMode('brand-directory')}
             className={`w-full flex items-center gap-[12px] py-[11px] px-[14px] rounded-[16px] cursor-pointer transition-all duration-250 text-[13px] font-medium mb-[2px]
               ${currentMode === 'brand-directory'
-                ? 'text-white bg-gradient-to-br from-[rgba(0,178,169,0.12)] to-[rgba(40,150,251,0.08)] shadow-[0_4px_24px_rgba(0,178,169,0.1),inset_0_1px_0_rgba(255,255,255,0.06),inset_0_0_0_1px_rgba(0,178,169,0.1)]'
+                ? 'text-white bg-white/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
                 : 'text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-white/5 hover:translate-x-[2px]'
               }`}
           >
-            <FolderOpen className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'brand-directory' ? 'opacity-100 drop-shadow-[0_0_4px_rgba(0,178,169,0.4)]' : 'opacity-60'}`} />
+            <FolderOpen className={`w-[18px] h-[18px] shrink-0 transition-all duration-250 ${currentMode === 'brand-directory' ? 'opacity-100' : 'opacity-60'}`} style={currentMode === 'brand-directory' ? { color: theme.accent } : undefined} />
             Brand Directory
           </button>
 

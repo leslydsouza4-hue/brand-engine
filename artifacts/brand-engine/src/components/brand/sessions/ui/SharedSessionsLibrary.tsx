@@ -28,6 +28,11 @@ const workspaceLabel = (value: string) => ({
   "summer-sun-drunk": "Summer · Sun Drunk",
   "summer-electric": "Summer · Electric",
   "summer-feral": "Summer · Feral",
+  "lu26-speakers": "LevelUp 26 · Speaker Graphics",
+  "social-composer": "LevelUp 26 · Social Posts",
+  "lu26-emails": "LevelUp 26 · Marketing Emails",
+  "lu26-community": "LevelUp 26 · Community Posts",
+  "lu26-covers": "LevelUp 26 · Social Covers",
 }[value] ?? value.replace(/[-_]/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()));
 
 function SessionPreview({ session }: { session: SessionSummary }) {

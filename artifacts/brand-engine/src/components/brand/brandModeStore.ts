@@ -76,22 +76,18 @@ export const BRAND_THEMES: Record<BrandMode, BrandTheme> = {
     logoLockupUrl: `${BASE}assets/logos/Lockup=Full Horizontal, Color=Light.png`,
   },
   levelup26: {
-    // Placeholder colors/fonts — designed to be on-brand for a "summit"
-    // event vibe. The user will swap these in once the official LevelUp 26
-    // brand kit lands. All references go through this object so a single
-    // edit updates every surface.
     name: "LevelUp 26",
     shortName: "LU26",
-    primary: "#7C3AED", // electric violet
-    accent: "#22D3EE", // cyan
-    cta: "#FBBF24", // amber
-    bgDeep: "#0A0118",
-    bgPanel: "#10031F",
+    primary: "#096093",
+    accent: "#69DDF4",
+    cta: "#FFD335",
+    bgDeep: "#071a31",
+    bgPanel: "#0a233e",
     textOnPrimary: "#FFFFFF",
     fontHeading: "'Poppins', sans-serif",
     fontBody: "'Inter', sans-serif",
-    logoIconUrl: `${BASE}assets/levelup26/logo-icon.svg`,
-    logoLockupUrl: `${BASE}assets/levelup26/logo-lockup.svg`,
+    logoIconUrl: `${BASE}levelup26/logo-light.png`,
+    logoLockupUrl: `${BASE}levelup26/logo-light.png`,
   },
   "summer-of-ai": {
     // Top-level "Summer of AI" campaign identity. The three sub-themes

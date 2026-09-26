@@ -5,6 +5,7 @@ import { TemplatesWorkspace } from "@/components/brand/TemplatesWorkspace";
 import { ShaunWorkspace } from "@/components/brand/ShaunWorkspace";
 import { ZoomWorkspace } from "@/components/brand/ZoomWorkspace";
 import { BrandDirectoryWorkspace } from "@/components/brand/BrandDirectoryWorkspace";
+import { LevelUpBrandDirectoryWorkspace } from "@/components/brand/LevelUpBrandDirectoryWorkspace";
 import { SettingsWorkspace } from "@/components/brand/SettingsWorkspace";
 import { MyExportsWorkspace } from "@/components/brand/MyExportsWorkspace";
 import { BizDevWorkspace } from "@/components/brand/BizDevWorkspace";
@@ -25,7 +26,7 @@ import { PartnerHeroWorkspace } from "@/components/brand/PartnerHeroWorkspace";
 import { SpotlightSessionsWorkspace } from "@/components/brand/SpotlightSessionsWorkspace";
 import { AffiliateBlurbWorkspace } from "@/components/brand/AffiliateBlurbWorkspace";
 import { LevelUpImageLibraryWorkspace } from "@/components/brand/LevelUpImageLibraryWorkspace";
-import { LevelUpComposerWorkspace } from "@/components/brand/LevelUpComposerWorkspace";
+import { LevelUpFigmaWorkspace } from "@/components/brand/LevelUpFigmaWorkspace";
 import { SummerOfAiWorkspace } from "@/components/brand/SummerOfAiWorkspace";
 import { CertifiedAdminWorkspace } from "@/components/brand/CertifiedAdminWorkspace";
 import type { SummerSection } from "@/components/brand/summerThemes";
@@ -40,7 +41,8 @@ const SESSIONS_SUPPORTED_MODES = [
   "content-army", "did-you-know", "email-templates", "zoom-backgrounds", 
   "events", "affiliate-leaderboard", "affiliate-partner-hero", 
   "swoosh-backgrounds", "growth-flywheel", 
-  "summer-sun-drunk", "summer-electric", "summer-feral"
+  "summer-sun-drunk", "summer-electric", "summer-feral",
+  "lu26-speakers", "lu26-emails", "lu26-community", "lu26-covers", "social-composer"
 ];
 
 
@@ -50,7 +52,7 @@ import { useRef } from "react";
 
 import { SharedSessionsLibrary } from "@/components/brand/sessions/ui/SharedSessionsLibrary";
 
-const VALID_MODES = ["saved-sessions", "brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
+const VALID_MODES = ["saved-sessions", "brand-brain", "templates", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "brand-directory", "settings", "events", "highly-cutout", "feature-requests", "growth-flywheel", "image-library", "social-composer", "lu26-speakers", "lu26-emails", "lu26-community", "lu26-covers", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics", "summer-sun-drunk", "summer-electric", "summer-feral"];
 
 function BrandEngineInner({
   currentMode,
@@ -91,7 +93,7 @@ function BrandEngineInner({
   }, [navigateWorkspace, currentMode]);
 
   useEffect(() => {
-    const luOnly = ["image-library", "social-composer"];
+    const luOnly = ["image-library", "social-composer", "lu26-speakers", "lu26-emails", "lu26-community", "lu26-covers"];
     const summerOnly = ["summer-sun-drunk", "summer-electric", "summer-feral"];
     const hlOnly = ["templates", "brand-brain", "landing-page", "shaun-thumbnails", "content-army", "did-you-know", "spotlight-sessions", "bizdev-templates", "super-promo", "master-class", "email-templates", "zoom-backgrounds", "swoosh-backgrounds", "events", "highly-cutout", "growth-flywheel", "affiliate-leaderboard", "affiliate-partner-hero", "affiliate-blurb", "certified-admin-graphics"];
     const notHl = [...luOnly, ...summerOnly];
@@ -143,7 +145,7 @@ function BrandEngineInner({
         {currentMode === "bizdev-templates" && <BizDevWorkspace />}
         {currentMode === "super-promo" && <SuperPromo2Workspace />}
         {currentMode === "master-class" && <MasterClassWorkspace />}
-        {currentMode === "brand-directory" && <BrandDirectoryWorkspace />}
+        {currentMode === "brand-directory" && (brandMode === "levelup26" ? <LevelUpBrandDirectoryWorkspace /> : <BrandDirectoryWorkspace />)}
         {currentMode === "settings" && <SettingsWorkspace />}
 
         {currentMode === "events" && <EventsWorkspace />}
@@ -159,7 +161,11 @@ function BrandEngineInner({
         {currentMode === "certified-admin-graphics" && <CertifiedAdminWorkspace />}
 
         {currentMode === "image-library" && <LevelUpImageLibraryWorkspace />}
-        {currentMode === "social-composer" && <LevelUpComposerWorkspace />}
+        {currentMode === "social-composer" && <LevelUpFigmaWorkspace category="speaker" social />}
+        {currentMode === "lu26-speakers" && <LevelUpFigmaWorkspace category="speaker" />}
+        {currentMode === "lu26-emails" && <LevelUpFigmaWorkspace category="email" />}
+        {currentMode === "lu26-community" && <LevelUpFigmaWorkspace category="community" />}
+        {currentMode === "lu26-covers" && <LevelUpFigmaWorkspace category="cover" />}
 
         {currentMode === "summer-sun-drunk" && <SummerOfAiWorkspace themeId="sun-drunk" section={summerSection} />}
         {currentMode === "summer-electric" && <SummerOfAiWorkspace themeId="electric" section={summerSection} />}
@@ -183,7 +189,7 @@ export default function BrandEngine() {
     // Shared sessions span brand modes. Loading one must reveal its real builder,
     // rather than letting the brand-specific default redirect replace it.
     if (SESSIONS_SUPPORTED_MODES.includes(mode)) {
-      setBrandMode(mode.startsWith("summer-") ? "summer-of-ai" : "highlevel");
+      setBrandMode(mode.startsWith("summer-") ? "summer-of-ai" : mode.startsWith("lu26-") || mode === "social-composer" ? "levelup26" : "highlevel");
     }
     _setCurrentMode(mode);
     window.location.hash = mode === "templates" ? "" : mode;

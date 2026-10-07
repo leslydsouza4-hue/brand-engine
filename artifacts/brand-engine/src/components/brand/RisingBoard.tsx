@@ -2,14 +2,6 @@ import type { CSSProperties } from "react";
 import type { Affiliate } from "./LeaderBoardWorkspace";
 import bgRising from "@assets/image_1789777984354.png";
 
-const HexChevron = ({ color }: { color: string }) => (
-  <svg width="100%" height="100%" viewBox="0 0 32 32" fill="none">
-    <path d="M16 3L28.5 10.2V24.8L16 32L3.5 24.8V10.2L16 3Z" stroke={color} strokeWidth="1.5" strokeOpacity="0.5" />
-    <path d="M16 11L11 16L12.4 17.4L16 13.8L19.6 17.4L21 16L16 11Z" fill={color} />
-    <path d="M16 17L11 22L12.4 23.4L16 19.8L19.6 23.4L21 22L16 17Z" fill={color} />
-  </svg>
-);
-
 const LineArrow = ({ right, className, style }: { right?: boolean; className?: string; style?: CSSProperties }) => (
   <svg viewBox="0 0 100 20" preserveAspectRatio="none" fill="none" className={className} style={{ ...style, transform: right ? "scaleX(-1)" : "none" }}>
     <path d="M100 10L85 0V9H0V11H85V20L100 10Z" fill="#32E4C4" />
@@ -96,13 +88,13 @@ export function RisingBoard({ rows, month }: { rows: Affiliate[]; month: string 
 
       {/* Bottom HighLevel Icon */}
       <img
-        src={`${import.meta.env.BASE_URL}assets/logos/Lockup=Icon, Color=Light.png`}
+        src={`${import.meta.env.BASE_URL}assets/logos/Lockup=Icon, Color=Full.png`}
         alt="HighLevel"
         className="absolute object-contain"
         style={{
-          bottom: "3.2%",
+          top: "92%",
           left: "50%",
-          transform: "translateX(-50%)",
+          transform: "translate(-50%, -50%)",
           width: "4.5cqw",
           height: "4.5cqw"
         }}
@@ -143,9 +135,6 @@ function RisingRow({ row, rank }: { row: Affiliate; rank: number }) {
       >
         {rank}
       </div>
-      <div className="shrink-0 flex items-center justify-center" style={{ width: "3cqw", height: "3cqw", marginLeft: "1.5cqw" }}>
-        <HexChevron color="#32E4C4" />
-      </div>
       <div
         className="flex-1 min-w-0 font-['Bebas_Neue'] text-white truncate"
         style={{
@@ -153,6 +142,7 @@ function RisingRow({ row, rank }: { row: Affiliate; rank: number }) {
           letterSpacing: "0.04em",
           lineHeight: 1,
           paddingLeft: "1.5cqw",
+          paddingRight: "1.5cqw",
           paddingTop: "0.2cqw"
         }}
       >

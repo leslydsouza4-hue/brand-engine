@@ -95,10 +95,10 @@ const STAGE_THEME: StageThemeMap = {
 
 // Petal gradients — "lit edge → shaded core" treatment per stage.
 const PETAL_GRADIENT: Record<StageId, [string, string]> = {
-  capture:    ["#FFE066", "#E0A700"], // bright yellow → deep gold
-  nurture:    ["#74B9FF", "#1E6FD9"], // sky blue → royal blue
-  close:      ["#7BE89A", "#0FA63B"], // mint → forest green
-  evangelize: ["#FED39A", "#E25822"], // peach → burnt orange
+  capture:    ["#06fb03", "#21aa0a"],
+  nurture:    ["#f2d231", "#dc4726"],
+  close:      ["#47adfa", "#74ccf8"],
+  evangelize: ["#eaab35", "#ffff44"],
   reactivate: ["#1E40AF", "#0B1A3A"],
 };
 

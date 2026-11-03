@@ -11,10 +11,12 @@ import levelupDriveRouter from "./levelup/drive";
 import levelupVisionRouter from "./levelup/vision";
 import summerGenerateImageRouter from "./summer/generate-image";
 import savedSessionsRouter from "./saved-sessions";
+import shaunVideoRouter from "./shaun-video";
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(savedSessionsRouter);
+router.use(shaunVideoRouter);
 router.use(descriptMetaRouter);
 router.use(supportDocMetaRouter);
 router.use(convertCmykRouter);

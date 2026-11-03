@@ -1,0 +1,277 @@
+import { randomUUID } from "node:crypto";
+import { mkdtemp, rm, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { Router, type Request, type Response } from "express";
+import { getAuth } from "@clerk/express";
+import { z } from "zod";
+import type { File } from "@google-cloud/storage";
+import { assertSessionMutationOrigin, idSchema, SessionError } from "../lib/session-validation";
+import { extractAudio, extractFrame, probeVideo, renderVideo, videoEditsSchema, retainedSegments } from "../lib/shaun-video-render";
+import { transcribeLocalAudio, isTranscriptionBusy } from "../lib/shaun-video-transcribe";
+import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
+import { getVideo, MAX_DURATION, MAX_VIDEO_BYTES, privateFile, readRecord, saveRecord, videoResponse, videoStorage, type JobRecord, type VideoRecord } from "../lib/shaun-video-store";
+
+const router = Router();
+const worker = randomUUID();
+const active = new Map<string, number>();
+const locked = new Set<string>();
+let running = 0;
+let transcriptionQueued = false;
+const prefix = "/shaun-video";
+const mime = z.enum(["video/mp4", "video/quicktime"]);
+const uploads = z.object({
+  name: z.string().trim().min(1).max(160),
+  size: z.number().int().min(12).max(MAX_VIDEO_BYTES), contentType: mime,
+}).strict();
+function endpoint(fn: (req: Request, res: Response, owner: string) => Promise<unknown>) {
+  return async (req: Request, res: Response) => {
+    try {
+      const owner = getAuth(req).userId;
+      if (!owner) throw new SessionError(401, "Sign in to use video finishing");
+      assertSessionMutationOrigin(req);
+      res.set({ "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" });
+      await fn(req, res, owner);
+    } catch (error) {
+      if (res.headersSent) { res.destroy(); return; }
+      if (error instanceof z.ZodError) { res.status(400).json({ error: error.issues.map(i => i.message).join("; "), code: "VALIDATION_ERROR" }); return; }
+      if (error instanceof SessionError) { res.status(error.status).json({ error: error.message, code: error.code || "VIDEO_ERROR" }); return; }
+      req.log.error({ err: error }, "Video operation failed");
+      res.status(500).json({ error: "Video operation failed. Please retry.", code: "VIDEO_ERROR" });
+    }
+  };
+}
+const id = (req: Request, key: string) => idSchema.parse(req.params[key]);
+function reserve(owner: string) {
+  if (running >= 2 || (active.get(owner) || 0) >= 2) throw new SessionError(429, "Video workers are busy. Wait for the current task to finish.", "VIDEO_BUSY");
+  running++; active.set(owner, (active.get(owner) || 0) + 1);
+}
+function release(owner: string) {
+  running--; const n = (active.get(owner) || 1) - 1;
+  if (n) active.set(owner, n); else active.delete(owner);
+}
+async function job(owner: string, kind: JobRecord["kind"], videoId: string | undefined,
+  task: (dir: string, record: JobRecord, progress: (n: number) => void) => Promise<unknown>) {
+  reserve(owner);
+  const now = new Date().toISOString();
+  const record: JobRecord = { jobId: randomUUID(), owner, worker, kind, videoId, status: "queued", progress: 0, createdAt: now, updatedAt: now };
+  const key = `jobs/${record.jobId}.json`;
+  try { await saveRecord(owner, key, record); } catch (error) { release(owner); throw error; }
+  void (async () => {
+    let dir: string | undefined;
+    let pending: Promise<void> = Promise.resolve();
+    let lastProgress = 0;
+    let heartbeat: ReturnType<typeof setInterval> | undefined;
+    const persist = () => {
+      record.updatedAt = new Date().toISOString();
+      // Snapshot now so a slow write cannot serialize a later mutation.
+      const snapshot = JSON.parse(JSON.stringify(record));
+      pending = pending.catch(() => undefined).then(() => saveRecord(owner, key, snapshot));
+      return pending;
+    };
+    try {
+      record.status = "running"; await persist();
+      heartbeat = setInterval(() => { void persist().catch(() => undefined); }, 30000);
+      dir = await mkdtemp(join(tmpdir(), "shaun-video-"));
+      record.result = await task(dir, record, n => {
+        record.progress = Math.max(record.progress, Math.min(0.99, n));
+        if (Date.now() - lastProgress > 2000) { lastProgress = Date.now(); void persist().catch(() => undefined); }
+      });
+      record.status = "succeeded"; record.progress = 1;
+    } catch (error) {
+      record.status = "failed";
+      // Never expose ffmpeg local paths, remote signed URLs or provider internals.
+      record.error = error instanceof SessionError ? error.message : kind === "transcribe"
+        ? "Local speech transcription failed. Please retry with a clear English audio track."
+        : kind === "import"
+        ? "Import failed. Export an MP4 from Descript and upload it instead."
+        : "Video processing failed. Check that the file is a valid MP4, at most 10 minutes and 4096 pixels per edge.";
+    } finally {
+      if (heartbeat) clearInterval(heartbeat);
+      if (kind === "transcribe") transcriptionQueued = false;
+      await persist().catch(() => undefined);
+      if (dir) await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+      release(owner);
+    }
+  })();
+  return { jobId: record.jobId };
+}
+async function uploadLocal(owner: string, key: string, local: string, contentType: string) {
+  const info = await stat(local);
+  if (info.size > 500 * 1024 * 1024) throw new SessionError(413, "Processed video exceeds the 500 MiB output limit");
+  const target = privateFile(owner, key);
+  await target.bucket.upload(local, { destination: target.name, resumable: false, metadata: { contentType, cacheControl: "private, no-store" } });
+}
+async function downloadLocal(owner: string, videoId: string, local: string) {
+  const file = privateFile(owner, `videos/${videoId}/source`);
+  const [meta] = await file.getMetadata();
+  if (Number(meta.size) > MAX_VIDEO_BYTES) throw new SessionError(413, "Video exceeds 250 MiB");
+  await file.download({ destination: local });
+}
+async function serve(req: Request, res: Response, file: File, contentType: string, name: string) {
+  const [meta] = await file.getMetadata();
+  const total = Number(meta.size);
+  let start = 0, end = total - 1;
+  const range = req.get("range");
+  if (range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (!match || (!match[1] && !match[2])) { res.status(416).set("Content-Range", `bytes */${total}`).end(); return; }
+    if (!match[1]) start = Math.max(0, total - Number(match[2]));
+    else { start = Number(match[1]); if (match[2]) end = Math.min(end, Number(match[2])); }
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= total) { res.status(416).set("Content-Range", `bytes */${total}`).end(); return; }
+    res.status(206).set("Content-Range", `bytes ${start}-${end}/${total}`);
+  }
+  res.set({ "Content-Type": contentType, "Content-Length": String(end - start + 1), "Accept-Ranges": "bytes",
+    "Content-Disposition": `${req.query.download === "1" ? "attachment" : "inline"}; filename="${name}"`,
+    "Content-Security-Policy": "default-src 'none'; sandbox" });
+  const stream = file.createReadStream({ start, end });
+  res.on("close", () => stream.destroy());
+  stream.on("error", () => res.destroy());
+  stream.pipe(res);
+}
+
+router.get(`${prefix}/capabilities`, endpoint(async (_req, res) => {
+  res.json({ maxUploadBytes: MAX_VIDEO_BYTES, maxDuration: MAX_DURATION, formats: ["video/mp4", "video/quicktime"],
+    wordTimestamps: true, segmentTimestamps: false, transcriptionModel: "Xenova/whisper-tiny.en",
+    timestampMethod: "whisper-cross-attention-dtw", transcriptionLanguage: "en",
+    transcriptionNote: "Local CPU Whisper; first transcription downloads the public Apache-2.0 ONNX model. Review generated words before export." });
+}));
+router.post(`${prefix}/uploads`, endpoint(async (req, res, owner) => {
+  const body = uploads.parse(req.body);
+  reserve(owner);
+  try {
+    const videoId = randomUUID();
+    const uploadURL = await videoStorage.getObjectEntityUploadURL();
+    const video: VideoRecord = { ...body, videoId, owner, status: "uploading", staging: videoStorage.normalizeObjectEntityPath(uploadURL), createdAt: new Date().toISOString() };
+    await saveRecord(owner, `videos/${videoId}.json`, video);
+    res.status(201).json({ videoId, uploadURL });
+  } finally { release(owner); }
+}));
+router.post(`${prefix}/videos/:videoId/complete`, endpoint(async (req, res, owner) => {
+  const videoId = id(req, "videoId"), lock = `${owner}/${videoId}`;
+  if (locked.has(lock)) throw new SessionError(409, "This upload is already being completed");
+  reserve(owner); locked.add(lock);
+  let dir: string | undefined;
+  try {
+    const video = await getVideo(owner, videoId, false);
+    if (video.status === "ready") { res.json(videoResponse(video)); return; }
+    if (video.owner !== owner) throw new SessionError(403, "Only the original uploader may complete a pending upload");
+    const staging = await videoStorage.getObjectEntityFile(video.staging!);
+    const [meta] = await staging.getMetadata();
+    if (Number(meta.size) !== video.size || meta.contentType !== video.contentType)
+      throw new SessionError(400, "Upload size or content type does not match. Upload the original file again.");
+    // Freeze a copy before validation: signed PUT URLs remain reusable for 15m.
+    const target = privateFile(owner, `videos/${videoId}/source`);
+    try { await staging.copy(target, { preconditionOpts: { ifGenerationMatch: 0 } }); }
+    catch (error) {
+      if ((error as { code?: number }).code === 412)
+        throw new SessionError(409, "This upload is already completing or complete. Refresh its video status before retrying.");
+      throw error;
+    }
+    try {
+      const [frozen] = await target.getMetadata();
+      if (Number(frozen.size) !== video.size || frozen.contentType !== video.contentType)
+        throw new SessionError(400, "Upload changed while completing. Please upload again.");
+      dir = await mkdtemp(join(tmpdir(), "shaun-video-"));
+      const local = join(dir, "source.mp4");
+      await target.download({ destination: local });
+      video.probe = await probeVideo(local).catch(() => { throw new SessionError(422, "Invalid video. Upload MP4 or MOV, at most 10 minutes and 4096 pixels per edge."); });
+      video.status = "ready"; delete video.staging;
+      await target.setMetadata({ cacheControl: "private, no-store" });
+      await saveRecord(owner, `videos/${videoId}.json`, video);
+      await staging.delete().catch(() => undefined);
+    } catch (error) { await target.delete().catch(() => undefined); throw error; }
+    res.json(videoResponse(video));
+  } finally {
+    if (dir) await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+    locked.delete(lock); release(owner);
+  }
+}));
+router.get(`${prefix}/videos/:videoId`, endpoint(async (req, res, owner) => {
+  res.json(videoResponse(await getVideo(owner, id(req, "videoId"), false)));
+}));
+router.get(`${prefix}/videos/:videoId/asset`, endpoint(async (req, res, owner) => {
+  const video = await getVideo(owner, id(req, "videoId"));
+  await serve(req, res, privateFile(owner, `videos/${video.videoId}/source`), video.contentType, "source.mp4");
+}));
+router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
+  const { url } = z.object({ url: z.string().max(2048) }).strict().parse(req.body);
+  validateDescriptShareUrl(url);
+  res.status(202).json(await job(owner, "import", undefined, async (dir, record) => {
+    const local = join(dir, "source.mp4");
+    const size = await importDescript(url, local);
+    const probe = await probeVideo(local);
+    const videoId = randomUUID();
+    const video: VideoRecord = { videoId, owner, name: "Descript import.mp4", size, contentType: "video/mp4", status: "ready", probe, createdAt: new Date().toISOString() };
+    await uploadLocal(owner, `videos/${videoId}/source`, local, "video/mp4");
+    await saveRecord(owner, `videos/${videoId}.json`, video);
+    record.videoId = videoId;
+    return videoResponse(video);
+  }));
+}));
+router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner) => {
+  const video = await getVideo(owner, id(req, "videoId"));
+  const edits = videoEditsSchema.parse(req.body);
+  try { retainedSegments(edits, (video.probe as { duration: number }).duration); }
+  catch (error) { throw new SessionError(400, (error as Error).message); }
+  res.status(202).json(await job(owner, "render", video.videoId, async (dir, record, progress) => {
+    const input = join(dir, "source.mp4"), output = join(dir, "output.mp4");
+    await downloadLocal(owner, video.videoId, input);
+    await renderVideo(input, output, edits, n => progress(n / 100));
+    await uploadLocal(owner, `jobs/${record.jobId}/output`, output, "video/mp4");
+    record.contentType = "video/mp4";
+    return { assetUrl: `/api/shaun-video/jobs/${record.jobId}/asset`, contentType: record.contentType };
+  }));
+}));
+router.post(`${prefix}/videos/:videoId/frames`, endpoint(async (req, res, owner) => {
+  const video = await getVideo(owner, id(req, "videoId"));
+  const { time } = z.object({ time: z.number().finite().min(0) }).strict().parse(req.body);
+  if (time >= (video.probe as { duration: number }).duration) throw new SessionError(400, "Frame time must be inside source duration");
+  res.status(202).json(await job(owner, "frame", video.videoId, async (dir, record) => {
+    const input = join(dir, "source.mp4"), output = join(dir, "frame.png");
+    await downloadLocal(owner, video.videoId, input);
+    await extractFrame(input, output, time);
+    await uploadLocal(owner, `jobs/${record.jobId}/output`, output, "image/png");
+    record.contentType = "image/png";
+    return { assetUrl: `/api/shaun-video/jobs/${record.jobId}/asset`, contentType: record.contentType };
+  }));
+}));
+router.post(`${prefix}/videos/:videoId/transcribe`, endpoint(async (req, res, owner) => {
+  const video = await getVideo(owner, id(req, "videoId"));
+  if (!(video.probe as { hasAudio: boolean }).hasAudio) throw new SessionError(422, "This video has no audio track");
+  if (transcriptionQueued || isTranscriptionBusy()) throw new SessionError(429, "A speech transcription is already running. Please wait.", "TRANSCRIPTION_BUSY");
+  transcriptionQueued = true;
+  try {
+    res.status(202).json(await job(owner, "transcribe", video.videoId, async (dir, record, progress) => {
+      try {
+        const input = join(dir, "source.mp4"), audio = join(dir, "speech.wav");
+        record.phase = "Preparing source audio"; progress(0.02);
+        await downloadLocal(owner, video.videoId, input);
+        await extractAudio(input, audio);
+        const result = await transcribeLocalAudio(audio, (value, phase) => {
+          record.phase = phase; progress(0.1 + value * 0.88);
+        });
+        record.phase = "Completed";
+        return result;
+      } finally { transcriptionQueued = false; }
+    }));
+  } catch (error) { transcriptionQueued = false; throw error; }
+}));
+router.get(`${prefix}/jobs/:jobId`, endpoint(async (req, res, owner) => {
+  const jobId = id(req, "jobId");
+  const record = await readRecord<JobRecord>(owner, `jobs/${jobId}.json`);
+  if (["queued", "running"].includes(record.status) && Date.now() - Date.parse(record.updatedAt) > 20 * 60 * 1000) {
+    record.status = "failed"; record.error = "Processing was interrupted by a server restart. Please retry.";
+    record.updatedAt = new Date().toISOString();
+    await saveRecord(owner, `jobs/${jobId}.json`, record);
+  }
+  const { owner: _owner, worker: _worker, ...publicRecord } = record;
+  res.json(publicRecord);
+}));
+router.get(`${prefix}/jobs/:jobId/asset`, endpoint(async (req, res, owner) => {
+  const jobId = id(req, "jobId");
+  const record = await readRecord<JobRecord>(owner, `jobs/${jobId}.json`);
+  if (record.status !== "succeeded" || !record.contentType) throw new SessionError(404, "Output not available");
+  await serve(req, res, privateFile(owner, `jobs/${jobId}/output`), record.contentType, record.contentType === "image/png" ? "frame.png" : "finished.mp4");
+}));
+export default router;

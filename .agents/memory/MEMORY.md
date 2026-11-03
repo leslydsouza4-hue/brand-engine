@@ -14,3 +14,4 @@
 - [Async run-token hand-off](async-run-token-handoff.md) — parent async op + awaited sub-op sharing a stale-run token: make ONE token at top, pass it down; don't let the sub-op bump its own.
 - [Summer canvas type scaling](summer-canvas-type-scaling.md) — scale all text off ONE shared typeRef; per-element px floors break proportions across formats.
 - [Figma page discovery](figma-page-discovery.md) — page enumeration can be incomplete; direct page links still work, and asset coverage must be stated explicitly.
+- [Shaun video finishing](shaun-video-finishing.md) — Descript remains the source; real word timing, public-download discovery, and codec-limited browser verification.

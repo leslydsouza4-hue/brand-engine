@@ -42,7 +42,8 @@ const SESSIONS_SUPPORTED_MODES = [
   "events", "affiliate-leaderboard", "affiliate-partner-hero", 
   "swoosh-backgrounds", "growth-flywheel", 
   "summer-sun-drunk", "summer-electric", "summer-feral",
-  "lu26-speakers", "lu26-emails", "lu26-community", "lu26-covers", "social-composer"
+  "lu26-speakers", "lu26-emails", "lu26-community", "lu26-covers", "social-composer",
+  "shaun-thumbnails"
 ];
 
 

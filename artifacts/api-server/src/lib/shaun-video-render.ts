@@ -1,0 +1,267 @@
+import { spawn } from "node:child_process";
+import { mkdtemp, rm, stat, writeFile, access } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { resolve, join } from "node:path";
+import { z } from "zod";
+
+const seconds = z.number().finite().min(0).max(600);
+const range = z.object({ start: seconds, end: seconds }).strict().refine(v => v.end > v.start, "End must follow start");
+export const videoEditsSchema = z.object({
+  trimStart: seconds,
+  trimEnd: seconds,
+  cuts: z.array(range).max(32),
+  blurs: z.array(z.object({
+    start: seconds, end: seconds,
+    x: z.number().finite().min(0).max(1), y: z.number().finite().min(0).max(1),
+    width: z.number().finite().min(0.01).max(1), height: z.number().finite().min(0.01).max(1),
+  }).strict().refine(v => v.end > v.start && v.x + v.width <= 1.000001 && v.y + v.height <= 1.000001, "Invalid blur region")).max(12),
+  words: z.array(z.object({
+    text: z.string().trim().min(1).max(80).refine(v => !/[\u0000-\u001f\u007f]/.test(v), "Caption contains control characters"),
+    start: seconds, end: seconds,
+  }).strict().refine(v => v.end > v.start, "Word end must follow start")).max(3000),
+  format: z.enum(["vertical", "horizontal"]),
+  framing: z.enum(["fit", "blur-fill"]),
+  captionTiming: z.enum(["word", "segment"]).optional(),
+}).strict().refine(v => v.trimEnd > v.trimStart, "Trim end must follow start");
+export type VideoEdits = z.infer<typeof videoEditsSchema>;
+export type VideoProbe = { duration: number; width: number; height: number; hasAudio: boolean };
+type Segment = { start: number; end: number; offset: number };
+const MAX_BYTES = 500 * 1024 * 1024;
+const RENDER_TIMEOUT = 12 * 60 * 1000;
+
+/** No shell and no remote input protocols. Callers provide their own private local paths.
+ * Each subprocess has bounded output, wall time and thread usage. */
+async function run(command: string, args: string[], timeout: number, onLine?: (line: string) => void, onStderr?: (text: string) => void) {
+  return new Promise<string>((fulfil, reject) => {
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+    let stdout = "", stderr = "", pending = "", settled = false;
+    let timedOut = false;
+    const timer = setTimeout(() => { timedOut = true; child.kill("SIGKILL"); }, timeout);
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (error) reject(error); else fulfil(stdout);
+    };
+    child.on("error", error => finish(new Error(`${command} unavailable: ${error.message}`)));
+    child.stdout.on("data", (data: Buffer) => {
+      stdout = (stdout + data.toString()).slice(-256_000);
+      if (onLine) {
+        pending += data.toString();
+        const lines = pending.split("\n"); pending = lines.pop()!.slice(-8192);
+        for (const line of lines) onLine(line);
+      }
+    });
+    child.stderr.on("data", (data: Buffer) => { stderr = (stderr + data.toString()).slice(-12000); onStderr?.(stderr); });
+    child.on("close", code => {
+      if (timedOut) return finish(new Error(`${command} exceeded its processing time limit`));
+      if (code !== 0) return finish(new Error(`${command} failed: ${stderr.slice(-3000) || `exit ${code}`}`));
+      finish();
+    });
+  });
+}
+
+async function localInput(path: string) {
+  const file = resolve(path);
+  const info = await stat(file);
+  if (!info.isFile() || info.size < 12 || info.size > MAX_BYTES) throw new Error("Video must be a local file between 12 bytes and 500 MB");
+  return file;
+}
+const inputArgs = (path: string) => ["-protocol_whitelist", "file,pipe", "-i", path];
+const baseArgs = ["-hide_banner", "-nostdin", "-y", "-threads", "2", "-filter_complex_threads", "1"];
+
+export async function probeVideo(path: string): Promise<VideoProbe> {
+  const file = await localInput(path);
+  const raw = await run("ffprobe", ["-v", "error", "-protocol_whitelist", "file,pipe", "-show_streams", "-show_format", "-of", "json", file], 30_000);
+  const data = JSON.parse(raw) as { streams: Array<{ codec_type: string; width?: number; height?: number; duration?: string; disposition?: { attached_pic?: number }; side_data_list?: Array<{ rotation?: number }>; tags?: { rotate?: string } }>; format: { duration?: string; format_name?: string } };
+  if (!data.format.format_name?.split(",").some(v => ["mov", "mp4"].includes(v))) throw new Error("Source must be an MP4 video");
+  const video = data.streams.find(s => s.codec_type === "video" && !s.disposition?.attached_pic);
+  const duration = Number(data.format.duration || video?.duration);
+  if (!video?.width || !video.height || !Number.isFinite(duration) || duration <= 0 || duration > 600 ||
+      video.width > 4096 || video.height > 4096 || video.width < 16 || video.height < 16)
+    throw new Error("Video must be at most 10 minutes and 4096 pixels per edge");
+  const rotation = Number(video.side_data_list?.find(v => v.rotation !== undefined)?.rotation ?? video.tags?.rotate ?? 0);
+  const rotated = Math.abs(rotation % 180) === 90;
+  return { duration, width: rotated ? video.height : video.width, height: rotated ? video.width : video.height, hasAudio: data.streams.some(s => s.codec_type === "audio") };
+}
+
+/** Source-time intervals retained by the edit, with exact continuous output offsets. */
+export function retainedSegments(edits: VideoEdits, duration: number): Segment[] {
+  const e = videoEditsSchema.parse(edits);
+  if (e.trimEnd > duration + 0.001) throw new Error("Trim exceeds source duration");
+  if ([...e.cuts, ...e.blurs, ...e.words].some(v => v.end > duration + 0.001)) throw new Error("An edit exceeds source duration");
+  for (let i = 1; i < e.words.length; i++) {
+    if (e.words[i].start < e.words[i - 1].end - 0.001) throw new Error("Caption words must be chronological and non-overlapping");
+  }
+  const cuts = e.cuts.map(v => ({ start: Math.max(e.trimStart, v.start), end: Math.min(e.trimEnd, v.end) }))
+    .filter(v => v.end > v.start).sort((a, b) => a.start - b.start);
+  const merged: Array<{ start: number; end: number }> = [];
+  for (const cut of cuts) {
+    const prev = merged.at(-1);
+    if (prev && cut.start <= prev.end) prev.end = Math.max(prev.end, cut.end);
+    else merged.push({ ...cut });
+  }
+  const result: Segment[] = [];
+  let cursor = e.trimStart, offset = 0;
+  for (const cut of [...merged, { start: e.trimEnd, end: e.trimEnd }]) {
+    if (cut.start > cursor) {
+      result.push({ start: cursor, end: cut.start, offset });
+      offset += cut.start - cursor;
+    }
+    cursor = Math.max(cursor, cut.end);
+  }
+  if (offset < 0.1) throw new Error("Edits must retain at least 0.1 seconds");
+  return result;
+}
+
+function assTime(time: number) {
+  const cs = Math.round(time * 100);
+  return `${Math.floor(cs / 360000)}:${String(Math.floor(cs / 6000) % 60).padStart(2, "0")}:${String(Math.floor(cs / 100) % 60).padStart(2, "0")}.${String(cs % 100).padStart(2, "0")}`;
+}
+// Never allow user text to introduce ASS override blocks, line breaks or drawing commands.
+export function escapeAss(text: string) { return text.replace(/\\/g, "＼").replace(/{/g, "｛").replace(/}/g, "｝").replace(/[\r\n]/g, " "); }
+
+export function makeCaptions(edits: VideoEdits, segments: Segment[], width: number, height: number) {
+  const fontSize = edits.format === "vertical" ? 66.96 : 69.12;
+  const margin = Math.round(height * (edits.format === "vertical" ? 0.16 : 0.09));
+  const header = `[Script Info]
+ScriptType: v4.00+
+PlayResX: ${width}
+PlayResY: ${height}
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Caption,Poppins,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00121820,&H80000000,-1,0,0,0,100,100,0,0,1,2,3,2,60,60,${margin},1
+Style: Active,Poppins,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00F0A31A,&H00F0A31A,-1,0,0,0,100,100,0,0,3,8,0,2,60,60,${margin},1
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+  const groups: VideoEdits["words"][] = [];
+  const visible = edits.words.filter(w => segments.some(s => w.end > s.start && w.start < s.end));
+  // Older SRT imports contain whole cue strings. Never pretend those are timed words.
+  const segmentTiming = edits.captionTiming === "segment" || (edits.captionTiming === undefined && visible.some(w => /\s/.test(w.text)));
+  let group: VideoEdits["words"] = [];
+  for (const [i, word] of visible.entries()) {
+    group.push(word);
+    const next = visible[i + 1];
+    if (segmentTiming || !next || group.length >= 4 || /[.?!]$/.test(word.text.trim()) ||
+        next.start - word.end > 0.7 || [...group, next].map(w => w.text).join(" ").length > 26) {
+      groups.push(group); group = [];
+    }
+  }
+  const events: string[] = [];
+  for (const words of groups) {
+    const lineEnd = words.at(-1)!.end + (segmentTiming ? 0 : 0.15);
+    const boundaries = [...new Set([words[0].start, ...words.flatMap(w => [w.start, w.end]), lineEnd])].sort((a, b) => a - b);
+    for (let i = 0; i < boundaries.length - 1; i++) for (const segment of segments) {
+      const start = Math.max(boundaries[i], segment.start), end = Math.min(boundaries[i + 1], segment.end);
+      if (end <= start) continue;
+      const active = segmentTiming ? -1 : words.findIndex(w => start >= w.start && start < w.end);
+      const chars = words.map(w => w.text).join(" ").length;
+      const size = Math.min(fontSize, Math.floor((width - 150) / Math.max(1, chars) / 0.7));
+      const line = words.map((w, j) => j === active
+        ? `{\\rActive\\fs${size}}${escapeAss(w.text)}{\\rCaption\\fs${size}}`
+        : escapeAss(w.text)).join(" ");
+      const a = segment.offset + start - segment.start, b = segment.offset + end - segment.start;
+      if (Math.round(b * 100) > Math.round(a * 100)) events.push(`Dialogue: 0,${assTime(a)},${assTime(b)},Caption,,0,0,0,,{\\fs${size}}${line}`);
+    }
+  }
+  return header + events.join("\n") + "\n";
+}
+
+function filterPath(path: string) {
+  // The actual paths here are generated under mkdtemp, not supplied by the user.
+  return path.replace(/\\/g, "\\\\").replace(/:/g, "\\:").replace(/'/g, "'\\''");
+}
+
+export async function renderVideo(input: string, output: string, edits: VideoEdits, progress: (value: number) => void = () => {}) {
+  const source = await localInput(input);
+  const info = await probeVideo(source);
+  const e = videoEditsSchema.parse(edits), segments = retainedSegments(e, info.duration);
+  const total = segments.reduce((sum, v) => sum + v.end - v.start, 0);
+  const width = e.format === "vertical" ? 1080 : 1920, height = e.format === "vertical" ? 1920 : 1080;
+  const dir = await mkdtemp(join(tmpdir(), "shaun-render-"));
+  const target = resolve(output);
+  if (target === source) { await rm(dir, { recursive: true, force: true }); throw new Error("Output cannot overwrite the original source"); }
+  let success = false;
+  try {
+    const filters: string[] = ["[0:v:0]setpts=PTS-STARTPTS,setsar=1[v0]"];
+    let label = "v0";
+    for (const [i, blur] of e.blurs.entries()) {
+      const x = Math.min(info.width - 2, Math.floor(blur.x * info.width / 2) * 2);
+      const y = Math.min(info.height - 2, Math.floor(blur.y * info.height / 2) * 2);
+      const w = Math.max(2, Math.min(info.width - x, Math.floor(blur.width * info.width / 2) * 2));
+      const h = Math.max(2, Math.min(info.height - y, Math.floor(blur.height * info.height / 2) * 2));
+      filters.push(`[${label}]split[base${i}][patch${i}]`,
+        `[patch${i}]crop=${w}:${h}:${x}:${y},boxblur=luma_radius=${Math.min(20, Math.floor(Math.min(w, h) / 2))}:luma_power=3[blur${i}]`,
+        `[base${i}][blur${i}]overlay=${x}:${y}:enable='gte(t,${blur.start})*lt(t,${blur.end})'[b${i}]`);
+      label = `b${i}`;
+    }
+    filters.push(`[${label}]split=${segments.length}${segments.map((_, i) => `[s${i}]`).join("")}`);
+    if (info.hasAudio) filters.push(`[0:a:0]asetpts=PTS-STARTPTS,asplit=${segments.length}${segments.map((_, i) => `[a${i}]`).join("")}`);
+    for (const [i, segment] of segments.entries()) {
+      filters.push(`[s${i}]trim=start=${segment.start}:end=${segment.end},setpts=PTS-STARTPTS[t${i}]`);
+      if (info.hasAudio) filters.push(`[a${i}]atrim=start=${segment.start}:end=${segment.end},asetpts=PTS-STARTPTS[u${i}]`);
+    }
+    filters.push(`${segments.map((_, i) => `[t${i}]${info.hasAudio ? `[u${i}]` : ""}`).join("")}concat=n=${segments.length}:v=1:a=${info.hasAudio ? 1 : 0}[joined]${info.hasAudio ? "[audio]" : ""}`);
+    if (e.framing === "blur-fill") {
+      filters.push("[joined]split[front][back]",
+        `[back]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=30:2[background]`,
+        `[front]scale=${width}:${height}:force_original_aspect_ratio=decrease[foreground]`,
+        "[background][foreground]overlay=(W-w)/2:(H-h)/2[framed]");
+    } else filters.push(`[joined]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220[framed]`);
+    if (e.words.length) {
+      let fonts = "";
+      for (const candidate of ["artifacts/brand-engine/src/assets/fonts", "../brand-engine/src/assets/fonts"]) {
+        const path = resolve(candidate);
+        if (await access(join(path, "Poppins-700.woff2")).then(() => true, () => false)) { fonts = path; break; }
+      }
+      if (!fonts) throw new Error("Poppins caption font is missing; render cancelled");
+      const captionPath = join(dir, "captions.ass");
+      await writeFile(captionPath, makeCaptions(e, segments, width, height));
+      filters.push(`[framed]ass=filename='${filterPath(captionPath)}':fontsdir='${filterPath(fonts)}'[captioned]`);
+    }
+    const graph = join(dir, "filters.txt");
+    await writeFile(graph, filters.join(";\n"));
+    let poppinsLoaded = false;
+    progress(0);
+    await run("ffmpeg", [...baseArgs, ...inputArgs(source), "-filter_complex_script", graph,
+      "-map", e.words.length ? "[captioned]" : "[framed]", ...(info.hasAudio ? ["-map", "[audio]", "-c:a", "aac", "-b:a", "192k"] : ["-an"]),
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-threads", "2", "-r", "30", "-pix_fmt", "yuv420p",
+      "-t", String(total), "-movflags", "+faststart", "-progress", "pipe:1", "-f", "mp4", target], RENDER_TIMEOUT, line => {
+      if (line.startsWith("out_time_us=")) progress(Math.min(99, Math.max(0, Number(line.slice(12)) / 1_000_000 / total * 100)));
+    }, text => { if (/fontselect: \(Poppins, 700, 0\) -> [^\n]*Poppins/i.test(text)) poppinsLoaded = true; });
+    if (e.words.some(w => segments.some(s => w.end > s.start && w.start < s.end)) && !poppinsLoaded)
+      throw new Error("FFmpeg did not load Poppins Bold for captions; render cancelled");
+    const rendered = await probeVideo(target);
+    if (rendered.width !== width || rendered.height !== height || rendered.hasAudio !== info.hasAudio || Math.abs(rendered.duration - total) > 0.15)
+      throw new Error("Rendered output failed duration, dimensions or audio validation");
+    success = true; progress(100);
+    return rendered;
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+    if (!success) await rm(target, { force: true });
+  }
+}
+
+export async function extractFrame(input: string, output: string, time: number) {
+  const source = await localInput(input), info = await probeVideo(source);
+  if (!Number.isFinite(time) || time < 0 || time >= info.duration) throw new Error("Frame time must be inside source duration");
+  const target = resolve(output);
+  if (target === source) throw new Error("Output cannot overwrite the original source");
+  try {
+    await run("ffmpeg", [...baseArgs, ...inputArgs(source), "-ss", String(time), "-frames:v", "1", "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2", "-f", "image2", "-vcodec", "png", target], 60_000);
+    if (!(await stat(target)).size) throw new Error("Frame extraction produced an empty image");
+  } catch (error) { await rm(target, { force: true }); throw error; }
+}
+
+export async function extractAudio(input: string, output: string) {
+  const source = await localInput(input), info = await probeVideo(source);
+  if (!info.hasAudio) throw new Error("Source has no audio track to transcribe");
+  const target = resolve(output);
+  if (target === source) throw new Error("Output cannot overwrite the original source");
+  try {
+    await run("ffmpeg", [...baseArgs, ...inputArgs(source), "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", "-f", "wav", target], 90_000);
+  } catch (error) { await rm(target, { force: true }); throw error; }
+}

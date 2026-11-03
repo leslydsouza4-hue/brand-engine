@@ -5,6 +5,9 @@ import { LivePreview } from "./LivePreview";
 import { DownloadButton } from "./DownloadButton";
 import { BatchExportQueue } from "./BatchExportQueue";
 import { useExport, type QueuedThumbnail } from "./useExport";
+import { ShaunVideoEditor } from "./ShaunVideoEditor";
+import { useSessionState } from "./sessions/useSessionState";
+import { Segmented } from "./shaunVideo/ui";
 
 const SHAUN_IMAGES = [
   "ShaunClark_03057_StudioSura-Photoroom.png",
@@ -208,10 +211,37 @@ export function ShaunWorkspace() {
     setDescriptError(null);
   };
 
+  const [mode, setMode] = useSessionState<"thumbnail" | "video">("shaun.mode", "thumbnail");
+  const modeSwitch = (
+    <Segmented value={mode} onChange={(v: "thumbnail" | "video") => setMode(v)} options={[{ value: "thumbnail", label: "Thumbnail" }, { value: "video", label: "Video" }]} />
+  );
+
+  // Guarded hand-off: never silently overwrite an existing thumbnail screenshot.
+  const handleUseFrame = (dataUrl: string) => {
+    if (screenshotImage && !window.confirm("Replace the current thumbnail screenshot with this video frame?")) return;
+    setScreenshotImage(dataUrl);
+    setScreenshotOpacity(40);
+    setScreenshotScale(85);
+    setScreenshotRadius(16);
+    setScreenshotOffsetX(0);
+    setScreenshotOffsetY(0);
+    setMode("thumbnail");
+    setCropModalImage(dataUrl);
+  };
+
+  if (mode === "video") {
+    return (
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
+        <ShaunVideoEditor modeSwitch={modeSwitch} onUseFrame={handleUseFrame} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col md:flex-row flex-1 overflow-hidden p-0 gap-0">
       
       <div className="w-full md:w-[380px] md:min-w-[380px] overflow-y-auto pt-[20px] px-[16px] md:px-[28px] pb-[28px] border-b md:border-b-0 md:border-r border-[rgba(255,255,255,0.06)] flex flex-col max-h-[50vh] md:max-h-none">
+        <div className="pt-[20px]">{modeSwitch}</div>
         <div className="pt-[20px] pb-[16px]">
           <div className="text-[11px] font-semibold uppercase tracking-[1.2px] text-[#64748B] mb-[12px]">Select Shaun</div>
           

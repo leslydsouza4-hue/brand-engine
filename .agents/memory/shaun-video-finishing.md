@@ -1,0 +1,28 @@
+---
+name: Shaun video finishing
+description: Product boundaries and non-obvious transcription/import/testing constraints
+---
+
+Descript is not being replaced. The user wants to finish Descript-sourced footage in Brand Engine: burn captions in the supplied white/cyan highlighted style, edit cuts/blurs, produce vertical/horizontal output, and create thumbnails.
+
+**Why:** The user explicitly corrected the scope: Descript remains their source and its originals may have no captions; attached captioned clips are style references, not proof the originals are captioned.
+
+**How to apply:** Preserve the existing Thumbnail workflow and HighLevel workspace UI. Do not add a separate full video-production product or infer source captions from reference exports.
+
+Use genuine aligned word timestamps, not evenly distributed transcript words.
+
+**Why:** The available cloud mini-transcribe model returned text without precise timing; the proxy rejected whisper-1. Local Whisper cross-attention alignment worked on real source audio. One ONNX export lacked cross-attention outputs; the Xenova tiny English export supported alignment.
+
+**How to apply:** Verify timing support before switching speech providers/models. Retain explicit uncertainty reporting and human caption review.
+
+Public Descript download URLs can be extensionless and supplied in page metadata; a missing `.mp4` match is not evidence that the media is inaccessible.
+
+**Why:** Both supplied shares imported successfully only after reading their public metadata's original-media URL. Owner download settings must be honored.
+
+**How to apply:** Inspect accessible public metadata before reporting a blocked import; retain narrow host/path validation and public-DNS pinning through redirects.
+
+Headless browser playback failures may reflect missing H.264/AAC support rather than broken media delivery.
+
+**Why:** Browser `canPlayType` returned empty for H.264/AAC and the decoder reported no supported streams, while source bytes matched and MP4 output/audio/rendered effects verified successfully.
+
+**How to apply:** Check decoder capabilities, media errors, authenticated ranges, and real decoded output before weakening headers or rewriting valid media.

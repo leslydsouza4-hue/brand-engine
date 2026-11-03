@@ -26,3 +26,15 @@ Headless browser playback failures may reflect missing H.264/AAC support rather 
 **Why:** Browser `canPlayType` returned empty for H.264/AAC and the decoder reported no supported streams, while source bytes matched and MP4 output/audio/rendered effects verified successfully.
 
 **How to apply:** Check decoder capabilities, media errors, authenticated ranges, and real decoded output before weakening headers or rewriting valid media.
+
+Do not treat validated MP4 exports as proof that in-editor playback works. Use a separate browser-friendly editing proxy, preserving original bytes and source-time coordinates.
+
+**Why:** The user encountered a blank preview with an imported 4K Descript video after the export-only verification had passed.
+
+**How to apply:** Verify decoded playback and seeking, not merely successful renders; keep conversion automatic for existing saved sessions as well as new imports.
+
+Prioritize fast editing previews over preview resolution; retain full-quality originals for final output.
+
+**Why:** The user explicitly said processing must be faster than doing the work in an editor. A high-resolution editing proxy adds delay without improving final output.
+
+**How to apply:** Benchmark changes on the same input, distinguish conversion from total import time, and reuse existing cached previews rather than regenerating them for quality-setting changes.

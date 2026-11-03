@@ -3,7 +3,7 @@ import { UploadCloud, Link2, Loader2, Play, Pause, Scissors, Square, Trash2, Cap
 import { LivePreview } from "./LivePreview";
 import { useSessionState } from "./sessions/useSessionState";
 import {
-  fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, probeInfo, startFrame, startImport, startRender, startTranscribe, uploadVideo, videoAssetUrl,
+  fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, startFrame, startImport, startRender, startTranscribe, uploadVideo,
   type Capabilities, type OutputResult, type TranscriptResult, type VideoMeta,
 } from "./shaunVideo/api";
 import {
@@ -35,6 +35,21 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [importUrl, setImportUrl] = useState("");
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [preview, setPreview] = useState<{ videoId: string; url: string } | null>(null);
+  const [previewRetry, setPreviewRetry] = useState(0);
+  useEffect(() => {
+    setPreview(null);
+    setErrors(prev => ({ ...prev, playback: undefined }));
+    if (!source) return;
+    const ac = new AbortController();
+    const videoId = source.videoId;
+    preparePreview(videoId, ac.signal).then(url => {
+      if (!ac.signal.aborted) setPreview({ videoId, url });
+    }).catch(error => {
+      if (!isAbort(error)) setErrors(prev => ({ ...prev, playback: `Could not prepare the video preview. ${(error as Error).message}` }));
+    });
+    return () => ac.abort();
+  }, [source?.videoId, previewRetry]);
   const [drawing, setDrawing] = useState(false);
   const [selectedBlur, setSelectedBlur] = useState<number | null>(null);
   const [markIn, setMarkIn] = useState<number | null>(null);
@@ -224,7 +239,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
             </div>
           )}
           {errors.video && <ErrorNote message={errors.video} />}
-          {errors.playback && !errors.video && <ErrorNote message={errors.playback} />}
+          {errors.playback && !errors.video && <ErrorNote message={errors.playback} onRetry={() => setPreviewRetry(n => n + 1)} />}
           <div
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
@@ -370,8 +385,14 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
         {source && edits ? (
           <div className="w-full h-full flex flex-col gap-[14px] min-h-0">
             <div className="flex-1 min-h-0 flex items-center justify-center">
-              <VideoStage
-                src={videoAssetUrl(source.videoId)} videoRef={videoRef} edits={edits} captions={captionUnits} timing={transcript?.timing ?? "word"}
+              {preview?.videoId !== source.videoId ? (
+                <div className="flex flex-col items-center gap-3 text-sm text-slate-400 p-8 text-center">
+                  {!errors.playback && <Loader2 className="w-6 h-6 animate-spin text-teal-400" />}
+                  <span>{errors.playback ? "Preview unavailable — retry from the source panel." : "Preparing a browser-friendly video preview…"}</span>
+                  <span className="text-xs">Your original stays untouched. Captions and exports use the full-quality source.</span>
+                </div>
+              ) : <VideoStage
+                src={preview.url} videoRef={videoRef} edits={edits} captions={captionUnits} timing={transcript?.timing ?? "word"}
                 time={time} sourceSize={source.width ? { width: source.width, height: source.height } : null}
                 drawing={drawing} selectedBlur={selectedBlur}
                 onTime={setTime} onPlaying={setPlaying}
@@ -390,7 +411,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   setDrawing(false);
                 }}
                 onSelectBlur={setSelectedBlur}
-              />
+              />}
             </div>
             <div className="shrink-0 flex items-center gap-[12px]">
               <button type="button" onClick={togglePlay} aria-label={playing ? "Pause" : "Play edited preview"} className="w-[38px] h-[38px] rounded-full bg-[#00B2A9] border-none flex items-center justify-center cursor-pointer hover:brightness-110 shrink-0">

@@ -70,11 +70,11 @@ async function localInput(path: string) {
 const inputArgs = (path: string) => ["-protocol_whitelist", "file,pipe", "-i", path];
 const baseArgs = ["-hide_banner", "-nostdin", "-y", "-threads", "2", "-filter_complex_threads", "1"];
 
-export async function probeVideo(path: string): Promise<VideoProbe> {
+export async function probeVideo(path: string, allowPreview = false): Promise<VideoProbe> {
   const file = await localInput(path);
   const raw = await run("ffprobe", ["-v", "error", "-protocol_whitelist", "file,pipe", "-show_streams", "-show_format", "-of", "json", file], 30_000);
   const data = JSON.parse(raw) as { streams: Array<{ codec_type: string; width?: number; height?: number; duration?: string; disposition?: { attached_pic?: number }; side_data_list?: Array<{ rotation?: number }>; tags?: { rotate?: string } }>; format: { duration?: string; format_name?: string } };
-  if (!data.format.format_name?.split(",").some(v => ["mov", "mp4"].includes(v))) throw new Error("Source must be an MP4 video");
+  if (!data.format.format_name?.split(",").some(v => (allowPreview ? ["mov", "mp4", "webm", "matroska"] : ["mov", "mp4"]).includes(v))) throw new Error("Source must be an MP4 video");
   const video = data.streams.find(s => s.codec_type === "video" && !s.disposition?.attached_pic);
   const duration = Number(data.format.duration || video?.duration);
   if (!video?.width || !video.height || !Number.isFinite(duration) || duration <= 0 || duration > 600 ||
@@ -253,6 +253,25 @@ export async function extractFrame(input: string, output: string, time: number) 
   try {
     await run("ffmpeg", [...baseArgs, ...inputArgs(source), "-ss", String(time), "-frames:v", "1", "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2", "-f", "image2", "-vcodec", "png", target], 60_000);
     if (!(await stat(target)).size) throw new Error("Frame extraction produced an empty image");
+  } catch (error) { await rm(target, { force: true }); throw error; }
+}
+
+/** Lightweight editing proxy. Never modifies the export source or its timeline. */
+export async function createPreview(input: string, output: string) {
+  const source = await localInput(input);
+  const info = await probeVideo(source);
+  const target = resolve(output);
+  if (target === source) throw new Error("Preview cannot overwrite source");
+  try {
+    await run("ffmpeg", [...baseArgs, ...inputArgs(source),
+      "-map", "0:v:0", "-map", "0:a:0?", "-vf",
+      "fps=24,scale=640:640:force_original_aspect_ratio=decrease:force_divisible_by=2:flags=fast_bilinear,setsar=1",
+      "-c:v", "libvpx", "-deadline", "realtime", "-cpu-used", "8", "-threads", "2",
+      "-b:v", "650k", "-pix_fmt", "yuv420p", "-g", "24",
+      "-c:a", "libopus", "-b:a", "64k", "-f", "webm", target], RENDER_TIMEOUT);
+    const preview = await probeVideo(target, true);
+    if (Math.abs(preview.duration - info.duration) > 0.2 || preview.hasAudio !== info.hasAudio)
+      throw new Error("Preview timeline validation failed");
   } catch (error) { await rm(target, { force: true }); throw error; }
 }
 

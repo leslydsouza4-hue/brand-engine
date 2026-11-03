@@ -7,7 +7,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
-import { escapeAss, extractAudio, extractFrame, makeCaptions, probeVideo, renderVideo, retainedSegments, videoEditsSchema, type VideoEdits } from "../lib/shaun-video-render";
+import { createPreview, escapeAss, extractAudio, extractFrame, makeCaptions, probeVideo, renderVideo, retainedSegments, videoEditsSchema, type VideoEdits } from "../lib/shaun-video-render";
 
 const edits: VideoEdits = {
   trimStart: 0, trimEnd: 1.2, cuts: [{ start: 0.4, end: 0.8 }],
@@ -15,6 +15,24 @@ const edits: VideoEdits = {
   words: [{ text: "Feature", start: 0, end: 0.35 }, { text: "updates", start: 0.85, end: 1.2 }],
   format: "horizontal", framing: "fit",
 };
+
+test("browser proxy preserves duration and audio without changing the original", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "shaun-preview-test-"));
+  try {
+    const source = join(dir, "source.mp4"), output = join(dir, "preview.webm");
+    await promisify(execFile)("ffmpeg", ["-v", "error", "-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=24",
+      "-f", "lavfi", "-i", "sine=frequency=440", "-t", "2", "-c:v", "libx264", "-threads", "2", "-c:a", "aac", source]);
+    const original = await readFile(source);
+    await createPreview(source, output);
+    assert.deepEqual(await readFile(source), original);
+    const proxy = await probeVideo(output, true);
+    assert.equal(proxy.width, 640);
+    assert.equal(proxy.height, 360);
+    assert.equal(proxy.hasAudio, true);
+    assert.ok(Math.abs(proxy.duration - 2) < 0.2);
+    await assert.rejects(probeVideo(output), /MP4/);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
 
 test("source-time cuts merge, clip and remap caption timing exactly", () => {
   const segments = retainedSegments(edits, 2);

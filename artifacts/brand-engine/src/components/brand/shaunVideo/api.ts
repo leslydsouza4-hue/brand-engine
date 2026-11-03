@@ -57,6 +57,19 @@ export const startFrame = (id: string, time: number) => request<{ jobId: string 
 export const getJob = <R,>(jobId: string, signal?: AbortSignal) => request<Job<R>>(`/jobs/${encodeURIComponent(jobId)}`, "GET", undefined, signal);
 export const jobAssetUrl = (jobId: string) => `${SHAUN_VIDEO_API}/jobs/${encodeURIComponent(jobId)}/asset`;
 export const videoAssetUrl = (videoId: string) => `${SHAUN_VIDEO_API}/videos/${encodeURIComponent(videoId)}/asset`;
+export async function preparePreview(videoId: string, signal: AbortSignal): Promise<string> {
+  for (;;) {
+    if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+    try {
+      const result = await request<{ jobId?: string; assetUrl?: string }>(`/videos/${encodeURIComponent(videoId)}/preview`, "POST", {}, signal);
+      if (result.jobId) await pollJob(result.jobId, () => undefined, signal);
+      return `${SHAUN_VIDEO_API}/videos/${encodeURIComponent(videoId)}/preview`;
+    } catch (error) {
+      if (!(error instanceof ShaunVideoError) || error.status !== 429) throw error;
+      await sleep(3000, signal);
+    }
+  }
+}
 
 const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve, reject) => {
   const t = setTimeout(resolve, ms);

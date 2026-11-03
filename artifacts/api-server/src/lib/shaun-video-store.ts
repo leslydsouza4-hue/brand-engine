@@ -10,7 +10,7 @@ export type VideoRecord = {
   size: number; contentType: string; staging?: string; probe?: unknown; createdAt: string;
 };
 export type JobRecord = {
-  jobId: string; owner: string; worker: string; kind: "import" | "render" | "frame" | "transcribe";
+  jobId: string; owner: string; worker: string; kind: "import" | "render" | "frame" | "transcribe" | "preview";
   status: "queued" | "running" | "succeeded" | "failed"; progress: number;
   videoId?: string; error?: string; result?: unknown; contentType?: string; phase?: string;
   createdAt: string; updatedAt: string;

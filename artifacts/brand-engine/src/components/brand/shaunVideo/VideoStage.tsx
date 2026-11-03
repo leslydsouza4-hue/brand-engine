@@ -129,13 +129,21 @@ export function VideoStage(p: Props) {
             onSeeked={e => { p.onTime(e.currentTarget.currentTime); snapshot(); }}
             onLoadedData={() => { p.onError(null); snapshot(); }}
             onCanPlay={() => p.onError(null)}
-            onTimeUpdate={e => { if (!playing) p.onTime(e.currentTarget.currentTime); }}
+            onTimeUpdate={e => {
+              const v = e.currentTarget;
+              if (!v.paused) {
+                const next = nextPlayableTime(editsRef.current, v.currentTime);
+                if (next === null) { v.pause(); v.currentTime = editsRef.current.trimStart; }
+                else if (Math.abs(next - v.currentTime) > 0.03) v.currentTime = next;
+              }
+              p.onTime(v.currentTime);
+            }}
             onLoadedMetadata={e => { p.onError(null); p.onLoaded({ duration: e.currentTarget.duration, width: e.currentTarget.videoWidth, height: e.currentTarget.videoHeight }); }}
             onError={e => {
               const v = e.currentTarget, err = v.error;
               // One quiet retry: transient range/network aborts must not show a false failure.
               if (!retriedRef.current && err?.code !== 4) { retriedRef.current = true; const t = v.currentTime; v.load(); v.currentTime = t; return; }
-              const reason = err?.code === 4 ? "This browser cannot decode the original video format (often HEVC/H.265). Renders still work; preview needs H.264 MP4." : err?.code === 2 ? "Network error while streaming the original video." : "The original video could not be played in the browser.";
+              const reason = "The video preview could not play. Retry the preview from the source panel; your original and edits are safe.";
               p.onError(`${reason}${err?.message ? ` (${err.message})` : ""}`);
             }}
           />

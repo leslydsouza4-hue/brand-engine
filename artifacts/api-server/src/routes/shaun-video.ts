@@ -7,7 +7,7 @@ import { getAuth } from "@clerk/express";
 import { z } from "zod";
 import type { File } from "@google-cloud/storage";
 import { assertSessionMutationOrigin, idSchema, SessionError } from "../lib/session-validation";
-import { extractAudio, extractFrame, probeVideo, renderVideo, videoEditsSchema, retainedSegments } from "../lib/shaun-video-render";
+import { createPreview, extractAudio, extractFrame, probeVideo, renderVideo, videoEditsSchema, retainedSegments } from "../lib/shaun-video-render";
 import { transcribeLocalAudio, isTranscriptionBusy } from "../lib/shaun-video-transcribe";
 import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
 import { getVideo, MAX_DURATION, MAX_VIDEO_BYTES, privateFile, readRecord, saveRecord, videoResponse, videoStorage, type JobRecord, type VideoRecord } from "../lib/shaun-video-store";
@@ -208,6 +208,36 @@ router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
     record.videoId = videoId;
     return videoResponse(video);
   }));
+}));
+// Cached derivative: existing sessions automatically gain a playable preview.
+router.post(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner) => {
+  const video = await getVideo(owner, id(req, "videoId"));
+  const key = `videos/${video.videoId}/preview-v1.webm`;
+  const assetUrl = `/api/shaun-video/videos/${video.videoId}/preview`;
+  if ((await privateFile(owner, key).exists())[0]) {
+    res.json({ assetUrl }); return;
+  }
+  const lock = `preview/${video.videoId}`;
+  if (locked.has(lock)) throw new SessionError(429, "Preparing this video preview. Please wait.");
+  locked.add(lock);
+  try {
+    res.status(202).json(await job(owner, "preview", video.videoId, async (dir, record) => {
+      try {
+        record.phase = "Preparing browser-friendly preview";
+        const input = join(dir, "source.mp4"), output = join(dir, "preview.webm");
+        await downloadLocal(owner, video.videoId, input);
+        await createPreview(input, output);
+        await uploadLocal(owner, key, output, "video/webm");
+        return { assetUrl };
+      } finally { locked.delete(lock); }
+    }));
+  } catch (error) { locked.delete(lock); throw error; }
+}));
+router.get(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner) => {
+  const video = await getVideo(owner, id(req, "videoId"));
+  const file = privateFile(owner, `videos/${video.videoId}/preview-v1.webm`);
+  if (!(await file.exists())[0]) throw new SessionError(404, "Preview is not ready");
+  await serve(req, res, file, "video/webm", "preview.webm");
 }));
 router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));

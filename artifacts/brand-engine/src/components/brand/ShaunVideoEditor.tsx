@@ -60,10 +60,9 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const currentVideoRef = useRef<string | undefined>(undefined);
   currentVideoRef.current = source?.videoId;
   const wantsLayout = !!source && edits?.format === "vertical" && !edits.split;
-  const previewReady = !!source && preview?.videoId === source.videoId;
   // Auto-detect once per source when vertical is chosen without saved bounds. Retry button bumps layoutRetry.
   useEffect(() => {
-    if (!source || !wantsLayout || !previewReady) return;
+    if (!source || !wantsLayout) return;
     const videoId = source.videoId;
     const tag = `${videoId}#${layoutRetry}`;
     if (layoutTriedRef.current.has(tag)) return;
@@ -95,7 +94,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
       }
     })();
     return () => { ac.abort(); layoutTriedRef.current.delete(tag); };
-  }, [source?.videoId, wantsLayout, previewReady, layoutRetry]);
+  }, [source?.videoId, wantsLayout, layoutRetry]);
   const layoutHere = layout && layout.videoId === source?.videoId ? layout : null;
   const manualSplit = () => {
     const full = { x: 0, y: 0, width: 1, height: 1 };
@@ -360,15 +359,13 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   <div className="text-[10px] text-[#475569] leading-[1.45]">Split: screen recording fitted in the top half, speaker cropped to fill the bottom half, captions over the speaker.</div>
                   {!edits.split && layoutHere?.status !== "error" && (
                     <div data-testid="status-layout" className="flex items-center gap-[6px] p-[8px] rounded-[10px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.15)] text-[10px] text-[#94A3B8]">
-                      <Loader2 className="w-[11px] h-[11px] animate-spin text-[#2896FB] shrink-0" />{previewReady ? (layoutHere?.phase || "Locating speaker and screen panels") : "Waiting for the preview before locating panels"}
+                      <Loader2 className="w-[11px] h-[11px] animate-spin text-[#2896FB] shrink-0" />{layoutHere?.phase || "Locating panels in the background. You can keep editing."}
                     </div>
                   )}
                   {!edits.split && layoutHere?.status === "error" && (
-                    <>
                       <ErrorNote message={layoutHere.note || "Could not locate the panels."} onRetry={() => setLayoutRetry(n => n + 1)} />
-                      <button type="button" data-testid="button-manual-split" onClick={manualSplit} className={`${ghostBtn} w-full mt-[6px]`}>Set panel bounds manually</button>
-                    </>
                   )}
+                  {!edits.split && <button type="button" data-testid="button-manual-split" onClick={manualSplit} className={`${ghostBtn} w-full mt-[6px]`}>Set panel bounds manually</button>}
                   {edits.split && (
                     <>
                       <SplitPanels split={edits.split} onChange={setSplit} />
@@ -507,7 +504,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               ) : <VideoStage
                 src={preview.url} videoRef={videoRef} edits={edits} captions={captionUnits} timing={transcript?.timing ?? "word"}
                 time={time} sourceSize={source.width ? { width: source.width, height: source.height } : null}
-                drawing={drawing} selectedBlur={selectedBlur} sourceView={sourceView || (edits.format === "vertical" && selectedBlur !== null && !edits.split)}
+                drawing={drawing} selectedBlur={selectedBlur} sourceView={sourceView || (edits.format === "vertical" && !edits.split)}
                 layoutStatus={layoutHere?.status === "error" ? "Panels not found. Retry detection or set bounds manually in the Format panel." : "Locating speaker and screen panels. Export unlocks once they are set."}
                 onTime={setTime} onPlaying={setPlaying}
                 onError={msg => setError("playback", msg ?? undefined)}

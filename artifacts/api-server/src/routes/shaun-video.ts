@@ -11,6 +11,7 @@ import { createPreview, extractAudio, extractFrame, probeVideo, renderVideo, vid
 import { transcribeLocalAudio, isTranscriptionBusy } from "../lib/shaun-video-transcribe";
 import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
 import { detectVideoLayout } from "../lib/shaun-video-layout";
+import { videoSourceCache } from "../lib/shaun-video-cache";
 import { getVideo, MAX_DURATION, MAX_VIDEO_BYTES, privateFile, readRecord, saveRecord, videoResponse, videoStorage, type JobRecord, type VideoRecord } from "../lib/shaun-video-store";
 
 const router = Router();
@@ -105,9 +106,17 @@ async function uploadLocal(owner: string, key: string, local: string, contentTyp
 }
 async function downloadLocal(owner: string, videoId: string, local: string) {
   const file = privateFile(owner, `videos/${videoId}/source`);
-  const [meta] = await file.getMetadata();
-  if (Number(meta.size) > MAX_VIDEO_BYTES) throw new SessionError(413, "Video exceeds 250 MiB");
-  await file.download({ destination: local });
+  await videoSourceCache.materialize(`${file.bucket.name}/${file.name}`, local, async path => {
+    const [meta] = await file.getMetadata();
+    if (Number(meta.size) > MAX_VIDEO_BYTES) throw new SessionError(413, "Video exceeds 250 MiB");
+    await file.download({ destination: path });
+  });
+}
+async function retainLocal(owner: string, videoId: string, local: string) {
+  const file = privateFile(owner, `videos/${videoId}/source`);
+  // Cache failure must not invalidate a durably saved original.
+  await videoSourceCache.seed(`${file.bucket.name}/${file.name}`, local)
+    .catch(error => console.warn("Video source cache retention failed", error.code));
 }
 async function serve(req: Request, res: Response, file: File, contentType: string, name: string) {
   const [meta] = await file.getMetadata();
@@ -180,6 +189,7 @@ router.post(`${prefix}/videos/:videoId/complete`, endpoint(async (req, res, owne
       video.status = "ready"; delete video.staging;
       await target.setMetadata({ cacheControl: "private, no-store" });
       await saveRecord(owner, `videos/${videoId}.json`, video);
+      await retainLocal(owner, videoId, local);
       await staging.delete().catch(() => undefined);
     } catch (error) { await target.delete().catch(() => undefined); throw error; }
     res.json(videoResponse(video));
@@ -217,6 +227,7 @@ router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
     await uploadLocal(owner, `videos/${videoId}/source`, local, "video/mp4");
     await saveRecord(owner, `videos/${videoId}.json`, video);
     await saveRecord(owner, cacheKey, { videoId, at: Date.now() });
+    await retainLocal(owner, videoId, local);
     record.videoId = videoId;
     return videoResponse(video);
   }));
@@ -255,8 +266,6 @@ router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner)
   const video = await getVideo(owner, id(req, "videoId"));
   const key = `videos/${video.videoId}/layout-v1.json`;
   if ((await privateFile(owner, key).exists())[0]) { res.json(await readRecord(owner, key)); return; }
-  const proxy = privateFile(owner, `videos/${video.videoId}/preview-v1.webm`);
-  if (!(await proxy.exists())[0]) throw new SessionError(429, "Waiting for the lightweight preview before locating panels.");
   const lock = `layout/${video.videoId}`;
   if (locked.has(lock)) throw new SessionError(429, "Locating this video's panels. Please wait.");
   locked.add(lock);
@@ -264,8 +273,8 @@ router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner)
     res.status(202).json(await job(owner, "layout", video.videoId, async (dir, record) => {
       try {
         record.phase = "Locating speaker and screen";
-        const input = join(dir, "preview.webm");
-        await proxy.download({ destination: input });
+        const input = join(dir, "source.mp4");
+        await downloadLocal(owner, video.videoId, input);
         const result = await detectVideoLayout(input, dir, (video.probe as { duration: number }).duration);
         await saveRecord(owner, key, result);
         return result;

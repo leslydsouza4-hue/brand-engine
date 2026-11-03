@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -196,9 +196,19 @@ router.get(`${prefix}/videos/:videoId/asset`, endpoint(async (req, res, owner) =
   await serve(req, res, privateFile(owner, `videos/${video.videoId}/source`), video.contentType, "source.mp4");
 }));
 router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
-  const { url } = z.object({ url: z.string().max(2048) }).strict().parse(req.body);
+  const { url, refresh } = z.object({ url: z.string().max(2048), refresh: z.boolean().optional() }).strict().parse(req.body);
   validateDescriptShareUrl(url);
   res.status(202).json(await job(owner, "import", undefined, async (dir, record) => {
+    const canonical = new URL(url); canonical.search = ""; canonical.hash = "";
+    const cacheKey = `imports/${createHash("sha256").update(canonical.href).digest("hex")}.json`;
+    try {
+      const cached = await readRecord<{ videoId: string; at: number }>(owner, cacheKey);
+      if (!refresh && Date.now() - cached.at < 15 * 60_000) {
+        const existing = await getVideo(owner, cached.videoId);
+        record.videoId = existing.videoId;
+        return videoResponse(existing);
+      }
+    } catch (error) { if (!(error instanceof SessionError && error.status === 404)) throw error; }
     const local = join(dir, "source.mp4");
     const size = await importDescript(url, local);
     const probe = await probeVideo(local);
@@ -206,6 +216,7 @@ router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
     const video: VideoRecord = { videoId, owner, name: "Descript import.mp4", size, contentType: "video/mp4", status: "ready", probe, createdAt: new Date().toISOString() };
     await uploadLocal(owner, `videos/${videoId}/source`, local, "video/mp4");
     await saveRecord(owner, `videos/${videoId}.json`, video);
+    await saveRecord(owner, cacheKey, { videoId, at: Date.now() });
     record.videoId = videoId;
     return videoResponse(video);
   }));
@@ -269,11 +280,22 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
   try { retainedSegments(edits, (video.probe as { duration: number }).duration); }
   catch (error) { throw new SessionError(400, (error as Error).message); }
   res.status(202).json(await job(owner, "render", video.videoId, async (dir, record, progress) => {
+    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("pan-v1:" + JSON.stringify(edits)).digest("hex")}.json`;
+    try {
+      const cached = await readRecord<{ jobId: string }>(owner, cacheKey);
+      const file = privateFile(owner, `jobs/${cached.jobId}/output`);
+      if ((await file.exists())[0]) {
+        await file.copy(privateFile(owner, `jobs/${record.jobId}/output`));
+        record.contentType = "video/mp4";
+        return { assetUrl: `/api/shaun-video/jobs/${record.jobId}/asset`, contentType: record.contentType };
+      }
+    } catch (error) { if (!(error instanceof SessionError && error.status === 404)) throw error; }
     const input = join(dir, "source.mp4"), output = join(dir, "output.mp4");
     await downloadLocal(owner, video.videoId, input);
     await renderVideo(input, output, edits, n => progress(n / 100));
     await uploadLocal(owner, `jobs/${record.jobId}/output`, output, "video/mp4");
     record.contentType = "video/mp4";
+    await saveRecord(owner, cacheKey, { jobId: record.jobId });
     return { assetUrl: `/api/shaun-video/jobs/${record.jobId}/asset`, contentType: record.contentType };
   }));
 }));

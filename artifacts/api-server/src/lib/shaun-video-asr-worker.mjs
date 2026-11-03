@@ -1,5 +1,6 @@
 import { pipeline, env } from "@huggingface/transformers";
 import { readFile } from "node:fs/promises";
+import { appendAlignedWord } from "./shaun-caption-alignment.mjs";
 
 // Generated model files stay outside the repository. Hugging Face model card:
 // https://huggingface.co/Xenova/whisper-tiny.en (Apache-2.0 ONNX conversion).
@@ -53,7 +54,8 @@ process.on("message", async message => {
     const audio = pcm16(await readFile(message.path));
     const duration = audio.length / 16000;
     const words = [];
-    let omittedUncertainWords = 0;
+    let groupedUncertainWords = 0;
+    let pendingText = "";
     // Overlapping context windows; keep words by their model-aligned midpoint.
     // Every retained start/end comes from Whisper cross-attention DTW, never
     // from a word count, text length, or uniformly distributed time interval.
@@ -68,22 +70,21 @@ process.on("message", async message => {
       for (const chunk of output.chunks || []) {
         const text = chunk.text.trim();
         const [relativeStart, relativeEnd] = chunk.timestamp;
-        if (!text || !Number.isFinite(relativeStart) || !Number.isFinite(relativeEnd)) { omittedUncertainWords++; continue; }
-        const start = Math.round((windowStart + relativeStart) * 100) / 100;
-        const end = Math.round((windowStart + relativeEnd) * 100) / 100;
+        if (!text) continue;
+        const start = Number.isFinite(relativeStart) ? Math.round((windowStart + relativeStart) * 100) / 100 : NaN;
+        const end = Number.isFinite(relativeEnd) ? Math.round((windowStart + relativeEnd) * 100) / 100 : NaN;
         const midpoint = (start + end) / 2;
         if (midpoint < centerStart || midpoint >= centerEnd && centerEnd < duration) continue;
-        if (start < 0 || end > duration || end > windowEnd || end <= start || start < (words.at(-1)?.end || 0)) {
-          omittedUncertainWords++; continue;
-        }
-        words.push({ text, start, end });
+        const grouped = appendAlignedWord(words, `${pendingText} ${text}`.trim(), start, end, duration);
+        if (grouped === null) { pendingText = `${pendingText} ${text}`.trim(); groupedUncertainWords++; }
+        else { pendingText = ""; if (grouped) groupedUncertainWords++; }
       }
     }
     if (!words.length) throw new Error("No timestamped English speech was detected. Check the audio track and try again.");
     send({ type: "result", result: {
       text: words.map(w => w.text).join(" "), words, segments: [], timing: "word",
       timestampMethod: "whisper-cross-attention-dtw", model: "Xenova/whisper-tiny.en",
-      language: "en", duration, omittedUncertainWords,
+      language: "en", duration, omittedUncertainWords: 0, groupedUncertainWords,
     } });
   } catch (error) {
     send({ type: "error", error: error instanceof Error ? error.message : "Local Whisper transcription failed" });

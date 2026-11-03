@@ -21,7 +21,7 @@ export interface Job<R = unknown> {
 export interface OutputResult { assetUrl: string; contentType: string }
 export interface TranscriptResult {
   text: string; words: TimedText[]; segments: TimedText[]; timing: CaptionTiming;
-  timestampMethod?: string; model?: string; language?: string; duration?: number; omittedUncertainWords?: number;
+  timestampMethod?: string; model?: string; language?: string; duration?: number; omittedUncertainWords?: number; groupedUncertainWords?: number;
 }
 export interface Capabilities {
   maxUploadBytes: number; maxDuration: number; formats: string[]; wordTimestamps: boolean; segmentTimestamps: boolean;
@@ -50,7 +50,7 @@ async function request<T>(path: string, method = "GET", body?: unknown, signal?:
 
 export const getCapabilities = (signal?: AbortSignal) => request<Capabilities>("/capabilities", "GET", undefined, signal);
 export const getVideo = (id: string, signal?: AbortSignal) => request<VideoMeta>(`/videos/${encodeURIComponent(id)}`, "GET", undefined, signal);
-export const startImport = (url: string) => request<{ jobId: string }>("/imports", "POST", { url });
+export const startImport = (url: string, refresh = false) => request<{ jobId: string }>("/imports", "POST", refresh ? { url, refresh: true } : { url });
 export const startTranscribe = (id: string) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/transcribe`, "POST", {});
 export const startRender = (id: string, edits: VideoEdits) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/render`, "POST", edits);
 export const startFrame = (id: string, time: number) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/frames`, "POST", { time });
@@ -116,6 +116,26 @@ export async function uploadVideo(file: File, onProgress: (p: number) => void, s
     xhr.send(file);
   });
   return request<VideoMeta>(`/videos/${encodeURIComponent(videoId)}/complete`, "POST", {}, signal);
+}
+
+/** Authenticated download of a finished render. Always uses the base-aware job asset URL. */
+export async function downloadJobAsset(jobId: string, filename: string, signal?: AbortSignal): Promise<void> {
+  let res: Response;
+  try { res = await fetch(jobAssetUrl(jobId), { credentials: "include", cache: "no-store", signal }); }
+  catch (err) { if (isAbort(err)) throw err; throw new ShaunVideoError("Download failed. Check your connection and try again."); }
+  if (!res.ok) {
+    const msg = res.status === 401 ? "Your session expired. Sign in again, then retry." : res.status === 404 ? "This render is no longer available. Render again." : `Download failed (${res.status}).`;
+    throw new ShaunVideoError(msg, res.status);
+  }
+  const type = (res.headers.get("content-type") || "").toLowerCase();
+  if (!type.startsWith("video/mp4")) throw new ShaunVideoError("The server did not return an MP4. Sign in again or render again.");
+  const blob = await res.blob();
+  if (!blob.size) throw new ShaunVideoError("The downloaded file was empty. Render again.");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename; a.rel = "noopener"; a.style.display = "none";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 export async function fetchAsDataUrl(url: string): Promise<string> {

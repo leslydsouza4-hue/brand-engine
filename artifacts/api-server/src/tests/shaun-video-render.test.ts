@@ -41,7 +41,7 @@ test("vertical split renders screen above speaker without changing horizontal", 
     await promisify(execFile)("ffmpeg", ["-v", "error", "-f", "lavfi", "-i",
       "color=c=red:s=640x360:r=24,drawbox=x=320:y=0:w=320:h=360:color=blue:t=fill",
       "-t", "1", "-c:v", "libx264", "-threads", "2", source]);
-    const split = { screen: { x: 0, y: 0, width: 0.5, height: 1 }, speaker: { x: 0.5, y: 0, width: 0.5, height: 1 }, screenScale: 0.5, speakerScale: 2 };
+    const split = { screen: { x: 0, y: 0, width: 0.5, height: 1 }, speaker: { x: 0.5, y: 0, width: 0.5, height: 1 }, screenScale: 0.5, speakerScale: 1, speakerPan: { x: 0.25, y: 0 } };
     const config: VideoEdits = { trimStart: 0, trimEnd: 1, cuts: [], blurs: [], words: [], format: "vertical", framing: "fit", split };
     await renderVideo(source, output, config);
     await promisify(execFile)("ffmpeg", ["-v", "error", "-i", output, "-frames:v", "1", frame]);
@@ -53,6 +53,8 @@ test("vertical split renders screen above speaker without changing horizontal", 
     assert.ok(Math.max(...edge) < 50, "50% screen scale adds space");
     const lowerEdge = await pixel(540, 1000);
     assert.ok(lowerEdge[2] > 200, "speaker scaling remains independent");
+    const pannedEdge = await pixel(50, 1440);
+    assert.ok(Math.max(...pannedEdge) < 50, "dragging the speaker right leaves space on the left");
     assert.equal(videoEditsSchema.safeParse({ ...config, split: { ...split, screenScale: 3 } }).success, false);
     await renderVideo(source, join(dir, "horizontal.mp4"), { ...config, format: "horizontal" });
     const horizontal = await probeVideo(join(dir, "horizontal.mp4"));

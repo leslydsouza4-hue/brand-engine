@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { boxFromDrag, captionAt, fitCrop, nextPlayableTime, normalizedPoint, type BlurBox, type Point, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
+import { boxFromDrag, captionAt, clamp, round3, type SplitLayout, fitCrop, nextPlayableTime, normalizedPoint, type BlurBox, type Point, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
 
 interface Props {
   src: string;
@@ -17,6 +17,8 @@ interface Props {
   onError: (msg: string | null) => void;
   onDrawBox: (box: Pick<BlurBox, "x" | "y" | "width" | "height">) => void;
   onSelectBlur: (i: number) => void;
+  /** Split only: hand-drag repositioning of a half. Called on every pointer move. */
+  onSplitChange?: (split: SplitLayout) => void;
   /** Vertical only: show the full original frame (for blur drawing / bounds checking) instead of the split. */
   sourceView?: boolean;
   /** Vertical without split: status shown instead of a squeezed full frame. */
@@ -62,37 +64,39 @@ export function VideoStage(p: Props) {
     ctx.fillStyle = "#030B17";
     ctx.fillRect(0, 0, W, H);
     const half = Math.round(H / 2);
-    const paint = (r: { x: number; y: number; width: number; height: number }, top: number, h: number, mode: "contain" | "cover", scale = 1) => {
+    const paint = (r: { x: number; y: number; width: number; height: number }, top: number, h: number, mode: "contain" | "cover", scale = 1, pan?: { x: number; y: number }) => {
       const sx = r.x * v.videoWidth, sy = r.y * v.videoHeight, sw = r.width * v.videoWidth, sh = r.height * v.videoHeight;
       if (sw < 1 || sh < 1) return;
       const f = fitCrop(sw, sh, W, h, mode);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, top, W, h); ctx.clip();
-      ctx.translate(W / 2, top + h / 2);
+      ctx.translate(W / 2 + (pan?.x ?? 0) * W, top + h / 2 + (pan?.y ?? 0) * h);
       ctx.scale(scale, scale);
       ctx.translate(-W / 2, -(top + h / 2));
       try { ctx.drawImage(v, sx + f.sx, sy + f.sy, f.sw, f.sh, f.dx, top + f.dy, f.dw, f.dh); } catch { /* frame not ready */ }
       ctx.restore();
     };
-    paint(split.screen, 0, half, "contain", split.screenScale);
-    paint(split.speaker, half, H - half, "cover", split.speakerScale);
+    paint(split.screen, 0, half, "contain", split.screenScale, split.screenPan);
+    paint(split.speaker, half, H - half, "cover", split.speakerScale, split.speakerPan);
   }, [videoRef]);
 
+  // Single place that enforces trim/cuts, only while genuinely playing and not mid-seek.
+  const enforce = useCallback((v: HTMLVideoElement) => {
+    if (v.paused || v.seeking || v.ended) return;
+    const next = nextPlayableTime(editsRef.current, v.currentTime);
+    if (next === null) { v.pause(); return; }
+    if (next - v.currentTime > 0.05) v.currentTime = next;
+  }, []);
   // Timer, not rAF: rAF is throttled inside the workspace iframe.
   useEffect(() => {
     if (!playing) return;
     const id = window.setInterval(() => {
       const v = videoRef.current;
-      if (v) {
-        const next = nextPlayableTime(editsRef.current, v.currentTime);
-        if (next === null) { v.pause(); v.currentTime = editsRef.current.trimStart; }
-        else if (Math.abs(next - v.currentTime) > 0.03) v.currentTime = next;
-        onTimeRef.current(v.currentTime);
-      }
+      if (v) { enforce(v); onTimeRef.current(v.currentTime); }
       draw();
     }, 33);
     return () => window.clearInterval(id);
-  }, [playing, videoRef, draw]);
+  }, [playing, videoRef, draw, enforce]);
 
   // Repaint when paused and the layout, bounds or stage size change.
   const splitKey = JSON.stringify(edits.split ?? null);
@@ -122,6 +126,40 @@ export function VideoStage(p: Props) {
     const box = commit ? boxFromDrag(d.a, pos(e)) : null;
     if (box) onDrawBoxRef.current(box);
   };
+  // Hand-drag repositioning of split halves. Writes pan on every move; never seeks.
+  const onSplitChangeRef = useRef(p.onSplitChange);
+  onSplitChangeRef.current = p.onSplitChange;
+  const panDragRef = useRef<{ id: number; panel: "screen" | "speaker"; sx: number; sy: number; start: { x: number; y: number }; w: number; h: number } | null>(null);
+  const [panDragging, setPanDragging] = useState<"screen" | "speaker" | null>(null);
+  const onPanDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const split = editsRef.current.split;
+    if (e.button > 0 || !split || !onSplitChangeRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const panel = e.clientY - rect.top < rect.height / 2 ? "screen" : "speaker";
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    videoRef.current?.pause();
+    const cur = split[panel === "screen" ? "screenPan" : "speakerPan"] ?? { x: 0, y: 0 };
+    panDragRef.current = { id: e.pointerId, panel, sx: e.clientX, sy: e.clientY, start: { ...cur }, w: rect.width, h: rect.height / 2 };
+    setPanDragging(panel);
+  };
+  const onPanMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = panDragRef.current, split = editsRef.current.split;
+    if (!d || d.id !== e.pointerId || !split) return;
+    const pan = { x: round3(clamp(d.start.x + (e.clientX - d.sx) / d.w, -1, 1)), y: round3(clamp(d.start.y + (e.clientY - d.sy) / d.h, -1, 1)) };
+    const next = { ...split, [d.panel === "screen" ? "screenPan" : "speakerPan"]: pan };
+    editsRef.current = { ...editsRef.current, split: next };
+    onSplitChangeRef.current?.(next);
+    draw();
+  };
+  const onPanUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = panDragRef.current;
+    if (!d || d.id !== e.pointerId) return;
+    panDragRef.current = null;
+    setPanDragging(null);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);
+  };
+
   // Same-origin frame snapshot used as poster so session thumbnails are never a black video.
   const snapshot = () => {
     const v = videoRef.current;
@@ -179,16 +217,12 @@ export function VideoStage(p: Props) {
             poster={poster}
             onPlay={() => { setPlaying(true); p.onPlaying(true); }}
             onPause={() => { setPlaying(false); p.onPlaying(false); }}
-            onSeeked={e => { p.onTime(e.currentTarget.currentTime); snapshot(); draw(); }}
+            onSeeked={e => { p.onTime(e.currentTarget.currentTime); if (e.currentTarget.paused) snapshot(); draw(); }}
             onLoadedData={() => { p.onError(null); snapshot(); draw(); }}
             onCanPlay={() => p.onError(null)}
             onTimeUpdate={e => {
               const v = e.currentTarget;
-              if (!v.paused) {
-                const next = nextPlayableTime(editsRef.current, v.currentTime);
-                if (next === null) { v.pause(); v.currentTime = editsRef.current.trimStart; }
-                else if (Math.abs(next - v.currentTime) > 0.03) v.currentTime = next;
-              }
+              enforce(v);
               p.onTime(v.currentTime);
               draw();
             }}
@@ -225,6 +259,20 @@ export function VideoStage(p: Props) {
         {splitMode && (
           <>
             <canvas ref={canvasRef} data-testid="canvas-split-preview" className="absolute inset-0 w-full h-full pointer-events-none" />
+            <div
+              data-testid="split-drag-surface"
+              className={`absolute inset-0 select-none ${panDragging ? "cursor-grabbing" : p.onSplitChange ? "cursor-grab" : ""}`}
+              style={{ touchAction: "none" }}
+              onPointerDown={onPanDown} onPointerMove={onPanMove} onPointerUp={onPanUp} onPointerCancel={onPanUp}
+              onDragStart={e => e.preventDefault()}
+            >
+              {(["screen", "speaker"] as const).map(k => (
+                <div key={k} className={`absolute left-0 right-0 h-1/2 pointer-events-none transition-opacity duration-150 ${k === "screen" ? "top-0" : "top-1/2"} ${panDragging === k ? "opacity-100" : "opacity-0"}`}
+                  style={{ boxShadow: `inset 0 0 0 2px ${k === "screen" ? "#2896FB" : "#00B2A9"}` }}>
+                  <span className="absolute top-[6px] right-[6px] text-[9px] font-semibold uppercase tracking-[0.8px] text-white rounded-[3px] px-[5px] py-[1px]" style={{ background: k === "screen" ? "#2896FB" : "#00B2A9" }}>Moving {k}</span>
+                </div>
+              ))}
+            </div>
             <div className="absolute left-0 right-0 top-1/2 h-px bg-[rgba(255,255,255,0.08)] pointer-events-none" />
           </>
         )}

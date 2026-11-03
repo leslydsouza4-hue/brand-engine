@@ -44,3 +44,9 @@ Vertical output must be screen recording in the top half and Shaun cropped into 
 **Why:** The user explicitly rejected fitting the whole horizontal recording into a vertical frame and requested the split-screen arrangement.
 
 **How to apply:** Keep preview and export crops identical; detect presenter panels, not identity. Circular webcam overlays can overlap the screen crop. Do not claim continuous tracking from sparse frame checks or recoverable detail from small embedded camera footage.
+
+Prefer direct hand-drag positioning over X/Y fields for screen and speaker. Keep technical caption/model details out of the primary editing flow.
+
+**Why:** The user explicitly requested a hand instead of coordinates and objected to being asked to manually recover many omitted caption words.
+
+**How to apply:** Keep advanced coordinates secondary; retain recognized text when word alignment fails by grouping existing aligned cues, and label uncertainty honestly rather than dropping words or inventing individual timestamps.

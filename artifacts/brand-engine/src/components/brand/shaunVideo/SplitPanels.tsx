@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { clamp, round3, type Rect, type SplitLayout } from "./edits";
 import { inputCls } from "./ui";
 
@@ -39,6 +40,7 @@ function RectRow({ title, hint, color, rect, onChange, id }: { title: string; hi
 
 /** Compact numeric editor for split source bounds, as percentages of the original frame. */
 export function SplitPanels({ split, onChange }: { split: SplitLayout; onChange: (s: SplitLayout) => void }) {
+  const [advanced, setAdvanced] = useState(false);
   const scaleControl = (panel: "screen" | "speaker") => {
     const key = panel === "screen" ? "screenScale" : "speakerScale";
     const value = Math.round((split[key] ?? 1) * 100);
@@ -52,13 +54,26 @@ export function SplitPanels({ split, onChange }: { split: SplitLayout; onChange:
         className="w-full accent-[#00B2A9] mt-[5px]" />
     </label>;
   };
+  const posReset = (panel: "screen" | "speaker") => {
+    const key = panel === "screen" ? "screenPan" : "speakerPan";
+    const p = split[key];
+    const moved = !!p && (Math.abs(p.x) > 0.001 || Math.abs(p.y) > 0.001);
+    return <button type="button" data-testid={`button-reset-${panel}-position`} disabled={!moved}
+      onClick={() => onChange({ ...split, [key]: { x: 0, y: 0 } })}
+      className="text-[10px] text-[#00B2A9] disabled:text-[#475569] disabled:cursor-default">Reset position</button>;
+  };
   return (
     <div className="flex flex-col gap-[10px] p-[10px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)]">
-      <RectRow id="screen" title="Screen" hint="top half, fitted" color="#2896FB" rect={split.screen} onChange={screen => onChange({ ...split, screen })} />
+      <p className="text-[10px] text-[#94A3B8] leading-[1.45] m-0">Drag the screen or speaker in the preview to move it. Use the sliders to zoom.</p>
       {scaleControl("screen")}
-      <RectRow id="speaker" title="Speaker" hint="bottom half, cropped" color="#00B2A9" rect={split.speaker} onChange={speaker => onChange({ ...split, speaker })} />
+      <div className="flex justify-end -mt-[6px]">{posReset("screen")}</div>
       {scaleControl("speaker")}
-      <p className="text-[10px] text-[#64748B]">50–200%. Zoom is centered in each half. Larger scales crop the edges; smaller scales add space.</p>
+      <div className="flex justify-end -mt-[6px]">{posReset("speaker")}</div>
+      <button type="button" data-testid="button-advanced-bounds" onClick={() => setAdvanced(a => !a)} className="self-start text-[10px] text-[#64748B] hover:text-[#94A3B8]">{advanced ? "Hide advanced crop bounds" : "Advanced crop bounds"}</button>
+      {advanced && <>
+        <RectRow id="screen" title="Screen" hint="area of original" color="#2896FB" rect={split.screen} onChange={screen => onChange({ ...split, screen })} />
+        <RectRow id="speaker" title="Speaker" hint="area of original" color="#00B2A9" rect={split.speaker} onChange={speaker => onChange({ ...split, speaker })} />
+      </>}
     </div>
   );
 }

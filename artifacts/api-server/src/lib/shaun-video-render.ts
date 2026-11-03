@@ -12,6 +12,8 @@ export const cropBoxSchema = z.object({
 export const splitSchema = z.object({ speaker: cropBoxSchema, screen: cropBoxSchema,
   screenScale: z.number().finite().min(0.5).max(2).optional(),
   speakerScale: z.number().finite().min(0.5).max(2).optional(),
+  screenPan: z.object({ x: z.number().min(-1).max(1), y: z.number().min(-1).max(1) }).strict().optional(),
+  speakerPan: z.object({ x: z.number().min(-1).max(1), y: z.number().min(-1).max(1) }).strict().optional(),
 }).strict();
 const range = z.object({ start: seconds, end: seconds }).strict().refine(v => v.end > v.start, "End must follow start");
 export const videoEditsSchema = z.object({
@@ -24,7 +26,7 @@ export const videoEditsSchema = z.object({
     width: z.number().finite().min(0.01).max(1), height: z.number().finite().min(0.01).max(1),
   }).strict().refine(v => v.end > v.start && v.x + v.width <= 1.000001 && v.y + v.height <= 1.000001, "Invalid blur region")).max(12),
   words: z.array(z.object({
-    text: z.string().trim().min(1).max(80).refine(v => !/[\u0000-\u001f\u007f]/.test(v), "Caption contains control characters"),
+    text: z.string().trim().min(1).max(500).refine(v => !/[\u0000-\u001f\u007f]/.test(v), "Caption contains control characters"),
     start: seconds, end: seconds,
   }).strict().refine(v => v.end > v.start, "Word end must follow start")).max(3000),
   format: z.enum(["vertical", "horizontal"]),
@@ -222,10 +224,15 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
         const h = Math.max(2, Math.min(info.height - y, Math.floor(b.height * info.height / 2) * 2));
         return `crop=${w}:${h}:${x}:${y}`;
       };
-      const zoom = (scale = 1) => `scale=${Math.round(1080 * scale / 2) * 2}:${Math.round(960 * scale / 2) * 2},pad=max(iw\\,1080):max(ih\\,960):(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=1080:960,setsar=1`;
+      const zoom = (scale = 1, pan = { x: 0, y: 0 }) => {
+        const w = Math.round(1080 * scale / 2) * 2, h = Math.round(960 * scale / 2) * 2;
+        const padW = Math.max(w, 1080) + Math.ceil(Math.abs(pan.x) * 1080) * 2;
+        const padH = Math.max(h, 960) + Math.ceil(Math.abs(pan.y) * 960) * 2;
+        return `scale=${w}:${h},pad=${padW}:${padH}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=1080:960:${Math.round((padW - 1080) / 2 - pan.x * 1080)}:${Math.round((padH - 960) / 2 - pan.y * 960)},setsar=1`;
+      };
       filters.push("[joined]split[screenSource][speakerSource]",
-        `[screenSource]${crop(e.split.screen)},scale=1080:960:force_original_aspect_ratio=decrease,pad=1080:960:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,${zoom(e.split.screenScale)}[top]`,
-        `[speakerSource]${crop(e.split.speaker)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,${zoom(e.split.speakerScale)}[bottom]`,
+        `[screenSource]${crop(e.split.screen)},scale=1080:960:force_original_aspect_ratio=decrease,pad=1080:960:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,${zoom(e.split.screenScale, e.split.screenPan)}[top]`,
+        `[speakerSource]${crop(e.split.speaker)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,${zoom(e.split.speakerScale, e.split.speakerPan)}[bottom]`,
         "[top][bottom]vstack=inputs=2[framed]");
     } else if (e.framing === "blur-fill") {
       filters.push("[joined]split[front][back]",

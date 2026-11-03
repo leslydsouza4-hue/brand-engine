@@ -119,6 +119,7 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
     },
   });
   await copyFile(path.resolve(artifactDir, "src/lib/shaun-video-asr-worker.mjs"), path.resolve(distDir, "shaun-video-asr-worker.mjs"));
+  await copyFile(path.resolve(artifactDir, "src/lib/shaun-caption-alignment.mjs"), path.resolve(distDir, "shaun-caption-alignment.mjs"));
 }
 
 buildAll().catch((err) => {

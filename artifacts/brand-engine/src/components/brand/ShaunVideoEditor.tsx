@@ -3,7 +3,7 @@ import { ScanSearch, Eye, UploadCloud, Link2, Loader2, Play, Pause, Scissors, Sq
 import { LivePreview } from "./LivePreview";
 import { useSessionState } from "./sessions/useSessionState";
 import {
-  fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
+  downloadJobAsset, fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
   type Capabilities, type OutputResult, type TranscriptResult, type VideoMeta,
 } from "./shaunVideo/api";
 import {
@@ -34,6 +34,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [busy, setBusy] = useState<Busy | null>(null);
   const [errors, setErrors] = useState<Partial<Record<BusyKind | "video" | "playback", string>>>({});
   const [importUrl, setImportUrl] = useState("");
+  const [importRefresh, setImportRefresh] = useState(false);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [preview, setPreview] = useState<{ videoId: string; url: string } | null>(null);
@@ -80,8 +81,12 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
         } catch (err) {
           if (isAbort(err) || ac.signal.aborted || currentVideoRef.current !== videoId) return;
           if (err instanceof ShaunVideoError && err.status === 429 && attempt < 8) {
-            await new Promise(res => setTimeout(res, 2500));
-            if (ac.signal.aborted) return;
+            const ok = await new Promise<boolean>(res => {
+              if (ac.signal.aborted) return res(false);
+              const t = setTimeout(() => res(true), 2500);
+              ac.signal.addEventListener("abort", () => { clearTimeout(t); res(false); }, { once: true });
+            });
+            if (!ok || ac.signal.aborted) return;
             continue;
           }
           setLayout({ videoId, status: "error", note: (err as Error).message || "Could not locate the speaker and screen panels." });
@@ -101,6 +106,8 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [selectedBlur, setSelectedBlur] = useState<number | null>(null);
   const [markIn, setMarkIn] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [download, setDownload] = useState<{ status: "idle" | "downloading" | "error"; error?: string }>({ status: "idle" });
+  const loadedForRef = useRef<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -178,10 +185,10 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     if (!DESCRIPT_RE.test(url)) { setError("import", "Paste a public https://share.descript.com/view/... link."); return; }
     if (!confirmReplace()) return;
     const meta = await run("import", "Importing from Descript", async (signal, progress) => {
-      const { jobId } = await startImport(url);
+      const { jobId } = await startImport(url, importRefresh);
       return pollJob<VideoMeta>(jobId, (p, _s, phase) => progress(p, phase), signal);
     });
-    if (meta) { adoptVideo(meta, "descript"); setImportUrl(""); }
+    if (meta) { adoptVideo(meta, "descript"); setImportUrl(""); setImportRefresh(false); }
   };
 
   const captionUnits: TimedText[] = transcript?.timing === "segment" ? transcript.segments : edits?.words ?? [];
@@ -198,7 +205,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
       return pollJob<TranscriptResult>(jobId, (p, _s, phase) => progress(p, phase), signal);
     });
     if (!result) return;
-    setTranscript({ timing: result.timing, text: result.text, segments: result.segments ?? [], model: result.model, timestampMethod: result.timestampMethod, language: result.language, omittedUncertainWords: result.omittedUncertainWords ?? 0 });
+    setTranscript({ timing: result.timing, text: result.text, segments: result.segments ?? [], model: result.model, timestampMethod: result.timestampMethod, language: result.language, omittedUncertainWords: result.omittedUncertainWords ?? 0, groupedUncertainWords: result.groupedUncertainWords ?? 0 });
     setEdits(e => e && { ...e, words: result.timing === "word" ? result.words : [] });
   };
 
@@ -216,6 +223,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
       const r = await pollJob<OutputResult>(jobId, (p, _s, phase) => progress(p, phase), signal);
       return { jobId, ...r };
     });
+    setDownload({ status: "idle" });
     if (result) setRender({ jobId: result.jobId, assetUrl: result.assetUrl, key, format: edits.format, renderedAt: new Date().toISOString() });
   };
 
@@ -231,12 +239,28 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     if (dataUrl) onUseFrame(dataUrl);
   };
 
-  const seek = (t: number) => { const v = videoRef.current; if (v) v.currentTime = t; setTime(t); };
+  const seek = (t: number) => { const v = videoRef.current; if (v && Math.abs(v.currentTime - t) > 0.001) v.currentTime = t; setTime(t); };
   const togglePlay = () => {
     const v = videoRef.current;
     if (!v || !edits) return;
-    if (v.paused) { if (v.currentTime >= edits.trimEnd - 0.05 || v.currentTime < edits.trimStart) v.currentTime = edits.trimStart; void v.play(); }
-    else v.pause();
+    if (!v.paused) { v.pause(); return; }
+    // Only rewind when the playhead is outside the kept range; otherwise resume exactly where it is.
+    if (v.currentTime >= edits.trimEnd - 0.05 || v.currentTime < edits.trimStart) v.currentTime = edits.trimStart;
+    const p = v.play();
+    if (p) p.catch(err => {
+      if ((err as Error)?.name === "AbortError") return;
+      setError("playback", "Playback was blocked by the browser. Press play again.");
+    });
+  };
+  const handleDownload = async () => {
+    if (!render || !source || download.status === "downloading") return;
+    setDownload({ status: "downloading" });
+    try {
+      await downloadJobAsset(render.jobId, `${source.name.replace(/\.[^.]+$/, "")}-${render.format}.mp4`);
+      setDownload({ status: "idle" });
+    } catch (err) {
+      setDownload({ status: "error", error: (err as Error).message || "Download failed. Try again." });
+    }
   };
   const patch = (p: Partial<VideoEdits>) => setEdits(e => e && { ...e, ...p });
 
@@ -313,6 +337,11 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                 {busyFor("import") ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : "Import"}
               </button>
             </div>
+            <label className="flex items-center gap-[6px] mt-[6px] text-[11px] text-[#94A3B8] cursor-pointer select-none">
+              <input type="checkbox" data-testid="checkbox-import-refresh" checked={importRefresh} disabled={!!busy} onChange={e => setImportRefresh(e.target.checked)} className="accent-[#00B2A9] w-[12px] h-[12px]" />
+              Fetch latest from Descript
+            </label>
+            <div className="text-[10px] text-[#475569] mt-[3px] leading-[1.45]">Recent imports are reused for speed. Fetch latest after editing in Descript.</div>
             <div className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">Imports the MP4 from a public Descript share. If the share has no downloadable MP4, export it from Descript and upload the file above.</div>
             {busyFor("import") && busy && <><ProgressBar value={busy.progress} label={busy.phase || busy.label} />{cancelBtn}</>}
             {errors.import && <ErrorNote message={errors.import} />}
@@ -371,13 +400,13 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               {transcript?.timing === "segment" && (
                 <div className="flex gap-[6px] p-[8px] mb-[8px] rounded-[10px] bg-[rgba(251,191,36,0.06)] border border-[rgba(251,191,36,0.18)] text-[10px] text-[#FCD34D] leading-[1.45]">
                   <AlertTriangle className="w-[12px] h-[12px] shrink-0 mt-[1px]" />
-                  The transcription provider returned phrase timing only. Captions show whole phrases with no per-word highlight.
+                  Captions will show as whole phrases. Give them a quick read before rendering.
                 </div>
               )}
               {transcript?.timing === "word" && (
                 <div className="p-[8px] mb-[8px] rounded-[10px] bg-[rgba(0,178,169,0.05)] border border-[rgba(0,178,169,0.14)] text-[10px] text-[#94A3B8] leading-[1.45]">
-                  Machine transcription ({transcript.model ?? "local Whisper"}, {transcript.language ?? "en"}). Word times are aligned by {transcript.timestampMethod === "whisper-cross-attention-dtw" ? "Whisper cross-attention" : (transcript.timestampMethod ?? "the model")}, not checked by a person. Review the words and timing before rendering.
-                  {!!transcript.omittedUncertainWords && <span className="block mt-[4px] text-[#FCD34D]">{transcript.omittedUncertainWords} word{transcript.omittedUncertainWords === 1 ? " was" : "s were"} left out because the timing was unreliable. Add them by hand if needed.</span>}
+                  {transcript.groupedUncertainWords ? "Some words are grouped together for timing. Review captions before exporting." : "Captions are automatic. Give them a quick read before rendering."}
+                  {!!transcript.omittedUncertainWords && <span className="block mt-[4px] text-[#FCD34D]">Some words were missed in this older transcript. Transcribe again to recover them.</span>}
                 </div>
               )}
               {!transcript && caps?.transcriptionNote && !busyFor("transcribe") && <div className="text-[10px] text-[#475569] mb-[6px] leading-[1.45]">{caps.transcriptionNote}</div>}
@@ -447,7 +476,11 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                 <div className={`mt-[8px] p-[10px] rounded-[12px] border ${renderStale ? "border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.04)]" : "border-[rgba(0,178,169,0.2)] bg-[rgba(0,178,169,0.05)]"}`}>
                   <div className="text-[11px] font-semibold text-[#E2E8F0]">{render.format === "vertical" ? "Vertical" : "Horizontal"} MP4 ready</div>
                   <div className="text-[10px] text-[#64748B] mb-[8px]">{renderStale ? "Edits changed since this render. Render again to include them." : `Rendered ${new Date(render.renderedAt).toLocaleString()}`}</div>
-                  <a href={render.assetUrl} download={`${source.name.replace(/\.[^.]+$/, "")}-${render.format}.mp4`} className={`${ghostBtn} no-underline`}><Download className="w-[11px] h-[11px]" />Download MP4</a>
+                  <button type="button" data-testid="button-download" disabled={download.status === "downloading"} onClick={() => void handleDownload()} className={ghostBtn}>
+                    {download.status === "downloading" ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
+                    {download.status === "downloading" ? "Downloading..." : "Download MP4"}
+                  </button>
+                  {download.status === "error" && <ErrorNote message={download.error ?? "Download failed."} onRetry={() => void handleDownload()} />}
                 </div>
               )}
               <button type="button" disabled={!!busy} onClick={() => void handleFrame()} className={`${ghostBtn} w-full mt-[10px]`}>
@@ -478,10 +511,14 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                 layoutStatus={layoutHere?.status === "error" ? "Panels not found. Retry detection or set bounds manually in the Format panel." : "Locating speaker and screen panels. Export unlocks once they are set."}
                 onTime={setTime} onPlaying={setPlaying}
                 onError={msg => setError("playback", msg ?? undefined)}
+                onSplitChange={setSplit}
                 onLoaded={info => {
                   if (!source.duration || !source.width) setSource(s => s && { ...s, duration: s.duration || round3(info.duration), width: s.width || info.width, height: s.height || info.height });
                   if (!edits.trimEnd && info.duration) patch({ trimEnd: round3(info.duration) });
+                  // Initial positioning once per preview source; reloads/retries must not move the playhead.
                   const v = videoRef.current;
+                  if (loadedForRef.current === preview.url) return;
+                  loadedForRef.current = preview.url;
                   if (v && edits.trimStart && v.currentTime < edits.trimStart) v.currentTime = edits.trimStart;
                 }}
                 onDrawBox={box => {

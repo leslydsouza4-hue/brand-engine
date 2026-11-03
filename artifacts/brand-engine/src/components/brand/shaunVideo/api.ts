@@ -1,5 +1,5 @@
 // Client for /api/shaun-video (see ../shaun-video-api-contract.md). Base-path aware.
-import type { TimedText, VideoEdits, CaptionTiming } from "./edits";
+import type { TimedText, VideoEdits, CaptionTiming, SplitLayout } from "./edits";
 
 export const SHAUN_VIDEO_API = `${import.meta.env.BASE_URL}api/shaun-video`;
 export const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime"];
@@ -54,6 +54,14 @@ export const startImport = (url: string) => request<{ jobId: string }>("/imports
 export const startTranscribe = (id: string) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/transcribe`, "POST", {});
 export const startRender = (id: string, edits: VideoEdits) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/render`, "POST", edits);
 export const startFrame = (id: string, time: number) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/frames`, "POST", { time });
+export interface LayoutResult { split: SplitLayout; note?: string }
+/** Locate speaker + screen panels. Server caches per source; may answer 200 directly or 202 with a job. */
+export async function requestLayout(id: string, signal: AbortSignal, onProgress?: (p: number, phase?: string) => void): Promise<LayoutResult> {
+  const r = await request<{ jobId?: string; split?: SplitLayout; note?: string }>(`/videos/${encodeURIComponent(id)}/layout`, "POST", {}, signal);
+  if (r.split) return { split: r.split, note: r.note };
+  if (!r.jobId) throw new ShaunVideoError("Layout detection returned no result.");
+  return pollJob<LayoutResult>(r.jobId, (p, _s, phase) => onProgress?.(p, phase), signal);
+}
 export const getJob = <R,>(jobId: string, signal?: AbortSignal) => request<Job<R>>(`/jobs/${encodeURIComponent(jobId)}`, "GET", undefined, signal);
 export const jobAssetUrl = (jobId: string) => `${SHAUN_VIDEO_API}/jobs/${encodeURIComponent(jobId)}/asset`;
 export const videoAssetUrl = (videoId: string) => `${SHAUN_VIDEO_API}/videos/${encodeURIComponent(videoId)}/asset`;

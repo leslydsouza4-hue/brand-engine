@@ -34,6 +34,29 @@ test("browser proxy preserves duration and audio without changing the original",
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
+test("vertical split renders screen above speaker without changing horizontal", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "shaun-split-test-"));
+  try {
+    const source = join(dir, "source.mp4"), output = join(dir, "split.mp4"), frame = join(dir, "frame.png");
+    await promisify(execFile)("ffmpeg", ["-v", "error", "-f", "lavfi", "-i",
+      "color=c=red:s=640x360:r=24,drawbox=x=320:y=0:w=320:h=360:color=blue:t=fill",
+      "-t", "1", "-c:v", "libx264", "-threads", "2", source]);
+    const split = { screen: { x: 0, y: 0, width: 0.5, height: 1 }, speaker: { x: 0.5, y: 0, width: 0.5, height: 1 } };
+    const config: VideoEdits = { trimStart: 0, trimEnd: 1, cuts: [], blurs: [], words: [], format: "vertical", framing: "fit", split };
+    await renderVideo(source, output, config);
+    await promisify(execFile)("ffmpeg", ["-v", "error", "-i", output, "-frames:v", "1", frame]);
+    const pixel = async (x: number, y: number) => [...await sharp(frame).extract({ left: x, top: y, width: 1, height: 1 }).removeAlpha().raw().toBuffer()];
+    const top = await pixel(540, 480), bottom = await pixel(540, 1440);
+    assert.ok(top[0] > 200 && top[2] < 30, "screen is in top half");
+    assert.ok(bottom[2] > 200 && bottom[0] < 30, "speaker is in bottom half");
+    await renderVideo(source, join(dir, "horizontal.mp4"), { ...config, format: "horizontal" });
+    const horizontal = await probeVideo(join(dir, "horizontal.mp4"));
+    assert.equal(horizontal.width, 1920);
+    assert.equal(horizontal.height, 1080);
+    assert.equal(videoEditsSchema.safeParse({ ...config, split: { ...split, speaker: { x: 0.9, y: 0, width: 0.5, height: 1 } } }).success, false);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
 test("source-time cuts merge, clip and remap caption timing exactly", () => {
   const segments = retainedSegments(edits, 2);
   assert.equal(segments.length, 2);

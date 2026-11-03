@@ -38,3 +38,9 @@ Prioritize fast editing previews over preview resolution; retain full-quality or
 **Why:** The user explicitly said processing must be faster than doing the work in an editor. A high-resolution editing proxy adds delay without improving final output.
 
 **How to apply:** Benchmark changes on the same input, distinguish conversion from total import time, and reuse existing cached previews rather than regenerating them for quality-setting changes.
+
+Vertical output must be screen recording in the top half and Shaun cropped into the bottom half, with captions over his section. Leave horizontal framing alone.
+
+**Why:** The user explicitly rejected fitting the whole horizontal recording into a vertical frame and requested the split-screen arrangement.
+
+**How to apply:** Keep preview and export crops identical; detect presenter panels, not identity. Circular webcam overlays can overlap the screen crop. Do not claim continuous tracking from sparse frame checks or recoverable detail from small embedded camera footage.

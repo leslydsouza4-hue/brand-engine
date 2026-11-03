@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
-import { boxFromDrag, captionAt, nextPlayableTime, normalizedPoint, type BlurBox, type Point, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { boxFromDrag, captionAt, fitCrop, nextPlayableTime, normalizedPoint, type BlurBox, type Point, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
 
 interface Props {
   src: string;
@@ -17,6 +17,10 @@ interface Props {
   onError: (msg: string | null) => void;
   onDrawBox: (box: Pick<BlurBox, "x" | "y" | "width" | "height">) => void;
   onSelectBlur: (i: number) => void;
+  /** Vertical only: show the full original frame (for blur drawing / bounds checking) instead of the split. */
+  sourceView?: boolean;
+  /** Vertical without split: status shown instead of a squeezed full frame. */
+  layoutStatus?: ReactNode;
 }
 
 /** Output-frame preview. Captions mirror the render style; blur regions are outlined, not faked. */
@@ -37,10 +41,44 @@ export function VideoStage(p: Props) {
   const retriedRef = useRef(false);
   useEffect(() => { retriedRef.current = false; }, [p.src]);
 
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const vertical = edits.format === "vertical";
+  const sourceMode = vertical && (!!p.sourceView || p.drawing);
+  const splitMode = vertical && !sourceMode && !!edits.split;
+  const locating = vertical && !sourceMode && !edits.split;
+  const splitModeRef = useRef(splitMode);
+  splitModeRef.current = splitMode;
+
+  // One decoder: the hidden <video> is painted into two canvas halves.
+  const draw = useCallback(() => {
+    const v = videoRef.current, c = canvasRef.current, split = editsRef.current.split;
+    if (!splitModeRef.current || !v || !c || !split || !v.videoWidth || v.readyState < 2) return;
+    const rect = c.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const W = Math.max(2, Math.round(rect.width * dpr)), H = Math.max(2, Math.round(rect.height * dpr));
+    if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#030B17";
+    ctx.fillRect(0, 0, W, H);
+    const half = Math.round(H / 2);
+    const paint = (r: { x: number; y: number; width: number; height: number }, top: number, h: number, mode: "contain" | "cover") => {
+      const sx = r.x * v.videoWidth, sy = r.y * v.videoHeight, sw = r.width * v.videoWidth, sh = r.height * v.videoHeight;
+      if (sw < 1 || sh < 1) return;
+      const f = fitCrop(sw, sh, W, h, mode);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, top, W, h); ctx.clip();
+      try { ctx.drawImage(v, sx + f.sx, sy + f.sy, f.sw, f.sh, f.dx, top + f.dy, f.dw, f.dh); } catch { /* frame not ready */ }
+      ctx.restore();
+    };
+    paint(split.screen, 0, half, "contain");
+    paint(split.speaker, half, H - half, "cover");
+  }, [videoRef]);
+
+  // Timer, not rAF: rAF is throttled inside the workspace iframe.
   useEffect(() => {
     if (!playing) return;
-    let raf = 0;
-    const tick = () => {
+    const id = window.setInterval(() => {
       const v = videoRef.current;
       if (v) {
         const next = nextPlayableTime(editsRef.current, v.currentTime);
@@ -48,14 +86,25 @@ export function VideoStage(p: Props) {
         else if (Math.abs(next - v.currentTime) > 0.03) v.currentTime = next;
         onTimeRef.current(v.currentTime);
       }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [playing, videoRef]);
+      draw();
+    }, 33);
+    return () => window.clearInterval(id);
+  }, [playing, videoRef, draw]);
 
-  const frameAspect = edits.format === "vertical" ? 9 / 16 : 16 / 9;
+  // Repaint when paused and the layout, bounds or stage size change.
+  const splitKey = JSON.stringify(edits.split ?? null);
+  useEffect(() => { draw(); }, [splitMode, splitKey, draw]);
+  useEffect(() => {
+    const c = canvasRef.current;
+    if (!c || !splitMode) return;
+    const ro = new ResizeObserver(() => draw());
+    ro.observe(c);
+    return () => ro.disconnect();
+  }, [splitMode, draw]);
+
   const srcAspect = p.sourceSize ? p.sourceSize.width / p.sourceSize.height : 16 / 9;
+  const frameAspect = sourceMode ? srcAspect : vertical ? 9 / 16 : 16 / 9;
+  const tall = frameAspect < 1;
   const widthBound = srcAspect >= frameAspect;
   const caption = captionAt(p.captions, p.time, p.timing, edits);
   const activeBlurs = edits.blurs.map((b, i) => ({ b, i })).filter(({ b, i }) => (p.time >= b.start && p.time < b.end) || i === p.selectedBlur);
@@ -88,16 +137,17 @@ export function VideoStage(p: Props) {
       <div
         data-session-preview
         className="relative overflow-hidden bg-[#030B17] shadow-[0_16px_60px_rgba(0,0,0,0.4)] rounded-[6px] max-h-full max-w-full"
-        style={{ aspectRatio: `${edits.format === "vertical" ? "9 / 16" : "16 / 9"}`, height: edits.format === "vertical" ? "100%" : undefined, width: edits.format === "vertical" ? undefined : "100%", containerType: "inline-size" }}
+        style={{ aspectRatio: `${frameAspect}`, height: tall ? "100%" : undefined, width: tall ? undefined : "100%", containerType: "inline-size" }}
       >
-        {edits.framing === "blur-fill" && (
+        {!vertical && edits.framing === "blur-fill" && (
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(40,150,251,0.18),rgba(3,11,23,0.95)_70%)]">
             <span className="absolute top-[8px] left-[8px] text-[9px] font-semibold uppercase tracking-[1px] text-[rgba(255,255,255,0.45)] bg-[rgba(0,0,0,0.35)] rounded-[4px] px-[6px] py-[2px]">Blurred fill added in render</span>
           </div>
         )}
         <div
           ref={mediaRef}
-          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${p.drawing ? "cursor-crosshair" : ""}`}
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${p.drawing ? "cursor-crosshair" : ""} ${splitMode || locating ? "opacity-0 pointer-events-none" : ""}`}
+          aria-hidden={splitMode || locating ? true : undefined}
           style={{ aspectRatio: `${srcAspect}`, width: widthBound ? "100%" : undefined, height: widthBound ? undefined : "100%", touchAction: p.drawing ? "none" : undefined }}
           onPointerDown={e => {
             if (!p.drawing || e.button > 0) return;
@@ -126,8 +176,8 @@ export function VideoStage(p: Props) {
             poster={poster}
             onPlay={() => { setPlaying(true); p.onPlaying(true); }}
             onPause={() => { setPlaying(false); p.onPlaying(false); }}
-            onSeeked={e => { p.onTime(e.currentTarget.currentTime); snapshot(); }}
-            onLoadedData={() => { p.onError(null); snapshot(); }}
+            onSeeked={e => { p.onTime(e.currentTarget.currentTime); snapshot(); draw(); }}
+            onLoadedData={() => { p.onError(null); snapshot(); draw(); }}
             onCanPlay={() => p.onError(null)}
             onTimeUpdate={e => {
               const v = e.currentTarget;
@@ -137,6 +187,7 @@ export function VideoStage(p: Props) {
                 else if (Math.abs(next - v.currentTime) > 0.03) v.currentTime = next;
               }
               p.onTime(v.currentTime);
+              draw();
             }}
             onLoadedMetadata={e => { p.onError(null); p.onLoaded({ duration: e.currentTarget.duration, width: e.currentTarget.videoWidth, height: e.currentTarget.videoHeight }); }}
             onError={e => {
@@ -159,12 +210,31 @@ export function VideoStage(p: Props) {
               <span className="absolute -top-[18px] left-0 text-[9px] font-semibold text-white bg-[rgba(3,11,23,0.8)] rounded-[3px] px-[4px] whitespace-nowrap">Blur {i + 1}</span>
             </button>
           ))}
+          {sourceMode && edits.split && ([["screen", edits.split.screen, "#2896FB"], ["speaker", edits.split.speaker, "#00B2A9"]] as const).map(([k, r, c]) => (
+            <div key={k} className="absolute pointer-events-none border-[1.5px] rounded-[2px]" style={{ borderColor: c, left: `${r.x * 100}%`, top: `${r.y * 100}%`, width: `${r.width * 100}%`, height: `${r.height * 100}%` }}>
+              <span className="absolute bottom-[3px] right-[3px] text-[9px] font-semibold uppercase tracking-[0.8px] text-white rounded-[3px] px-[4px]" style={{ background: c }}>{k}</span>
+            </div>
+          ))}
           {draft && (
             <div className="absolute pointer-events-none border-[2px] border-[#00B2A9] bg-[rgba(0,178,169,0.15)]" style={{ left: `${Math.min(draft.a.x, draft.b.x) * 100}%`, top: `${Math.min(draft.a.y, draft.b.y) * 100}%`, width: `${Math.abs(draft.b.x - draft.a.x) * 100}%`, height: `${Math.abs(draft.b.y - draft.a.y) * 100}%` }} />
           )}
         </div>
-        {caption && (
-          <div className="absolute left-[6%] right-[6%] text-center pointer-events-none font-['Poppins'] font-bold text-white leading-[1.25]" style={{ bottom: edits.format === "vertical" ? "16%" : "9%", fontSize: edits.format === "vertical" ? "6.2cqw" : "3.6cqw", textShadow: "0 2px 6px rgba(0,0,0,0.85)" }}>
+        {splitMode && (
+          <>
+            <canvas ref={canvasRef} data-testid="canvas-split-preview" className="absolute inset-0 w-full h-full pointer-events-none" />
+            <div className="absolute left-0 right-0 top-1/2 h-px bg-[rgba(255,255,255,0.08)] pointer-events-none" />
+          </>
+        )}
+        {locating && (
+          <div data-testid="status-locating-panels" className="absolute inset-0 flex flex-col items-center justify-center gap-[10px] p-[18px] text-center bg-[#030B17]">
+            <div className="w-full flex-1 rounded-[4px] border border-dashed border-[rgba(40,150,251,0.25)] flex items-end justify-start p-[6px]"><span className="text-[9px] uppercase tracking-[1px] text-[rgba(40,150,251,0.6)] font-semibold">Screen</span></div>
+            <div className="text-[11px] text-[#94A3B8] leading-[1.45] max-w-[90%]">{p.layoutStatus}</div>
+            <div className="w-full flex-1 rounded-[4px] border border-dashed border-[rgba(0,178,169,0.25)] flex items-end justify-start p-[6px]"><span className="text-[9px] uppercase tracking-[1px] text-[rgba(0,178,169,0.6)] font-semibold">Speaker</span></div>
+          </div>
+        )}
+        {sourceMode && <span className="absolute top-[8px] left-[8px] text-[9px] font-semibold uppercase tracking-[1px] text-[rgba(255,255,255,0.7)] bg-[rgba(3,11,23,0.7)] rounded-[4px] px-[6px] py-[2px] pointer-events-none">Original source view</span>}
+        {caption && !locating && !sourceMode && (
+          <div className="absolute left-[6%] right-[6%] text-center pointer-events-none font-['Poppins'] font-bold text-white leading-[1.25]" style={{ bottom: edits.format === "vertical" ? `${(edits.captionBottom ?? 0.04) * 100}%` : "9%", fontSize: edits.format === "vertical" ? "6.2cqw" : "3.6cqw", textShadow: "0 2px 6px rgba(0,0,0,0.85)" }}>
             {caption.words.map((w, i) => (
               <span key={`${w.start}-${i}`} className="inline-block mx-[0.12em] px-[0.14em] rounded-[0.18em]" style={i === caption.activeIndex ? { background: "#1AA3F0", textShadow: "none" } : undefined}>{w.text}</span>
             ))}

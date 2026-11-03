@@ -5,6 +5,11 @@ import { resolve, join } from "node:path";
 import { z } from "zod";
 
 const seconds = z.number().finite().min(0).max(600);
+export const cropBoxSchema = z.object({
+  x: z.number().finite().min(0).max(0.99), y: z.number().finite().min(0).max(0.99),
+  width: z.number().finite().min(0.02).max(1), height: z.number().finite().min(0.02).max(1),
+}).strict().refine(b => b.x + b.width <= 1.000001 && b.y + b.height <= 1.000001, "Crop extends beyond source");
+export const splitSchema = z.object({ speaker: cropBoxSchema, screen: cropBoxSchema }).strict();
 const range = z.object({ start: seconds, end: seconds }).strict().refine(v => v.end > v.start, "End must follow start");
 export const videoEditsSchema = z.object({
   trimStart: seconds,
@@ -22,6 +27,8 @@ export const videoEditsSchema = z.object({
   format: z.enum(["vertical", "horizontal"]),
   framing: z.enum(["fit", "blur-fill"]),
   captionTiming: z.enum(["word", "segment"]).optional(),
+  captionBottom: z.number().finite().min(0.02).max(0.22).optional(),
+  split: splitSchema.optional(),
 }).strict().refine(v => v.trimEnd > v.trimStart, "Trim end must follow start");
 export type VideoEdits = z.infer<typeof videoEditsSchema>;
 export type VideoProbe = { duration: number; width: number; height: number; hasAudio: boolean };
@@ -123,7 +130,7 @@ export function escapeAss(text: string) { return text.replace(/\\/g, "＼").repl
 
 export function makeCaptions(edits: VideoEdits, segments: Segment[], width: number, height: number) {
   const fontSize = edits.format === "vertical" ? 66.96 : 69.12;
-  const margin = Math.round(height * (edits.format === "vertical" ? 0.16 : 0.09));
+  const margin = Math.round(height * (edits.format === "vertical" && edits.split ? edits.captionBottom ?? 0.04 : edits.format === "vertical" ? 0.16 : 0.09));
   const header = `[Script Info]
 ScriptType: v4.00+
 PlayResX: ${width}
@@ -205,7 +212,18 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
       if (info.hasAudio) filters.push(`[a${i}]atrim=start=${segment.start}:end=${segment.end},asetpts=PTS-STARTPTS[u${i}]`);
     }
     filters.push(`${segments.map((_, i) => `[t${i}]${info.hasAudio ? `[u${i}]` : ""}`).join("")}concat=n=${segments.length}:v=1:a=${info.hasAudio ? 1 : 0}[joined]${info.hasAudio ? "[audio]" : ""}`);
-    if (e.framing === "blur-fill") {
+    if (e.format === "vertical" && e.split) {
+      const crop = (b: z.infer<typeof cropBoxSchema>) => {
+        const x = Math.floor(b.x * info.width / 2) * 2, y = Math.floor(b.y * info.height / 2) * 2;
+        const w = Math.max(2, Math.min(info.width - x, Math.floor(b.width * info.width / 2) * 2));
+        const h = Math.max(2, Math.min(info.height - y, Math.floor(b.height * info.height / 2) * 2));
+        return `crop=${w}:${h}:${x}:${y}`;
+      };
+      filters.push("[joined]split[screenSource][speakerSource]",
+        `[screenSource]${crop(e.split.screen)},scale=1080:960:force_original_aspect_ratio=decrease,pad=1080:960:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,setsar=1[top]`,
+        `[speakerSource]${crop(e.split.speaker)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]`,
+        "[top][bottom]vstack=inputs=2[framed]");
+    } else if (e.framing === "blur-fill") {
       filters.push("[joined]split[front][back]",
         `[back]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=30:2[background]`,
         `[front]scale=${width}:${height}:force_original_aspect_ratio=decrease[foreground]`,
@@ -273,6 +291,12 @@ export async function createPreview(input: string, output: string) {
     if (Math.abs(preview.duration - info.duration) > 0.2 || preview.hasAudio !== info.hasAudio)
       throw new Error("Preview timeline validation failed");
   } catch (error) { await rm(target, { force: true }); throw error; }
+}
+
+export async function layoutFrame(input: string, output: string, time: number) {
+  const source = await localInput(input);
+  await run("ffmpeg", [...baseArgs, "-ss", String(time), ...inputArgs(source), "-frames:v", "1",
+    "-vf", "scale=960:960:force_original_aspect_ratio=decrease", "-q:v", "4", output], 30_000);
 }
 
 export async function extractAudio(input: string, output: string) {

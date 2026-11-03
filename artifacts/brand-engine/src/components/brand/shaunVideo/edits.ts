@@ -16,6 +16,27 @@ export interface VideoEdits {
   framing: VideoFraming;
   /** Optional on the wire; renderEdits always sends it explicitly. */
   captionTiming?: CaptionTiming;
+  captionBottom?: number;
+  /** Vertical split layout: normalized ORIGINAL source bounds for each panel. */
+  split?: SplitLayout;
+}
+
+export interface Rect { x: number; y: number; width: number; height: number }
+export interface SplitLayout { speaker: Rect; screen: Rect }
+
+export function validRect(r: Rect | undefined): boolean {
+  return !!r && [r.x, r.y, r.width, r.height].every(Number.isFinite) && r.width >= 0.02 && r.height >= 0.02 && r.x >= 0 && r.y >= 0 && r.x <= 0.99 && r.y <= 0.99 && r.x + r.width <= 1.000001 && r.y + r.height <= 1.000001;
+}
+
+/** Destination rect for drawing a source crop (px) into a box, contain or cover. Returns src+dst. */
+export function fitCrop(sw: number, sh: number, dw: number, dh: number, mode: "contain" | "cover") {
+  const sa = sw / sh, da = dw / dh;
+  if (mode === "contain") {
+    const w = sa > da ? dw : dh * sa, h = sa > da ? dw / sa : dh;
+    return { sx: 0, sy: 0, sw, sh, dx: (dw - w) / 2, dy: (dh - h) / 2, dw: w, dh: h };
+  }
+  const cw = sa > da ? sh * da : sw, ch = sa > da ? sh : sw / da;
+  return { sx: (sw - cw) / 2, sy: (sh - ch) / 2, sw: cw, sh: ch, dx: 0, dy: 0, dw, dh };
 }
 
 export type CaptionTiming = "word" | "segment";
@@ -86,6 +107,13 @@ export function validateEdits(e: VideoEdits, duration: number): string[] {
     if (b.width <= 0 || b.height <= 0 || b.x < 0 || b.y < 0 || b.x + b.width > 1.0001 || b.y + b.height > 1.0001) errors.push(`Blur ${i + 1} is outside the frame.`);
   });
   e.words.forEach((w, i) => { if (!(w.end >= w.start)) errors.push(`Caption ${i + 1} ends before it starts.`); });
+  if (e.format === "vertical") {
+    if (!e.split) errors.push("Vertical export needs the speaker and screen panels located first.");
+    else {
+      if (!validRect(e.split.screen)) errors.push("Screen panel bounds are outside the source frame.");
+      if (!validRect(e.split.speaker)) errors.push("Speaker panel bounds are outside the source frame.");
+    }
+  }
   if (outputDuration(e) < 0.5) errors.push("Edited video must be at least half a second long.");
   return errors;
 }

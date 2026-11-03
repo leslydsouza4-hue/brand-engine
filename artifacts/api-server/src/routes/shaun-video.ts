@@ -10,6 +10,7 @@ import { assertSessionMutationOrigin, idSchema, SessionError } from "../lib/sess
 import { createPreview, extractAudio, extractFrame, probeVideo, renderVideo, videoEditsSchema, retainedSegments } from "../lib/shaun-video-render";
 import { transcribeLocalAudio, isTranscriptionBusy } from "../lib/shaun-video-transcribe";
 import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
+import { detectVideoLayout } from "../lib/shaun-video-layout";
 import { getVideo, MAX_DURATION, MAX_VIDEO_BYTES, privateFile, readRecord, saveRecord, videoResponse, videoStorage, type JobRecord, type VideoRecord } from "../lib/shaun-video-store";
 
 const router = Router();
@@ -239,9 +240,32 @@ router.get(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner)
   if (!(await file.exists())[0]) throw new SessionError(404, "Preview is not ready");
   await serve(req, res, file, "video/webm", "preview.webm");
 }));
+router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner) => {
+  const video = await getVideo(owner, id(req, "videoId"));
+  const key = `videos/${video.videoId}/layout-v1.json`;
+  if ((await privateFile(owner, key).exists())[0]) { res.json(await readRecord(owner, key)); return; }
+  const proxy = privateFile(owner, `videos/${video.videoId}/preview-v1.webm`);
+  if (!(await proxy.exists())[0]) throw new SessionError(429, "Waiting for the lightweight preview before locating panels.");
+  const lock = `layout/${video.videoId}`;
+  if (locked.has(lock)) throw new SessionError(429, "Locating this video's panels. Please wait.");
+  locked.add(lock);
+  try {
+    res.status(202).json(await job(owner, "layout", video.videoId, async (dir, record) => {
+      try {
+        record.phase = "Locating speaker and screen";
+        const input = join(dir, "preview.webm");
+        await proxy.download({ destination: input });
+        const result = await detectVideoLayout(input, dir, (video.probe as { duration: number }).duration);
+        await saveRecord(owner, key, result);
+        return result;
+      } finally { locked.delete(lock); }
+    }));
+  } catch (error) { locked.delete(lock); throw error; }
+}));
 router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
   const edits = videoEditsSchema.parse(req.body);
+  if (edits.format === "vertical" && !edits.split) throw new SessionError(400, "Locate the speaker and screen crops before exporting vertical video.");
   try { retainedSegments(edits, (video.probe as { duration: number }).duration); }
   catch (error) { throw new SessionError(400, (error as Error).message); }
   res.status(202).json(await job(owner, "render", video.videoId, async (dir, record, progress) => {

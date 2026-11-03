@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { UploadCloud, Link2, Loader2, Play, Pause, Scissors, Square, Trash2, Captions, Film, Download, ImagePlus, RotateCcw, X, AlertTriangle, Video } from "lucide-react";
+import { ScanSearch, Eye, UploadCloud, Link2, Loader2, Play, Pause, Scissors, Square, Trash2, Captions, Film, Download, ImagePlus, RotateCcw, X, AlertTriangle, Video } from "lucide-react";
 import { LivePreview } from "./LivePreview";
 import { useSessionState } from "./sessions/useSessionState";
 import {
-  fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, startFrame, startImport, startRender, startTranscribe, uploadVideo,
+  fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
   type Capabilities, type OutputResult, type TranscriptResult, type VideoMeta,
 } from "./shaunVideo/api";
 import {
   defaultEdits, editsKey, fmtTime, renderEdits, round3, validateEdits,
-  type TimedText, type TranscriptState, type VideoEdits,
+  type SplitLayout, type TimedText, type TranscriptState, type VideoEdits,
 } from "./shaunVideo/edits";
 import { VideoStage } from "./shaunVideo/VideoStage";
+import { SplitPanels } from "./shaunVideo/SplitPanels";
 import { Timeline } from "./shaunVideo/Timeline";
 import { CaptionEditor } from "./shaunVideo/CaptionEditor";
 import { Section, Segmented, TimeInput, ProgressBar, ErrorNote, ghostBtn, primaryBtn, inputCls } from "./shaunVideo/ui";
@@ -51,6 +52,52 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     return () => ac.abort();
   }, [source?.videoId, previewRetry]);
   const [drawing, setDrawing] = useState(false);
+  const [sourceView, setSourceView] = useState(false);
+  const [layout, setLayout] = useState<{ videoId: string; status: "analyzing" | "error" | "done"; note?: string; phase?: string } | null>(null);
+  const [layoutRetry, setLayoutRetry] = useState(0);
+  const layoutTriedRef = useRef<Set<string>>(new Set());
+  const currentVideoRef = useRef<string | undefined>(undefined);
+  currentVideoRef.current = source?.videoId;
+  const wantsLayout = !!source && edits?.format === "vertical" && !edits.split;
+  const previewReady = !!source && preview?.videoId === source.videoId;
+  // Auto-detect once per source when vertical is chosen without saved bounds. Retry button bumps layoutRetry.
+  useEffect(() => {
+    if (!source || !wantsLayout || !previewReady) return;
+    const videoId = source.videoId;
+    const tag = `${videoId}#${layoutRetry}`;
+    if (layoutTriedRef.current.has(tag)) return;
+    layoutTriedRef.current.add(tag);
+    const ac = new AbortController();
+    setLayout({ videoId, status: "analyzing" });
+    (async () => {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          const r = await requestLayout(videoId, ac.signal, (_p, phase) => { if (!ac.signal.aborted) setLayout(l => l && l.videoId === videoId ? { ...l, phase } : l); });
+          if (ac.signal.aborted || currentVideoRef.current !== videoId) return;
+          setEdits(e => e && !e.split ? { ...e, split: r.split } : e);
+          setLayout({ videoId, status: "done", note: r.note });
+          return;
+        } catch (err) {
+          if (isAbort(err) || ac.signal.aborted || currentVideoRef.current !== videoId) return;
+          if (err instanceof ShaunVideoError && err.status === 429 && attempt < 8) {
+            await new Promise(res => setTimeout(res, 2500));
+            if (ac.signal.aborted) return;
+            continue;
+          }
+          setLayout({ videoId, status: "error", note: (err as Error).message || "Could not locate the speaker and screen panels." });
+          return;
+        }
+      }
+    })();
+    return () => { ac.abort(); layoutTriedRef.current.delete(tag); };
+  }, [source?.videoId, wantsLayout, previewReady, layoutRetry]);
+  const layoutHere = layout && layout.videoId === source?.videoId ? layout : null;
+  const manualSplit = () => {
+    const full = { x: 0, y: 0, width: 1, height: 1 };
+    patch({ split: { screen: { ...full }, speaker: { ...full } } });
+    setSourceView(true);
+  };
+  const setSplit = (split: SplitLayout) => patch({ split });
   const [selectedBlur, setSelectedBlur] = useState<number | null>(null);
   const [markIn, setMarkIn] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -109,7 +156,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     setEdits(defaultEdits(duration));
     setTranscript(null);
     setRender(null);
-    setTime(0); setSelectedBlur(null); setMarkIn(null); setDrawing(false);
+    setTime(0); setSelectedBlur(null); setMarkIn(null); setDrawing(false); setSourceView(false); setLayout(null);
     setErrors({});
   };
 
@@ -277,8 +324,33 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
             <Section title="Format">
               <div className="flex flex-col gap-[6px]">
                 <Segmented value={edits.format} onChange={format => patch({ format })} options={[{ value: "vertical", label: "Vertical 9:16" }, { value: "horizontal", label: "Horizontal 16:9" }]} />
-                <Segmented value={edits.framing} onChange={framing => patch({ framing })} options={[{ value: "blur-fill", label: "Blur fill" }, { value: "fit", label: "Fit" }]} />
-                <div className="text-[10px] text-[#475569] leading-[1.45]">Full footage is always kept in frame. Blur fill backs it with a blurred copy in the render; Fit uses solid bars.</div>
+                {edits.format === "horizontal" ? <>
+                  <Segmented value={edits.framing} onChange={framing => patch({ framing })} options={[{ value: "blur-fill", label: "Blur fill" }, { value: "fit", label: "Fit" }]} />
+                  <div className="text-[10px] text-[#475569] leading-[1.45]">Full footage is always kept in frame. Blur fill backs it with a blurred copy in the render; Fit uses solid bars.</div>
+                </> : <>
+                  <div className="text-[10px] text-[#475569] leading-[1.45]">Split: screen recording fitted in the top half, speaker cropped to fill the bottom half, captions over the speaker.</div>
+                  {!edits.split && layoutHere?.status !== "error" && (
+                    <div data-testid="status-layout" className="flex items-center gap-[6px] p-[8px] rounded-[10px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.15)] text-[10px] text-[#94A3B8]">
+                      <Loader2 className="w-[11px] h-[11px] animate-spin text-[#2896FB] shrink-0" />{previewReady ? (layoutHere?.phase || "Locating speaker and screen panels") : "Waiting for the preview before locating panels"}
+                    </div>
+                  )}
+                  {!edits.split && layoutHere?.status === "error" && (
+                    <>
+                      <ErrorNote message={layoutHere.note || "Could not locate the panels."} onRetry={() => setLayoutRetry(n => n + 1)} />
+                      <button type="button" data-testid="button-manual-split" onClick={manualSplit} className={`${ghostBtn} w-full mt-[6px]`}>Set panel bounds manually</button>
+                    </>
+                  )}
+                  {edits.split && (
+                    <>
+                      <SplitPanels split={edits.split} onChange={setSplit} />
+                      {layoutHere?.status === "done" && layoutHere.note && <div className="text-[10px] text-[#64748B] leading-[1.45]">{layoutHere.note}</div>}
+                      <div className="flex gap-[6px]">
+                        <button type="button" data-testid="button-source-view" onClick={() => setSourceView(v => !v)} className={`${ghostBtn} flex-1 ${sourceView ? "!text-[#00B2A9] !border-[rgba(0,178,169,0.4)]" : ""}`}><Eye className="w-[11px] h-[11px]" />{sourceView ? "Show split preview" : "Check on original"}</button>
+                        <button type="button" data-testid="button-redetect" onClick={() => { if (window.confirm("Detect panels again? Your manual bounds will be replaced.")) { patch({ split: undefined }); setLayoutRetry(n => n + 1); } }} className={`${ghostBtn} flex-1`}><ScanSearch className="w-[11px] h-[11px]" />Detect again</button>
+                      </div>
+                    </>
+                  )}
+                </>}
               </div>
             </Section>
 
@@ -289,6 +361,13 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               </button>
               {busyFor("transcribe") && busy && <><ProgressBar value={busy.progress} label={busy.phase || busy.label} />{cancelBtn}</>}
               {errors.transcribe && <ErrorNote message={errors.transcribe} onRetry={() => void handleTranscribe()} />}
+              {edits.format === "vertical" && (
+                <label className="block text-[11px] text-[#94A3B8] mb-[10px]">
+                  Caption distance from bottom · {Math.round((edits.captionBottom ?? 0.04) * 100)}%
+                  <input aria-label="Caption distance from bottom" type="range" min="2" max="22" step="1" value={Math.round((edits.captionBottom ?? 0.04) * 100)} onChange={e => patch({ captionBottom: Number(e.target.value) / 100 })} className="block w-full mt-[6px] accent-[#00B2A9]" />
+                  <span className="block text-[10px] mt-[4px]">Move captions below Shaun’s face. Use an uncaptioned Descript source to avoid doubling existing text.</span>
+                </label>
+              )}
               {transcript?.timing === "segment" && (
                 <div className="flex gap-[6px] p-[8px] mb-[8px] rounded-[10px] bg-[rgba(251,191,36,0.06)] border border-[rgba(251,191,36,0.18)] text-[10px] text-[#FCD34D] leading-[1.45]">
                   <AlertTriangle className="w-[12px] h-[12px] shrink-0 mt-[1px]" />
@@ -332,6 +411,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               <button type="button" onClick={() => { setDrawing(d => !d); videoRef.current?.pause(); }} className={`${ghostBtn} w-full ${drawing ? "!text-[#00B2A9] !border-[rgba(0,178,169,0.4)] bg-[rgba(0,178,169,0.08)]" : ""}`}>
                 <Square className="w-[11px] h-[11px]" />{drawing ? "Drag a box on the preview (click to stop)" : "Draw blur box at playhead"}
               </button>
+              {edits.format === "vertical" && <div className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">Blur boxes are drawn on the original frame, so drawing switches the preview to source view.</div>}
               <div className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">Boxes are outlined in preview. The actual blur is applied in the FFmpeg render.</div>
               {edits.blurs.length > 0 && (
                 <div className="flex flex-wrap gap-[4px] mt-[8px]">
@@ -394,7 +474,8 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               ) : <VideoStage
                 src={preview.url} videoRef={videoRef} edits={edits} captions={captionUnits} timing={transcript?.timing ?? "word"}
                 time={time} sourceSize={source.width ? { width: source.width, height: source.height } : null}
-                drawing={drawing} selectedBlur={selectedBlur}
+                drawing={drawing} selectedBlur={selectedBlur} sourceView={sourceView || (edits.format === "vertical" && selectedBlur !== null && !edits.split)}
+                layoutStatus={layoutHere?.status === "error" ? "Panels not found. Retry detection or set bounds manually in the Format panel." : "Locating speaker and screen panels. Export unlocks once they are set."}
                 onTime={setTime} onPlaying={setPlaying}
                 onError={msg => setError("playback", msg ?? undefined)}
                 onLoaded={info => {

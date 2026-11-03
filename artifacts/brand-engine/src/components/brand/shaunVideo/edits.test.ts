@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { captionAt, defaultEdits, groupCaptionLines, keptRanges, nextPlayableTime, outputDuration, validateEdits } from "./edits";
+import { captionAt, defaultEdits, fitCrop, validRect, groupCaptionLines, keptRanges, nextPlayableTime, outputDuration, validateEdits } from "./edits";
 
 test("kept ranges remove trim and merged cuts", () => {
   const e = { ...defaultEdits(20), trimStart: 1, trimEnd: 18, cuts: [{ start: 5, end: 7 }, { start: 6, end: 8 }, { start: 17, end: 30 }] };
@@ -21,8 +21,23 @@ test("caption lines break on punctuation, gaps and length", () => {
 
 test("validation flags inverted ranges and out-of-frame blurs", () => {
   const e = { ...defaultEdits(10), blurs: [{ start: 2, end: 1, x: 0.8, y: 0, width: 0.4, height: 0.2 }] };
-  assert.equal(validateEdits(e, 10).length, 2);
-  assert.equal(validateEdits(defaultEdits(10), 10).length, 0);
+  assert.equal(validateEdits(e, 10).length, 3);
+  assert.equal(validateEdits(defaultEdits(10), 10).length, 1);
+  assert.equal(validateEdits({ ...defaultEdits(10), format: "horizontal" }, 10).length, 0);
+});
+
+test("split crops preserve screen and fill speaker with strict normalized bounds", () => {
+  assert.equal(validRect({ x: 0, y: 0, width: 1, height: 1 }), true);
+  assert.equal(validRect({ x: 0.9, y: 0, width: 0.2, height: 1 }), false);
+  assert.equal(validRect({ x: 0, y: 0, width: 0.015, height: 1 }), false);
+  const screen = fitCrop(1920, 1080, 1080, 960, "contain");
+  assert.equal(screen.sw, 1920);
+  assert.equal(screen.dw, 1080);
+  assert.ok(screen.dh < 960);
+  const speaker = fitCrop(500, 500, 1080, 960, "cover");
+  assert.equal(speaker.dw, 1080);
+  assert.equal(speaker.dh, 960);
+  assert.ok(speaker.sh < 500);
 });
 
 test("blur drag maps client pixels to normalized source rect in any direction", async () => {

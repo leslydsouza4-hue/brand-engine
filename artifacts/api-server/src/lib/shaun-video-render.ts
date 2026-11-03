@@ -9,7 +9,10 @@ export const cropBoxSchema = z.object({
   x: z.number().finite().min(0).max(0.99), y: z.number().finite().min(0).max(0.99),
   width: z.number().finite().min(0.02).max(1), height: z.number().finite().min(0.02).max(1),
 }).strict().refine(b => b.x + b.width <= 1.000001 && b.y + b.height <= 1.000001, "Crop extends beyond source");
-export const splitSchema = z.object({ speaker: cropBoxSchema, screen: cropBoxSchema }).strict();
+export const splitSchema = z.object({ speaker: cropBoxSchema, screen: cropBoxSchema,
+  screenScale: z.number().finite().min(0.5).max(2).optional(),
+  speakerScale: z.number().finite().min(0.5).max(2).optional(),
+}).strict();
 const range = z.object({ start: seconds, end: seconds }).strict().refine(v => v.end > v.start, "End must follow start");
 export const videoEditsSchema = z.object({
   trimStart: seconds,
@@ -219,9 +222,10 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
         const h = Math.max(2, Math.min(info.height - y, Math.floor(b.height * info.height / 2) * 2));
         return `crop=${w}:${h}:${x}:${y}`;
       };
+      const zoom = (scale = 1) => `scale=${Math.round(1080 * scale / 2) * 2}:${Math.round(960 * scale / 2) * 2},pad=max(iw\\,1080):max(ih\\,960):(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=1080:960,setsar=1`;
       filters.push("[joined]split[screenSource][speakerSource]",
-        `[screenSource]${crop(e.split.screen)},scale=1080:960:force_original_aspect_ratio=decrease,pad=1080:960:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,setsar=1[top]`,
-        `[speakerSource]${crop(e.split.speaker)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,setsar=1[bottom]`,
+        `[screenSource]${crop(e.split.screen)},scale=1080:960:force_original_aspect_ratio=decrease,pad=1080:960:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,${zoom(e.split.screenScale)}[top]`,
+        `[speakerSource]${crop(e.split.speaker)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,${zoom(e.split.speakerScale)}[bottom]`,
         "[top][bottom]vstack=inputs=2[framed]");
     } else if (e.framing === "blur-fill") {
       filters.push("[joined]split[front][back]",

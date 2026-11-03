@@ -39,10 +39,26 @@ function RectRow({ title, hint, color, rect, onChange, id }: { title: string; hi
 
 /** Compact numeric editor for split source bounds, as percentages of the original frame. */
 export function SplitPanels({ split, onChange }: { split: SplitLayout; onChange: (s: SplitLayout) => void }) {
+  const scaleControl = (panel: "screen" | "speaker") => {
+    const key = panel === "screen" ? "screenScale" : "speakerScale";
+    const value = Math.round((split[key] ?? 1) * 100);
+    const title = panel === "screen" ? "Screen" : "Speaker";
+    return <label className="block text-[11px] text-[#94A3B8]">
+      <span className="flex justify-between items-center">{title} scale · {value}%
+        <button type="button" className="text-[#00B2A9] text-[10px]" onClick={() => onChange({ ...split, [key]: 1 })}>Reset</button>
+      </span>
+      <input type="range" aria-label={`${title} scale`} min="50" max="200" step="1" value={value}
+        onChange={e => onChange({ ...split, [key]: Number(e.target.value) / 100 })}
+        className="w-full accent-[#00B2A9] mt-[5px]" />
+    </label>;
+  };
   return (
     <div className="flex flex-col gap-[10px] p-[10px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)]">
       <RectRow id="screen" title="Screen" hint="top half, fitted" color="#2896FB" rect={split.screen} onChange={screen => onChange({ ...split, screen })} />
+      {scaleControl("screen")}
       <RectRow id="speaker" title="Speaker" hint="bottom half, cropped" color="#00B2A9" rect={split.speaker} onChange={speaker => onChange({ ...split, speaker })} />
+      {scaleControl("speaker")}
+      <p className="text-[10px] text-[#64748B]">50–200%. Zoom is centered in each half. Larger scales crop the edges; smaller scales add space.</p>
     </div>
   );
 }

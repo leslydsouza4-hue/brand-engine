@@ -22,7 +22,7 @@ export interface VideoEdits {
 }
 
 export interface Rect { x: number; y: number; width: number; height: number }
-export interface SplitLayout { speaker: Rect; screen: Rect }
+export interface SplitLayout { speaker: Rect; screen: Rect; speakerScale?: number; screenScale?: number }
 
 export function validRect(r: Rect | undefined): boolean {
   return !!r && [r.x, r.y, r.width, r.height].every(Number.isFinite) && r.width >= 0.02 && r.height >= 0.02 && r.x >= 0 && r.y >= 0 && r.x <= 0.99 && r.y <= 0.99 && r.x + r.width <= 1.000001 && r.y + r.height <= 1.000001;

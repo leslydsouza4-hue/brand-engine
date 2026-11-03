@@ -62,17 +62,20 @@ export function VideoStage(p: Props) {
     ctx.fillStyle = "#030B17";
     ctx.fillRect(0, 0, W, H);
     const half = Math.round(H / 2);
-    const paint = (r: { x: number; y: number; width: number; height: number }, top: number, h: number, mode: "contain" | "cover") => {
+    const paint = (r: { x: number; y: number; width: number; height: number }, top: number, h: number, mode: "contain" | "cover", scale = 1) => {
       const sx = r.x * v.videoWidth, sy = r.y * v.videoHeight, sw = r.width * v.videoWidth, sh = r.height * v.videoHeight;
       if (sw < 1 || sh < 1) return;
       const f = fitCrop(sw, sh, W, h, mode);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, top, W, h); ctx.clip();
+      ctx.translate(W / 2, top + h / 2);
+      ctx.scale(scale, scale);
+      ctx.translate(-W / 2, -(top + h / 2));
       try { ctx.drawImage(v, sx + f.sx, sy + f.sy, f.sw, f.sh, f.dx, top + f.dy, f.dw, f.dh); } catch { /* frame not ready */ }
       ctx.restore();
     };
-    paint(split.screen, 0, half, "contain");
-    paint(split.speaker, half, H - half, "cover");
+    paint(split.screen, 0, half, "contain", split.screenScale);
+    paint(split.speaker, half, H - half, "cover", split.speakerScale);
   }, [videoRef]);
 
   // Timer, not rAF: rAF is throttled inside the workspace iframe.

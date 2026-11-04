@@ -12,6 +12,7 @@ import { transcribeLocalAudio, isTranscriptionBusy } from "../lib/shaun-video-tr
 import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
 import { detectVideoLayout, detectPrivateDetails, privacyRequestSchema } from "../lib/shaun-video-layout";
 import { videoSourceCache } from "../lib/shaun-video-cache";
+import { pipeStorageResponse } from "../lib/shaun-storage-stream";
 import { getVideo, MAX_DURATION, MAX_VIDEO_BYTES, privateFile, readRecord, saveRecord, videoResponse, videoStorage, type JobRecord, type VideoRecord } from "../lib/shaun-video-store";
 
 const router = Router();
@@ -82,9 +83,14 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
       record.status = "succeeded"; record.progress = 1;
     } catch (error) {
       record.status = "failed";
+      const detail = error as { code?: string; tool?: string; exitCode?: number; systemCode?: string };
+      console.error("Video job failed", { jobId: record.jobId, kind, phase: record.phase,
+        code: detail.code ?? "PROCESSING_FAILED", tool: detail.tool, exitCode: detail.exitCode, systemCode: detail.systemCode });
       // Never expose ffmpeg local paths, remote signed URLs or provider internals.
-      record.error = error instanceof SessionError ? error.message : kind === "transcribe"
-        ? "Local speech transcription failed. Please retry with a clear English audio track."
+      record.error = detail.code === "MEDIA_TOOL_UNAVAILABLE"
+        ? "The server's video tools are unavailable. This is a server setup issue, not a problem with your video."
+        : error instanceof SessionError ? error.message : kind === "transcribe"
+        ? "Caption preparation failed on the server. Your video and edits are safe. Please retry."
         : kind === "layout"
         ? "Automatic analysis could not complete. Try a shorter selection, or use manual regions and scene controls."
         : kind === "import"
@@ -137,9 +143,7 @@ async function serve(req: Request, res: Response, file: File, contentType: strin
     "Content-Disposition": `${req.query.download === "1" ? "attachment" : "inline"}; filename="${name}"`,
     "Content-Security-Policy": "default-src 'none'; sandbox" });
   const stream = file.createReadStream({ start, end });
-  res.on("close", () => stream.destroy());
-  stream.on("error", () => res.destroy());
-  stream.pipe(res);
+  pipeStorageResponse(stream, res);
 }
 
 router.get(`${prefix}/capabilities`, endpoint(async (_req, res) => {
@@ -222,11 +226,14 @@ router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
       }
     } catch (error) { if (!(error instanceof SessionError && error.status === 404)) throw error; }
     const local = join(dir, "source.mp4");
+    record.phase = "Downloading Descript video";
     let title = "";
     const size = await importDescript(url, local, value => { title = value; });
+    record.phase = "Checking video format";
     const probe = await probeVideo(local);
     const videoId = randomUUID();
     const video: VideoRecord = { videoId, owner, name: `${title || "Descript video"}.mp4`, size, contentType: "video/mp4", status: "ready", probe, createdAt: new Date().toISOString() };
+    record.phase = "Saving imported video";
     await uploadLocal(owner, `videos/${videoId}/source`, local, "video/mp4");
     await saveRecord(owner, `videos/${videoId}.json`, video);
     await saveRecord(owner, cacheKey, { videoId, at: Date.now() });
@@ -349,8 +356,24 @@ router.post(`${prefix}/videos/:videoId/transcribe`, endpoint(async (req, res, ow
       try {
         const input = join(dir, "source.mp4"), audio = join(dir, "speech.wav");
         record.phase = "Preparing source audio"; progress(0.02);
-        await downloadLocal(owner, video.videoId, input);
-        await extractAudio(input, audio);
+        try {
+          record.phase = "Loading source for captions";
+          await downloadLocal(owner, video.videoId, input);
+          record.phase = "Extracting source audio";
+          await extractAudio(input, audio);
+        } catch (error) {
+          console.warn("Caption preparation retry", { phase: record.phase, code: (error as NodeJS.ErrnoException).code ?? "PROCESSING_FAILED" });
+          record.phase = "Recovering audio from prepared preview"; progress(0.04);
+          const proxy = join(dir, "preview.webm");
+          try {
+            await privateFile(owner, `videos/${video.videoId}/preview-v1.webm`).download({ destination: proxy });
+            await rm(audio, { force: true });
+            await extractAudio(proxy, audio, true);
+          } catch (retryError) {
+            console.warn("Caption audio recovery failed", { code: (retryError as NodeJS.ErrnoException).code ?? "PROCESSING_FAILED" });
+            throw new SessionError(503, "The server could not prepare this video's audio. Your original and edits are safe. Please retry.", "AUDIO_PREPARATION_FAILED");
+          }
+        }
         const result = await transcribeLocalAudio(audio, (value, phase) => {
           record.phase = phase; progress(0.1 + value * 0.88);
         });

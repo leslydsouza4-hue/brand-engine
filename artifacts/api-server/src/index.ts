@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { verifyVideoRuntime } from "./lib/shaun-video-render";
 
 const rawPort = process.env["PORT"];
 
@@ -14,6 +15,9 @@ const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
+
+await verifyVideoRuntime();
+logger.info("Video runtime verified: ffmpeg, ffprobe, caption and blur filters available");
 
 app.listen(port, (err) => {
   if (err) {

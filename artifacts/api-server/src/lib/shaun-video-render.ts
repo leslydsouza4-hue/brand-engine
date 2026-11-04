@@ -61,7 +61,9 @@ async function run(command: string, args: string[], timeout: number, onLine?: (l
       clearTimeout(timer);
       if (error) reject(error); else fulfil(stdout);
     };
-    child.on("error", error => finish(new Error(`${command} unavailable: ${error.message}`)));
+    child.on("error", error => finish(Object.assign(new Error(`${command} unavailable`), {
+      code: "MEDIA_TOOL_UNAVAILABLE", tool: command, systemCode: (error as NodeJS.ErrnoException).code,
+    })));
     child.stdout.on("data", (data: Buffer) => {
       stdout = (stdout + data.toString()).slice(-256_000);
       if (onLine) {
@@ -72,11 +74,21 @@ async function run(command: string, args: string[], timeout: number, onLine?: (l
     });
     child.stderr.on("data", (data: Buffer) => { stderr = (stderr + data.toString()).slice(-12000); onStderr?.(stderr); });
     child.on("close", code => {
-      if (timedOut) return finish(new Error(`${command} exceeded its processing time limit`));
-      if (code !== 0) return finish(new Error(`${command} failed: ${stderr.slice(-3000) || `exit ${code}`}`));
+      if (timedOut) return finish(Object.assign(new Error(`${command} exceeded its processing time limit`), { code: "MEDIA_TOOL_TIMEOUT", tool: command }));
+      if (code !== 0) return finish(Object.assign(new Error(`${command} failed: ${stderr.slice(-3000) || `exit ${code}`}`), { code: "MEDIA_TOOL_FAILED", tool: command, exitCode: code }));
       finish();
     });
   });
+}
+
+/** Fail startup before a publish is declared healthy without required video tools. */
+export async function verifyVideoRuntime() {
+  await run("ffprobe", ["-version"], 10000);
+  const filters = await run("ffmpeg", ["-hide_banner", "-filters"], 10000);
+  for (const filter of ["ass", "scale", "boxblur", "drawbox"]) {
+    if (!new RegExp(`^\\s*\\S+\\s+${filter}\\s`, "m").test(filters))
+      throw new Error(`Video runtime is missing the ${filter} filter. Install ffmpeg-full.`);
+  }
 }
 
 async function localInput(path: string) {
@@ -336,8 +348,8 @@ export async function layoutFrame(input: string, output: string, time: number) {
     "-vf", "scale=960:960:force_original_aspect_ratio=decrease", "-q:v", "4", output], 30_000);
 }
 
-export async function extractAudio(input: string, output: string) {
-  const source = await localInput(input), info = await probeVideo(source);
+export async function extractAudio(input: string, output: string, browserPreview = false) {
+  const source = await localInput(input), info = await probeVideo(source, browserPreview);
   if (!info.hasAudio) throw new Error("Source has no audio track to transcribe");
   const target = resolve(output);
   if (target === source) throw new Error("Output cannot overwrite the original source");

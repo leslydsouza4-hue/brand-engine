@@ -17,6 +17,24 @@ Use genuine aligned word timestamps, not evenly distributed transcript words.
 
 Public Descript download URLs can be extensionless and supplied in page metadata; a missing `.mp4` match is not evidence that the media is inaccessible.
 
+Do not interpret a generic transcription-job failure as bad English audio: inspect its last phase. Audio retrieval/extraction can fail before Whisper runs even when the same source transcribes successfully.
+
+**Why:** A failed production job stopped at audio preparation while the identical source produced aligned words locally.
+
+**How to apply:** Separate preparation failures from recognition failures, retain stage diagnostics, and verify recovery using the same source.
+
+Development can expose FFmpeg through an injected runtime path even when it is not declared as a production dependency. A successful local render is not evidence that the published runtime has the tools.
+
+**Why:** Import and audio-preparation failures appeared after publishing; FFmpeg worked locally but was absent from the declared system dependencies. Historical job logs hid the exception, so that incident's exact cause could not be proven.
+
+**How to apply:** Explicitly declare the full FFmpeg package and verify ffprobe plus caption/blur filters before the server reports healthy. Keep safe background-job failure diagnostics.
+
+GCS read streams emit `response` before constructing their internal pipeline. Destroying a stream immediately on an early browser disconnect can crash the server outside the stream error handler.
+
+**Why:** Preview cancellation produced `ERR_STREAM_UNABLE_TO_PIPE` in the storage SDK.
+
+**How to apply:** Allow response pipeline initialization before destroying a cancelled storage stream; test cancellation before the upstream response arrives.
+
 **Why:** Both supplied shares imported successfully only after reading their public metadata's original-media URL. Owner download settings must be honored.
 
 **How to apply:** Inspect accessible public metadata before reporting a blocked import; retain narrow host/path validation and public-DNS pinning through redirects.

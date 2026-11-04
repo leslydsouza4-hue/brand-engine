@@ -252,7 +252,7 @@ export function boxFromDrag(a: Point, b: Point, minSize = 0.01): Pick<BlurBox, "
 
 export type FitMode = "contain" | "cover";
 /** Both panels keep the full selected crop visible (contain), including speaker-only scenes. */
-export const PANEL_FIT: Record<"screen" | "speaker", FitMode> = { screen: "contain", speaker: "cover" };
+export const PANEL_FIT: Record<"screen" | "speaker", FitMode> = { screen: "cover", speaker: "cover" };
 
 /** Fill a rectangular panel from the inner camera area, not the circle's bounding square.
  * Legacy near-square webcam bounds are treated as circular until redetected. */

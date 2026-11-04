@@ -49,13 +49,19 @@ test("vertical split renders screen above speaker without changing horizontal", 
     const top = await pixel(540, 288), bottom = await pixel(540, 1440);
     assert.ok(top[0] > 200 && top[2] < 30, "screen is in top half");
     assert.ok(bottom[2] > 200 && bottom[0] < 30, "speaker is in bottom half");
-    const edge = await pixel(540, 100);
+    const edge = await pixel(100, 288);
     assert.ok(Math.max(...edge) < 50, "50% screen scale adds space");
     const lowerEdge = await pixel(540, 1000);
     assert.ok(lowerEdge[2] > 200, "speaker scaling remains independent");
     const pannedEdge = await pixel(50, 1440);
     assert.ok(pannedEdge[2]>200 && pannedEdge[0]<30, "dragging is bounded so the speaker cannot expose empty space");
     assert.equal(videoEditsSchema.safeParse({ ...config, split: { ...split, screenScale: 3 } }).success, false);
+    await renderVideo(source, output, { ...config, split: { ...split, screenScale: 1 } });
+    await promisify(execFile)("ffmpeg", ["-v", "error", "-y", "-i", output, "-frames:v", "1", frame]);
+    for (const x of [1, 1078]) {
+      const p = await pixel(x, 288);
+      assert.ok(p[0] > 200 && p[2] < 30, "default screen framing fills both side edges");
+    }
     await renderVideo(source, join(dir, "horizontal.mp4"), { ...config, format: "horizontal" });
     const horizontal = await probeVideo(join(dir, "horizontal.mp4"));
     assert.equal(horizontal.width, 1920);

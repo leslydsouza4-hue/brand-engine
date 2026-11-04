@@ -43,6 +43,10 @@ Vertical demos use approximately 30% screen above 70% Shaun, matching the suppli
 
 Exclude the small embedded bottom-left Shaun webcam from the upper UI panel, even if a portion of the screen must be cropped. Shaun should appear only in the large lower presenter section during demos.
 
+The upper screen panel should fill edge-to-edge without side gaps, preserving aspect ratio by cropping overflow rather than stretching.
+
+**Why:** The user explicitly rejected the empty left/right margins in the screen panel.
+
 **Why:** The user repeated this correction after asking to preserve the screen UI; webcam exclusion takes priority over retaining all source UI.
 
 **Why:** The user explicitly corrected the contain-fit interpretation and supplied a zoomed rectangular reference. Cropping inside the camera circle removes its visible border without inventing missing footage.

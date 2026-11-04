@@ -242,7 +242,7 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
         const cw = Math.max(2, Math.min(info.width - x, Math.floor(b.width * info.width / 2) * 2));
         const ch = Math.max(2, Math.min(info.height - y, Math.floor(b.height * info.height / 2) * 2));
         const aspect=cw/ch, relative=(width/panelHeight)/aspect;
-        const circular=mode==="cover" && (split.speakerShape==="circle" || (!split.speakerShape && aspect>=0.85 && aspect<=1.15));
+        const circular=b===split.speaker && (split.speakerShape==="circle" || (!split.speakerShape && aspect>=0.85 && aspect<=1.15));
         const autoZoom=circular?Math.sqrt(1+Math.min(relative,1/relative)**2)*1.04:1;
         const ratio=(mode==="contain"?Math.min:Math.max)(width/cw,panelHeight/ch)*scale*autoZoom;
         const w=Math.max(2,Math.round(cw*ratio/2)*2), h=Math.max(2,Math.round(ch*ratio/2)*2);
@@ -254,7 +254,7 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
       const screenHeight=Math.round(height*0.3/2)*2;
       if (piece.scene?.mode === "speaker") filters.push(`[joined]${frame(split.speaker,"cover",split.speakerScale,split.speakerPan,height)}[framed]`);
       else filters.push("[joined]split[screenSource][speakerSource]",
-        `[screenSource]${frame(excludeWebcam(split.screen,split.speaker)??split.screen,"contain",split.screenScale,split.screenPan,screenHeight)}[top]`,
+        `[screenSource]${frame(excludeWebcam(split.screen,split.speaker)??split.screen,"cover",split.screenScale,split.screenPan,screenHeight)}[top]`,
         `[speakerSource]${frame(split.speaker,"cover",split.speakerScale,split.speakerPan,height-screenHeight)}[bottom]`,
         "[top][bottom]vstack=inputs=2[framed]");
     } else if (e.framing === "blur-fill") {

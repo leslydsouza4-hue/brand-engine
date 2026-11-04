@@ -57,7 +57,7 @@ export function VideoStage(p: Props) {
     const paint = (r: { x: number; y: number; width: number; height: number }, top: number, h: number, mode: "contain" | "cover", scale = 1, pan?: { x: number; y: number }) => {
       const sx = r.x * v.videoWidth, sy = r.y * v.videoHeight, sw = r.width * v.videoWidth, sh = r.height * v.videoHeight;
       if (sw < 1 || sh < 1) return;
-      const zoom=mode==="cover"?speakerAutoScale(sw,sh,W,h,split.speakerShape):1;
+      const zoom=r===split.speaker?speakerAutoScale(sw,sh,W,h,split.speakerShape):1;
       const f = panelPlacement(sw, sh, W, h, mode, scale*zoom, pan);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, top, W, h); ctx.clip();

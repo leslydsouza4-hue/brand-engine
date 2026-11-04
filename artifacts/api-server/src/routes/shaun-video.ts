@@ -306,7 +306,7 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
   try { retainedSegments(edits, (video.probe as { duration: number }).duration); }
   catch (error) { throw new SessionError(400, (error as Error).message); }
   res.status(202).json(await job(owner, "render", video.videoId, async (dir, record, progress) => {
-    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("scenes-v2:" + JSON.stringify(edits)).digest("hex")}.json`;
+    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("framing-v3:" + JSON.stringify(edits)).digest("hex")}.json`;
     try {
       const cached = await readRecord<{ jobId: string }>(owner, cacheKey);
       const file = privateFile(owner, `jobs/${cached.jobId}/output`);

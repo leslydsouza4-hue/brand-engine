@@ -31,6 +31,7 @@ export const videoEditsSchema = z.object({
     start: seconds, end: seconds,
   }).strict().refine(v => v.end > v.start, "Word end must follow start")).max(3000),
   format: z.enum(["vertical", "horizontal"]),
+  exportQuality: z.enum(["fast","standard"]).optional(),
   framing: z.enum(["fit", "blur-fill"]),
   captionTiming: z.enum(["word", "segment"]).optional(),
   captionBottom: z.number().finite().min(0.02).max(0.22).optional(),
@@ -137,7 +138,9 @@ function assTime(time: number) {
 export function escapeAss(text: string) { return text.replace(/\\/g, "＼").replace(/{/g, "｛").replace(/}/g, "｝").replace(/[\r\n]/g, " "); }
 
 export function makeCaptions(edits: VideoEdits, segments: Segment[], width: number, height: number) {
-  const fontSize = edits.format === "vertical" ? 66.96 : 69.12;
+  const resolutionScale=width/(edits.format==="vertical"?1080:1920);
+  const fontSize = (edits.format === "vertical" ? 66.96 : 69.12)*resolutionScale;
+  const sideMargin=Math.round(60*resolutionScale);
   const margin = Math.round(height * (edits.format === "vertical" && edits.split ? edits.captionBottom ?? 0.04 : edits.format === "vertical" ? 0.16 : 0.09));
   const header = `[Script Info]
 ScriptType: v4.00+
@@ -147,8 +150,8 @@ WrapStyle: 2
 ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Caption,Poppins,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00121820,&H80000000,-1,0,0,0,100,100,0,0,1,2,3,2,60,60,${margin},1
-Style: Active,Poppins,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00F0A31A,&H00F0A31A,-1,0,0,0,100,100,0,0,3,8,0,2,60,60,${margin},1
+Style: Caption,Poppins,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00121820,&H80000000,-1,0,0,0,100,100,0,0,1,${2*resolutionScale},${3*resolutionScale},2,${sideMargin},${sideMargin},${margin},1
+Style: Active,Poppins,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00F0A31A,&H00F0A31A,-1,0,0,0,100,100,0,0,3,${8*resolutionScale},0,2,${sideMargin},${sideMargin},${margin},1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
@@ -174,7 +177,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       if (end <= start) continue;
       const active = segmentTiming ? -1 : words.findIndex(w => start >= w.start && start < w.end);
       const chars = words.map(w => w.text).join(" ").length;
-      const size = Math.min(fontSize, Math.floor((width - 150) / Math.max(1, chars) / 0.7));
+      const size = Math.min(fontSize, Math.floor((width - 150*resolutionScale) / Math.max(1, chars) / 0.7));
       const line = words.map((w, j) => j === active
         ? `{\\rActive\\fs${size}}${escapeAss(w.text)}{\\rCaption\\fs${size}}`
         : escapeAss(w.text)).join(" ");
@@ -195,7 +198,8 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
   const info = await probeVideo(source);
   const e = videoEditsSchema.parse(edits), segments = retainedSegments(e, info.duration);
   const total = segments.reduce((sum, v) => sum + v.end - v.start, 0);
-  const width = e.format === "vertical" ? 1080 : 1920, height = e.format === "vertical" ? 1920 : 1080;
+  const shortEdge=e.exportQuality==="fast"?720:1080, longEdge=e.exportQuality==="fast"?1280:1920;
+  const width = e.format === "vertical" ? shortEdge : longEdge, height = e.format === "vertical" ? longEdge : shortEdge;
   const dir = await mkdtemp(join(tmpdir(), "shaun-render-"));
   const target = resolve(output);
   if (target === source) { await rm(dir, { recursive: true, force: true }); throw new Error("Output cannot overwrite the original source"); }
@@ -230,22 +234,21 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
     const begin = filters.length;
     const split = piece.scene?.split ?? e.split;
     if (e.format === "vertical" && split) {
-      const crop = (b: z.infer<typeof cropBoxSchema>) => {
+      const frame = (b: z.infer<typeof cropBoxSchema>, mode: "contain"|"cover", scale = 1, pan = {x:0,y:0}, panelHeight = height/2) => {
         const x = Math.floor(b.x * info.width / 2) * 2, y = Math.floor(b.y * info.height / 2) * 2;
-        const w = Math.max(2, Math.min(info.width - x, Math.floor(b.width * info.width / 2) * 2));
-        const h = Math.max(2, Math.min(info.height - y, Math.floor(b.height * info.height / 2) * 2));
-        return `crop=${w}:${h}:${x}:${y}`;
+        const cw = Math.max(2, Math.min(info.width - x, Math.floor(b.width * info.width / 2) * 2));
+        const ch = Math.max(2, Math.min(info.height - y, Math.floor(b.height * info.height / 2) * 2));
+        const ratio=(mode==="contain"?Math.min:Math.max)(width/cw,panelHeight/ch)*scale;
+        const w=Math.max(2,Math.round(cw*ratio/2)*2), h=Math.max(2,Math.round(ch*ratio/2)*2);
+        const dx=Math.max(-Math.abs(w-width)/2,Math.min(Math.abs(w-width)/2,pan.x*width));
+        const dy=Math.max(-Math.abs(h-panelHeight)/2,Math.min(Math.abs(h-panelHeight)/2,pan.y*panelHeight));
+        const padW=Math.max(w,width)+Math.ceil(Math.abs(dx))*2, padH=Math.max(h,panelHeight)+Math.ceil(Math.abs(dy))*2;
+        return `crop=${cw}:${ch}:${x}:${y},scale=${w}:${h},pad=${padW}:${padH}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=${width}:${panelHeight}:${Math.round((padW-width)/2-dx)}:${Math.round((padH-panelHeight)/2-dy)},setsar=1`;
       };
-      const zoom = (scale = 1, pan = { x: 0, y: 0 }, panelHeight = 960) => {
-        const w = Math.round(1080 * scale / 2) * 2, h = Math.round(panelHeight * scale / 2) * 2;
-        const padW = Math.max(w, 1080) + Math.ceil(Math.abs(pan.x) * 1080) * 2;
-        const padH = Math.max(h, panelHeight) + Math.ceil(Math.abs(pan.y) * panelHeight) * 2;
-        return `scale=${w}:${h},pad=${padW}:${padH}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=1080:${panelHeight}:${Math.round((padW - 1080) / 2 - pan.x * 1080)}:${Math.round((padH - panelHeight) / 2 - pan.y * panelHeight)},setsar=1`;
-      };
-      if (piece.scene?.mode === "speaker") filters.push(`[joined]${crop(split.speaker)},scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,${zoom(split.speakerScale,split.speakerPan,1920)}[framed]`);
+      if (piece.scene?.mode === "speaker") filters.push(`[joined]${frame(split.speaker,"cover",split.speakerScale,split.speakerPan,height)}[framed]`);
       else filters.push("[joined]split[screenSource][speakerSource]",
-        `[screenSource]${crop(split.screen)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,${zoom(split.screenScale, split.screenPan)}[top]`,
-        `[speakerSource]${crop(split.speaker)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,${zoom(split.speakerScale, split.speakerPan)}[bottom]`,
+        `[screenSource]${frame(split.screen,"contain",split.screenScale,split.screenPan)}[top]`,
+        `[speakerSource]${frame(split.speaker,"cover",split.speakerScale,split.speakerPan)}[bottom]`,
         "[top][bottom]vstack=inputs=2[framed]");
     } else if (e.framing === "blur-fill") {
       filters.push("[joined]split[front][back]",

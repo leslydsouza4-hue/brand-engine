@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { captionAt, clamp, round3, type SplitLayout, fitCrop, layoutAt, nextPlayableTime, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
+import { captionAt, clamp, round3, type SplitLayout, panelPlacement, panLimits, PANEL_FIT, layoutAt, nextPlayableTime, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
 
 interface Props {
   src: string;
@@ -57,18 +57,15 @@ export function VideoStage(p: Props) {
     const paint = (r: { x: number; y: number; width: number; height: number }, top: number, h: number, mode: "contain" | "cover", scale = 1, pan?: { x: number; y: number }) => {
       const sx = r.x * v.videoWidth, sy = r.y * v.videoHeight, sw = r.width * v.videoWidth, sh = r.height * v.videoHeight;
       if (sw < 1 || sh < 1) return;
-      const f = fitCrop(sw, sh, W, h, mode);
+      const f = panelPlacement(sw, sh, W, h, mode, scale, pan);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, top, W, h); ctx.clip();
-      ctx.translate(W / 2 + (pan?.x ?? 0) * W, top + h / 2 + (pan?.y ?? 0) * h);
-      ctx.scale(scale, scale);
-      ctx.translate(-W / 2, -(top + h / 2));
-      try { ctx.drawImage(v, sx + f.sx, sy + f.sy, f.sw, f.sh, f.dx, top + f.dy, f.dw, f.dh); } catch { /* frame not ready */ }
+      try { ctx.drawImage(v, sx, sy, sw, sh, f.dx, top + f.dy, f.dw, f.dh); } catch { /* frame not ready */ }
       ctx.restore();
     };
-    if (act.mode === "speaker") { paint(split.speaker, 0, H, "cover", split.speakerScale, split.speakerPan); return; }
-    paint(split.screen, 0, half, "cover", split.screenScale, split.screenPan);
-    paint(split.speaker, half, H - half, "cover", split.speakerScale, split.speakerPan);
+    if (act.mode === "speaker") { paint(split.speaker, 0, H, PANEL_FIT.speaker, split.speakerScale, split.speakerPan); return; }
+    paint(split.screen, 0, half, PANEL_FIT.screen, split.screenScale, split.screenPan);
+    paint(split.speaker, half, H - half, PANEL_FIT.speaker, split.speakerScale, split.speakerPan);
   }, [videoRef]);
 
   // Single place that enforces trim/cuts, only while genuinely playing and not mid-seek.
@@ -108,7 +105,7 @@ export function VideoStage(p: Props) {
   // Hand-drag repositioning of split halves. Writes pan on every move; never seeks.
   const onSplitChangeRef = useRef(p.onSplitChange);
   onSplitChangeRef.current = p.onSplitChange;
-  const panDragRef = useRef<{ id: number; scene: number | null; panel: "screen" | "speaker"; sx: number; sy: number; start: { x: number; y: number }; w: number; h: number } | null>(null);
+  const panDragRef = useRef<{ id: number; scene: number | null; panel: "screen" | "speaker"; sx: number; sy: number; start: { x: number; y: number }; w: number; h: number; full: boolean } | null>(null);
   const [panDragging, setPanDragging] = useState<"screen" | "speaker" | null>(null);
   const onPanDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const act = layoutAt(editsRef.current, videoRef.current?.currentTime ?? 0);
@@ -120,8 +117,11 @@ export function VideoStage(p: Props) {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     videoRef.current?.pause();
-    const cur = split[panel === "screen" ? "screenPan" : "speakerPan"] ?? { x: 0, y: 0 };
-    panDragRef.current = { id: e.pointerId, scene: act.sceneIndex, panel, sx: e.clientX, sy: e.clientY, start: { ...cur }, w: rect.width, h: full ? rect.height : rect.height / 2 };
+    const v0 = videoRef.current, r0 = split[panel];
+    const lim0 = v0 && v0.videoWidth ? panLimits(r0.width * v0.videoWidth, r0.height * v0.videoHeight, rect.width, full ? rect.height : rect.height / 2, full ? "cover" : PANEL_FIT[panel], split[panel === "screen" ? "screenScale" : "speakerScale"]) : { x: 1, y: 1 };
+    const raw = split[panel === "screen" ? "screenPan" : "speakerPan"] ?? { x: 0, y: 0 };
+    const cur = { x: clamp(raw.x, -lim0.x, lim0.x), y: clamp(raw.y, -lim0.y, lim0.y) };
+    panDragRef.current = { id: e.pointerId, scene: act.sceneIndex, panel, sx: e.clientX, sy: e.clientY, start: { ...cur }, w: rect.width, h: full ? rect.height : rect.height / 2, full };
     setPanDragging(panel);
   };
   const onPanMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -130,7 +130,9 @@ export function VideoStage(p: Props) {
     const cur = editsRef.current;
     const split = d.scene === null ? cur.split : cur.scenes?.[d.scene]?.split;
     if (!split) return;
-    const pan = { x: round3(clamp(d.start.x + (e.clientX - d.sx) / d.w, -1, 1)), y: round3(clamp(d.start.y + (e.clientY - d.sy) / d.h, -1, 1)) };
+    const v = videoRef.current, r = split[d.panel];
+    const lim = v && v.videoWidth ? panLimits(r.width * v.videoWidth, r.height * v.videoHeight, d.w, d.h, d.full ? "cover" : PANEL_FIT[d.panel], split[d.panel === "screen" ? "screenScale" : "speakerScale"]) : { x: 1, y: 1 };
+    const pan = { x: round3(clamp(d.start.x + (e.clientX - d.sx) / d.w, -lim.x, lim.x)), y: round3(clamp(d.start.y + (e.clientY - d.sy) / d.h, -lim.y, lim.y)) };
     const next = { ...split, [d.panel === "screen" ? "screenPan" : "speakerPan"]: pan };
     editsRef.current = d.scene === null ? { ...cur, split: next } : { ...cur, scenes: (cur.scenes ?? []).map((sc, i) => i === d.scene ? { ...sc, split: next } : sc) };
     onSplitChangeRef.current?.(next, d.scene);

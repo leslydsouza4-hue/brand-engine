@@ -3,7 +3,8 @@
 ## Scene and privacy additions
 
 - `POST /videos/:videoId/layout` now returns `{split, scenes, note}` (or a 202 job), cached as layout-v2. Scenes are `{start,end,mode:"speaker"|"split",split}` in source time. Sampled boundaries are approximate and editable. Older saved edits fall back to their global split.
-- Edits accept up to 32 ordered, non-overlapping scenes and 64 blur regions. Screen crops cover the top half; speaker-only scenes cover the full portrait frame. Export and preview use the same source-time scene lookup, including gaps and cuts.
+- Edits accept up to 32 ordered, non-overlapping scenes and 64 blur regions. Screen crops fit inside the top half; speaker-only scenes cover the full portrait frame. Scale/pan acts on the full selected crop before final clipping. Pan is bounded to keep smaller images inside and larger images covering their panel. Export and preview use the same source-time scene lookup, including gaps and cuts.
+- `exportQuality` is `"fast"` (720p) or `"standard"` (1080p). Omitted means standard for older sessions. New uploads explicitly choose fast; the selector explains the lower-resolution tradeoff. Caption proportions are resolution-independent.
 - `POST /videos/:videoId/privacy` accepts `{start,end,target:"screen"|"speaker",crop:{x,y,width,height}}`; returns `{blurs,note,sampledFrames}` or a 202 job. Results are cached by source and request. The selected interval is sampled (at most eight stills); this is not guaranteed anonymization. Coordinates always refer to the entire source, not the selected crop. Suggestions require explicit review and acceptance.
 - Blur selection uses a separate paused-source editor. The live composed preview does not display blur masks. Actual masking is applied during export, before framing and cuts.
 - Exports seek directly to trimStart; source-time coordinates and edit ranges remain unchanged.

@@ -61,3 +61,36 @@ test("layoutAt picks scene, falls back to base split in gaps; crop mapping round
   assert.deepEqual(cropToSource({ x: 0.5, y: 0.5, width: 0.5, height: 0.5 }, { x: 0, y: 0.5, width: 1, height: 0.5 }), { x: 0.5, y: 0.75, width: 0.5, height: 0.25 });
   assert.equal(renderEdits(e, null).scenes?.length, 1);
 });
+
+import { panelPlacement, panLimits } from "./edits";
+
+test("screen contain keeps all content and letterboxes, pan locked on letterboxed axis", () => {
+  const p = panelPlacement(1920, 1080, 1080, 960, "contain");
+  assert.equal(p.dw, 1080); assert.equal(Math.round(p.dh), 608); assert.equal(p.dx, 0);
+  const q = panelPlacement(1920, 1080, 1080, 960, "contain", 1, { x: 0.5, y: 0.5 });
+  assert.equal(q.offsetX, 0);
+  assert.ok(Math.abs(q.offsetY - (960 - 607.5) / 2) < 1e-9);
+  assert.ok(q.dy + q.dh <= 960 + 1e-9);
+});
+
+test("zoom out of cover recovers full source pixels", () => {
+  const p = panelPlacement(1000, 500, 500, 500, "cover", 0.5);
+  assert.equal(p.dw, 500); assert.equal(p.dh, 250); assert.equal(p.dx, 0); assert.equal(p.dy, 125);
+});
+
+test("larger image pan clamps so panel stays covered", () => {
+  const p = panelPlacement(1000, 1000, 500, 500, "cover", 2, { x: 1, y: -1 });
+  assert.equal(p.dw, 1000); assert.equal(p.offsetX, 250); assert.equal(p.offsetY, -250);
+  assert.equal(p.dx, 0); assert.equal(p.dy + p.dh, 500);
+  assert.deepEqual(panLimits(1000, 1000, 500, 500, "cover", 2), { x: 0.5, y: 0.5 });
+  assert.deepEqual(panLimits(1000, 1000, 500, 500, "cover", 1), { x: 0, y: 0 });
+});
+
+import { renderEdits } from "./edits";
+test("export quality: new uploads fast, old sessions standard, renderEdits preserves", () => {
+  assert.equal(defaultEdits(10).exportQuality, "fast");
+  assert.equal(renderEdits(defaultEdits(10), null).exportQuality, "fast");
+  const old = { ...defaultEdits(10) }; delete old.exportQuality;
+  assert.equal(renderEdits(old, null).exportQuality, "standard");
+  assert.equal(renderEdits({ ...defaultEdits(10), exportQuality: "standard" }, null).exportQuality, "standard");
+});

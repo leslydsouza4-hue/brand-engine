@@ -19,7 +19,7 @@ import { ScenesPanel } from "./shaunVideo/ScenesPanel";
 import { Section, Segmented, TimeInput, ProgressBar, ErrorNote, ghostBtn, primaryBtn, inputCls } from "./shaunVideo/ui";
 
 interface SourceRef { videoId: string; name: string; duration: number; width: number; height: number; origin: "upload" | "descript" }
-interface RenderRef { jobId: string; assetUrl: string; key: string; format: string; renderedAt: string }
+interface RenderRef { jobId: string; assetUrl: string; key: string; format: string; quality?: "fast" | "standard"; renderedAt: string }
 type BusyKind = "upload" | "import" | "transcribe" | "render" | "frame";
 interface Busy { kind: BusyKind; progress: number; label: string; phase?: string }
 
@@ -232,7 +232,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
       return { jobId, ...r };
     });
     setDownload({ status: "idle" });
-    if (result) setRender({ jobId: result.jobId, assetUrl: result.assetUrl, key, format: edits.format, renderedAt: new Date().toISOString() });
+    if (result) setRender({ jobId: result.jobId, assetUrl: result.assetUrl, key, format: edits.format, quality: payload.exportQuality, renderedAt: new Date().toISOString() });
   };
 
   const handleFrame = async () => {
@@ -289,7 +289,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
 
   const resetEdits = () => {
     if (!edits || !window.confirm("Reset trim, cuts, blurs and format? Captions are kept.")) return;
-    setEdits({ ...defaultEdits(duration), words: edits.words });
+    setEdits({ ...defaultEdits(duration), words: edits.words, exportQuality: edits.exportQuality ?? "standard" });
     setSelectedBlur(null); setMarkIn(null);
   };
 
@@ -377,9 +377,28 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   {!edits.split && <button type="button" data-testid="button-manual-split" onClick={manualSplit} className={`${ghostBtn} w-full mt-[6px]`}>Set panel bounds manually</button>}
                   {edits.split && (
                     <>
-                      <div className="text-[10px] font-semibold text-[#CBD5E1]">Base layout</div>
-                      <SplitPanels split={edits.split} onChange={setSplit} />
-                      <ScenesPanel scenes={edits.scenes ?? []} base={edits.split} time={time} duration={duration} activeIndex={layoutAt(edits, time)?.sceneIndex ?? null} onChange={setScenes} onSeek={seek} />
+                      {(() => {
+                        const act = layoutAt(edits, time);
+                        if (!act) return null;
+                        const n = edits.scenes?.length ?? 0;
+                        return <>
+                          <div data-testid="status-active-scene" className="flex items-center justify-between gap-[6px] text-[10px] font-semibold text-[#CBD5E1]">
+                            <span className="flex items-center gap-[6px]"><span className="w-[6px] h-[6px] rounded-full bg-[#00B2A9]" />Editing {act.sceneIndex === null ? "base layout" : `scene ${act.sceneIndex + 1} of ${n}`}</span>
+                            <span className="font-normal text-[#64748B]">{act.mode === "speaker" ? "Speaker only" : "Split"} · at {fmtTime(time)}</span>
+                          </div>
+                          <SplitPanels split={act.split} onChange={s => setActiveSplit(s, act.sceneIndex)} />
+                        </>;
+                      })()}
+                      <details data-testid="disclosure-scene-timing" className="group rounded-[10px] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.015)]">
+                        <summary className="cursor-pointer select-none list-none px-[10px] py-[8px] text-[10px] font-semibold text-[#94A3B8] hover:text-[#CBD5E1] flex justify-between">
+                          <span>Scene timing (advanced)</span><span className="font-normal text-[#475569]">{edits.scenes?.length ?? 0} scenes</span>
+                        </summary>
+                        <div className="px-[10px] pb-[10px] flex flex-col gap-[8px]">
+                          <ScenesPanel scenes={edits.scenes ?? []} base={edits.split} time={time} duration={duration} activeIndex={layoutAt(edits, time)?.sceneIndex ?? null} onChange={setScenes} onSeek={seek} />
+                          <div className="text-[10px] font-semibold text-[#CBD5E1]">Base layout (outside scenes)</div>
+                          <SplitPanels split={edits.split} onChange={setSplit} />
+                        </div>
+                      </details>
                       {layoutHere?.status === "done" && layoutHere.note && <div className="text-[10px] text-[#64748B] leading-[1.45]">{layoutHere.note}</div>}
                       <div className="flex gap-[6px]">
                         <button type="button" data-testid="button-redetect" onClick={() => { if (window.confirm("Detect panels again? Your manual bounds and scenes will be replaced.")) { patch({ split: undefined, scenes: undefined }); setLayoutRetry(n => n + 1); } }} className={`${ghostBtn} flex-1`}><ScanSearch className="w-[11px] h-[11px]" />Detect again</button>
@@ -473,6 +492,10 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
             </Section>
 
             <Section title="Export">
+              <div className="mb-[8px]">
+                <Segmented value={edits.exportQuality ?? "standard"} onChange={exportQuality => patch({ exportQuality })} options={[{ value: "fast", label: "Fast 720p" }, { value: "standard", label: "Full HD 1080p" }]} />
+                <div data-testid="text-export-quality" className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">{(edits.exportQuality ?? "standard") === "fast" ? `Lower resolution: ${edits.format === "vertical" ? "720x1280" : "1280x720"}. Quicker for drafts and review. Choose Full HD for the final post.` : `Full resolution: ${edits.format === "vertical" ? "1080x1920" : "1920x1080"}. Takes longer to render.`} The preview is the same either way.</div>
+              </div>
               {validation.length > 0 && <ErrorNote message={validation.join(" ")} />}
               <button type="button" disabled={!!busy || validation.length > 0} onClick={() => void handleRender()} className={`${primaryBtn} mt-[4px]`}>
                 {busyFor("render") ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Film className="w-[14px] h-[14px]" />}
@@ -482,7 +505,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               {errors.render && <ErrorNote message={errors.render} onRetry={() => void handleRender()} />}
               {render && (
                 <div className={`mt-[8px] p-[10px] rounded-[12px] border ${renderStale ? "border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.04)]" : "border-[rgba(0,178,169,0.2)] bg-[rgba(0,178,169,0.05)]"}`}>
-                  <div className="text-[11px] font-semibold text-[#E2E8F0]">{render.format === "vertical" ? "Vertical" : "Horizontal"} MP4 ready</div>
+                  <div className="text-[11px] font-semibold text-[#E2E8F0]">{render.format === "vertical" ? "Vertical" : "Horizontal"} {render.quality === "fast" ? "720p (fast, lower resolution)" : "1080p"} MP4 ready</div>
                   <div className="text-[10px] text-[#64748B] mb-[8px]">{renderStale ? "Edits changed since this render. Render again to include them." : `Rendered ${new Date(render.renderedAt).toLocaleString()}`}</div>
                   <button type="button" data-testid="button-download" disabled={download.status === "downloading"} onClick={() => void handleDownload()} className={ghostBtn}>
                     {download.status === "downloading" ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}

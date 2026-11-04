@@ -55,6 +55,10 @@ Prefer direct hand-drag positioning over X/Y fields for screen and speaker. Keep
 
 **How to apply:** Keep advanced coordinates secondary; retain recognized text when word alignment fails by grouping existing aligned cues, and label uncertainty honestly rather than dropping words or inventing individual timestamps.
 
+Keep the main video controls focused on the scene currently visible; hide base-layout and detailed scene timing controls under Advanced. Fit the screen content by default instead of permanently cutting off its edges.
+
+**Why:** The user found the base-layout/expanded-scenes sidebar complicated and reported that scaling and dragging cut off the screen. Main sliders must visibly affect the current scene.
+
 Blur selection belongs in separate Screen and Speaker selection surfaces, not on the live output preview. Support manual regions and reviewed automatic personal-detail suggestions.
 
 **Why:** The user explicitly requested two selectors outside the live preview and both manual and automatic blur.

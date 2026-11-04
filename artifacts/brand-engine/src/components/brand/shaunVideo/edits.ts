@@ -4,6 +4,7 @@ export interface TimedText { text: string; start: number; end: number }
 export interface Range { start: number; end: number }
 export interface BlurBox extends Range { x: number; y: number; width: number; height: number }
 export type VideoFormat = "vertical" | "horizontal";
+export type ExportQuality = "fast" | "standard";
 export type VideoFraming = "fit" | "blur-fill";
 
 export interface VideoEdits {
@@ -17,6 +18,8 @@ export interface VideoEdits {
   /** Optional on the wire; renderEdits always sends it explicitly. */
   captionTiming?: CaptionTiming;
   captionBottom?: number;
+  /** Export resolution. Absent (older sessions) means standard 1080p; fast renders 720p. */
+  exportQuality?: ExportQuality;
   /** Vertical split layout: normalized ORIGINAL source bounds for each panel. */
   split?: SplitLayout;
   /** Optional source-time layout scenes. Absent on older sessions: the whole video uses `split`. */
@@ -88,7 +91,7 @@ export const round3 = (n: number) => Math.round(n * 1000) / 1000;
 export const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 export function defaultEdits(duration: number): VideoEdits {
-  return { trimStart: 0, trimEnd: round3(duration), cuts: [], blurs: [], words: [], format: "vertical", framing: "blur-fill" };
+  return { trimStart: 0, trimEnd: round3(duration), cuts: [], blurs: [], words: [], format: "vertical", framing: "blur-fill", exportQuality: "fast" };
 }
 
 export function mergeRanges(ranges: Range[]): Range[] {
@@ -221,7 +224,7 @@ export function renderEdits(e: VideoEdits, t: TranscriptState | null): VideoEdit
   return { ...e,
     blurs: e.blurs.map(b => ({ x: round3(b.x), y: round3(b.y), width: round3(b.width), height: round3(b.height), start: round3(b.start), end: round3(b.end) })),
     ...(e.scenes?.length ? { scenes: e.scenes.map(sc => ({ start: round3(sc.start), end: round3(sc.end), mode: sc.mode, split: sc.split })) } : { scenes: undefined }),
-    captionTiming: t?.timing ?? "word", trimStart: round3(e.trimStart), trimEnd: round3(e.trimEnd), words: words.map(w => ({ text: w.text.trim(), start: round3(w.start), end: round3(w.end) })).filter(w => w.text) };
+    captionTiming: t?.timing ?? "word", exportQuality: e.exportQuality ?? "standard", trimStart: round3(e.trimStart), trimEnd: round3(e.trimEnd), words: words.map(w => ({ text: w.text.trim(), start: round3(w.start), end: round3(w.end) })).filter(w => w.text) };
 }
 
 export interface Point { x: number; y: number }
@@ -238,4 +241,32 @@ export function boxFromDrag(a: Point, b: Point, minSize = 0.01): Pick<BlurBox, "
   const width = Math.abs(b.x - a.x), height = Math.abs(b.y - a.y);
   if (width < minSize || height < minSize) return null;
   return { x: round3(x), y: round3(y), width: round3(Math.min(width, 1 - x)), height: round3(Math.min(height, 1 - y)) };
+}
+
+export type FitMode = "contain" | "cover";
+/** Default fit per panel: screen keeps all content visible (letterbox), speaker fills its panel. */
+export const PANEL_FIT: Record<"screen" | "speaker", FitMode> = { screen: "contain", speaker: "cover" };
+
+/** Largest allowed offset (px) on one axis: keeps a smaller image inside, a larger image covering. */
+export const maxPanOffset = (rendered: number, panel: number) => Math.abs(rendered - panel) / 2;
+
+export interface Placement { dx: number; dy: number; dw: number; dh: number; offsetX: number; offsetY: number }
+/**
+ * Where the FULL selected source crop (sw x sh px) lands inside a panel (pw x ph), relative to the panel's top-left.
+ * base = contain/cover scale, then user scale, then pan (normalized of panel size) clamped to +/- maxPanOffset.
+ * The caller clips to the panel. Render (FFmpeg) must use the same math.
+ */
+export function panelPlacement(sw: number, sh: number, pw: number, ph: number, mode: FitMode, scale = 1, pan?: Pan): Placement {
+  const base = mode === "cover" ? Math.max(pw / sw, ph / sh) : Math.min(pw / sw, ph / sh);
+  const k = base * (scale > 0 && Number.isFinite(scale) ? scale : 1);
+  const dw = sw * k, dh = sh * k;
+  const mx = maxPanOffset(dw, pw), my = maxPanOffset(dh, ph);
+  const offsetX = clamp((pan?.x ?? 0) * pw, -mx, mx), offsetY = clamp((pan?.y ?? 0) * ph, -my, my);
+  return { dx: (pw - dw) / 2 + offsetX, dy: (ph - dh) / 2 + offsetY, dw, dh, offsetX, offsetY };
+}
+
+/** Normalized pan limits for a placement, so stored pan never drifts beyond what is visible. */
+export function panLimits(sw: number, sh: number, pw: number, ph: number, mode: FitMode, scale = 1): Pan {
+  const p = panelPlacement(sw, sh, pw, ph, mode, scale);
+  return { x: pw > 0 ? maxPanOffset(p.dw, pw) / pw : 0, y: ph > 0 ? maxPanOffset(p.dh, ph) / ph : 0 };
 }

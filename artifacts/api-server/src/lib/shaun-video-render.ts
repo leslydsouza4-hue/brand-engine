@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { z } from "zod";
 import { excludeWebcam } from "./shaun-screen-crop";
+import { ffmpegProgress } from "./shaun-job-progress";
 
 const seconds = z.number().finite().min(0).max(600);
 export const cropBoxSchema = z.object({
@@ -228,7 +229,7 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
       const w = Math.max(2, Math.min(info.width - x, Math.floor(blur.width * info.width / 2) * 2));
       const h = Math.max(2, Math.min(info.height - y, Math.floor(blur.height * info.height / 2) * 2));
       filters.push(`[${label}]split[base${i}][patch${i}]`,
-        `[patch${i}]crop=${w}:${h}:${x}:${y},boxblur=luma_radius=${Math.min(20, Math.floor(Math.min(w, h) / 2))}:luma_power=3[blur${i}]`,
+        `[patch${i}]crop=${w}:${h}:${x}:${y},boxblur=luma_radius=${Math.min(20, Math.floor(Math.min(w, h) / 2))}:luma_power=3:chroma_radius=${Math.min(20, Math.floor(Math.min(w, h) / 4))}:enable='gte(t,${blur.start})*lt(t,${blur.end})'[blur${i}]`,
         `[base${i}][blur${i}]overlay=${x}:${y}:enable='gte(t,${blur.start})*lt(t,${blur.end})'[b${i}]`);
       label = `b${i}`;
     }
@@ -295,9 +296,10 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
     progress(0);
     await run("ffmpeg", [...baseArgs, "-ss", String(e.trimStart), "-t", String(e.trimEnd-e.trimStart), ...inputArgs(source), "-filter_complex_script", graph,
       "-map", e.words.length ? "[captioned]" : "[framed]", ...(info.hasAudio ? ["-map", "[audio]", "-c:a", "aac", "-b:a", "192k"] : ["-an"]),
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-threads", "2", "-r", "30", "-pix_fmt", "yuv420p",
+      "-c:v", "libx264", "-preset", e.exportQuality === "fast" ? "ultrafast" : "superfast", "-crf", "21", "-threads", "2", "-r", "30", "-pix_fmt", "yuv420p",
       "-t", String(total), "-movflags", "+faststart", "-progress", "pipe:1", "-f", "mp4", target], RENDER_TIMEOUT, line => {
-      if (line.startsWith("out_time_us=")) progress(Math.min(99, Math.max(0, Number(line.slice(12)) / 1_000_000 / total * 100)));
+      const value = ffmpegProgress(line, total);
+      if (value !== undefined) progress(value);
     }, text => { if (/fontselect: \(Poppins, 700, 0\) -> [^\n]*Poppins/i.test(text)) poppinsLoaded = true; });
     if (e.words.some(w => segments.some(s => w.end > s.start && w.start < s.end)) && !poppinsLoaded)
       throw new Error("FFmpeg did not load Poppins Bold for captions; render cancelled");

@@ -13,6 +13,7 @@ import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-imp
 import { detectVideoLayout, detectPrivateDetails, privacyRequestSchema } from "../lib/shaun-video-layout";
 import { videoSourceCache } from "../lib/shaun-video-cache";
 import { pipeStorageResponse } from "../lib/shaun-storage-stream";
+import { finiteProgress, jobHeartbeatExpired } from "../lib/shaun-job-progress";
 import { getVideo, MAX_DURATION, MAX_VIDEO_BYTES, privateFile, readRecord, saveRecord, videoResponse, videoStorage, type JobRecord, type VideoRecord } from "../lib/shaun-video-store";
 
 const router = Router();
@@ -77,7 +78,7 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
       heartbeat = setInterval(() => { void persist().catch(() => undefined); }, 30000);
       dir = await mkdtemp(join(tmpdir(), "shaun-video-"));
       record.result = await task(dir, record, n => {
-        record.progress = Math.max(record.progress, Math.min(0.99, n));
+        record.progress = finiteProgress(record.progress, n);
         if (Date.now() - lastProgress > 2000) { lastProgress = Date.now(); void persist().catch(() => undefined); }
       });
       record.status = "succeeded"; record.progress = 1;
@@ -314,6 +315,7 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
   try { retainedSegments(edits, (video.probe as { duration: number }).duration); }
   catch (error) { throw new SessionError(400, (error as Error).message); }
   res.status(202).json(await job(owner, "render", video.videoId, async (dir, record, progress) => {
+    record.phase = "Checking saved video"; progress(0.01);
     const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("panels-filled-v2:" + JSON.stringify(edits)).digest("hex")}.json`;
     try {
       const cached = await readRecord<{ jobId: string }>(owner, cacheKey);
@@ -325,8 +327,11 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
       }
     } catch (error) { if (!(error instanceof SessionError && error.status === 404)) throw error; }
     const input = join(dir, "source.mp4"), output = join(dir, "output.mp4");
+    record.phase = "Loading source video"; progress(0.02);
     await downloadLocal(owner, video.videoId, input);
-    await renderVideo(input, output, edits, n => progress(n / 100));
+    record.phase = "Creating MP4"; progress(0.05);
+    await renderVideo(input, output, edits, n => progress(0.05 + n / 100 * 0.88));
+    record.phase = "Saving finished MP4"; progress(0.95);
     await uploadLocal(owner, `jobs/${record.jobId}/output`, output, "video/mp4");
     record.contentType = "video/mp4";
     await saveRecord(owner, cacheKey, { jobId: record.jobId });
@@ -386,13 +391,15 @@ router.post(`${prefix}/videos/:videoId/transcribe`, endpoint(async (req, res, ow
 router.get(`${prefix}/jobs/:jobId`, endpoint(async (req, res, owner) => {
   const jobId = id(req, "jobId");
   const record = await readRecord<JobRecord>(owner, `jobs/${jobId}.json`);
-  if (["queued", "running"].includes(record.status) && Date.now() - Date.parse(record.updatedAt) > 20 * 60 * 1000) {
-    record.status = "failed"; record.error = "Processing was interrupted by a server restart. Please retry.";
+  if (["queued", "running"].includes(record.status) && jobHeartbeatExpired(record.updatedAt)) {
+    record.status = "failed"; record.error = record.kind === "render"
+      ? "The server stopped during export. Your video and edits are safe. Click Download MP4 again to retry."
+      : "Processing was interrupted. Your video and edits are safe. Please retry.";
     record.updatedAt = new Date().toISOString();
     await saveRecord(owner, `jobs/${jobId}.json`, record);
   }
   const { owner: _owner, worker: _worker, ...publicRecord } = record;
-  res.json(publicRecord);
+  res.json({ ...publicRecord, progress: Number.isFinite(record.progress) ? record.progress : 0 });
 }));
 router.get(`${prefix}/jobs/:jobId/asset`, endpoint(async (req, res, owner) => {
   const jobId = id(req, "jobId");

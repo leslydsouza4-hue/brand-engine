@@ -102,6 +102,22 @@ test("source-time cuts merge, clip and remap caption timing exactly", () => {
   assert.equal(overlapping[1].start, 0.9);
 });
 
+test("small timed privacy regions export without invalid chroma radii", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "shaun-small-blur-"));
+  try {
+    const source = join(dir, "source.mp4"), output = join(dir, "output.mp4");
+    await promisify(execFile)("ffmpeg", ["-v", "error", "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=30",
+      "-t", "1", "-c:v", "libx264", "-threads", "2", source]);
+    const points: number[] = [];
+    await renderVideo(source, output, { trimStart: 0, trimEnd: 1, cuts: [], words: [], format: "horizontal",
+      framing: "fit", exportQuality: "fast",
+      blurs: [{ start: 0.2, end: 0.5, x: 0.2, y: 0.2, width: 0.02, height: 0.02 }] }, p => points.push(p));
+    assert.ok(points.every(Number.isFinite));
+    assert.equal(points.at(-1), 100);
+    assert.equal((await probeVideo(output)).width, 1280);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
 test("strict edit bounds and caption override injection protection", () => {
   assert.equal(escapeAss("{\\p1}evil\\Ntext"), "｛＼p1｝evil＼Ntext");
   assert.throws(() => videoEditsSchema.parse({ ...edits, injected: true }));

@@ -21,6 +21,7 @@ import { Section, Segmented, TimeInput, ProgressBar, ErrorNote, ghostBtn, primar
 
 interface SourceRef { videoId: string; name: string; duration: number; width: number; height: number; origin: "upload" | "descript" }
 interface RenderRef { jobId: string; assetUrl: string; key: string; format: string; quality?: "fast" | "standard"; renderedAt: string }
+interface PendingRender { jobId: string; key: string; videoId: string }
 type BusyKind = "upload" | "import" | "transcribe" | "render" | "frame";
 interface Busy { kind: BusyKind; progress: number; label: string; phase?: string }
 
@@ -33,6 +34,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [edits, setEdits] = useSessionState<VideoEdits | null>("shaun.video.edits", null);
   const [transcript, setTranscript] = useSessionState<TranscriptState | null>("shaun.video.transcript", null);
   const [render, setRender] = useSessionState<RenderRef | null>("shaun.video.render", null);
+  const [pendingRender, setPendingRender] = useSessionState<PendingRender | null>("shaun.video.pendingRender", null);
 
   // Replace one-off zoom corrections from the old circle-fit layout once.
   // Later manual adjustments remain untouched.
@@ -268,13 +270,27 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     await run("render", "Preparing download", async (signal, progress) => {
       let jobId = render && !renderStale ? render.jobId : undefined;
       if (!jobId) {
-        ({ jobId } = await startRender(source.videoId, payload));
-        const r = await pollJob<OutputResult>(jobId, p => progress(p * 0.9, "Preparing video"), signal);
+        jobId = pendingRender?.key === key && pendingRender.videoId === source.videoId ? pendingRender.jobId : undefined;
+        if (!jobId) {
+          ({ jobId } = await startRender(source.videoId, payload));
+          setPendingRender({ jobId, key, videoId: source.videoId });
+        }
+        let r: OutputResult;
+        try {
+          r = await pollJob<OutputResult>(jobId, (p, _status, phase) => progress(p * 0.9, phase || "Creating MP4"), signal);
+        } catch (error) {
+          if (error instanceof ShaunVideoError && (error.code === "JOB_FAILED" || error.code === "JOB_INTERRUPTED" || error.status === 404))
+            setPendingRender(p => p?.jobId === jobId ? null : p);
+          throw error;
+        }
         if (signal.aborted) return;
         setRender({ jobId, assetUrl: r.assetUrl, key, format: edits.format, quality: payload.exportQuality, renderedAt: new Date().toISOString() });
+        setPendingRender(p => p?.jobId === jobId ? null : p);
       }
-      progress(0.95, "Downloading MP4");
-      const blob = await fetchJobMp4(jobId, signal);
+      progress(0.9, "Downloading MP4");
+      const blob = await fetchJobMp4(jobId, signal, undefined, (loaded, total) =>
+        progress(total ? 0.9 + 0.1 * loaded / total : 0.9,
+          `Downloading MP4 · ${(loaded / 1048576).toFixed(1)}${total ? ` / ${(total / 1048576).toFixed(1)}` : ""} MB`));
       if (!signal.aborted) saveBlob(blob, videoDownloadName(source.name));
     });
   };

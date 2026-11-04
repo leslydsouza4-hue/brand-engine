@@ -23,6 +23,18 @@ Do not interpret a generic transcription-job failure as bad English audio: inspe
 
 **How to apply:** Separate preparation failures from recognition failures, retain stage diagnostics, and verify recovery using the same source.
 
+Persisted “running” job metadata is not evidence that its worker is alive. An API-process restart kills its in-process video task even while status polling continues to return HTTP 200.
+
+**Why:** A published export remained waiting after a confirmed process termination; its stored heartbeat had stopped. Telemetry did not prove OOM or resource throttling.
+
+**How to apply:** Use heartbeat freshness to detect interrupted work and preserve the pending job identity when stopping/retrying. Surviving restarts requires durable execution or recovery, not just durable status records. Do not claim a faster render when only a stranded wait was fixed.
+
+FFmpeg can emit `out_time_us=N/A` before the first encoded frame. Nonfinite progress must never reach persistence: NaN becomes JSON null and can permanently poison monotonic progress updates.
+
+**Why:** A real published export stored null progress and displayed 0% throughout.
+
+**How to apply:** Validate finite numbers both when parsing media-tool output and at the job-progress boundary.
+
 Development can expose FFmpeg through an injected runtime path even when it is not declared as a production dependency. A successful local render is not evidence that the published runtime has the tools.
 
 **Why:** Import and audio-preparation failures appeared after publishing; FFmpeg worked locally but was absent from the declared system dependencies. Historical job logs hid the exception, so that incident's exact cause could not be proven.
@@ -56,6 +68,12 @@ Prioritize fast editing previews over preview resolution; retain full-quality or
 **Why:** The user explicitly said processing must be faster than doing the work in an editor. A high-resolution editing proxy adds delay without improving final output.
 
 **How to apply:** Benchmark changes on the same input, distinguish conversion from total import time, and reuse existing cached previews rather than regenerating them for quality-setting changes.
+
+Keep the user's selected export resolution when optimizing speed; prefer faster encoding over maximum compression, accepting potentially larger MP4 files.
+
+**Why:** The user repeatedly prioritizes turnaround time. Silently lowering the selected resolution would change the output they requested.
+
+**How to apply:** Skip privacy-filter computation outside active regions' time ranges and verify real output dimensions, audio, captions and blur after encoding changes.
 
 Vertical demos use approximately 30% screen above 70% Shaun, matching the supplied reference. Shaun must automatically fill a rectangular presenter panel—not show the whole small camera circle fitted inside it. Enlarge the available camera image into the panel; do not ask the user to repeatedly zoom. Speaker-only greetings and thanks/outros fill the portrait frame. Leave horizontal framing alone.
 

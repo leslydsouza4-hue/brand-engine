@@ -1,5 +1,6 @@
 // Client for /api/shaun-video (see ../shaun-video-api-contract.md). Base-path aware.
 import type { TimedText, VideoEdits, CaptionTiming, SplitLayout, Scene, Rect, BlurBox } from "./edits";
+import { readDownloadBody } from "./downloadBody";
 
 export const SHAUN_VIDEO_API = `${import.meta.env.BASE_URL}api/shaun-video`;
 export const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime"];
@@ -89,20 +90,24 @@ export async function preparePreview(videoId: string, signal: AbortSignal): Prom
 }
 
 const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve, reject) => {
-  const t = setTimeout(resolve, ms);
-  signal?.addEventListener("abort", () => { clearTimeout(t); reject(new DOMException("Aborted", "AbortError")); }, { once: true });
+  if (signal?.aborted) return reject(new DOMException("Aborted", "AbortError"));
+  const abort = () => { clearTimeout(t); reject(new DOMException("Aborted", "AbortError")); };
+  const t = setTimeout(() => { signal?.removeEventListener("abort", abort); resolve(); }, ms);
+  signal?.addEventListener("abort", abort, { once: true });
 });
 
 /** Polls every ~1.5s until terminal. Aborting stops watching only; the server job keeps running. */
 export async function pollJob<R>(jobId: string, onProgress: (p: number, status: JobStatus, phase?: string) => void, signal?: AbortSignal): Promise<R> {
   for (;;) {
     const job = await getJob<R>(jobId, signal);
-    onProgress(job.progress ?? 0, job.status, job.phase);
+    onProgress(Number.isFinite(job.progress) ? job.progress : 0, job.status, job.phase);
     if (job.status === "succeeded") {
       if (job.result === undefined) throw new ShaunVideoError("Job finished without a result.");
       return job.result;
     }
-    if (job.status === "failed") throw new ShaunVideoError(job.error || "Job failed.");
+    if (job.status === "failed") throw new ShaunVideoError(job.error || "Job failed.", 0, "JOB_FAILED");
+    if (!Number.isFinite(Date.parse(job.updatedAt)) || Date.now() - Date.parse(job.updatedAt) > 3 * 60_000)
+      throw new ShaunVideoError("The server stopped responding during processing. Your video and edits are safe. Please retry.", 0, "JOB_INTERRUPTED");
     await sleep(1500, signal);
   }
 }
@@ -128,22 +133,27 @@ export async function uploadVideo(file: File, onProgress: (p: number) => void, s
 }
 
 /** Authenticated fetch of a finished render as a verified MP4 blob. */
-export async function fetchJobMp4(jobId: string, signal?: AbortSignal, maxBytes?: number): Promise<Blob> {
+export async function fetchJobMp4(jobId: string, signal?: AbortSignal, maxBytes?: number,
+  onProgress?: (loaded: number, total?: number) => void): Promise<Blob> {
   let res: Response;
-  try { res = await fetch(jobAssetUrl(jobId), { credentials: "include", cache: "no-store", signal }); }
-  catch (err) { if (isAbort(err)) throw err; throw new ShaunVideoError("Download failed. Check your connection and try again."); }
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (signal?.aborted) abort(); else signal?.addEventListener("abort", abort, { once: true });
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, 60_000);
+  try { res = await fetch(jobAssetUrl(jobId), { credentials: "include", cache: "no-store", signal: controller.signal }); }
+  catch (err) {
+    if (timedOut) throw new ShaunVideoError("The download did not start. Retry Download MP4; your finished video will be reused.");
+    if (isAbort(err)) throw err;
+    throw new ShaunVideoError("Download failed. Check your connection and try again.");
+  } finally { clearTimeout(timer); signal?.removeEventListener("abort", abort); }
   if (!res.ok) {
     const msg = res.status === 401 ? "Your session expired. Sign in again, then retry." : res.status === 404 ? "This render is no longer available. Render again." : `Download failed (${res.status}).`;
     throw new ShaunVideoError(msg, res.status);
   }
   const type = (res.headers.get("content-type") || "").toLowerCase();
   if (!type.startsWith("video/mp4")) throw new ShaunVideoError("The server did not return an MP4. Sign in again or render again.");
-  const len = Number(res.headers.get("content-length"));
-  if (maxBytes && len > maxBytes) { res.body?.cancel().catch(() => undefined); throw new ShaunVideoError(`This render is over ${Math.round(maxBytes / 1048576)} MB. Choose Fast 720p and render again.`, 413); }
-  const blob = await res.blob();
-  if (!blob.size) throw new ShaunVideoError("The downloaded file was empty. Render again.");
-  if (maxBytes && blob.size > maxBytes) throw new ShaunVideoError(`This render is over ${Math.round(maxBytes / 1048576)} MB. Choose Fast 720p and render again.`, 413);
-  return blob.type === "video/mp4" ? blob : new Blob([blob], { type: "video/mp4" });
+  return readDownloadBody(res, { signal, maxBytes, onProgress });
 }
 
 /** Saves an already-fetched blob locally. The blob URL is revoked shortly after. */

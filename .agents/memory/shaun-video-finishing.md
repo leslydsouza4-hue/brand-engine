@@ -39,9 +39,13 @@ Prioritize fast editing previews over preview resolution; retain full-quality or
 
 **How to apply:** Benchmark changes on the same input, distinguish conversion from total import time, and reuse existing cached previews rather than regenerating them for quality-setting changes.
 
-Vertical demos must be screen recording in the top half and Shaun cropped into the bottom half, with captions over his section. Speaker-only greetings and thanks/outros must instead show Shaun full-frame. Leave horizontal framing alone.
+Vertical demos use approximately 30% screen above 70% Shaun, matching the supplied reference. Shaun must automatically fill a rectangular presenter panel—not show the whole small camera circle fitted inside it. Enlarge the available camera image into the panel; do not ask the user to repeatedly zoom. Speaker-only greetings and thanks/outros fill the portrait frame. Leave horizontal framing alone.
 
-**Why:** The user explicitly requested split-screen during feature demos but full-screen Shaun before and after screen sharing.
+Exclude the small embedded bottom-left Shaun webcam from the upper UI panel, even if a portion of the screen must be cropped. Shaun should appear only in the large lower presenter section during demos.
+
+**Why:** The user repeated this correction after asking to preserve the screen UI; webcam exclusion takes priority over retaining all source UI.
+
+**Why:** The user explicitly corrected the contain-fit interpretation and supplied a zoomed rectangular reference. Cropping inside the camera circle removes its visible border without inventing missing footage.
 
 The full-screen greeting should be brief—roughly the first 5–8 seconds (“Happy Thursday”, “good morning”)—then the demo switches to split view, with full-screen Shaun again for the outro.
 
@@ -54,6 +58,10 @@ Prefer direct hand-drag positioning over X/Y fields for screen and speaker. Keep
 **Why:** The user explicitly requested a hand instead of coordinates and objected to being asked to manually recover many omitted caption words.
 
 **How to apply:** Keep advanced coordinates secondary; retain recognized text when word alignment fails by grouping existing aligned cues, and label uncertainty honestly rather than dropping words or inventing individual timestamps.
+
+Transcription should happen automatically; the primary caption control is on/off, not a manual transcribe step.
+
+**Why:** The user explicitly requested automatic transcription with only an on/off control. Never overwrite existing caption edits or imported subtitles automatically.
 
 Keep the main video controls focused on the scene currently visible; hide base-layout and detailed scene timing controls under Advanced. Fit the screen content by default instead of permanently cutting off its edges.
 

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { layoutFrame, splitSchema, cropBoxSchema } from "./shaun-video-render";
 import { SessionError } from "./session-validation";
 import { greetingScenes } from "./shaun-greeting-scenes";
+import { excludeWebcam } from "./shaun-screen-crop";
 
 async function frames(input: string, dir: string, times: number[]) {
   const parts: Array<{text: string} | {inlineData: {data:string; mimeType:string}}> = [];
@@ -45,9 +46,14 @@ export async function detectVideoLayout(input:string, dir:string, duration:numbe
   const times=Array.from({length:count},(_,i)=>Math.max(0,Math.min(duration-0.25,i*duration/(count-1)+0.01)));
   const boundaries=[0,...times.slice(1).map((time,i)=>(time+times[i])/2),duration];
   const result=z.object({frames:z.array(z.object({mode:z.enum(["speaker","split"]),split:splitSchema})).length(count)}).parse(await inspect(await frames(input,dir,times),
-    `Return {"frames":[{"mode":"speaker" or "split","split":{"speaker":{"x":0,"y":0,"width":1,"height":1},"screen":{"x":0,"y":0,"width":1,"height":1}}}]} with EXACTLY ${count} entries, one per image in order. Normalized full source coordinates. Identify live presenter region, not identity. Speaker-only greetings/endings are mode speaker; include head and torso region suitable for portrait cover. Screen sharing is mode split: speaker tight webcam bounds and screen largest useful UNOBSTRUCTED rectangle EXCLUDING embedded webcam (do not include presenter in screen crop). Prefer zooming screen content over retaining webcam. Do not confuse software avatars with presenter. No explanatory prose.`));
+    `Return {"frames":[{"mode":"speaker" or "split","split":{"speaker":{"x":0,"y":0,"width":1,"height":1},"screen":{"x":0,"y":0,"width":1,"height":1}}}]} with EXACTLY ${count} entries, one per image in order. Normalized full source coordinates. Identify live presenter region, not identity. Speaker-only greetings/endings are mode speaker. Speaker crop MUST retain the entire camera panel, hair, shoulders, chest and available background: NOT a face bounding box. Prefer rectangular camera footage when available; do not invent pixels outside an already circular camera. Screen sharing is mode split: retain the full shared application including sidebars, Slack UI or developer panels when present. Do NOT crop out useful UI to exclude a webcam overlay; prioritize complete app content. Do not invent Slack UI when absent. Output is fitted, not zoom-to-fill: top30% screen and bottom70% presenter. Do not confuse software avatars with presenter. No explanatory prose.`));
   const scenes: Array<{start:number;end:number;mode:"speaker"|"split";split:z.infer<typeof splitSchema>}>=[];
   result.frames.forEach((f,i)=>{
+    if(f.mode==="split") {
+      const clean=excludeWebcam(f.split.screen,f.split.speaker);
+      if(!clean) throw new SessionError(422,"The screen and camera could not be separated. Select their bounds manually.");
+      f.split.screen=clean;
+    }
     const previous=scenes.at(-1);
     const similar=previous && previous.mode===f.mode && (["screen","speaker"] as const).every(panel=>
       (["x","y","width","height"] as const).every(key=>Math.abs(previous.split[panel][key]-f.split[panel][key])<0.04));

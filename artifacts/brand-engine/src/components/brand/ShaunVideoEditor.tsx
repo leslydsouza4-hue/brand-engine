@@ -3,7 +3,7 @@ import { ScanSearch, UploadCloud, Link2, Loader2, Play, Pause, Scissors, Monitor
 import { LivePreview } from "./LivePreview";
 import { useSessionState } from "./sessions/useSessionState";
 import {
-  downloadJobAsset, fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
+  fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
   type Capabilities, type OutputResult, type TranscriptResult, type VideoMeta,
 } from "./shaunVideo/api";
 import {
@@ -11,6 +11,7 @@ import {
   type BlurBox, type Scene, type SplitLayout, type TimedText, type TranscriptState, type VideoEdits,
 } from "./shaunVideo/edits";
 import { VideoStage } from "./shaunVideo/VideoStage";
+import { usePreparedDownload } from "./shaunVideo/preparedDownload";
 import { SplitPanels } from "./shaunVideo/SplitPanels";
 import { Timeline } from "./shaunVideo/Timeline";
 import { CaptionEditor } from "./shaunVideo/CaptionEditor";
@@ -32,6 +33,18 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [edits, setEdits] = useSessionState<VideoEdits | null>("shaun.video.edits", null);
   const [transcript, setTranscript] = useSessionState<TranscriptState | null>("shaun.video.transcript", null);
   const [render, setRender] = useSessionState<RenderRef | null>("shaun.video.render", null);
+
+  // Replace one-off zoom corrections from the old circle-fit layout once.
+  // Later manual adjustments remain untouched.
+  useEffect(() => {
+    const needs = (s: SplitLayout | undefined) => !!s && !s.speakerAutoFramed;
+    if (!edits || (!needs(edits.split) && !edits.scenes?.some(s => needs(s.split)))) return;
+    const upgrade = (s: SplitLayout): SplitLayout => s.speakerAutoFramed ? s : {
+      ...s, speakerScale: 1, speakerPan: { x: 0, y: 0 }, speakerAutoFramed: true,
+    };
+    setEdits(e => e && ({ ...e, split: e.split ? upgrade(e.split) : undefined,
+      scenes: e.scenes?.map(s => ({ ...s, split: upgrade(s.split) })) }));
+  }, [edits, setEdits]);
 
   const [busy, setBusy] = useState<Busy | null>(null);
   const [errors, setErrors] = useState<Partial<Record<BusyKind | "video" | "playback", string>>>({});
@@ -114,7 +127,6 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [selectedBlur, setSelectedBlur] = useState<number | null>(null);
   const [markIn, setMarkIn] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [download, setDownload] = useState<{ status: "idle" | "downloading" | "error"; error?: string }>({ status: "idle" });
   const loadedForRef = useRef<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -205,33 +217,61 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     else setEdits(e => e && { ...e, words: units });
   };
 
-  const handleTranscribe = async () => {
+  const [autoCaptions, setAutoCaptionsState] = useState<boolean>(() => { try { return localStorage.getItem("shaun.video.autoCaptions") !== "off"; } catch { return true; } });
+  const setAutoCaptions = (on: boolean) => {
+    setAutoCaptionsState(on);
+    try { localStorage.setItem("shaun.video.autoCaptions", on ? "on" : "off"); } catch { /* storage unavailable */ }
+    if (!on && busy?.kind === "transcribe") {
+      // Cancels only the transcription watch; allow it to start again when switched back on.
+      abortRef.current?.abort();
+      if (source) autoTriedRef.current.delete(source.videoId);
+    }
+  };
+  const autoTriedRef = useRef<Set<string>>(new Set());
+  const hasCaptionsRef = useRef(false);
+  hasCaptionsRef.current = !!transcript || captionUnits.length > 0;
+
+  const handleTranscribe = async (auto = false) => {
     if (!source) return;
-    if (captionUnits.length && !window.confirm("Transcribing again replaces your caption edits. Continue?")) return;
+    if (!auto && captionUnits.length && !window.confirm("Transcribing again replaces your caption edits. Continue?")) return;
+    const videoId = source.videoId;
     const result = await run("transcribe", "Transcribing", async (signal, progress) => {
       const { jobId } = await startTranscribe(source.videoId);
       return pollJob<TranscriptResult>(jobId, (p, _s, phase) => progress(p, phase), signal);
     });
-    if (!result) return;
+    if (!result || currentVideoRef.current !== videoId) return;
+    // Auto runs never overwrite words or captions that appeared meanwhile.
+    if (auto && hasCaptionsRef.current) return;
     setTranscript({ timing: result.timing, text: result.text, segments: result.segments ?? [], model: result.model, timestampMethod: result.timestampMethod, language: result.language, omittedUncertainWords: result.omittedUncertainWords ?? 0, groupedUncertainWords: result.groupedUncertainWords ?? 0 });
     setEdits(e => e && { ...e, words: result.timing === "word" ? result.words : [] });
   };
 
+  // Auto-transcribe once per source per mount, once the preview (audio) is ready and nothing else is busy.
+  const previewReady = !!source && preview?.videoId === source.videoId;
+  const hasCaptions = !!transcript || captionUnits.length > 0;
+  useEffect(() => {
+    if (!autoCaptions || !source || !previewReady || hasCaptions || busy || errors.video || errors.transcribe) return;
+    if (autoTriedRef.current.has(source.videoId)) return;
+    autoTriedRef.current.add(source.videoId);
+    void handleTranscribe(true);
+  }, [autoCaptions, source?.videoId, previewReady, hasCaptions, busy, errors.video, errors.transcribe]);
+
   const duration = source?.duration || edits?.trimEnd || 0;
   const validation = useMemo(() => edits ? validateEdits(edits, duration) : [], [edits, duration]);
-  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) : "";
+  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + (autoCaptions ? "" : "#nocaptions") : "";
+  const prepared = usePreparedDownload(render?.jobId ?? null, source && render ? `${source.name.replace(/\.[^.]+$/, "")}-${render.format}.mp4` : "video.mp4");
   const renderStale = !!render && render.key !== currentKey;
 
   const handleRender = async () => {
     if (!source || !edits || validation.length) return;
-    const payload = renderEdits(edits, transcript);
+    const full = renderEdits(edits, transcript);
+    const payload = autoCaptions ? full : { ...full, words: [] };
     const key = currentKey;
     const result = await run("render", "Rendering MP4", async (signal, progress) => {
       const { jobId } = await startRender(source.videoId, payload);
       const r = await pollJob<OutputResult>(jobId, (p, _s, phase) => progress(p, phase), signal);
       return { jobId, ...r };
     });
-    setDownload({ status: "idle" });
     if (result) setRender({ jobId: result.jobId, assetUrl: result.assetUrl, key, format: edits.format, quality: payload.exportQuality, renderedAt: new Date().toISOString() });
   };
 
@@ -259,16 +299,6 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
       if ((err as Error)?.name === "AbortError") return;
       setError("playback", "Playback was blocked by the browser. Press play again.");
     });
-  };
-  const handleDownload = async () => {
-    if (!render || !source || download.status === "downloading") return;
-    setDownload({ status: "downloading" });
-    try {
-      await downloadJobAsset(render.jobId, `${source.name.replace(/\.[^.]+$/, "")}-${render.format}.mp4`);
-      setDownload({ status: "idle" });
-    } catch (err) {
-      setDownload({ status: "error", error: (err as Error).message || "Download failed. Try again." });
-    }
   };
   const patch = (p: Partial<VideoEdits>) => setEdits(e => e && { ...e, ...p });
 
@@ -365,7 +395,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   <Segmented value={edits.framing} onChange={framing => patch({ framing })} options={[{ value: "blur-fill", label: "Blur fill" }, { value: "fit", label: "Fit" }]} />
                   <div className="text-[10px] text-[#475569] leading-[1.45]">Full footage is always kept in frame. Blur fill backs it with a blurred copy in the render; Fit uses solid bars.</div>
                 </> : <>
-                  <div className="text-[10px] text-[#475569] leading-[1.45]">Split: screen recording fills the top half, speaker fills the bottom half, captions over the speaker. Speaker-only scenes fill the whole frame.</div>
+                  <div className="text-[10px] text-[#475569] leading-[1.45]">Screen on top 30%, Shaun fills the bottom 70%. Automatic camera framing removes the circle edges. Greetings and outros fill the whole frame.</div>
                   {!edits.split && layoutHere?.status !== "error" && (
                     <div data-testid="status-layout" className="flex items-center gap-[6px] p-[8px] rounded-[10px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.15)] text-[10px] text-[#94A3B8]">
                       <Loader2 className="w-[11px] h-[11px] animate-spin text-[#2896FB] shrink-0" />{layoutHere?.phase || "Locating panels in the background. You can keep editing."}
@@ -410,34 +440,40 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
             </Section>
 
             <Section title="Captions" right={transcript && <span className={`text-[9px] font-semibold uppercase tracking-[0.8px] px-[6px] py-[2px] rounded-[4px] ${transcript.timing === "word" ? "text-[#00B2A9] bg-[rgba(0,178,169,0.1)]" : "text-[#FBBF24] bg-[rgba(251,191,36,0.1)]"}`}>{transcript.timing === "word" ? "Word timing" : "Segment timing"}</span>}>
-              <button type="button" disabled={!!busy} onClick={() => void handleTranscribe()} className={`${ghostBtn} w-full mb-[8px]`}>
-                {busyFor("transcribe") ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <Captions className="w-[12px] h-[12px]" />}
-                {transcript ? "Transcribe again" : "Transcribe captions"}
-              </button>
+              <div className="flex items-center justify-between gap-[10px] p-[10px] mb-[8px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)]">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-[6px] text-[12px] font-semibold text-[#E2E8F0]"><Captions className="w-[12px] h-[12px] text-[#00B2A9]" />Auto captions</div>
+                  <div className="text-[10px] text-[#64748B] leading-[1.45]">{autoCaptions ? "Transcribes new videos automatically." : "Off. Captions hidden in preview and export; edits are kept."}</div>
+                </div>
+                <button type="button" role="switch" aria-checked={autoCaptions} aria-label="Auto captions" data-testid="switch-auto-captions" onClick={() => setAutoCaptions(!autoCaptions)}
+                  className={`relative w-[34px] h-[20px] rounded-full border-none cursor-pointer shrink-0 transition-colors ${autoCaptions ? "bg-[#00B2A9]" : "bg-[rgba(255,255,255,0.12)]"}`}>
+                  <span className={`absolute top-[3px] left-[3px] w-[14px] h-[14px] rounded-full bg-[#F1F5F9] transition-transform ${autoCaptions ? "translate-x-[14px]" : ""}`} />
+                </button>
+              </div>
               {busyFor("transcribe") && busy && <><ProgressBar value={busy.progress} label={busy.phase || busy.label} />{cancelBtn}</>}
-              {errors.transcribe && <ErrorNote message={errors.transcribe} onRetry={() => void handleTranscribe()} />}
-              {edits.format === "vertical" && (
+              {errors.transcribe && <ErrorNote message={errors.transcribe} onRetry={() => void handleTranscribe(!hasCaptions)} />}
+              {autoCaptions && edits.format === "vertical" && (
                 <label className="block text-[11px] text-[#94A3B8] mb-[10px]">
                   Caption distance from bottom · {Math.round((edits.captionBottom ?? 0.04) * 100)}%
                   <input aria-label="Caption distance from bottom" type="range" min="2" max="22" step="1" value={Math.round((edits.captionBottom ?? 0.04) * 100)} onChange={e => patch({ captionBottom: Number(e.target.value) / 100 })} className="block w-full mt-[6px] accent-[#00B2A9]" />
-                  <span className="block text-[10px] mt-[4px]">Move captions below Shaun’s face. Use an uncaptioned Descript source to avoid doubling existing text.</span>
+                  <span className="block text-[10px] mt-[4px]">Keep captions clear of the speaker’s face. Use an uncaptioned Descript source.</span>
                 </label>
               )}
-              {transcript?.timing === "segment" && (
+              {autoCaptions && transcript?.timing === "segment" && (
                 <div className="flex gap-[6px] p-[8px] mb-[8px] rounded-[10px] bg-[rgba(251,191,36,0.06)] border border-[rgba(251,191,36,0.18)] text-[10px] text-[#FCD34D] leading-[1.45]">
                   <AlertTriangle className="w-[12px] h-[12px] shrink-0 mt-[1px]" />
                   Captions will show as whole phrases. Give them a quick read before rendering.
                 </div>
               )}
-              {transcript?.timing === "word" && (
+              {autoCaptions && transcript?.timing === "word" && (
                 <div className="p-[8px] mb-[8px] rounded-[10px] bg-[rgba(0,178,169,0.05)] border border-[rgba(0,178,169,0.14)] text-[10px] text-[#94A3B8] leading-[1.45]">
                   {transcript.groupedUncertainWords ? "Some words are grouped together for timing. Review captions before exporting." : "Captions are automatic. Give them a quick read before rendering."}
                   {!!transcript.omittedUncertainWords && <span className="block mt-[4px] text-[#FCD34D]">Some words were missed in this older transcript. Transcribe again to recover them.</span>}
                 </div>
               )}
-              {!transcript && caps?.transcriptionNote && !busyFor("transcribe") && <div className="text-[10px] text-[#475569] mb-[6px] leading-[1.45]">{caps.transcriptionNote}</div>}
-              {(transcript || captionUnits.length > 0) && <CaptionEditor units={captionUnits} timing={transcript?.timing ?? "word"} time={time} onChange={setCaptionUnits} onSeek={seek} />}
-              {!transcript && !captionUnits.length && !busyFor("transcribe") && <div className="text-[10px] text-[#475569]">Captions are burned into the render automatically in white bold with the spoken word highlighted.</div>}
+              {autoCaptions && !transcript && caps?.transcriptionNote && !busyFor("transcribe") && <div className="text-[10px] text-[#475569] mb-[6px] leading-[1.45]">{caps.transcriptionNote}</div>}
+              {autoCaptions && (transcript || captionUnits.length > 0) && <CaptionEditor units={captionUnits} timing={transcript?.timing ?? "word"} time={time} onChange={setCaptionUnits} onSeek={seek} />}
+              {autoCaptions && !transcript && !captionUnits.length && !busyFor("transcribe") && !errors.transcribe && <div className="text-[10px] text-[#475569]">Starts once the video is ready. Burned in white bold, spoken word highlighted.</div>}
             </Section>
 
             <Section title="Trim and cuts" right={<button type="button" onClick={resetEdits} className={ghostBtn}><RotateCcw className="w-[10px] h-[10px]" />Reset</button>}>
@@ -507,11 +543,13 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                 <div className={`mt-[8px] p-[10px] rounded-[12px] border ${renderStale ? "border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.04)]" : "border-[rgba(0,178,169,0.2)] bg-[rgba(0,178,169,0.05)]"}`}>
                   <div className="text-[11px] font-semibold text-[#E2E8F0]">{render.format === "vertical" ? "Vertical" : "Horizontal"} {render.quality === "fast" ? "720p (fast, lower resolution)" : "1080p"} MP4 ready</div>
                   <div className="text-[10px] text-[#64748B] mb-[8px]">{renderStale ? "Edits changed since this render. Render again to include them." : `Rendered ${new Date(render.renderedAt).toLocaleString()}`}</div>
-                  <button type="button" data-testid="button-download" disabled={download.status === "downloading"} onClick={() => void handleDownload()} className={ghostBtn}>
-                    {download.status === "downloading" ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
-                    {download.status === "downloading" ? "Downloading..." : "Download MP4"}
+                  <button type="button" data-testid="button-download" disabled={prepared.status === "saving"} onClick={() => void prepared.download()} className={ghostBtn}>
+                    {prepared.status === "preparing" || prepared.status === "saving" ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
+                    {prepared.status === "preparing" ? "Preparing download..." : prepared.status === "saving" ? "Finishing download..." : "Download MP4"}
                   </button>
-                  {download.status === "error" && <ErrorNote message={download.error ?? "Download failed."} onRetry={() => void handleDownload()} />}
+                  {prepared.status === "ready" && <div data-testid="status-download-ready" className="text-[10px] text-[#64748B] mt-[4px]">Ready to save.</div>}
+                  {prepared.status === "deferred" && <div className="text-[10px] text-[#64748B] mt-[4px]">Large file: transfer starts when you click Download.</div>}
+                  {prepared.status === "error" && <ErrorNote message={prepared.error ?? "Download failed."} onRetry={prepared.retry} />}
                 </div>
               )}
               <button type="button" disabled={!!busy} onClick={() => void handleFrame()} className={`${ghostBtn} w-full mt-[10px]`}>
@@ -536,7 +574,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   <span className="text-xs">Your original stays untouched. Captions and exports use the full-quality source.</span>
                 </div>
               ) : <VideoStage
-                src={preview.url} videoRef={videoRef} edits={edits} captions={captionUnits} timing={transcript?.timing ?? "word"}
+                src={preview.url} videoRef={videoRef} edits={edits} captions={autoCaptions ? captionUnits : []} timing={transcript?.timing ?? "word"}
                 time={time} sourceSize={source.width ? { width: source.width, height: source.height } : null}
                 layoutStatus={layoutHere?.status === "error" ? "Panels not found. Retry detection or set bounds manually in the Format panel." : "Locating speaker and screen panels. Export unlocks once they are set."}
                 onTime={setTime} onPlaying={setPlaying}

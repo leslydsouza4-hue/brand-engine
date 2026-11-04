@@ -6,9 +6,39 @@ id = "8mRNEC_RSuGZZqqEgFBlx"
 uri = "file://artifacts/brand-engine/Design.md"
 type = "text"
 title = "HighLevel Brand Engine Design System"
+logical_id = "d11f3818-2bcd-4167-ae29-91288e428ec3"
 
 [[outputs]]
 id = "IsFUrGvK0AijuqMLMBntp"
 uri = "file://did-you-know-docs.md"
 type = "text"
 title = "Did You Know — Feature Documentation"
+logical_id = "960556e1-01b4-468c-bcd3-e21deca5c7b5"
+
+[[outputs]]
+id = "C7VRx1-Nbac8sKSBRJorC"
+uri = "file://generated-artifacts/shaun-framing/intro.jpg"
+type = "image"
+title = "Corrected intro — actual rendered frame"
+description = "Shaun fills the rectangular portrait frame automatically."
+logical_id = "3a32618f-31cc-4602-af9b-a30f11200a3d"
+content_hash = "sha256:d9a4e53496739c630edd360079b513cd975196c617ca8475743d963d62a5f529"
+size = 11636
+mtime_ms = 1793756878940
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:16202af2-8028-4cc1-964a-81c9525966c4/3a32618f-31cc-4602-af9b-a30f11200a3d/d67a5af0-992e-4e26-bbee-e161bb69bdd8"
+storage_version_token = "1793756917701597"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "1jCjuWWHeWJKH2eCQWg6_"
+uri = "file://generated-artifacts/shaun-framing/demo.jpg"
+type = "image"
+title = "Corrected demo — actual rendered frame"
+description = "UI above, filled presenter below, without the duplicate webcam in the UI panel."
+logical_id = "dc5a6a44-f0fb-4626-b120-1817d976a9b0"
+content_hash = "sha256:49533cadd4970acafad31a1cdcacd4fe2206dd87ae4f43934ad624ce26630d92"
+size = 15442
+mtime_ms = 1793756878955
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:16202af2-8028-4cc1-964a-81c9525966c4/dc5a6a44-f0fb-4626-b120-1817d976a9b0/ac607cc4-491e-49d2-8b6d-47c6282e6f91"
+storage_version_token = "1793756918168065"
+content_type = "image/jpeg"

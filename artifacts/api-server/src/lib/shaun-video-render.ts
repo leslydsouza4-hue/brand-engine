@@ -3,6 +3,7 @@ import { mkdtemp, rm, stat, writeFile, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import { z } from "zod";
+import { excludeWebcam } from "./shaun-screen-crop";
 
 const seconds = z.number().finite().min(0).max(600);
 export const cropBoxSchema = z.object({
@@ -10,6 +11,8 @@ export const cropBoxSchema = z.object({
   width: z.number().finite().min(0.02).max(1), height: z.number().finite().min(0.02).max(1),
 }).strict().refine(b => b.x + b.width <= 1.000001 && b.y + b.height <= 1.000001, "Crop extends beyond source");
 export const splitSchema = z.object({ speaker: cropBoxSchema, screen: cropBoxSchema,
+  speakerShape: z.enum(["circle","rectangle"]).optional(),
+  speakerAutoFramed: z.boolean().optional(),
   screenScale: z.number().finite().min(0.5).max(2).optional(),
   speakerScale: z.number().finite().min(0.5).max(2).optional(),
   screenPan: z.object({ x: z.number().min(-1).max(1), y: z.number().min(-1).max(1) }).strict().optional(),
@@ -238,17 +241,21 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
         const x = Math.floor(b.x * info.width / 2) * 2, y = Math.floor(b.y * info.height / 2) * 2;
         const cw = Math.max(2, Math.min(info.width - x, Math.floor(b.width * info.width / 2) * 2));
         const ch = Math.max(2, Math.min(info.height - y, Math.floor(b.height * info.height / 2) * 2));
-        const ratio=(mode==="contain"?Math.min:Math.max)(width/cw,panelHeight/ch)*scale;
+        const aspect=cw/ch, relative=(width/panelHeight)/aspect;
+        const circular=mode==="cover" && (split.speakerShape==="circle" || (!split.speakerShape && aspect>=0.85 && aspect<=1.15));
+        const autoZoom=circular?Math.sqrt(1+Math.min(relative,1/relative)**2)*1.04:1;
+        const ratio=(mode==="contain"?Math.min:Math.max)(width/cw,panelHeight/ch)*scale*autoZoom;
         const w=Math.max(2,Math.round(cw*ratio/2)*2), h=Math.max(2,Math.round(ch*ratio/2)*2);
         const dx=Math.max(-Math.abs(w-width)/2,Math.min(Math.abs(w-width)/2,pan.x*width));
         const dy=Math.max(-Math.abs(h-panelHeight)/2,Math.min(Math.abs(h-panelHeight)/2,pan.y*panelHeight));
         const padW=Math.max(w,width)+Math.ceil(Math.abs(dx))*2, padH=Math.max(h,panelHeight)+Math.ceil(Math.abs(dy))*2;
         return `crop=${cw}:${ch}:${x}:${y},scale=${w}:${h},pad=${padW}:${padH}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=${width}:${panelHeight}:${Math.round((padW-width)/2-dx)}:${Math.round((padH-panelHeight)/2-dy)},setsar=1`;
       };
+      const screenHeight=Math.round(height*0.3/2)*2;
       if (piece.scene?.mode === "speaker") filters.push(`[joined]${frame(split.speaker,"cover",split.speakerScale,split.speakerPan,height)}[framed]`);
       else filters.push("[joined]split[screenSource][speakerSource]",
-        `[screenSource]${frame(split.screen,"contain",split.screenScale,split.screenPan)}[top]`,
-        `[speakerSource]${frame(split.speaker,"cover",split.speakerScale,split.speakerPan)}[bottom]`,
+        `[screenSource]${frame(excludeWebcam(split.screen,split.speaker)??split.screen,"contain",split.screenScale,split.screenPan,screenHeight)}[top]`,
+        `[speakerSource]${frame(split.speaker,"cover",split.speakerScale,split.speakerPan,height-screenHeight)}[bottom]`,
         "[top][bottom]vstack=inputs=2[framed]");
     } else if (e.framing === "blur-fill") {
       filters.push("[joined]split[front][back]",

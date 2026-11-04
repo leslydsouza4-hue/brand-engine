@@ -56,7 +56,14 @@ export function sourceToCrop(box: Rect, crop: Rect): Rect {
 export interface Rect { x: number; y: number; width: number; height: number }
 export interface Pan { x: number; y: number }
 /** screenPan/speakerPan: destination offsets in -1..1 of output width / half height, applied after fit + scale. */
-export interface SplitLayout { speaker: Rect; screen: Rect; speakerScale?: number; screenScale?: number; screenPan?: Pan; speakerPan?: Pan }
+export interface SplitLayout { speaker: Rect; screen: Rect; speakerScale?: number; screenScale?: number; screenPan?: Pan; speakerPan?: Pan; speakerShape?: "circle" | "rectangle"; speakerAutoFramed?: boolean }
+
+export function screenWithoutWebcam(s:SplitLayout):Rect {
+ const a=s.screen,b=s.speaker,r=a.x+a.width,d=a.y+a.height;
+ if(b.x>=r || b.y>=d || b.x+b.width<=a.x || b.y+b.height<=a.y)return a;
+ const l=Math.max(a.x,b.x-0.005),t=Math.max(a.y,b.y-0.005),br=Math.min(r,b.x+b.width+0.005),bb=Math.min(d,b.y+b.height+0.005);
+ return [{x:a.x,y:a.y,width:a.width,height:t-a.y},{x:br,y:a.y,width:r-br,height:a.height},{x:a.x,y:bb,width:a.width,height:d-bb},{x:a.x,y:a.y,width:l-a.x,height:a.height}].filter(v=>v.width>=0.02&&v.height>=0.02).sort((x,y)=>y.width*y.height-x.width*x.height)[0]??a;
+}
 
 export function validRect(r: Rect | undefined): boolean {
   return !!r && [r.x, r.y, r.width, r.height].every(Number.isFinite) && r.width >= 0.02 && r.height >= 0.02 && r.x >= 0 && r.y >= 0 && r.x <= 0.99 && r.y <= 0.99 && r.x + r.width <= 1.000001 && r.y + r.height <= 1.000001;
@@ -244,8 +251,19 @@ export function boxFromDrag(a: Point, b: Point, minSize = 0.01): Pick<BlurBox, "
 }
 
 export type FitMode = "contain" | "cover";
-/** Default fit per panel: screen keeps all content visible (letterbox), speaker fills its panel. */
+/** Both panels keep the full selected crop visible (contain), including speaker-only scenes. */
 export const PANEL_FIT: Record<"screen" | "speaker", FitMode> = { screen: "contain", speaker: "cover" };
+
+/** Fill a rectangular panel from the inner camera area, not the circle's bounding square.
+ * Legacy near-square webcam bounds are treated as circular until redetected. */
+export function speakerAutoScale(sw:number,sh:number,pw:number,ph:number,shape?:SplitLayout["speakerShape"]) {
+  const aspect=sw/sh;
+  if(shape==="rectangle" || (!shape && (aspect<0.85 || aspect>1.15))) return 1;
+  const ratio=(pw/ph)/aspect;
+  return Math.sqrt(1+Math.min(ratio,1/ratio)**2)*1.04;
+}
+/** Vertical split: screen occupies the top 30% of the frame, speaker the bottom 70%. Must match the renderer. */
+export const SPLIT_TOP = 0.3;
 
 /** Largest allowed offset (px) on one axis: keeps a smaller image inside, a larger image covering. */
 export const maxPanOffset = (rendered: number, panel: number) => Math.abs(rendered - panel) / 2;

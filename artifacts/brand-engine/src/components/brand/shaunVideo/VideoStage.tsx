@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { captionAt, clamp, round3, type SplitLayout, panelPlacement, panLimits, PANEL_FIT, layoutAt, nextPlayableTime, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
+import { captionAt, clamp, round3, type SplitLayout, panelPlacement, panLimits, speakerAutoScale, screenWithoutWebcam, PANEL_FIT, SPLIT_TOP, layoutAt, nextPlayableTime, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
 
 interface Props {
   src: string;
@@ -53,18 +53,19 @@ export function VideoStage(p: Props) {
     if (!ctx) return;
     ctx.fillStyle = "#030B17";
     ctx.fillRect(0, 0, W, H);
-    const half = Math.round(H / 2);
+    const half = Math.round(H * SPLIT_TOP);
     const paint = (r: { x: number; y: number; width: number; height: number }, top: number, h: number, mode: "contain" | "cover", scale = 1, pan?: { x: number; y: number }) => {
       const sx = r.x * v.videoWidth, sy = r.y * v.videoHeight, sw = r.width * v.videoWidth, sh = r.height * v.videoHeight;
       if (sw < 1 || sh < 1) return;
-      const f = panelPlacement(sw, sh, W, h, mode, scale, pan);
+      const zoom=mode==="cover"?speakerAutoScale(sw,sh,W,h,split.speakerShape):1;
+      const f = panelPlacement(sw, sh, W, h, mode, scale*zoom, pan);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, top, W, h); ctx.clip();
       try { ctx.drawImage(v, sx, sy, sw, sh, f.dx, top + f.dy, f.dw, f.dh); } catch { /* frame not ready */ }
       ctx.restore();
     };
     if (act.mode === "speaker") { paint(split.speaker, 0, H, PANEL_FIT.speaker, split.speakerScale, split.speakerPan); return; }
-    paint(split.screen, 0, half, PANEL_FIT.screen, split.screenScale, split.screenPan);
+    paint(screenWithoutWebcam(split), 0, half, PANEL_FIT.screen, split.screenScale, split.screenPan);
     paint(split.speaker, half, H - half, PANEL_FIT.speaker, split.speakerScale, split.speakerPan);
   }, [videoRef]);
 
@@ -113,15 +114,17 @@ export function VideoStage(p: Props) {
     const split = act.split;
     const rect = e.currentTarget.getBoundingClientRect();
     const full = act.mode === "speaker";
-    const panel = !full && e.clientY - rect.top < rect.height / 2 ? "screen" : "speaker";
+    const panel = !full && e.clientY - rect.top < rect.height * SPLIT_TOP ? "screen" : "speaker";
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     videoRef.current?.pause();
-    const v0 = videoRef.current, r0 = split[panel];
-    const lim0 = v0 && v0.videoWidth ? panLimits(r0.width * v0.videoWidth, r0.height * v0.videoHeight, rect.width, full ? rect.height : rect.height / 2, full ? "cover" : PANEL_FIT[panel], split[panel === "screen" ? "screenScale" : "speakerScale"]) : { x: 1, y: 1 };
+    const v0 = videoRef.current, r0 = panel==="screen"?screenWithoutWebcam(split):split.speaker;
+    const ph=full?rect.height:rect.height*(panel==="screen"?SPLIT_TOP:1-SPLIT_TOP);
+    const zoom=v0 && panel==="speaker"?speakerAutoScale(r0.width*v0.videoWidth,r0.height*v0.videoHeight,rect.width,ph,split.speakerShape):1;
+    const lim0 = v0 && v0.videoWidth ? panLimits(r0.width * v0.videoWidth, r0.height * v0.videoHeight, rect.width, ph, PANEL_FIT[panel], (split[panel === "screen" ? "screenScale" : "speakerScale"]??1)*zoom) : { x: 1, y: 1 };
     const raw = split[panel === "screen" ? "screenPan" : "speakerPan"] ?? { x: 0, y: 0 };
     const cur = { x: clamp(raw.x, -lim0.x, lim0.x), y: clamp(raw.y, -lim0.y, lim0.y) };
-    panDragRef.current = { id: e.pointerId, scene: act.sceneIndex, panel, sx: e.clientX, sy: e.clientY, start: { ...cur }, w: rect.width, h: full ? rect.height : rect.height / 2, full };
+    panDragRef.current = { id: e.pointerId, scene: act.sceneIndex, panel, sx: e.clientX, sy: e.clientY, start: { ...cur }, w: rect.width, h: full ? rect.height : rect.height * (panel === "screen" ? SPLIT_TOP : 1 - SPLIT_TOP), full };
     setPanDragging(panel);
   };
   const onPanMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -130,8 +133,9 @@ export function VideoStage(p: Props) {
     const cur = editsRef.current;
     const split = d.scene === null ? cur.split : cur.scenes?.[d.scene]?.split;
     if (!split) return;
-    const v = videoRef.current, r = split[d.panel];
-    const lim = v && v.videoWidth ? panLimits(r.width * v.videoWidth, r.height * v.videoHeight, d.w, d.h, d.full ? "cover" : PANEL_FIT[d.panel], split[d.panel === "screen" ? "screenScale" : "speakerScale"]) : { x: 1, y: 1 };
+    const v = videoRef.current, r = d.panel==="screen"?screenWithoutWebcam(split):split.speaker;
+    const zoom=v && d.panel==="speaker"?speakerAutoScale(r.width*v.videoWidth,r.height*v.videoHeight,d.w,d.h,split.speakerShape):1;
+    const lim = v && v.videoWidth ? panLimits(r.width * v.videoWidth, r.height * v.videoHeight, d.w, d.h, PANEL_FIT[d.panel], (split[d.panel === "screen" ? "screenScale" : "speakerScale"]??1)*zoom) : { x: 1, y: 1 };
     const pan = { x: round3(clamp(d.start.x + (e.clientX - d.sx) / d.w, -lim.x, lim.x)), y: round3(clamp(d.start.y + (e.clientY - d.sy) / d.h, -lim.y, lim.y)) };
     const next = { ...split, [d.panel === "screen" ? "screenPan" : "speakerPan"]: pan };
     editsRef.current = d.scene === null ? { ...cur, split: next } : { ...cur, scenes: (cur.scenes ?? []).map((sc, i) => i === d.scene ? { ...sc, split: next } : sc) };
@@ -215,21 +219,21 @@ export function VideoStage(p: Props) {
               onDragStart={e => e.preventDefault()}
             >
               {(["screen", "speaker"] as const).map(k => (
-                <div key={k} className={`absolute left-0 right-0 pointer-events-none transition-opacity duration-150 ${active?.mode === "speaker" ? "top-0 h-full" : k === "screen" ? "top-0 h-1/2" : "top-1/2 h-1/2"} ${panDragging === k ? "opacity-100" : "opacity-0"}`}
+                <div key={k} className={`absolute left-0 right-0 pointer-events-none transition-opacity duration-150 ${active?.mode === "speaker" ? "top-0 h-full" : k === "screen" ? "top-0 h-[30%]" : "top-[30%] h-[70%]"} ${panDragging === k ? "opacity-100" : "opacity-0"}`}
                   style={{ boxShadow: `inset 0 0 0 2px ${k === "screen" ? "#2896FB" : "#00B2A9"}` }}>
                   <span className="absolute top-[6px] right-[6px] text-[9px] font-semibold uppercase tracking-[0.8px] text-white rounded-[3px] px-[5px] py-[1px]" style={{ background: k === "screen" ? "#2896FB" : "#00B2A9" }}>Moving {k}</span>
                 </div>
               ))}
             </div>
-            {active?.mode !== "speaker" && <div className="absolute left-0 right-0 top-1/2 h-px bg-[rgba(255,255,255,0.08)] pointer-events-none" />}
+            {active?.mode !== "speaker" && <div className="absolute left-0 right-0 top-[30%] h-px bg-[rgba(255,255,255,0.08)] pointer-events-none" />}
             {active?.sceneIndex !== null && active && <span className="absolute top-[8px] left-[8px] text-[9px] font-semibold uppercase tracking-[1px] text-[rgba(255,255,255,0.7)] bg-[rgba(3,11,23,0.7)] rounded-[4px] px-[6px] py-[2px] pointer-events-none">Scene {active.sceneIndex + 1} · {active.mode === "speaker" ? "Speaker only" : "Split"}</span>}
           </>
         )}
         {locating && (
           <div data-testid="status-locating-panels" className="absolute inset-0 flex flex-col items-center justify-center gap-[10px] p-[18px] text-center bg-[#030B17]">
-            <div className="w-full flex-1 rounded-[4px] border border-dashed border-[rgba(40,150,251,0.25)] flex items-end justify-start p-[6px]"><span className="text-[9px] uppercase tracking-[1px] text-[rgba(40,150,251,0.6)] font-semibold">Screen</span></div>
+            <div className="w-full flex-[3] rounded-[4px] border border-dashed border-[rgba(40,150,251,0.25)] flex items-end justify-start p-[6px]"><span className="text-[9px] uppercase tracking-[1px] text-[rgba(40,150,251,0.6)] font-semibold">Screen</span></div>
             <div className="text-[11px] text-[#94A3B8] leading-[1.45] max-w-[90%]">{p.layoutStatus}</div>
-            <div className="w-full flex-1 rounded-[4px] border border-dashed border-[rgba(0,178,169,0.25)] flex items-end justify-start p-[6px]"><span className="text-[9px] uppercase tracking-[1px] text-[rgba(0,178,169,0.6)] font-semibold">Speaker</span></div>
+            <div className="w-full flex-[7] rounded-[4px] border border-dashed border-[rgba(0,178,169,0.25)] flex items-end justify-start p-[6px]"><span className="text-[9px] uppercase tracking-[1px] text-[rgba(0,178,169,0.6)] font-semibold">Speaker</span></div>
           </div>
         )}
         {caption && !locating && (

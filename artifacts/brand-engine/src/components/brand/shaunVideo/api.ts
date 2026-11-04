@@ -127,8 +127,8 @@ export async function uploadVideo(file: File, onProgress: (p: number) => void, s
   return request<VideoMeta>(`/videos/${encodeURIComponent(videoId)}/complete`, "POST", {}, signal);
 }
 
-/** Authenticated download of a finished render. Always uses the base-aware job asset URL. */
-export async function downloadJobAsset(jobId: string, filename: string, signal?: AbortSignal): Promise<void> {
+/** Authenticated fetch of a finished render as a verified MP4 blob. */
+export async function fetchJobMp4(jobId: string, signal?: AbortSignal, maxBytes?: number): Promise<Blob> {
   let res: Response;
   try { res = await fetch(jobAssetUrl(jobId), { credentials: "include", cache: "no-store", signal }); }
   catch (err) { if (isAbort(err)) throw err; throw new ShaunVideoError("Download failed. Check your connection and try again."); }
@@ -138,13 +138,26 @@ export async function downloadJobAsset(jobId: string, filename: string, signal?:
   }
   const type = (res.headers.get("content-type") || "").toLowerCase();
   if (!type.startsWith("video/mp4")) throw new ShaunVideoError("The server did not return an MP4. Sign in again or render again.");
+  const len = Number(res.headers.get("content-length"));
+  if (maxBytes && len > maxBytes) { res.body?.cancel().catch(() => undefined); throw new ShaunVideoError(`This render is over ${Math.round(maxBytes / 1048576)} MB. Choose Fast 720p and render again.`, 413); }
   const blob = await res.blob();
   if (!blob.size) throw new ShaunVideoError("The downloaded file was empty. Render again.");
+  if (maxBytes && blob.size > maxBytes) throw new ShaunVideoError(`This render is over ${Math.round(maxBytes / 1048576)} MB. Choose Fast 720p and render again.`, 413);
+  return blob.type === "video/mp4" ? blob : new Blob([blob], { type: "video/mp4" });
+}
+
+/** Saves an already-fetched blob locally. The blob URL is revoked shortly after. */
+export function saveBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = filename; a.rel = "noopener"; a.style.display = "none";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+/** Authenticated download of a finished render. */
+export async function downloadJobAsset(jobId: string, filename: string, signal?: AbortSignal): Promise<void> {
+  saveBlob(await fetchJobMp4(jobId, signal), filename);
 }
 
 export async function fetchAsDataUrl(url: string): Promise<string> {

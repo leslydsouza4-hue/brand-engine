@@ -46,7 +46,7 @@ test("vertical split renders screen above speaker without changing horizontal", 
     await renderVideo(source, output, config);
     await promisify(execFile)("ffmpeg", ["-v", "error", "-i", output, "-frames:v", "1", frame]);
     const pixel = async (x: number, y: number) => [...await sharp(frame).extract({ left: x, top: y, width: 1, height: 1 }).removeAlpha().raw().toBuffer()];
-    const top = await pixel(540, 480), bottom = await pixel(540, 1440);
+    const top = await pixel(540, 288), bottom = await pixel(540, 1440);
     assert.ok(top[0] > 200 && top[2] < 30, "screen is in top half");
     assert.ok(bottom[2] > 200 && bottom[0] < 30, "speaker is in bottom half");
     const edge = await pixel(540, 100);

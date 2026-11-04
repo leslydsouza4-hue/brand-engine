@@ -43,6 +43,10 @@ Vertical demos must be screen recording in the top half and Shaun cropped into t
 
 **Why:** The user explicitly requested split-screen during feature demos but full-screen Shaun before and after screen sharing.
 
+The full-screen greeting should be brief—roughly the first 5–8 seconds (“Happy Thursday”, “good morning”)—then the demo switches to split view, with full-screen Shaun again for the outro.
+
+**Why:** The user clarified that greetings must not leave Shaun full-screen deep into the demonstration. Timing defaults must not be described as recognizing speech.
+
 **How to apply:** Keep preview and export crops identical; detect presenter panels, not identity. Circular webcam overlays can overlap the screen crop. Do not claim continuous tracking from sparse frame checks or recoverable detail from small embedded camera footage.
 
 Prefer direct hand-drag positioning over X/Y fields for screen and speaker. Keep technical caption/model details out of the primary editing flow.

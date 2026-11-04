@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { layoutFrame, splitSchema, cropBoxSchema } from "./shaun-video-render";
 import { SessionError } from "./session-validation";
+import { greetingScenes } from "./shaun-greeting-scenes";
 
 async function frames(input: string, dir: string, times: number[]) {
   const parts: Array<{text: string} | {inlineData: {data:string; mimeType:string}}> = [];
@@ -53,8 +54,8 @@ export async function detectVideoLayout(input:string, dir:string, duration:numbe
     if(similar) previous.end=boundaries[i+1];
     else scenes.push({start:boundaries[i],end:boundaries[i+1],...f});
   });
-  return {split:scenes.find(s=>s.mode==="split")?.split ?? scenes[0].split,scenes,
-    note:`Sampled ${count} frames. Review scene boundaries and crops; transitions between samples are approximate.`};
+  return {split:scenes.find(s=>s.mode==="split")?.split ?? scenes[0].split,scenes:greetingScenes(scenes,duration),
+    note:`Sampled ${count} frames. Full-screen greeting defaults to the first 6 seconds and closing to the last 4 seconds (shorter for short clips). These are editable timing defaults, not speech detection. Review crops and adjust boundaries.`};
 }
 export const privacyRequestSchema=z.object({start:z.number().min(0),end:z.number().max(600),target:z.enum(["screen","speaker"]),crop:cropBoxSchema}).strict().refine(v=>v.end>v.start);
 export async function detectPrivateDetails(input:string,dir:string,request:z.infer<typeof privacyRequestSchema>) {

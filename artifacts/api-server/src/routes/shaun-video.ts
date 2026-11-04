@@ -212,7 +212,7 @@ router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
   validateDescriptShareUrl(url);
   res.status(202).json(await job(owner, "import", undefined, async (dir, record) => {
     const canonical = new URL(url); canonical.search = ""; canonical.hash = "";
-    const cacheKey = `imports/${createHash("sha256").update(canonical.href).digest("hex")}.json`;
+    const cacheKey = `imports/${createHash("sha256").update("named-v2:" + canonical.href).digest("hex")}.json`;
     try {
       const cached = await readRecord<{ videoId: string; at: number }>(owner, cacheKey);
       if (!refresh && Date.now() - cached.at < 15 * 60_000) {
@@ -222,10 +222,11 @@ router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
       }
     } catch (error) { if (!(error instanceof SessionError && error.status === 404)) throw error; }
     const local = join(dir, "source.mp4");
-    const size = await importDescript(url, local);
+    let title = "";
+    const size = await importDescript(url, local, value => { title = value; });
     const probe = await probeVideo(local);
     const videoId = randomUUID();
-    const video: VideoRecord = { videoId, owner, name: "Descript import.mp4", size, contentType: "video/mp4", status: "ready", probe, createdAt: new Date().toISOString() };
+    const video: VideoRecord = { videoId, owner, name: `${title || "Descript video"}.mp4`, size, contentType: "video/mp4", status: "ready", probe, createdAt: new Date().toISOString() };
     await uploadLocal(owner, `videos/${videoId}/source`, local, "video/mp4");
     await saveRecord(owner, `videos/${videoId}.json`, video);
     await saveRecord(owner, cacheKey, { videoId, at: Date.now() });

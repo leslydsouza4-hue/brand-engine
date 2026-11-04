@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ScanSearch, UploadCloud, Link2, Loader2, Play, Pause, Scissors, Monitor, User, Trash2, Captions, Film, Download, ImagePlus, RotateCcw, X, AlertTriangle, Video } from "lucide-react";
+import { ScanSearch, UploadCloud, Link2, Loader2, Play, Pause, Scissors, Monitor, User, Trash2, Captions, Download, ImagePlus, RotateCcw, X, AlertTriangle, Video } from "lucide-react";
 import { LivePreview } from "./LivePreview";
 import { useSessionState } from "./sessions/useSessionState";
 import {
-  fetchAsDataUrl, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
+  fetchAsDataUrl, fetchJobMp4, saveBlob, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
   type Capabilities, type OutputResult, type TranscriptResult, type VideoMeta,
 } from "./shaunVideo/api";
 import {
@@ -11,7 +11,7 @@ import {
   type BlurBox, type Scene, type SplitLayout, type TimedText, type TranscriptState, type VideoEdits,
 } from "./shaunVideo/edits";
 import { VideoStage } from "./shaunVideo/VideoStage";
-import { usePreparedDownload } from "./shaunVideo/preparedDownload";
+import { videoDownloadName } from "./shaunVideo/downloadName";
 import { SplitPanels } from "./shaunVideo/SplitPanels";
 import { Timeline } from "./shaunVideo/Timeline";
 import { CaptionEditor } from "./shaunVideo/CaptionEditor";
@@ -49,7 +49,6 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [busy, setBusy] = useState<Busy | null>(null);
   const [errors, setErrors] = useState<Partial<Record<BusyKind | "video" | "playback", string>>>({});
   const [importUrl, setImportUrl] = useState("");
-  const [importRefresh, setImportRefresh] = useState(false);
   const [time, setTime] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [preview, setPreview] = useState<{ videoId: string; url: string } | null>(null);
@@ -205,10 +204,10 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     if (!DESCRIPT_RE.test(url)) { setError("import", "Paste a public https://share.descript.com/view/... link."); return; }
     if (!confirmReplace()) return;
     const meta = await run("import", "Importing from Descript", async (signal, progress) => {
-      const { jobId } = await startImport(url, importRefresh);
+      const { jobId } = await startImport(url);
       return pollJob<VideoMeta>(jobId, (p, _s, phase) => progress(p, phase), signal);
     });
-    if (meta) { adoptVideo(meta, "descript"); setImportUrl(""); setImportRefresh(false); }
+    if (meta) { adoptVideo(meta, "descript"); setImportUrl(""); }
   };
 
   const captionUnits: TimedText[] = transcript?.timing === "segment" ? transcript.segments : edits?.words ?? [];
@@ -258,8 +257,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
 
   const duration = source?.duration || edits?.trimEnd || 0;
   const validation = useMemo(() => edits ? validateEdits(edits, duration) : [], [edits, duration]);
-  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + (autoCaptions ? "" : "#nocaptions") : "";
-  const prepared = usePreparedDownload(render?.jobId ?? null, source && render ? `${source.name.replace(/\.[^.]+$/, "")}-${render.format}.mp4` : "video.mp4");
+  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#panels-filled-v2" + (autoCaptions ? "" : "#nocaptions") : "";
   const renderStale = !!render && render.key !== currentKey;
 
   const handleRender = async () => {
@@ -267,12 +265,18 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     const full = renderEdits(edits, transcript);
     const payload = autoCaptions ? full : { ...full, words: [] };
     const key = currentKey;
-    const result = await run("render", "Rendering MP4", async (signal, progress) => {
-      const { jobId } = await startRender(source.videoId, payload);
-      const r = await pollJob<OutputResult>(jobId, (p, _s, phase) => progress(p, phase), signal);
-      return { jobId, ...r };
+    await run("render", "Preparing download", async (signal, progress) => {
+      let jobId = render && !renderStale ? render.jobId : undefined;
+      if (!jobId) {
+        ({ jobId } = await startRender(source.videoId, payload));
+        const r = await pollJob<OutputResult>(jobId, p => progress(p * 0.9, "Preparing video"), signal);
+        if (signal.aborted) return;
+        setRender({ jobId, assetUrl: r.assetUrl, key, format: edits.format, quality: payload.exportQuality, renderedAt: new Date().toISOString() });
+      }
+      progress(0.95, "Downloading MP4");
+      const blob = await fetchJobMp4(jobId, signal);
+      if (!signal.aborted) saveBlob(blob, videoDownloadName(source.name));
     });
-    if (result) setRender({ jobId: result.jobId, assetUrl: result.assetUrl, key, format: edits.format, quality: payload.exportQuality, renderedAt: new Date().toISOString() });
   };
 
   const handleFrame = async () => {
@@ -375,11 +379,6 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                 {busyFor("import") ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : "Import"}
               </button>
             </div>
-            <label className="flex items-center gap-[6px] mt-[6px] text-[11px] text-[#94A3B8] cursor-pointer select-none">
-              <input type="checkbox" data-testid="checkbox-import-refresh" checked={importRefresh} disabled={!!busy} onChange={e => setImportRefresh(e.target.checked)} className="accent-[#00B2A9] w-[12px] h-[12px]" />
-              Fetch latest from Descript
-            </label>
-            <div className="text-[10px] text-[#475569] mt-[3px] leading-[1.45]">Recent imports are reused for speed. Fetch latest after editing in Descript.</div>
             <div className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">Imports the MP4 from a public Descript share. If the share has no downloadable MP4, export it from Descript and upload the file above.</div>
             {busyFor("import") && busy && <><ProgressBar value={busy.progress} label={busy.phase || busy.label} />{cancelBtn}</>}
             {errors.import && <ErrorNote message={errors.import} />}
@@ -462,21 +461,21 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               {autoCaptions && transcript?.timing === "segment" && (
                 <div className="flex gap-[6px] p-[8px] mb-[8px] rounded-[10px] bg-[rgba(251,191,36,0.06)] border border-[rgba(251,191,36,0.18)] text-[10px] text-[#FCD34D] leading-[1.45]">
                   <AlertTriangle className="w-[12px] h-[12px] shrink-0 mt-[1px]" />
-                  Captions will show as whole phrases. Give them a quick read before rendering.
+                  Captions will show as whole phrases. Give them a quick read before downloading.
                 </div>
               )}
               {autoCaptions && transcript?.timing === "word" && (
                 <div className="p-[8px] mb-[8px] rounded-[10px] bg-[rgba(0,178,169,0.05)] border border-[rgba(0,178,169,0.14)] text-[10px] text-[#94A3B8] leading-[1.45]">
-                  {transcript.groupedUncertainWords ? "Some words are grouped together for timing. Review captions before exporting." : "Captions are automatic. Give them a quick read before rendering."}
+                  {transcript.groupedUncertainWords ? "Some words are grouped together for timing. Review captions before exporting." : "Captions are automatic. Give them a quick read before downloading."}
                   {!!transcript.omittedUncertainWords && <span className="block mt-[4px] text-[#FCD34D]">Some words were missed in this older transcript. Transcribe again to recover them.</span>}
                 </div>
               )}
               {autoCaptions && !transcript && caps?.transcriptionNote && !busyFor("transcribe") && <div className="text-[10px] text-[#475569] mb-[6px] leading-[1.45]">{caps.transcriptionNote}</div>}
-              {autoCaptions && (transcript || captionUnits.length > 0) && <CaptionEditor units={captionUnits} timing={transcript?.timing ?? "word"} time={time} onChange={setCaptionUnits} onSeek={seek} />}
+              {autoCaptions && (transcript || captionUnits.length > 0) && <details className="mt-[8px]"><summary className="text-[11px] text-[#94A3B8] cursor-pointer">Review captions</summary><CaptionEditor units={captionUnits} timing={transcript?.timing ?? "word"} time={time} onChange={setCaptionUnits} onSeek={seek} /></details>}
               {autoCaptions && !transcript && !captionUnits.length && !busyFor("transcribe") && !errors.transcribe && <div className="text-[10px] text-[#475569]">Starts once the video is ready. Burned in white bold, spoken word highlighted.</div>}
             </Section>
 
-            <Section title="Trim and cuts" right={<button type="button" onClick={resetEdits} className={ghostBtn}><RotateCcw className="w-[10px] h-[10px]" />Reset</button>}>
+            <Section title="Trim and cuts" collapsible right={<button type="button" onClick={resetEdits} className={ghostBtn}><RotateCcw className="w-[10px] h-[10px]" />Reset</button>}>
               <div className="flex gap-[8px] mb-[6px]">
                 <TimeInput label="Start (s)" value={edits.trimStart} max={duration} onChange={v => patch({ trimStart: v })} />
                 <TimeInput label="End (s)" value={edits.trimEnd} max={duration} onChange={v => patch({ trimEnd: v })} />
@@ -527,31 +526,24 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               )}
             </Section>
 
-            <Section title="Export">
+            <Section title="Export settings" collapsible>
+              <label className="block text-[11px] text-[#94A3B8] mb-[10px]">Video name
+                <input aria-label="Video download name" value={source.name.replace(/\.(mp4|mov|webm)$/i, "")} onChange={e => setSource(s => s && ({ ...s, name: e.target.value }))} className={`${inputCls} mt-[5px]`} />
+              </label>
               <div className="mb-[8px]">
                 <Segmented value={edits.exportQuality ?? "standard"} onChange={exportQuality => patch({ exportQuality })} options={[{ value: "fast", label: "Fast 720p" }, { value: "standard", label: "Full HD 1080p" }]} />
                 <div data-testid="text-export-quality" className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">{(edits.exportQuality ?? "standard") === "fast" ? `Lower resolution: ${edits.format === "vertical" ? "720x1280" : "1280x720"}. Quicker for drafts and review. Choose Full HD for the final post.` : `Full resolution: ${edits.format === "vertical" ? "1080x1920" : "1920x1080"}. Takes longer to render.`} The preview is the same either way.</div>
               </div>
+            </Section>
+            <Section title="Download">
               {validation.length > 0 && <ErrorNote message={validation.join(" ")} />}
-              <button type="button" disabled={!!busy || validation.length > 0} onClick={() => void handleRender()} className={`${primaryBtn} mt-[4px]`}>
-                {busyFor("render") ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Film className="w-[14px] h-[14px]" />}
-                {render && !renderStale ? "Render again" : "Render MP4"}
+              <button type="button" data-testid="button-download" disabled={!!busy || validation.length > 0} onClick={() => void handleRender()} className={`${primaryBtn} mt-[4px]`}>
+                {busyFor("render") ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
+                {busyFor("render") ? "Preparing download…" : "Download MP4"}
               </button>
               {busyFor("render") && busy && <><ProgressBar value={busy.progress} label={busy.phase || busy.label} />{cancelBtn}</>}
               {errors.render && <ErrorNote message={errors.render} onRetry={() => void handleRender()} />}
-              {render && (
-                <div className={`mt-[8px] p-[10px] rounded-[12px] border ${renderStale ? "border-[rgba(251,191,36,0.2)] bg-[rgba(251,191,36,0.04)]" : "border-[rgba(0,178,169,0.2)] bg-[rgba(0,178,169,0.05)]"}`}>
-                  <div className="text-[11px] font-semibold text-[#E2E8F0]">{render.format === "vertical" ? "Vertical" : "Horizontal"} {render.quality === "fast" ? "720p (fast, lower resolution)" : "1080p"} MP4 ready</div>
-                  <div className="text-[10px] text-[#64748B] mb-[8px]">{renderStale ? "Edits changed since this render. Render again to include them." : `Rendered ${new Date(render.renderedAt).toLocaleString()}`}</div>
-                  <button type="button" data-testid="button-download" disabled={prepared.status === "saving"} onClick={() => void prepared.download()} className={ghostBtn}>
-                    {prepared.status === "preparing" || prepared.status === "saving" ? <Loader2 className="w-[11px] h-[11px] animate-spin" /> : <Download className="w-[11px] h-[11px]" />}
-                    {prepared.status === "preparing" ? "Preparing download..." : prepared.status === "saving" ? "Finishing download..." : "Download MP4"}
-                  </button>
-                  {prepared.status === "ready" && <div data-testid="status-download-ready" className="text-[10px] text-[#64748B] mt-[4px]">Ready to save.</div>}
-                  {prepared.status === "deferred" && <div className="text-[10px] text-[#64748B] mt-[4px]">Large file: transfer starts when you click Download.</div>}
-                  {prepared.status === "error" && <ErrorNote message={prepared.error ?? "Download failed."} onRetry={prepared.retry} />}
-                </div>
-              )}
+              <div className="mt-[6px] text-[10px] text-[#64748B] break-all">{videoDownloadName(source.name)}</div>
               <button type="button" disabled={!!busy} onClick={() => void handleFrame()} className={`${ghostBtn} w-full mt-[10px]`}>
                 {busyFor("frame") ? <Loader2 className="w-[12px] h-[12px] animate-spin" /> : <ImagePlus className="w-[12px] h-[12px]" />}
                 Use frame at {fmtTime(time)} in thumbnail

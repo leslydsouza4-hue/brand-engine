@@ -47,6 +47,10 @@ The upper screen panel should fill edge-to-edge without side gaps, preserving as
 
 **Why:** The user explicitly rejected the empty left/right margins in the screen panel.
 
+The user approved the filled rectangular Shaun framing and edge-to-edge UI panel. Preserve it. The preferred workflow is one Download action, not separate render/download steps; secondary editing controls should stay collapsed to keep the sidebar clean. Video filenames should use the Descript title plus the thumbnail-style date.
+
+**Why:** The user explicitly confirmed the visuals looked good and asked to simplify the finishing workflow rather than redesign the framing again.
+
 **Why:** The user repeated this correction after asking to preserve the screen UI; webcam exclusion takes priority over retaining all source UI.
 
 **Why:** The user explicitly corrected the contain-fit interpretation and supplied a zoomed rectangular reference. Cropping inside the camera circle removes its visible border without inventing missing footage.

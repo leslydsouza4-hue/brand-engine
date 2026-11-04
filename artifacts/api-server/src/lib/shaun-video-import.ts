@@ -103,7 +103,17 @@ export function findDescriptMedia(html: string): string {
   if (!media) throw new SessionError(422, fallback);
   return media;
 }
-export async function importDescript(raw: string, output: string) {
+export function descriptTitle(html: string): string {
+  const tags = html.match(/<meta\b[^>]*>/gi) ?? [];
+  let title = "";
+  for (const tag of tags) {
+    const attrs = Object.fromEntries([...tag.matchAll(/([\w:-]+)\s*=\s*(["'])(.*?)\2/g)].map(m => [m[1].toLowerCase(), m[3]]));
+    if (attrs.property === "og:title" || attrs.name === "og:title") { title = attrs.content ?? ""; break; }
+  }
+  title ||= html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  return title.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s*[-|]\s*Descript\s*$/i, "").trim().slice(0, 200);
+}
+export async function importDescript(raw: string, output: string, onTitle?: (title: string) => void) {
   validateDescriptShareUrl(raw);
   const page = await request(raw);
   let html = "";
@@ -113,6 +123,7 @@ export async function importDescript(raw: string, output: string) {
     if (size > 2 * 1024 * 1024) { page.destroy(); throw new SessionError(422, fallback); }
     html += chunk.toString("utf8");
   }
+  onTitle?.(descriptTitle(html));
   const media = findDescriptMedia(html);
   const response = await request(media);
   const length = Number(response.headers["content-length"] || 0);

@@ -6,7 +6,13 @@ export const ghostBtn = "flex items-center justify-center gap-[5px] py-[6px] px-
 export const primaryBtn = "flex items-center justify-center gap-[6px] w-full py-[11px] px-[14px] rounded-[12px] border-none text-[13px] font-semibold text-white cursor-pointer transition-all bg-[linear-gradient(135deg,#095DC3_0%,#2896FB_45%,#00B2A9_100%)] hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:brightness-100";
 export const inputCls = "w-full py-[8px] px-[10px] rounded-[10px] border border-[rgba(255,255,255,0.06)] bg-[rgba(255,255,255,0.03)] text-[12px] text-[#E2E8F0] outline-none focus:border-[rgba(0,178,169,0.4)] transition-all";
 
-export function Section({ title, right, children }: { title: string; right?: ReactNode; children: ReactNode }) {
+export function Section({ title, right, children, collapsible = false }: { title: string; right?: ReactNode; children: ReactNode; collapsible?: boolean }) {
+  if (collapsible) return (
+    <details className="py-[14px] border-t border-[rgba(255,255,255,0.04)]">
+      <summary className={`${sectionLabel} cursor-pointer select-none`}>{title}</summary>
+      <div className="mt-[10px]">{right && <div className="flex justify-end mb-[8px]">{right}</div>}{children}</div>
+    </details>
+  );
   return (
     <div className="py-[14px] border-t border-[rgba(255,255,255,0.04)] first:border-t-0">
       <div className="flex items-center justify-between mb-[10px]"><span className={sectionLabel}>{title}</span>{right}</div>

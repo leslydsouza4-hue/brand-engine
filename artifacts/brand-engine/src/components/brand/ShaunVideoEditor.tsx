@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ScanSearch, Eye, UploadCloud, Link2, Loader2, Play, Pause, Scissors, Square, Trash2, Captions, Film, Download, ImagePlus, RotateCcw, X, AlertTriangle, Video } from "lucide-react";
+import { ScanSearch, UploadCloud, Link2, Loader2, Play, Pause, Scissors, Monitor, User, Trash2, Captions, Film, Download, ImagePlus, RotateCcw, X, AlertTriangle, Video } from "lucide-react";
 import { LivePreview } from "./LivePreview";
 import { useSessionState } from "./sessions/useSessionState";
 import {
@@ -7,13 +7,15 @@ import {
   type Capabilities, type OutputResult, type TranscriptResult, type VideoMeta,
 } from "./shaunVideo/api";
 import {
-  defaultEdits, editsKey, fmtTime, renderEdits, round3, validateEdits,
-  type SplitLayout, type TimedText, type TranscriptState, type VideoEdits,
+  defaultEdits, editsKey, fmtTime, layoutAt, MAX_BLURS, renderEdits, round3, validateEdits,
+  type BlurBox, type Scene, type SplitLayout, type TimedText, type TranscriptState, type VideoEdits,
 } from "./shaunVideo/edits";
 import { VideoStage } from "./shaunVideo/VideoStage";
 import { SplitPanels } from "./shaunVideo/SplitPanels";
 import { Timeline } from "./shaunVideo/Timeline";
 import { CaptionEditor } from "./shaunVideo/CaptionEditor";
+import { PrivacyEditor } from "./shaunVideo/PrivacyEditor";
+import { ScenesPanel } from "./shaunVideo/ScenesPanel";
 import { Section, Segmented, TimeInput, ProgressBar, ErrorNote, ghostBtn, primaryBtn, inputCls } from "./shaunVideo/ui";
 
 interface SourceRef { videoId: string; name: string; duration: number; width: number; height: number; origin: "upload" | "descript" }
@@ -52,8 +54,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     });
     return () => ac.abort();
   }, [source?.videoId, previewRetry]);
-  const [drawing, setDrawing] = useState(false);
-  const [sourceView, setSourceView] = useState(false);
+  const [privacyTarget, setPrivacyTarget] = useState<"screen" | "speaker" | null>(null);
   const [layout, setLayout] = useState<{ videoId: string; status: "analyzing" | "error" | "done"; note?: string; phase?: string } | null>(null);
   const [layoutRetry, setLayoutRetry] = useState(0);
   const layoutTriedRef = useRef<Set<string>>(new Set());
@@ -74,7 +75,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
         try {
           const r = await requestLayout(videoId, ac.signal, (_p, phase) => { if (!ac.signal.aborted) setLayout(l => l && l.videoId === videoId ? { ...l, phase } : l); });
           if (ac.signal.aborted || currentVideoRef.current !== videoId) return;
-          setEdits(e => e && !e.split ? { ...e, split: r.split } : e);
+          setEdits(e => e && !e.split ? { ...e, split: r.split, scenes: r.scenes } : e);
           setLayout({ videoId, status: "done", note: r.note });
           return;
         } catch (err) {
@@ -99,9 +100,17 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const manualSplit = () => {
     const full = { x: 0, y: 0, width: 1, height: 1 };
     patch({ split: { screen: { ...full }, speaker: { ...full } } });
-    setSourceView(true);
   };
   const setSplit = (split: SplitLayout) => patch({ split });
+  const setScenes = (scenes: Scene[]) => patch({ scenes });
+  const setActiveSplit = (split: SplitLayout, sceneIndex: number | null) =>
+    setEdits(e => e && (sceneIndex === null ? { ...e, split } : { ...e, scenes: (e.scenes ?? []).map((sc, i) => i === sceneIndex ? { ...sc, split } : sc) }));
+  const addBlurs = (boxes: BlurBox[]) => {
+    if (!edits || !boxes.length) return;
+    const next = [...edits.blurs, ...boxes].slice(0, MAX_BLURS);
+    patch({ blurs: next });
+    setSelectedBlur(next.length - 1);
+  };
   const [selectedBlur, setSelectedBlur] = useState<number | null>(null);
   const [markIn, setMarkIn] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -162,7 +171,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     setEdits(defaultEdits(duration));
     setTranscript(null);
     setRender(null);
-    setTime(0); setSelectedBlur(null); setMarkIn(null); setDrawing(false); setSourceView(false); setLayout(null);
+    setTime(0); setSelectedBlur(null); setMarkIn(null); setPrivacyTarget(null); setLayout(null);
     setErrors({});
   };
 
@@ -356,7 +365,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   <Segmented value={edits.framing} onChange={framing => patch({ framing })} options={[{ value: "blur-fill", label: "Blur fill" }, { value: "fit", label: "Fit" }]} />
                   <div className="text-[10px] text-[#475569] leading-[1.45]">Full footage is always kept in frame. Blur fill backs it with a blurred copy in the render; Fit uses solid bars.</div>
                 </> : <>
-                  <div className="text-[10px] text-[#475569] leading-[1.45]">Split: screen recording fitted in the top half, speaker cropped to fill the bottom half, captions over the speaker.</div>
+                  <div className="text-[10px] text-[#475569] leading-[1.45]">Split: screen recording fills the top half, speaker fills the bottom half, captions over the speaker. Speaker-only scenes fill the whole frame.</div>
                   {!edits.split && layoutHere?.status !== "error" && (
                     <div data-testid="status-layout" className="flex items-center gap-[6px] p-[8px] rounded-[10px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.15)] text-[10px] text-[#94A3B8]">
                       <Loader2 className="w-[11px] h-[11px] animate-spin text-[#2896FB] shrink-0" />{layoutHere?.phase || "Locating panels in the background. You can keep editing."}
@@ -368,11 +377,12 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   {!edits.split && <button type="button" data-testid="button-manual-split" onClick={manualSplit} className={`${ghostBtn} w-full mt-[6px]`}>Set panel bounds manually</button>}
                   {edits.split && (
                     <>
+                      <div className="text-[10px] font-semibold text-[#CBD5E1]">Base layout</div>
                       <SplitPanels split={edits.split} onChange={setSplit} />
+                      <ScenesPanel scenes={edits.scenes ?? []} base={edits.split} time={time} duration={duration} activeIndex={layoutAt(edits, time)?.sceneIndex ?? null} onChange={setScenes} onSeek={seek} />
                       {layoutHere?.status === "done" && layoutHere.note && <div className="text-[10px] text-[#64748B] leading-[1.45]">{layoutHere.note}</div>}
                       <div className="flex gap-[6px]">
-                        <button type="button" data-testid="button-source-view" onClick={() => setSourceView(v => !v)} className={`${ghostBtn} flex-1 ${sourceView ? "!text-[#00B2A9] !border-[rgba(0,178,169,0.4)]" : ""}`}><Eye className="w-[11px] h-[11px]" />{sourceView ? "Show split preview" : "Check on original"}</button>
-                        <button type="button" data-testid="button-redetect" onClick={() => { if (window.confirm("Detect panels again? Your manual bounds will be replaced.")) { patch({ split: undefined }); setLayoutRetry(n => n + 1); } }} className={`${ghostBtn} flex-1`}><ScanSearch className="w-[11px] h-[11px]" />Detect again</button>
+                        <button type="button" data-testid="button-redetect" onClick={() => { if (window.confirm("Detect panels again? Your manual bounds and scenes will be replaced.")) { patch({ split: undefined, scenes: undefined }); setLayoutRetry(n => n + 1); } }} className={`${ghostBtn} flex-1`}><ScanSearch className="w-[11px] h-[11px]" />Detect again</button>
                       </div>
                     </>
                   )}
@@ -434,11 +444,12 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
             </Section>
 
             <Section title="Blur regions">
-              <button type="button" onClick={() => { setDrawing(d => !d); videoRef.current?.pause(); }} className={`${ghostBtn} w-full ${drawing ? "!text-[#00B2A9] !border-[rgba(0,178,169,0.4)] bg-[rgba(0,178,169,0.08)]" : ""}`}>
-                <Square className="w-[11px] h-[11px]" />{drawing ? "Drag a box on the preview (click to stop)" : "Draw blur box at playhead"}
-              </button>
-              {edits.format === "vertical" && <div className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">Blur boxes are drawn on the original frame, so drawing switches the preview to source view.</div>}
-              <div className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">Boxes are outlined in preview. The actual blur is applied in the FFmpeg render.</div>
+              <div className="flex gap-[6px]">
+                <button type="button" data-testid="button-blur-screen" disabled={edits.blurs.length >= MAX_BLURS} onClick={() => { videoRef.current?.pause(); setPrivacyTarget("screen"); }} className={`${ghostBtn} flex-1`}><Monitor className="w-[11px] h-[11px]" />Screen</button>
+                <button type="button" data-testid="button-blur-speaker" disabled={edits.blurs.length >= MAX_BLURS} onClick={() => { videoRef.current?.pause(); setPrivacyTarget("speaker"); }} className={`${ghostBtn} flex-1`}><User className="w-[11px] h-[11px]" />Speaker</button>
+              </div>
+              <div className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">Opens a paused frame of that panel to draw boxes or auto blur personal details. Blurs are applied in the export only; the live preview stays clean.</div>
+              <div className="text-[10px] text-[#64748B] mt-[3px] tabular-nums">{edits.blurs.length} of {MAX_BLURS} regions used</div>
               {edits.blurs.length > 0 && (
                 <div className="flex flex-wrap gap-[4px] mt-[8px]">
                   {edits.blurs.map((_, i) => (
@@ -504,11 +515,10 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               ) : <VideoStage
                 src={preview.url} videoRef={videoRef} edits={edits} captions={captionUnits} timing={transcript?.timing ?? "word"}
                 time={time} sourceSize={source.width ? { width: source.width, height: source.height } : null}
-                drawing={drawing} selectedBlur={selectedBlur} sourceView={sourceView || (edits.format === "vertical" && !edits.split)}
                 layoutStatus={layoutHere?.status === "error" ? "Panels not found. Retry detection or set bounds manually in the Format panel." : "Locating speaker and screen panels. Export unlocks once they are set."}
                 onTime={setTime} onPlaying={setPlaying}
                 onError={msg => setError("playback", msg ?? undefined)}
-                onSplitChange={setSplit}
+                onSplitChange={setActiveSplit}
                 onLoaded={info => {
                   if (!source.duration || !source.width) setSource(s => s && { ...s, duration: s.duration || round3(info.duration), width: s.width || info.width, height: s.height || info.height });
                   if (!edits.trimEnd && info.duration) patch({ trimEnd: round3(info.duration) });
@@ -518,14 +528,6 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   loadedForRef.current = preview.url;
                   if (v && edits.trimStart && v.currentTime < edits.trimStart) v.currentTime = edits.trimStart;
                 }}
-                onDrawBox={box => {
-                  const start = round3(time), end = round3(Math.min(duration || time + 3, time + 3));
-                  const next = [...edits.blurs, { start, end, ...box }];
-                  patch({ blurs: next });
-                  setSelectedBlur(next.length - 1);
-                  setDrawing(false);
-                }}
-                onSelectBlur={setSelectedBlur}
               />}
             </div>
             <div className="shrink-0 flex items-center gap-[12px]">
@@ -555,6 +557,10 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
           </div>
         )}
       </LivePreview>
+      {privacyTarget && source && edits && preview?.videoId === source.videoId && (
+        <PrivacyEditor target={privacyTarget} src={preview.url} videoId={source.videoId} edits={edits} duration={duration} startTime={time}
+          onClose={() => setPrivacyTarget(null)} onAddBlurs={addBlurs} />
+      )}
     </>
   );
 }

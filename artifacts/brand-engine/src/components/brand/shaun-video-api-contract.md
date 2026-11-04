@@ -1,5 +1,13 @@
 # Shaun video API
 
+## Scene and privacy additions
+
+- `POST /videos/:videoId/layout` now returns `{split, scenes, note}` (or a 202 job), cached as layout-v2. Scenes are `{start,end,mode:"speaker"|"split",split}` in source time. Sampled boundaries are approximate and editable. Older saved edits fall back to their global split.
+- Edits accept up to 32 ordered, non-overlapping scenes and 64 blur regions. Screen crops cover the top half; speaker-only scenes cover the full portrait frame. Export and preview use the same source-time scene lookup, including gaps and cuts.
+- `POST /videos/:videoId/privacy` accepts `{start,end,target:"screen"|"speaker",crop:{x,y,width,height}}`; returns `{blurs,note,sampledFrames}` or a 202 job. Results are cached by source and request. The selected interval is sampled (at most eight stills); this is not guaranteed anonymization. Coordinates always refer to the entire source, not the selected crop. Suggestions require explicit review and acceptance.
+- Blur selection uses a separate paused-source editor. The live composed preview does not display blur masks. Actual masking is applied during export, before framing and cuts.
+- Exports seek directly to trimStart; source-time coordinates and edit ranges remain unchanged.
+
 Base: `/api/shaun-video` (use the app's base-path-aware API URL helper). Every endpoint requires the existing Clerk sign-in cookie. Mutations require same-origin requests. JSON errors: `{error, code}`. Assets and completed jobs follow the **shared saved-session library policy: accessible to all signed-in users, never anonymous visitors**. Session state may retain `videoId` and edits; another signed-in user can reopen and render that source. Only its original uploader can complete a pending upload; ready originals are immutable.
 
 All times are **source-video seconds**, never output seconds. Rectangles use normalized source coordinates, 0–1. Edits: `{trimStart,trimEnd,cuts:[{start,end}],blurs:[{start,end,x,y,width,height}],words:[{text,start,end}],format:"vertical"|"horizontal",framing:"fit"|"blur-fill",captionTiming?:"word"|"segment"}`. Automatic local transcription is always word timing. When passing phrase/SRT cues through `words`, explicitly send `captionTiming:"segment"`; never split cues into fabricated word times.

@@ -39,9 +39,9 @@ Prioritize fast editing previews over preview resolution; retain full-quality or
 
 **How to apply:** Benchmark changes on the same input, distinguish conversion from total import time, and reuse existing cached previews rather than regenerating them for quality-setting changes.
 
-Vertical output must be screen recording in the top half and Shaun cropped into the bottom half, with captions over his section. Leave horizontal framing alone.
+Vertical demos must be screen recording in the top half and Shaun cropped into the bottom half, with captions over his section. Speaker-only greetings and thanks/outros must instead show Shaun full-frame. Leave horizontal framing alone.
 
-**Why:** The user explicitly rejected fitting the whole horizontal recording into a vertical frame and requested the split-screen arrangement.
+**Why:** The user explicitly requested split-screen during feature demos but full-screen Shaun before and after screen sharing.
 
 **How to apply:** Keep preview and export crops identical; detect presenter panels, not identity. Circular webcam overlays can overlap the screen crop. Do not claim continuous tracking from sparse frame checks or recoverable detail from small embedded camera footage.
 
@@ -50,3 +50,15 @@ Prefer direct hand-drag positioning over X/Y fields for screen and speaker. Keep
 **Why:** The user explicitly requested a hand instead of coordinates and objected to being asked to manually recover many omitted caption words.
 
 **How to apply:** Keep advanced coordinates secondary; retain recognized text when word alignment fails by grouping existing aligned cues, and label uncertainty honestly rather than dropping words or inventing individual timestamps.
+
+Blur selection belongs in separate Screen and Speaker selection surfaces, not on the live output preview. Support manual regions and reviewed automatic personal-detail suggestions.
+
+**Why:** The user explicitly requested two selectors outside the live preview and both manual and automatic blur.
+
+**How to apply:** Preserve source coordinates and time ranges through crops, scenes and cuts; explain sampled detection can miss details and require review before applying suggestions. Do not claim guaranteed anonymization.
+
+Use a constrained response schema for vision coordinates, and avoid seeking to the last few milliseconds when extracting analysis stills.
+
+**Why:** Unconstrained multi-image responses returned pixel coordinates despite normalized-coordinate prompts; seeking after the last decodable video frame produced no image even though FFmpeg exited successfully.
+
+**How to apply:** Validate model bounds, keep final samples safely inside the duration, and use probed source duration rather than rounded display duration.

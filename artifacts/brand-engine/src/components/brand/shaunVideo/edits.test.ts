@@ -50,3 +50,14 @@ test("blur drag maps client pixels to normalized source rect in any direction", 
   assert.equal(boxFromDrag({ x: 0.2, y: 0.2 }, { x: 0.205, y: 0.6 }), null);
   assert.deepEqual(boxFromDrag({ x: 0.1, y: 0.1 }, { x: 0.12, y: 0.12 }), { x: 0.1, y: 0.1, width: 0.02, height: 0.02 });
 });
+
+test("layoutAt picks scene, falls back to base split in gaps; crop mapping round-trips", async () => {
+  const { layoutAt, cropToSource, renderEdits } = await import("./edits");
+  const r = { x: 0, y: 0, width: 1, height: 0.5 };
+  const base = { screen: r, speaker: { x: 0, y: 0.5, width: 1, height: 0.5 } };
+  const e = { ...defaultEdits(20), split: base, scenes: [{ start: 2, end: 5, mode: "speaker" as const, split: base }] };
+  assert.equal(layoutAt(e, 3)?.mode, "speaker");
+  assert.equal(layoutAt(e, 6)?.sceneIndex, null);
+  assert.deepEqual(cropToSource({ x: 0.5, y: 0.5, width: 0.5, height: 0.5 }, { x: 0, y: 0.5, width: 1, height: 0.5 }), { x: 0.5, y: 0.75, width: 0.5, height: 0.25 });
+  assert.equal(renderEdits(e, null).scenes?.length, 1);
+});

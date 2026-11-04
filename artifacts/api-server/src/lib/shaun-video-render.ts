@@ -16,6 +16,7 @@ export const splitSchema = z.object({ speaker: cropBoxSchema, screen: cropBoxSch
   speakerPan: z.object({ x: z.number().min(-1).max(1), y: z.number().min(-1).max(1) }).strict().optional(),
 }).strict();
 const range = z.object({ start: seconds, end: seconds }).strict().refine(v => v.end > v.start, "End must follow start");
+export const sceneSchema = z.object({ start: seconds, end: seconds, mode: z.enum(["speaker", "split"]), split: splitSchema }).strict().refine(v => v.end > v.start);
 export const videoEditsSchema = z.object({
   trimStart: seconds,
   trimEnd: seconds,
@@ -24,7 +25,7 @@ export const videoEditsSchema = z.object({
     start: seconds, end: seconds,
     x: z.number().finite().min(0).max(1), y: z.number().finite().min(0).max(1),
     width: z.number().finite().min(0.01).max(1), height: z.number().finite().min(0.01).max(1),
-  }).strict().refine(v => v.end > v.start && v.x + v.width <= 1.000001 && v.y + v.height <= 1.000001, "Invalid blur region")).max(12),
+  }).strict().refine(v => v.end > v.start && v.x + v.width <= 1.000001 && v.y + v.height <= 1.000001, "Invalid blur region")).max(64),
   words: z.array(z.object({
     text: z.string().trim().min(1).max(500).refine(v => !/[\u0000-\u001f\u007f]/.test(v), "Caption contains control characters"),
     start: seconds, end: seconds,
@@ -34,6 +35,7 @@ export const videoEditsSchema = z.object({
   captionTiming: z.enum(["word", "segment"]).optional(),
   captionBottom: z.number().finite().min(0.02).max(0.22).optional(),
   split: splitSchema.optional(),
+  scenes: z.array(sceneSchema).max(32).optional(),
 }).strict().refine(v => v.trimEnd > v.trimStart, "Trim end must follow start");
 export type VideoEdits = z.infer<typeof videoEditsSchema>;
 export type VideoProbe = { duration: number; width: number; height: number; hasAudio: boolean };
@@ -101,6 +103,7 @@ export async function probeVideo(path: string, allowPreview = false): Promise<Vi
 export function retainedSegments(edits: VideoEdits, duration: number): Segment[] {
   const e = videoEditsSchema.parse(edits);
   if (e.trimEnd > duration + 0.001) throw new Error("Trim exceeds source duration");
+  if (e.scenes?.some((s, i, all) => s.end > duration + 0.001 || (i > 0 && s.start < all[i - 1].end))) throw new Error("Scene ranges must be ordered, non-overlapping and inside the video");
   if ([...e.cuts, ...e.blurs, ...e.words].some(v => v.end > duration + 0.001)) throw new Error("An edit exceeds source duration");
   for (let i = 1; i < e.words.length; i++) {
     if (e.words[i].start < e.words[i - 1].end - 0.001) throw new Error("Caption words must be chronological and non-overlapping");
@@ -198,7 +201,7 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
   if (target === source) { await rm(dir, { recursive: true, force: true }); throw new Error("Output cannot overwrite the original source"); }
   let success = false;
   try {
-    const filters: string[] = ["[0:v:0]setpts=PTS-STARTPTS,setsar=1[v0]"];
+    const filters: string[] = [`[0:v:0]setpts=PTS-STARTPTS+${e.trimStart}/TB,setsar=1[v0]`];
     let label = "v0";
     for (const [i, blur] of e.blurs.entries()) {
       const x = Math.min(info.width - 2, Math.floor(blur.x * info.width / 2) * 2);
@@ -211,28 +214,38 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
       label = `b${i}`;
     }
     filters.push(`[${label}]split=${segments.length}${segments.map((_, i) => `[s${i}]`).join("")}`);
-    if (info.hasAudio) filters.push(`[0:a:0]asetpts=PTS-STARTPTS,asplit=${segments.length}${segments.map((_, i) => `[a${i}]`).join("")}`);
+    if (info.hasAudio) filters.push(`[0:a:0]asetpts=PTS-STARTPTS+${e.trimStart}/TB,asplit=${segments.length}${segments.map((_, i) => `[a${i}]`).join("")}`);
     for (const [i, segment] of segments.entries()) {
       filters.push(`[s${i}]trim=start=${segment.start}:end=${segment.end},setpts=PTS-STARTPTS[t${i}]`);
       if (info.hasAudio) filters.push(`[a${i}]atrim=start=${segment.start}:end=${segment.end},asetpts=PTS-STARTPTS[u${i}]`);
     }
     filters.push(`${segments.map((_, i) => `[t${i}]${info.hasAudio ? `[u${i}]` : ""}`).join("")}concat=n=${segments.length}:v=1:a=${info.hasAudio ? 1 : 0}[joined]${info.hasAudio ? "[audio]" : ""}`);
-    if (e.format === "vertical" && e.split) {
+    const pieces = segments.flatMap(s => {
+      const bounds = [...new Set([s.start, ...(e.format === "vertical" ? (e.scenes ?? []).flatMap(v => [v.start, v.end]).filter(t => t > s.start && t < s.end) : []), s.end])].sort((a,b) => a-b);
+      return bounds.slice(0,-1).map((start,i) => ({ start: s.offset + start - s.start, end: s.offset + bounds[i+1] - s.start, scene: e.scenes?.find(v => start >= v.start && start < v.end) }));
+    });
+    filters.push(`[joined]split=${pieces.length}${pieces.map((_,i) => `[piece${i}]`).join("")}`);
+    for (const [index, piece] of pieces.entries()) {
+    filters.push(`[piece${index}]trim=start=${piece.start}:end=${piece.end},setpts=PTS-STARTPTS[joined${index}]`);
+    const begin = filters.length;
+    const split = piece.scene?.split ?? e.split;
+    if (e.format === "vertical" && split) {
       const crop = (b: z.infer<typeof cropBoxSchema>) => {
         const x = Math.floor(b.x * info.width / 2) * 2, y = Math.floor(b.y * info.height / 2) * 2;
         const w = Math.max(2, Math.min(info.width - x, Math.floor(b.width * info.width / 2) * 2));
         const h = Math.max(2, Math.min(info.height - y, Math.floor(b.height * info.height / 2) * 2));
         return `crop=${w}:${h}:${x}:${y}`;
       };
-      const zoom = (scale = 1, pan = { x: 0, y: 0 }) => {
-        const w = Math.round(1080 * scale / 2) * 2, h = Math.round(960 * scale / 2) * 2;
+      const zoom = (scale = 1, pan = { x: 0, y: 0 }, panelHeight = 960) => {
+        const w = Math.round(1080 * scale / 2) * 2, h = Math.round(panelHeight * scale / 2) * 2;
         const padW = Math.max(w, 1080) + Math.ceil(Math.abs(pan.x) * 1080) * 2;
-        const padH = Math.max(h, 960) + Math.ceil(Math.abs(pan.y) * 960) * 2;
-        return `scale=${w}:${h},pad=${padW}:${padH}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=1080:960:${Math.round((padW - 1080) / 2 - pan.x * 1080)}:${Math.round((padH - 960) / 2 - pan.y * 960)},setsar=1`;
+        const padH = Math.max(h, panelHeight) + Math.ceil(Math.abs(pan.y) * panelHeight) * 2;
+        return `scale=${w}:${h},pad=${padW}:${padH}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=1080:${panelHeight}:${Math.round((padW - 1080) / 2 - pan.x * 1080)}:${Math.round((padH - panelHeight) / 2 - pan.y * panelHeight)},setsar=1`;
       };
-      filters.push("[joined]split[screenSource][speakerSource]",
-        `[screenSource]${crop(e.split.screen)},scale=1080:960:force_original_aspect_ratio=decrease,pad=1080:960:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,${zoom(e.split.screenScale, e.split.screenPan)}[top]`,
-        `[speakerSource]${crop(e.split.speaker)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,${zoom(e.split.speakerScale, e.split.speakerPan)}[bottom]`,
+      if (piece.scene?.mode === "speaker") filters.push(`[joined]${crop(split.speaker)},scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,${zoom(split.speakerScale,split.speakerPan,1920)}[framed]`);
+      else filters.push("[joined]split[screenSource][speakerSource]",
+        `[screenSource]${crop(split.screen)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,${zoom(split.screenScale, split.screenPan)}[top]`,
+        `[speakerSource]${crop(split.speaker)},scale=1080:960:force_original_aspect_ratio=increase,crop=1080:960,${zoom(split.speakerScale, split.speakerPan)}[bottom]`,
         "[top][bottom]vstack=inputs=2[framed]");
     } else if (e.framing === "blur-fill") {
       filters.push("[joined]split[front][back]",
@@ -240,6 +253,9 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
         `[front]scale=${width}:${height}:force_original_aspect_ratio=decrease[foreground]`,
         "[background][foreground]overlay=(W-w)/2:(H-h)/2[framed]");
     } else filters.push(`[joined]scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220[framed]`);
+    for (let i=begin;i<filters.length;i++) filters[i]=filters[i].replace(/\[([a-zA-Z]+)\]/g, (_, label) => `[${label}${index}]`);
+    }
+    filters.push(`${pieces.map((_,i)=>`[framed${i}]`).join("")}concat=n=${pieces.length}:v=1:a=0[framed]`);
     if (e.words.length) {
       let fonts = "";
       for (const candidate of ["artifacts/brand-engine/src/assets/fonts", "../brand-engine/src/assets/fonts"]) {
@@ -255,7 +271,7 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
     await writeFile(graph, filters.join(";\n"));
     let poppinsLoaded = false;
     progress(0);
-    await run("ffmpeg", [...baseArgs, ...inputArgs(source), "-filter_complex_script", graph,
+    await run("ffmpeg", [...baseArgs, "-ss", String(e.trimStart), "-t", String(e.trimEnd-e.trimStart), ...inputArgs(source), "-filter_complex_script", graph,
       "-map", e.words.length ? "[captioned]" : "[framed]", ...(info.hasAudio ? ["-map", "[audio]", "-c:a", "aac", "-b:a", "192k"] : ["-an"]),
       "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-threads", "2", "-r", "30", "-pix_fmt", "yuv420p",
       "-t", String(total), "-movflags", "+faststart", "-progress", "pipe:1", "-f", "mp4", target], RENDER_TIMEOUT, line => {

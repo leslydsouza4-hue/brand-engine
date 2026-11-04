@@ -19,6 +19,35 @@ export interface VideoEdits {
   captionBottom?: number;
   /** Vertical split layout: normalized ORIGINAL source bounds for each panel. */
   split?: SplitLayout;
+  /** Optional source-time layout scenes. Absent on older sessions: the whole video uses `split`. */
+  scenes?: Scene[];
+}
+
+export type SceneMode = "speaker" | "split";
+/** One layout interval in SOURCE seconds. Speaker mode fills the full 1080x1920 frame with split.speaker. */
+export interface Scene extends Range { mode: SceneMode; split: SplitLayout }
+export const MAX_BLURS = 64;
+export const MAX_SCENES = 32;
+
+export interface ActiveLayout { mode: SceneMode; split: SplitLayout; sceneIndex: number | null }
+/** Layout at source time t: matching scene, otherwise the base split. */
+export function layoutAt(e: Pick<VideoEdits, "split" | "scenes">, t: number): ActiveLayout | null {
+  const scenes = e.scenes ?? [];
+  const i = scenes.findIndex(s => t >= s.start && t < s.end);
+  if (i >= 0) return { mode: scenes[i].mode, split: scenes[i].split, sceneIndex: i };
+  return e.split ? { mode: "split", split: e.split, sceneIndex: null } : null;
+}
+
+/** Map a normalized point inside a crop back to full-source normalized coordinates. */
+export function cropToSource(box: Rect, crop: Rect): Rect {
+  const x = round3(crop.x + box.x * crop.width), y = round3(crop.y + box.y * crop.height);
+  return {
+    x, y,
+    width: round3(Math.min(1-x,box.width * crop.width)), height: round3(Math.min(1-y,box.height * crop.height)),
+  };
+}
+export function sourceToCrop(box: Rect, crop: Rect): Rect {
+  return { x: (box.x - crop.x) / crop.width, y: (box.y - crop.y) / crop.height, width: box.width / crop.width, height: box.height / crop.height };
 }
 
 export interface Rect { x: number; y: number; width: number; height: number }
@@ -109,6 +138,13 @@ export function validateEdits(e: VideoEdits, duration: number): string[] {
     if (!(b.end > b.start)) errors.push(`Blur ${i + 1} must end after it starts.`);
     if (b.width <= 0 || b.height <= 0 || b.x < 0 || b.y < 0 || b.x + b.width > 1.0001 || b.y + b.height > 1.0001) errors.push(`Blur ${i + 1} is outside the frame.`);
   });
+  if (e.blurs.length > MAX_BLURS) errors.push(`At most ${MAX_BLURS} blur regions can be exported.`);
+  if ((e.scenes?.length ?? 0) > MAX_SCENES) errors.push(`At most ${MAX_SCENES} layout scenes are supported.`);
+  (e.scenes ?? []).forEach((sc, i) => {
+    if (!(sc.end > sc.start)) errors.push(`Scene ${i + 1} must end after it starts.`);
+    if (!validRect(sc.split.speaker)) errors.push(`Scene ${i + 1} speaker bounds are outside the source frame.`);
+    if (sc.mode === "split" && !validRect(sc.split.screen)) errors.push(`Scene ${i + 1} screen bounds are outside the source frame.`);
+  });
   e.words.forEach((w, i) => { if (!(w.end >= w.start)) errors.push(`Caption ${i + 1} ends before it starts.`); });
   if (e.format === "vertical") {
     if (!e.split) errors.push("Vertical export needs the speaker and screen panels located first.");
@@ -182,7 +218,10 @@ export function editsKey(e: VideoEdits, timing: CaptionTiming, segments: TimedTe
 /** Captions sent to the renderer: real words, or whole segments when only segment timing exists. */
 export function renderEdits(e: VideoEdits, t: TranscriptState | null): VideoEdits {
   const words = t?.timing === "segment" ? t.segments : e.words;
-  return { ...e, captionTiming: t?.timing ?? "word", trimStart: round3(e.trimStart), trimEnd: round3(e.trimEnd), words: words.map(w => ({ text: w.text.trim(), start: round3(w.start), end: round3(w.end) })).filter(w => w.text) };
+  return { ...e,
+    blurs: e.blurs.map(b => ({ x: round3(b.x), y: round3(b.y), width: round3(b.width), height: round3(b.height), start: round3(b.start), end: round3(b.end) })),
+    ...(e.scenes?.length ? { scenes: e.scenes.map(sc => ({ start: round3(sc.start), end: round3(sc.end), mode: sc.mode, split: sc.split })) } : { scenes: undefined }),
+    captionTiming: t?.timing ?? "word", trimStart: round3(e.trimStart), trimEnd: round3(e.trimEnd), words: words.map(w => ({ text: w.text.trim(), start: round3(w.start), end: round3(w.end) })).filter(w => w.text) };
 }
 
 export interface Point { x: number; y: number }

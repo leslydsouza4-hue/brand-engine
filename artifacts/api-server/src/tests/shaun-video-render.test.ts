@@ -64,6 +64,23 @@ test("vertical split renders screen above speaker without changing horizontal", 
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
+test("scene transitions survive cuts and render speaker-only then split", async () => {
+  const dir=await mkdtemp(join(tmpdir(),"shaun-scenes-test-"));
+  try {
+    const source=join(dir,"source.mp4"),output=join(dir,"out.mp4");
+    await promisify(execFile)("ffmpeg",["-v","error","-f","lavfi","-i","color=c=red:s=640x360:r=24,drawbox=x=320:y=0:w=320:h=360:color=blue:t=fill","-t","3","-c:v","libx264","-threads","2",source]);
+    const split={screen:{x:0,y:0,width:0.5,height:1},speaker:{x:0.5,y:0,width:0.5,height:1}};
+    const e:VideoEdits={trimStart:0.2,trimEnd:3,cuts:[{start:0.5,end:1.5}],blurs:[],words:[],format:"vertical",framing:"fit",split,scenes:[{start:0,end:2,mode:"speaker",split},{start:2,end:3,mode:"split",split}]};
+    await renderVideo(source,output,e);
+    for(const [time,red] of [[0.2,false],[1.5,true]] as const){
+      const frame=join(dir,`frame-${time}.png`);
+      await promisify(execFile)("ffmpeg",["-v","error","-ss",String(time),"-i",output,"-frames:v","1",frame]);
+      const p=await sharp(frame).extract({left:540,top:480,width:1,height:1}).removeAlpha().raw().toBuffer();
+      assert.ok(red ? p[0]>200 && p[2]<30 : p[2]>200 && p[0]<30);
+    }
+  } finally {await rm(dir,{recursive:true,force:true});}
+});
+
 test("source-time cuts merge, clip and remap caption timing exactly", () => {
   const segments = retainedSegments(edits, 2);
   assert.equal(segments.length, 2);

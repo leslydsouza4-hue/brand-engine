@@ -10,7 +10,7 @@ import { assertSessionMutationOrigin, idSchema, SessionError } from "../lib/sess
 import { createPreview, extractAudio, extractFrame, probeVideo, renderVideo, videoEditsSchema, retainedSegments } from "../lib/shaun-video-render";
 import { transcribeLocalAudio, isTranscriptionBusy } from "../lib/shaun-video-transcribe";
 import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
-import { detectVideoLayout } from "../lib/shaun-video-layout";
+import { detectVideoLayout, detectPrivateDetails, privacyRequestSchema } from "../lib/shaun-video-layout";
 import { videoSourceCache } from "../lib/shaun-video-cache";
 import { getVideo, MAX_DURATION, MAX_VIDEO_BYTES, privateFile, readRecord, saveRecord, videoResponse, videoStorage, type JobRecord, type VideoRecord } from "../lib/shaun-video-store";
 
@@ -85,6 +85,8 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
       // Never expose ffmpeg local paths, remote signed URLs or provider internals.
       record.error = error instanceof SessionError ? error.message : kind === "transcribe"
         ? "Local speech transcription failed. Please retry with a clear English audio track."
+        : kind === "layout"
+        ? "Automatic analysis could not complete. Try a shorter selection, or use manual regions and scene controls."
         : kind === "import"
         ? "Import failed. Export an MP4 from Descript and upload it instead."
         : "Video processing failed. Check that the file is a valid MP4, at most 10 minutes and 4096 pixels per edge.";
@@ -264,7 +266,7 @@ router.get(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner)
 }));
 router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
-  const key = `videos/${video.videoId}/layout-v1.json`;
+  const key = `videos/${video.videoId}/layout-v2.json`;
   if ((await privateFile(owner, key).exists())[0]) { res.json(await readRecord(owner, key)); return; }
   const lock = `layout/${video.videoId}`;
   if (locked.has(lock)) throw new SessionError(429, "Locating this video's panels. Please wait.");
@@ -282,6 +284,21 @@ router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner)
     }));
   } catch (error) { locked.delete(lock); throw error; }
 }));
+router.post(`${prefix}/videos/:videoId/privacy`, endpoint(async (req,res,owner)=>{
+  const video=await getVideo(owner,id(req,"videoId"));
+  const request=privacyRequestSchema.parse(req.body);
+  if(request.end>(video.probe as {duration:number}).duration) throw new SessionError(400,"Scan exceeds source duration");
+  const key=`videos/${video.videoId}/privacy/${createHash("sha256").update(JSON.stringify(request)).digest("hex")}.json`;
+  if((await privateFile(owner,key).exists())[0]) {res.json(await readRecord(owner,key));return;}
+  res.status(202).json(await job(owner,"layout",video.videoId,async(dir,record)=>{
+    record.phase="Finding personal details";
+    const input=join(dir,"source.mp4");
+    await downloadLocal(owner,video.videoId,input);
+    const result=await detectPrivateDetails(input,dir,request);
+    await saveRecord(owner,key,result);
+    return result;
+  }));
+}));
 router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
   const edits = videoEditsSchema.parse(req.body);
@@ -289,7 +306,7 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
   try { retainedSegments(edits, (video.probe as { duration: number }).duration); }
   catch (error) { throw new SessionError(400, (error as Error).message); }
   res.status(202).json(await job(owner, "render", video.videoId, async (dir, record, progress) => {
-    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("pan-v1:" + JSON.stringify(edits)).digest("hex")}.json`;
+    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("scenes-v2:" + JSON.stringify(edits)).digest("hex")}.json`;
     try {
       const cached = await readRecord<{ jobId: string }>(owner, cacheKey);
       const file = privateFile(owner, `jobs/${cached.jobId}/output`);

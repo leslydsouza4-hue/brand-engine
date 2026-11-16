@@ -42,3 +42,17 @@ mtime_ms = 1793756878955
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:16202af2-8028-4cc1-964a-81c9525966c4/dc5a6a44-f0fb-4626-b120-1817d976a9b0/ac607cc4-491e-49d2-8b6d-47c6282e6f91"
 storage_version_token = "1793756918168065"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "e4OyxzsQUJA19UVS8BGQY"
+uri = "file://docs/CLAUDE_HANDOVER.md"
+type = "text"
+title = "Brand Engine — Claude Handover"
+description = "Project context, approved UI and video behavior, code map, known issues, verification commands, and a ready-to-paste Claude Code brief."
+logical_id = "da51742e-36d0-40c3-9d3c-e0f98187263e"
+content_hash = "sha256:32ae7091c4bc165574db3c7a9aca536e2ec5a6c633bfc5ec5af869f57a14f483"
+size = 23389
+mtime_ms = 1794858695723
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:16202af2-8028-4cc1-964a-81c9525966c4/da51742e-36d0-40c3-9d3c-e0f98187263e/6adf67d5-d90c-49c6-b596-c10ee2ead67a"
+storage_version_token = "1794858716527825"
+content_type = "text/markdown"

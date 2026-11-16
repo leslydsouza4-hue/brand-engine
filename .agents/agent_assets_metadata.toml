@@ -56,3 +56,17 @@ mtime_ms = 1794858695723
 storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:16202af2-8028-4cc1-964a-81c9525966c4/da51742e-36d0-40c3-9d3c-e0f98187263e/d06fa3cb-c999-47a9-bacc-bdf453bafde6"
 storage_version_token = "1794858872013040"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "kEZcvRArXLh3G3lSE-v3n"
+uri = "file://generated-artifacts/handover/brand-engine-source.zip"
+type = "unspecified"
+title = "Download Brand Engine Source ZIP"
+description = "42.5 MB source package for Claude Code, with handover, fonts, imported dependencies and two Shaun video references. Large static brand graphics and credentials are excluded; read START_HERE.md."
+logical_id = "e81336c2-a1f3-4bb0-8bcc-d05d0ec10811"
+content_hash = "sha256:1265b02b70ea9247dbad18e1cc2316f4fa0aa20fab6090fad34dc99b00bd38bd"
+size = 44529154
+mtime_ms = 1794859304815
+storage_uri = "gcs://replit-rams-assets-worf/rams/assets/repl:16202af2-8028-4cc1-964a-81c9525966c4/e81336c2-a1f3-4bb0-8bcc-d05d0ec10811/c0b35e05-b89a-4ff2-9238-afe096320ff7"
+storage_version_token = "1794859312211993"
+content_type = "application/octet-stream"

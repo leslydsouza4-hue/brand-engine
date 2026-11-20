@@ -4,11 +4,22 @@ import { captionAt, defaultEdits, fitCrop, validRect, groupCaptionLines, keptRan
 
 test("automatic headroom matches the renderer and keeps manual positioning", () => {
   const crop = { x: 0, y: 0, width: 1, height: 1 }, head = { x: 0.3, y: 0.04, width: 0.4, height: 0.45 };
-  const pan = speakerFramingPan(crop, head, 800, 800, 1080, 1920, 1.19);
+  const pan = speakerFramingPan(crop, head, 800, 800, 1080, 1920, 1.19, undefined, "rectangle");
   const h = 1920*1.19;
   assert.ok((1920-h)/2 + head.y*h + pan.y*1920 > 0);
   const manual = { x: 0.1, y: -0.02 };
-  assert.deepEqual(speakerFramingPan(crop, head, 800, 800, 1080, 1920, 1.19, manual), manual);
+  assert.deepEqual(speakerFramingPan(crop, head, 800, 800, 1080, 1920, 1.19, manual, "rectangle"), manual);
+});
+
+test("circular speaker positioning keeps the camera border outside the preview", () => {
+  const crop = { x: 0, y: 0, width: 1, height: 1 };
+  const zoom = Math.sqrt(1 + (720 / 1280) ** 2) * 1.04;
+  for (const requested of [undefined, { x: 0.4, y: -0.3 }]) {
+    const pan = speakerFramingPan(crop, undefined, 800, 800, 720, 1280, zoom, requested, "circle");
+    const radius = 1280 * zoom / 2;
+    assert.ok(((360 + Math.abs(pan.x * 720)) / radius) ** 2 +
+      ((640 + Math.abs(pan.y * 1280)) / radius) ** 2 <= 0.98 ** 2 + 1e-9);
+  }
 });
 
 test("kept ranges remove trim and merged cuts", () => {

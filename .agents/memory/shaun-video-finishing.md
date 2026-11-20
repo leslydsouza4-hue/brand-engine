@@ -89,6 +89,12 @@ Frame Shaun with his full hair/top of head and reasonable headroom, not a centre
 
 **How to apply:** Use available camera footage and detected head bounds without claiming to recover missing source pixels or continuous tracking. Preserve manual adjustments; invalidate cached layout/output references when these rendering rules change.
 
+Only Shaun and his actual camera background belong in the presenter panel; curved camera-mask edges and material outside the camera must not appear, including after headroom adjustments or dragging.
+
+**Why:** The user repeated the no-camera-circle requirement after a headroom correction revealed the original curved edge at the top-right.
+
+**How to apply:** Circular camera crops need corner-in-ellipse safety, not just rectangular crop bounds. Respect manual framing within that safe interior; preview and export must agree.
+
 The user approved the filled rectangular Shaun framing and edge-to-edge UI panel. Preserve it. The preferred workflow is one Download action, not separate render/download steps; secondary editing controls should stay collapsed to keep the sidebar clean. Video filenames should use the Descript title plus the thumbnail-style date.
 
 **Why:** The user explicitly confirmed the visuals looked good and asked to simplify the finishing workflow rather than redesign the framing again.

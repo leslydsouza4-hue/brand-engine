@@ -43,13 +43,14 @@ export function SplitPanels({ split, onChange }: { split: SplitLayout; onChange:
   const [advanced, setAdvanced] = useState(false);
   const scaleControl = (panel: "screen" | "speaker") => {
     const key = panel === "screen" ? "screenScale" : "speakerScale";
-    const value = Math.round((split[key] ?? 1) * 100);
+    const minimum = panel === "speaker" && split.speakerShape === "circle" ? 100 : 50;
+    const value = Math.max(minimum, Math.round((split[key] ?? 1) * 100));
     const title = panel === "screen" ? "Screen" : "Speaker";
     return <label className="block text-[11px] text-[#94A3B8]">
       <span className="flex justify-between items-center">{title} scale · {value}%
         <button type="button" className="text-[#00B2A9] text-[10px]" onClick={() => onChange({ ...split, [key]: 1 })}>Reset</button>
       </span>
-      <input type="range" aria-label={`${title} scale`} min="50" max="200" step="1" value={value}
+      <input type="range" aria-label={`${title} scale`} min={minimum} max="200" step="1" value={value}
         onChange={e => onChange({ ...split, [key]: Number(e.target.value) / 100 })}
         className="w-full accent-[#00B2A9] mt-[5px]" />
     </label>;

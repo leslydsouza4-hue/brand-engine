@@ -70,6 +70,37 @@ test("vertical split renders screen above speaker without changing horizontal", 
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
+test("circular camera borders stay out of full and split exports, including manual drags", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "shaun-circle-border-"));
+  try {
+    const image = join(dir, "circle.png"), source = join(dir, "circle.mp4");
+    await sharp(Buffer.from('<svg width="800" height="800"><rect width="800" height="800" fill="red"/><circle cx="400" cy="400" r="396" fill="blue"/></svg>')).png().toFile(image);
+    await promisify(execFile)("ffmpeg", ["-v", "error", "-y", "-loop", "1", "-i", image, "-t", "0.3",
+      "-c:v", "libx264", "-pix_fmt", "yuv420p", source]);
+    for (const mode of ["speaker", "split"] as const) {
+      const output = join(dir, `${mode}.mp4`), frame = join(dir, `${mode}.png`);
+      const split = { speaker: { x: 0, y: 0, width: 1, height: 1 },
+        screen: { x: 0, y: 0, width: 1, height: 1 }, speakerShape: "circle" as const,
+        speakerHead: { x: 0.3, y: 0.03, width: 0.4, height: 0.5 },
+        speakerPan: mode === "split" ? { x: 0.35, y: -0.2 } : undefined,
+        speakerScale: 0.68 };
+      await renderVideo(source, output, { trimStart: 0, trimEnd: 0.3, cuts: [], words: [],
+        blurs: [], format: "vertical", framing: "fit", exportQuality: "fast", split,
+        scenes: [{ start: 0, end: 0.3, mode, split }] });
+      await promisify(execFile)("ffmpeg", ["-v", "error", "-y", "-i", output, "-frames:v", "1", frame]);
+      const { data, info } = await sharp(frame).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const top = mode === "split" ? Math.round(info.height * 0.3 / 2) * 2 : 0;
+      for (let y = top + 3; y < info.height - 3; y++) {
+        for (let x = 3; x < info.width - 3; x++) {
+          const p = (y * info.width + x) * info.channels;
+          assert.ok(data[p + 2] > 150 && data[p] < 70,
+            `${mode}: no red outer-camera pixels at ${x},${y}`);
+        }
+      }
+    }
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
 test("scene transitions survive cuts and render speaker-only then split", async () => {
   const dir=await mkdtemp(join(tmpdir(),"shaun-scenes-test-"));
   try {

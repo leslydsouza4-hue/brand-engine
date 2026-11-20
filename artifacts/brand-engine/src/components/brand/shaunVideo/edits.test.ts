@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { captionAt, defaultEdits, fitCrop, validRect, groupCaptionLines, keptRanges, nextPlayableTime, outputDuration, validateEdits } from "./edits";
+import { captionAt, defaultEdits, fitCrop, validRect, groupCaptionLines, keptRanges, nextPlayableTime, outputDuration, validateEdits, speakerFramingPan } from "./edits";
+
+test("automatic headroom matches the renderer and keeps manual positioning", () => {
+  const crop = { x: 0, y: 0, width: 1, height: 1 }, head = { x: 0.3, y: 0.04, width: 0.4, height: 0.45 };
+  const pan = speakerFramingPan(crop, head, 800, 800, 1080, 1920, 1.19);
+  const h = 1920*1.19;
+  assert.ok((1920-h)/2 + head.y*h + pan.y*1920 > 0);
+  const manual = { x: 0.1, y: -0.02 };
+  assert.deepEqual(speakerFramingPan(crop, head, 800, 800, 1080, 1920, 1.19, manual), manual);
+});
 
 test("kept ranges remove trim and merged cuts", () => {
   const e = { ...defaultEdits(20), trimStart: 1, trimEnd: 18, cuts: [{ start: 5, end: 7 }, { start: 6, end: 8 }, { start: 17, end: 30 }] };

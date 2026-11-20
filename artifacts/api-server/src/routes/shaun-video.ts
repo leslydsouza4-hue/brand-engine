@@ -278,7 +278,7 @@ router.get(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner)
 }));
 router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
-  const key = `videos/${video.videoId}/layout-v5.json`;
+  const key = `videos/${video.videoId}/layout-headroom-product-v6.json`;
   if ((await privateFile(owner, key).exists())[0]) { res.json(await readRecord(owner, key)); return; }
   const lock = `layout/${video.videoId}`;
   if (locked.has(lock)) throw new SessionError(429, "Locating this video's panels. Please wait.");
@@ -327,7 +327,7 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
       progress(value);
     };
     phase("Checking saved video", 0.01);
-    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("panels-filled-v2:" + JSON.stringify(edits)).digest("hex")}.json`;
+    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("headroom-rounded-v3:" + JSON.stringify(edits)).digest("hex")}.json`;
     try {
       const cached = await readRecord<{ jobId: string }>(owner, cacheKey);
       const file = privateFile(owner, `jobs/${cached.jobId}/output`);

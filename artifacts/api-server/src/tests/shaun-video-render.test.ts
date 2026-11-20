@@ -95,8 +95,8 @@ test("source-time cuts merge, clip and remap caption timing exactly", () => {
   const ass = makeCaptions(edits, segments, 1920, 1080);
   assert.match(ass, /Dialogue: 0,0:00:00\.45,0:00:00\.80/);
   assert.match(ass, /Poppins/);
-  assert.match(ass, /Style: Active,Poppins,[^\n]*&H00F0A31A/);
-  assert.match(ass, /\\rActive/);
+  assert.match(ass, /\\1c&H00F0A31A&\\p1/);
+  assert.match(ass, / b /);
   const overlapping = retainedSegments({ ...edits, cuts: [{ start: 0.2, end: 0.6 }, { start: 0.4, end: 0.9 }] }, 2);
   assert.equal(overlapping.length, 2);
   assert.equal(overlapping[1].start, 0.9);
@@ -158,7 +158,7 @@ test("strict edit bounds and caption override injection protection", () => {
   assert.throws(() => retainedSegments({ ...edits, words: [{ text: "one", start: 0, end: 1 }, { text: "two", start: 0.5, end: 1.1 }] }, 2), /chronological/);
 });
 
-test("ASS active word is a filled cyan rectangle, and SRT segments never highlight", { timeout: 30_000 }, async () => {
+test("ASS active word has a filled rounded cyan box, and SRT segments never highlight", { timeout: 30_000 }, async () => {
   const dir = await mkdtemp(join(tmpdir(), "shaun-caption-pixels-"));
   try {
     const e: VideoEdits = { ...edits, cuts: [], blurs: [], words: [{ text: "INNOVATION", start: 0, end: 1 }] };
@@ -178,14 +178,26 @@ test("ASS active word is a filled cyan rectangle, and SRT segments never highlig
       minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); count++;
     }
     assert.ok(count > 5000, `Expected filled cyan box, found ${count} cyan pixels`);
-    // Filled rectangular corners distinguish a background box from glyph outlines.
-    for (const x of [minX + 4, maxX - 4]) for (const y of [minY + 4, maxY - 4])
-      assert.ok(isCyan(x, y), `Missing cyan rectangle corner at ${x},${y}`);
+    // Curved corners must be empty while the middle of each box edge is filled.
+    for (const x of [minX + 1, maxX - 1]) for (const y of [minY + 1, maxY - 1])
+      assert.ok(!isCyan(x, y), `Expected rounded inset at ${x},${y}`);
+    assert.ok(isCyan(Math.round((minX+maxX)/2), minY+2));
+    assert.ok(isCyan(minX+2, Math.round((minY+maxY)/2)));
     assert.ok(count / ((maxX - minX + 1) * (maxY - minY + 1)) > 0.6);
+    let whiteMinX = info.width, whiteMaxX = 0, whiteMinY = info.height, whiteMaxY = 0;
+    for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
+      const p = (y*info.width+x)*info.channels;
+      if (data[p] > 235 && data[p+1] > 235 && data[p+2] > 235) {
+        whiteMinX = Math.min(whiteMinX, x); whiteMaxX = Math.max(whiteMaxX, x);
+        whiteMinY = Math.min(whiteMinY, y); whiteMaxY = Math.max(whiteMaxY, y);
+      }
+    }
+    assert.ok(whiteMinX > minX && whiteMaxX < maxX, "rounded background encloses the shaped word horizontally");
+    assert.ok(whiteMinY > minY && whiteMaxY < maxY, "rounded background encloses the word vertically");
     const segment = makeCaptions({ ...e, captionTiming: "segment" }, retainedSegments(e, 2), 1920, 1080);
-    assert.doesNotMatch(segment.split("[Events]")[1], /\\rActive/);
+    assert.doesNotMatch(segment.split("[Events]")[1], /\\p1/);
     const cue = makeCaptions({ ...e, words: [{ text: "A whole SRT cue", start: 0, end: 1 }] }, retainedSegments(e, 2), 1920, 1080);
-    assert.doesNotMatch(cue.split("[Events]")[1], /\\rActive/);
+    assert.doesNotMatch(cue.split("[Events]")[1], /\\p1/);
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 

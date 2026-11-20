@@ -30,6 +30,8 @@ async function buildAll() {
     external: [
       "*.node",
       "sharp",
+      // Fontkit loads adjacent Unicode/font tables at runtime.
+      "fontkit",
       "better-sqlite3",
       "sqlite3",
       "canvas",

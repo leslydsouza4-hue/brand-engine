@@ -259,7 +259,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
 
   const duration = source?.duration || edits?.trimEnd || 0;
   const validation = useMemo(() => edits ? validateEdits(edits, duration) : [], [edits, duration]);
-  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#panels-filled-v2" + (autoCaptions ? "" : "#nocaptions") : "";
+  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#headroom-rounded-v3" + (autoCaptions ? "" : "#nocaptions") : "";
   const renderStale = !!render && render.key !== currentKey;
 
   const handleRender = async () => {
@@ -410,7 +410,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   <Segmented value={edits.framing} onChange={framing => patch({ framing })} options={[{ value: "blur-fill", label: "Blur fill" }, { value: "fit", label: "Fit" }]} />
                   <div className="text-[10px] text-[#475569] leading-[1.45]">Full footage is always kept in frame. Blur fill backs it with a blurred copy in the render; Fit uses solid bars.</div>
                 </> : <>
-                  <div className="text-[10px] text-[#475569] leading-[1.45]">Screen on top 30%, Shaun fills the bottom 70%. Automatic camera framing removes the circle edges. Greetings and outros fill the whole frame.</div>
+                  <div className="text-[10px] text-[#475569] leading-[1.45]">Main product UI on top 30%, Shaun fills the bottom 70% with headroom. Greetings and outros fill the whole frame. Use Detect again to update an older video's camera and screen bounds.</div>
                   {!edits.split && layoutHere?.status !== "error" && (
                     <div data-testid="status-layout" className="flex items-center gap-[6px] p-[8px] rounded-[10px] bg-[rgba(40,150,251,0.05)] border border-[rgba(40,150,251,0.15)] text-[10px] text-[#94A3B8]">
                       <Loader2 className="w-[11px] h-[11px] animate-spin text-[#2896FB] shrink-0" />{layoutHere?.phase || "Locating panels in the background. You can keep editing."}

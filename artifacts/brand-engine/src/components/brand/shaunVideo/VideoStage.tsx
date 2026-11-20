@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { captionAt, clamp, round3, type SplitLayout, panelPlacement, panLimits, speakerAutoScale, screenWithoutWebcam, PANEL_FIT, SPLIT_TOP, layoutAt, nextPlayableTime, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
+import { captionAt, clamp, round3, type SplitLayout, panelPlacement, panLimits, speakerAutoScale, speakerFramingPan, screenWithoutWebcam, PANEL_FIT, SPLIT_TOP, layoutAt, nextPlayableTime, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
 
 interface Props {
   src: string;
@@ -58,7 +58,8 @@ export function VideoStage(p: Props) {
       const sx = r.x * v.videoWidth, sy = r.y * v.videoHeight, sw = r.width * v.videoWidth, sh = r.height * v.videoHeight;
       if (sw < 1 || sh < 1) return;
       const zoom=r===split.speaker?speakerAutoScale(sw,sh,W,h,split.speakerShape):1;
-      const f = panelPlacement(sw, sh, W, h, mode, scale*zoom, pan);
+      const positioned = r===split.speaker ? speakerFramingPan(r, split.speakerHead, v.videoWidth, v.videoHeight, W, h, scale*zoom, pan) : pan;
+      const f = panelPlacement(sw, sh, W, h, mode, scale*zoom, positioned);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, top, W, h); ctx.clip();
       try { ctx.drawImage(v, sx, sy, sw, sh, f.dx, top + f.dy, f.dw, f.dh); } catch { /* frame not ready */ }
@@ -122,7 +123,9 @@ export function VideoStage(p: Props) {
     const ph=full?rect.height:rect.height*(panel==="screen"?SPLIT_TOP:1-SPLIT_TOP);
     const zoom=v0 && panel==="speaker"?speakerAutoScale(r0.width*v0.videoWidth,r0.height*v0.videoHeight,rect.width,ph,split.speakerShape):1;
     const lim0 = v0 && v0.videoWidth ? panLimits(r0.width * v0.videoWidth, r0.height * v0.videoHeight, rect.width, ph, PANEL_FIT[panel], (split[panel === "screen" ? "screenScale" : "speakerScale"]??1)*zoom) : { x: 1, y: 1 };
-    const raw = split[panel === "screen" ? "screenPan" : "speakerPan"] ?? { x: 0, y: 0 };
+    const stored = split[panel === "screen" ? "screenPan" : "speakerPan"];
+    const raw = v0 && panel==="speaker" ? speakerFramingPan(r0, split.speakerHead, v0.videoWidth, v0.videoHeight,
+      rect.width, ph, (split.speakerScale ?? 1)*zoom, stored) : stored ?? { x: 0, y: 0 };
     const cur = { x: clamp(raw.x, -lim0.x, lim0.x), y: clamp(raw.y, -lim0.y, lim0.y) };
     panDragRef.current = { id: e.pointerId, scene: act.sceneIndex, panel, sx: e.clientX, sy: e.clientY, start: { ...cur }, w: rect.width, h: full ? rect.height : rect.height * (panel === "screen" ? SPLIT_TOP : 1 - SPLIT_TOP), full };
     setPanDragging(panel);

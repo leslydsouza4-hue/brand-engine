@@ -83,6 +83,12 @@ The upper screen panel should fill edge-to-edge without side gaps, preserving as
 
 **Why:** The user explicitly rejected the empty left/right margins in the screen panel.
 
+Frame Shaun with his full hair/top of head and reasonable headroom, not a centred face zoom. The screen panel should show the demonstrated product UI, excluding surrounding Slack, chat threads and developer panels as well as the small duplicate webcam. Caption highlights should have slightly rounded corners in exported video, not only in the preview.
+
+**Why:** The user approved the overall video look but corrected clipped-head framing, square exported highlights and retained Slack chrome. This supersedes the earlier request to retain Slack UI.
+
+**How to apply:** Use available camera footage and detected head bounds without claiming to recover missing source pixels or continuous tracking. Preserve manual adjustments; invalidate cached layout/output references when these rendering rules change.
+
 The user approved the filled rectangular Shaun framing and edge-to-edge UI panel. Preserve it. The preferred workflow is one Download action, not separate render/download steps; secondary editing controls should stay collapsed to keep the sidebar clean. Video filenames should use the Descript title plus the thumbnail-style date.
 
 **Why:** The user explicitly confirmed the visuals looked good and asked to simplify the finishing workflow rather than redesign the framing again.

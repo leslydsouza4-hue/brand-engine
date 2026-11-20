@@ -5,6 +5,8 @@ import { resolve, join } from "node:path";
 import { z } from "zod";
 import { excludeWebcam } from "./shaun-screen-crop";
 import { ffmpegProgress } from "./shaun-job-progress";
+import { speakerFramingPan } from "./shaun-speaker-framing";
+import { captionWordBoxes, roundedCaptionBox } from "./shaun-caption-box";
 
 const seconds = z.number().finite().min(0).max(600);
 export const cropBoxSchema = z.object({
@@ -14,6 +16,7 @@ export const cropBoxSchema = z.object({
 export const splitSchema = z.object({ speaker: cropBoxSchema, screen: cropBoxSchema,
   speakerShape: z.enum(["circle","rectangle"]).optional(),
   speakerAutoFramed: z.boolean().optional(),
+  speakerHead: cropBoxSchema.optional(),
   screenScale: z.number().finite().min(0.5).max(2).optional(),
   speakerScale: z.number().finite().min(0.5).max(2).optional(),
   screenPan: z.object({ x: z.number().min(-1).max(1), y: z.number().min(-1).max(1) }).strict().optional(),
@@ -167,7 +170,6 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Caption,Poppins,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00121820,&H80000000,-1,0,0,0,100,100,0,0,1,${2*resolutionScale},${3*resolutionScale},2,${sideMargin},${sideMargin},${margin},1
-Style: Active,Poppins,${fontSize},&H00FFFFFF,&H00FFFFFF,&H00F0A31A,&H00F0A31A,-1,0,0,0,100,100,0,0,3,${8*resolutionScale},0,2,${sideMargin},${sideMargin},${margin},1
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
@@ -186,19 +188,26 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
   }
   const events: string[] = [];
   for (const words of groups) {
+    const chars = words.map(w => w.text).join(" ").length;
+    const size = Math.min(fontSize, Math.floor((width - 150*resolutionScale) / Math.max(1, chars) / 0.7));
+    const boxes = segmentTiming ? [] : captionWordBoxes(words.map(w => w.text), size, width);
     const lineEnd = words.at(-1)!.end + (segmentTiming ? 0 : 0.15);
     const boundaries = [...new Set([words[0].start, ...words.flatMap(w => [w.start, w.end]), lineEnd])].sort((a, b) => a - b);
     for (let i = 0; i < boundaries.length - 1; i++) for (const segment of segments) {
       const start = Math.max(boundaries[i], segment.start), end = Math.min(boundaries[i + 1], segment.end);
       if (end <= start) continue;
       const active = segmentTiming ? -1 : words.findIndex(w => start >= w.start && start < w.end);
-      const chars = words.map(w => w.text).join(" ").length;
-      const size = Math.min(fontSize, Math.floor((width - 150*resolutionScale) / Math.max(1, chars) / 0.7));
-      const line = words.map((w, j) => j === active
-        ? `{\\rActive\\fs${size}}${escapeAss(w.text)}{\\rCaption\\fs${size}}`
-        : escapeAss(w.text)).join(" ");
+      const line = words.map(w => escapeAss(w.text)).join(" ");
       const a = segment.offset + start - segment.start, b = segment.offset + end - segment.start;
-      if (Math.round(b * 100) > Math.round(a * 100)) events.push(`Dialogue: 0,${assTime(a)},${assTime(b)},Caption,,0,0,0,,{\\fs${size}}${line}`);
+      if (Math.round(b * 100) > Math.round(a * 100)) {
+        if (active >= 0) {
+          const box = boxes[active], pad = 8 * resolutionScale;
+          events.push(`Dialogue: 0,${assTime(a)},${assTime(b)},Caption,,0,0,0,,${roundedCaptionBox(
+            box.left - pad, height - margin - size * 0.86 - pad, box.width + pad * 2,
+            size * 0.74 + pad * 2, 10 * resolutionScale)}`);
+        }
+        events.push(`Dialogue: 1,${assTime(a)},${assTime(b)},Caption,,0,0,0,,{\\fs${size}}${line}`);
+      }
     }
   }
   return header + events.join("\n") + "\n";
@@ -262,8 +271,10 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
         const autoZoom=circular?Math.sqrt(1+Math.min(relative,1/relative)**2)*1.04:1;
         const ratio=(mode==="contain"?Math.min:Math.max)(width/cw,panelHeight/ch)*scale*autoZoom;
         const w=Math.max(2,Math.round(cw*ratio/2)*2), h=Math.max(2,Math.round(ch*ratio/2)*2);
-        const dx=Math.max(-Math.abs(w-width)/2,Math.min(Math.abs(w-width)/2,pan.x*width));
-        const dy=Math.max(-Math.abs(h-panelHeight)/2,Math.min(Math.abs(h-panelHeight)/2,pan.y*panelHeight));
+        const positioned = b === split.speaker ? speakerFramingPan(b, split.speakerHead, info.width, info.height,
+          width, panelHeight, scale * autoZoom, pan) : pan;
+        const dx=Math.max(-Math.abs(w-width)/2,Math.min(Math.abs(w-width)/2,positioned.x*width));
+        const dy=Math.max(-Math.abs(h-panelHeight)/2,Math.min(Math.abs(h-panelHeight)/2,positioned.y*panelHeight));
         const padW=Math.max(w,width)+Math.ceil(Math.abs(dx))*2, padH=Math.max(h,panelHeight)+Math.ceil(Math.abs(dy))*2;
         return `crop=${cw}:${ch}:${x}:${y},scale=${w}:${h},pad=${padW}:${padH}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=${width}:${panelHeight}:${Math.round((padW-width)/2-dx)}:${Math.round((padH-panelHeight)/2-dy)},setsar=1`;
       };

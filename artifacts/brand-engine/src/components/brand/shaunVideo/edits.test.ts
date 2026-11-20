@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { captionAt, defaultEdits, fitCrop, validRect, groupCaptionLines, keptRanges, nextPlayableTime, outputDuration, validateEdits, speakerFramingPan } from "./edits";
+import { captionAt, defaultEdits, fitCrop, validRect, groupCaptionLines, keptRanges, nextPlayableTime, outputDuration, validateEdits, speakerFramingPan, speakerFramingZoom } from "./edits";
 
 test("automatic headroom matches the renderer and keeps manual positioning", () => {
   const crop = { x: 0, y: 0, width: 1, height: 1 }, head = { x: 0.3, y: 0.04, width: 0.4, height: 0.45 };
@@ -19,6 +19,19 @@ test("circular speaker positioning keeps the camera border outside the preview",
     const radius = 1280 * zoom / 2;
     assert.ok(((360 + Math.abs(pan.x * 720)) / radius) ** 2 +
       ((640 + Math.abs(pan.y * 1280)) / radius) ** 2 <= 0.98 ** 2 + 1e-9);
+  }
+});
+
+test("circular speaker drags move in both directions without losing border protection", () => {
+  const crop = { x: 0, y: 0, width: 1, height: 1 };
+  const base = Math.sqrt(1 + (720 / 1280) ** 2) * 1.04;
+  for (const requested of [{x:0.2,y:0.15}, {x:-0.25,y:-0.2}]) {
+    const zoom = speakerFramingZoom(crop, 800, 800, 720, 1280, base, requested, "circle");
+    assert.ok(zoom > base);
+    assert.deepEqual(speakerFramingPan(crop, undefined, 800, 800, 720, 1280, zoom, requested, "circle"), requested);
+    const radius = 1280*zoom/2;
+    assert.ok(((360 + Math.abs(requested.x*720))/radius)**2 +
+      ((640 + Math.abs(requested.y*1280))/radius)**2 < 0.98**2);
   }
 });
 

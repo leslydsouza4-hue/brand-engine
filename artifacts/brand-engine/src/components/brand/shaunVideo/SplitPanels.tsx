@@ -65,7 +65,7 @@ export function SplitPanels({ split, onChange }: { split: SplitLayout; onChange:
   };
   return (
     <div className="flex flex-col gap-[10px] p-[10px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)]">
-      <p className="text-[10px] text-[#94A3B8] leading-[1.45] m-0">Drag the screen or speaker in the preview to move it. Use the sliders to zoom.</p>
+      <p className="text-[10px] text-[#94A3B8] leading-[1.45] m-0">Drag the screen or speaker in the preview to move it. Use the sliders to zoom. Circular cameras zoom in as needed while dragging to hide their edges.</p>
       {scaleControl("screen")}
       <div className="flex justify-end -mt-[6px]">{posReset("screen")}</div>
       {scaleControl("speaker")}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { captionAt, clamp, round3, type SplitLayout, panelPlacement, panLimits, speakerAutoScale, speakerFramingPan, screenWithoutWebcam, PANEL_FIT, SPLIT_TOP, layoutAt, nextPlayableTime, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
+import { captionAt, clamp, round3, type SplitLayout, panelPlacement, panLimits, speakerAutoScale, speakerFramingPan, speakerFramingZoom, screenWithoutWebcam, PANEL_FIT, SPLIT_TOP, layoutAt, nextPlayableTime, type CaptionTiming, type TimedText, type VideoEdits } from "./edits";
 
 interface Props {
   src: string;
@@ -59,8 +59,10 @@ export function VideoStage(p: Props) {
       if (sw < 1 || sh < 1) return;
       const zoom=r===split.speaker?speakerAutoScale(sw,sh,W,h,split.speakerShape):1;
       if (zoom > 1) scale = Math.max(1, scale);
-      const positioned = r===split.speaker ? speakerFramingPan(r, split.speakerHead, v.videoWidth, v.videoHeight, W, h, scale*zoom, pan, split.speakerShape) : pan;
-      const f = panelPlacement(sw, sh, W, h, mode, scale*zoom, positioned);
+      const effectiveZoom = r===split.speaker ? speakerFramingZoom(r, v.videoWidth, v.videoHeight,
+        W, h, scale*zoom, pan, split.speakerShape) : scale*zoom;
+      const positioned = r===split.speaker ? speakerFramingPan(r, split.speakerHead, v.videoWidth, v.videoHeight, W, h, effectiveZoom, pan, split.speakerShape) : pan;
+      const f = panelPlacement(sw, sh, W, h, mode, effectiveZoom, positioned);
       ctx.save();
       ctx.beginPath(); ctx.rect(0, top, W, h); ctx.clip();
       try { ctx.drawImage(v, sx, sy, sw, sh, f.dx, top + f.dy, f.dw, f.dh); } catch { /* frame not ready */ }
@@ -124,10 +126,13 @@ export function VideoStage(p: Props) {
     const ph=full?rect.height:rect.height*(panel==="screen"?SPLIT_TOP:1-SPLIT_TOP);
     const zoom=v0 && panel==="speaker"?speakerAutoScale(r0.width*v0.videoWidth,r0.height*v0.videoHeight,rect.width,ph,split.speakerShape):1;
     const storedScale = split[panel === "screen" ? "screenScale" : "speakerScale"] ?? 1;
-    const lim0 = v0 && v0.videoWidth ? panLimits(r0.width * v0.videoWidth, r0.height * v0.videoHeight, rect.width, ph, PANEL_FIT[panel], (zoom > 1 ? Math.max(1, storedScale) : storedScale)*zoom) : { x: 1, y: 1 };
     const stored = split[panel === "screen" ? "screenPan" : "speakerPan"];
+    const baseZoom = (zoom > 1 ? Math.max(1, storedScale) : storedScale)*zoom;
+    const effectiveZoom = v0 && panel === "speaker" ? speakerFramingZoom(r0, v0.videoWidth, v0.videoHeight,
+      rect.width, ph, baseZoom, stored, split.speakerShape) : baseZoom;
+    const lim0 = v0 && v0.videoWidth ? panLimits(r0.width * v0.videoWidth, r0.height * v0.videoHeight, rect.width, ph, PANEL_FIT[panel], effectiveZoom) : { x: 1, y: 1 };
     const raw = v0 && panel==="speaker" ? speakerFramingPan(r0, split.speakerHead, v0.videoWidth, v0.videoHeight,
-      rect.width, ph, (zoom > 1 ? Math.max(1, split.speakerScale ?? 1) : split.speakerScale ?? 1)*zoom, stored, split.speakerShape) : stored ?? { x: 0, y: 0 };
+      rect.width, ph, effectiveZoom, stored, split.speakerShape) : stored ?? { x: 0, y: 0 };
     const cur = { x: clamp(raw.x, -lim0.x, lim0.x), y: clamp(raw.y, -lim0.y, lim0.y) };
     panDragRef.current = { id: e.pointerId, scene: act.sceneIndex, panel, sx: e.clientX, sy: e.clientY, start: { ...cur }, w: rect.width, h: full ? rect.height : rect.height * (panel === "screen" ? SPLIT_TOP : 1 - SPLIT_TOP), full };
     setPanDragging(panel);
@@ -141,9 +146,13 @@ export function VideoStage(p: Props) {
     const v = videoRef.current, r = d.panel==="screen"?screenWithoutWebcam(split):split.speaker;
     const zoom=v && d.panel==="speaker"?speakerAutoScale(r.width*v.videoWidth,r.height*v.videoHeight,d.w,d.h,split.speakerShape):1;
     const storedScale = split[d.panel === "screen" ? "screenScale" : "speakerScale"] ?? 1;
-    const effectiveScale = (zoom > 1 ? Math.max(1, storedScale) : storedScale)*zoom;
-    const lim = v && v.videoWidth ? panLimits(r.width * v.videoWidth, r.height * v.videoHeight, d.w, d.h, PANEL_FIT[d.panel], effectiveScale) : { x: 1, y: 1 };
+    const baseZoom = (zoom > 1 ? Math.max(1, storedScale) : storedScale)*zoom;
+    // Circular cameras can move beyond the old tiny ellipse-safe range:
+    // their zoom follows the requested drag instead of discarding it.
+    const lim = zoom > 1 ? { x: 1, y: 1 } : v && v.videoWidth ? panLimits(r.width * v.videoWidth, r.height * v.videoHeight, d.w, d.h, PANEL_FIT[d.panel], baseZoom) : { x: 1, y: 1 };
     const requested = { x: round3(clamp(d.start.x + (e.clientX - d.sx) / d.w, -lim.x, lim.x)), y: round3(clamp(d.start.y + (e.clientY - d.sy) / d.h, -lim.y, lim.y)) };
+    const effectiveScale = v && d.panel === "speaker" ? speakerFramingZoom(r, v.videoWidth,
+      v.videoHeight, d.w, d.h, baseZoom, requested, split.speakerShape) : baseZoom;
     const pan = v && d.panel === "speaker" ? speakerFramingPan(r, split.speakerHead,
       v.videoWidth, v.videoHeight, d.w, d.h, effectiveScale, requested, split.speakerShape) : requested;
     const next = { ...split, [d.panel === "screen" ? "screenPan" : "speakerPan"]: pan };

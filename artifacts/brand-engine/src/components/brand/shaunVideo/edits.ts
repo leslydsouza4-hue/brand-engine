@@ -58,6 +58,20 @@ export interface Pan { x: number; y: number }
 /** screenPan/speakerPan: destination offsets in -1..1 of output width / half height, applied after fit + scale. */
 export interface SplitLayout { speaker: Rect; screen: Rect; speakerScale?: number; screenScale?: number; screenPan?: Pan; speakerPan?: Pan; speakerShape?: "circle" | "rectangle"; speakerAutoFramed?: boolean; speakerHead?: Rect }
 
+/** Match the renderer: allow dragging while automatically keeping circular edges out. */
+export function speakerFramingZoom(crop: Rect, sourceWidth: number, sourceHeight: number,
+  panelWidth: number, panelHeight: number, zoom: number, pan?: Pan, shape?: "circle" | "rectangle"): number {
+  const sw = crop.width * sourceWidth, sh = crop.height * sourceHeight;
+  const circular = shape === "circle" || (!shape && sw / sh >= 0.85 && sw / sh <= 1.15);
+  if (!circular || !pan || (!pan.x && !pan.y)) return zoom;
+  const cover = Math.max(panelWidth / sw, panelHeight / sh);
+  const required = Math.hypot(
+    (panelWidth + 2 * Math.abs(pan.x * panelWidth)) / (sw * cover),
+    (panelHeight + 2 * Math.abs(pan.y * panelHeight)) / (sh * cover),
+  ) / 0.975;
+  return Math.max(zoom, required);
+}
+
 /** Keep in sync with the renderer's speakerFramingPan, including circular edge safety. */
 export function speakerFramingPan(crop: Rect, head: Rect | undefined, sourceWidth: number, sourceHeight: number,
   panelWidth: number, panelHeight: number, zoom: number, pan?: Pan, shape?: "circle" | "rectangle"): Pan {

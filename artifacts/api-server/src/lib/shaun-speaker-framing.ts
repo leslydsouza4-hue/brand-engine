@@ -1,5 +1,18 @@
 type Rect = { x: number; y: number; width: number; height: number };
 type Pan = { x: number; y: number };
+/** Let a drag move freely: enlarge only as needed to keep the camera's outer edge hidden. */
+export function speakerFramingZoom(crop: Rect, sourceWidth: number, sourceHeight: number,
+  panelWidth: number, panelHeight: number, zoom: number, pan?: Pan, shape?: "circle" | "rectangle"): number {
+  const sw = crop.width * sourceWidth, sh = crop.height * sourceHeight;
+  const circular = shape === "circle" || (!shape && sw / sh >= 0.85 && sw / sh <= 1.15);
+  if (!circular || !pan || (!pan.x && !pan.y)) return zoom;
+  const cover = Math.max(panelWidth / sw, panelHeight / sh);
+  const required = Math.hypot(
+    (panelWidth + 2 * Math.abs(pan.x * panelWidth)) / (sw * cover),
+    (panelHeight + 2 * Math.abs(pan.y * panelHeight)) / (sh * cover),
+  ) / 0.975;
+  return Math.max(zoom, required);
+}
 /** Match the preview: protect hair and constrain circular cameras to their inner area. */
 export function speakerFramingPan(crop: Rect, head: Rect | undefined, sourceWidth: number, sourceHeight: number,
   panelWidth: number, panelHeight: number, zoom: number, pan?: Pan, shape?: "circle" | "rectangle"): Pan {

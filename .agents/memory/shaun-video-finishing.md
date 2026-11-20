@@ -93,7 +93,7 @@ Only Shaun and his actual camera background belong in the presenter panel; curve
 
 **Why:** The user repeated the no-camera-circle requirement after a headroom correction revealed the original curved edge at the top-right.
 
-**How to apply:** Circular camera crops need corner-in-ellipse safety, not just rectangular crop bounds. Respect manual framing within that safe interior; preview and export must agree.
+**How to apply:** Circular camera crops need corner-in-ellipse safety, not just rectangular crop bounds. Do not enforce that by pinning drag movement: the user reported that protection made the speaker impossible to move. Expand the effective crop zoom as needed for manual movement, explain the zoom behavior, and keep preview/export identical.
 
 The user approved the filled rectangular Shaun framing and edge-to-edge UI panel. Preserve it. The preferred workflow is one Download action, not separate render/download steps; secondary editing controls should stay collapsed to keep the sidebar clean. Video filenames should use the Descript title plus the thumbnail-style date.
 

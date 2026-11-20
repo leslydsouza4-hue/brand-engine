@@ -14,6 +14,7 @@ import { detectVideoLayout, detectPrivateDetails, privacyRequestSchema } from ".
 import { videoSourceCache } from "../lib/shaun-video-cache";
 import { pipeStorageResponse } from "../lib/shaun-storage-stream";
 import { finiteProgress, jobHeartbeatExpired } from "../lib/shaun-job-progress";
+import { logger } from "../lib/logger";
 import { getVideo, MAX_DURATION, MAX_VIDEO_BYTES, privateFile, readRecord, saveRecord, videoResponse, videoStorage, type JobRecord, type VideoRecord } from "../lib/shaun-video-store";
 
 const router = Router();
@@ -62,6 +63,7 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
   const key = `jobs/${record.jobId}.json`;
   try { await saveRecord(owner, key, record); } catch (error) { release(owner); throw error; }
   void (async () => {
+    const startedAt = Date.now();
     let dir: string | undefined;
     let pending: Promise<void> = Promise.resolve();
     let lastProgress = 0;
@@ -82,11 +84,12 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
         if (Date.now() - lastProgress > 2000) { lastProgress = Date.now(); void persist().catch(() => undefined); }
       });
       record.status = "succeeded"; record.progress = 1;
+      logger.info({ jobId: record.jobId, kind, elapsedMs: Date.now() - startedAt }, "Video job completed");
     } catch (error) {
       record.status = "failed";
       const detail = error as { code?: string; tool?: string; exitCode?: number; systemCode?: string };
-      console.error("Video job failed", { jobId: record.jobId, kind, phase: record.phase,
-        code: detail.code ?? "PROCESSING_FAILED", tool: detail.tool, exitCode: detail.exitCode, systemCode: detail.systemCode });
+      logger.error({ jobId: record.jobId, kind, phase: record.phase, elapsedMs: Date.now() - startedAt,
+        code: detail.code ?? "PROCESSING_FAILED", tool: detail.tool, exitCode: detail.exitCode, systemCode: detail.systemCode }, "Video job failed");
       // Never expose ffmpeg local paths, remote signed URLs or provider internals.
       record.error = detail.code === "MEDIA_TOOL_UNAVAILABLE"
         ? "The server's video tools are unavailable. This is a server setup issue, not a problem with your video."
@@ -315,7 +318,15 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
   try { retainedSegments(edits, (video.probe as { duration: number }).duration); }
   catch (error) { throw new SessionError(400, (error as Error).message); }
   res.status(202).json(await job(owner, "render", video.videoId, async (dir, record, progress) => {
-    record.phase = "Checking saved video"; progress(0.01);
+    let phaseStartedAt = Date.now();
+    const phase = (name: string, value: number) => {
+      if (record.phase) logger.info({ jobId: record.jobId, phase: record.phase,
+        elapsedMs: Date.now() - phaseStartedAt }, "Video export stage completed");
+      phaseStartedAt = Date.now();
+      record.phase = name;
+      progress(value);
+    };
+    phase("Checking saved video", 0.01);
     const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("panels-filled-v2:" + JSON.stringify(edits)).digest("hex")}.json`;
     try {
       const cached = await readRecord<{ jobId: string }>(owner, cacheKey);
@@ -327,12 +338,14 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
       }
     } catch (error) { if (!(error instanceof SessionError && error.status === 404)) throw error; }
     const input = join(dir, "source.mp4"), output = join(dir, "output.mp4");
-    record.phase = "Loading source video"; progress(0.02);
+    phase("Loading source video", 0.02);
     await downloadLocal(owner, video.videoId, input);
-    record.phase = "Creating MP4"; progress(0.05);
+    phase("Creating MP4", 0.05);
     await renderVideo(input, output, edits, n => progress(0.05 + n / 100 * 0.88));
-    record.phase = "Saving finished MP4"; progress(0.95);
+    phase("Saving finished MP4", 0.95);
     await uploadLocal(owner, `jobs/${record.jobId}/output`, output, "video/mp4");
+    logger.info({ jobId: record.jobId, phase: record.phase, elapsedMs: Date.now() - phaseStartedAt,
+      bytes: (await stat(output)).size }, "Video export stage completed");
     record.contentType = "video/mp4";
     await saveRecord(owner, cacheKey, { jobId: record.jobId });
     return { assetUrl: `/api/shaun-video/jobs/${record.jobId}/asset`, contentType: record.contentType };

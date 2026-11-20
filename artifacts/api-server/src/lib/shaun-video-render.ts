@@ -221,7 +221,9 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
   if (target === source) { await rm(dir, { recursive: true, force: true }); throw new Error("Output cannot overwrite the original source"); }
   let success = false;
   try {
-    const filters: string[] = [`[0:v:0]setpts=PTS-STARTPTS+${e.trimStart}/TB,setsar=1[v0]`];
+    // Drop surplus source frames before blurs/crops, not only at the encoder.
+    // The delivered video is always 30fps; processing 60fps/4K here wastes work.
+    const filters: string[] = [`[0:v:0]setpts=PTS-STARTPTS+${e.trimStart}/TB,fps=30,setsar=1[v0]`];
     let label = "v0";
     for (const [i, blur] of e.blurs.entries()) {
       const x = Math.min(info.width - 2, Math.floor(blur.x * info.width / 2) * 2);
@@ -233,18 +235,19 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
         `[base${i}][blur${i}]overlay=${x}:${y}:enable='gte(t,${blur.start})*lt(t,${blur.end})'[b${i}]`);
       label = `b${i}`;
     }
-    filters.push(`[${label}]split=${segments.length}${segments.map((_, i) => `[s${i}]`).join("")}`);
     if (info.hasAudio) filters.push(`[0:a:0]asetpts=PTS-STARTPTS+${e.trimStart}/TB,asplit=${segments.length}${segments.map((_, i) => `[a${i}]`).join("")}`);
     for (const [i, segment] of segments.entries()) {
-      filters.push(`[s${i}]trim=start=${segment.start}:end=${segment.end},setpts=PTS-STARTPTS[t${i}]`);
       if (info.hasAudio) filters.push(`[a${i}]atrim=start=${segment.start}:end=${segment.end},asetpts=PTS-STARTPTS[u${i}]`);
     }
-    filters.push(`${segments.map((_, i) => `[t${i}]${info.hasAudio ? `[u${i}]` : ""}`).join("")}concat=n=${segments.length}:v=1:a=${info.hasAudio ? 1 : 0}[joined]${info.hasAudio ? "[audio]" : ""}`);
+    if (info.hasAudio) filters.push(`${segments.map((_, i) => `[u${i}]`).join("")}concat=n=${segments.length}:v=0:a=1[audio]`);
     const pieces = segments.flatMap(s => {
       const bounds = [...new Set([s.start, ...(e.format === "vertical" ? (e.scenes ?? []).flatMap(v => [v.start, v.end]).filter(t => t > s.start && t < s.end) : []), s.end])].sort((a,b) => a-b);
-      return bounds.slice(0,-1).map((start,i) => ({ start: s.offset + start - s.start, end: s.offset + bounds[i+1] - s.start, scene: e.scenes?.find(v => start >= v.start && start < v.end) }));
+      return bounds.slice(0,-1).map((start,i) => ({ start, end: bounds[i+1], scene: e.scenes?.find(v => start >= v.start && start < v.end) }));
     });
-    filters.push(`[joined]split=${pieces.length}${pieces.map((_,i) => `[piece${i}]`).join("")}`);
+    // Frame each source-time piece before concatenating. Previously the graph
+    // concatenated full-resolution cuts, split that stream again for scenes,
+    // and only then scaled it. That retained expensive 4K intermediate frames.
+    filters.push(`[${label}]split=${pieces.length}${pieces.map((_,i) => `[piece${i}]`).join("")}`);
     for (const [index, piece] of pieces.entries()) {
     filters.push(`[piece${index}]trim=start=${piece.start}:end=${piece.end},setpts=PTS-STARTPTS[joined${index}]`);
     const begin = filters.length;

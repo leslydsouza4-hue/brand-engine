@@ -102,6 +102,36 @@ test("source-time cuts merge, clip and remap caption timing exactly", () => {
   assert.equal(overlapping[1].start, 0.9);
 });
 
+test("60fps input keeps source-time scenes and audio when exported at 30fps", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "shaun-high-fps-"));
+  const exec = promisify(execFile);
+  try {
+    const source = join(dir, "source.mp4"), output = join(dir, "output.mp4");
+    await exec("ffmpeg", ["-v", "error", "-f", "lavfi", "-i",
+      "color=c=red:s=640x360:r=60,drawbox=x=320:y=0:w=320:h=360:color=blue:t=fill",
+      "-f", "lavfi", "-i", "sine=frequency=440", "-t", "3",
+      "-c:v", "libx264", "-threads", "2", "-c:a", "aac", source]);
+    const split = { screen: { x: 0, y: 0, width: 0.5, height: 1 },
+      speaker: { x: 0.5, y: 0, width: 0.5, height: 1 } };
+    const result = await renderVideo(source, output, {
+      trimStart: 0.2, trimEnd: 2.8, cuts: [{ start: 0.6, end: 1.4 }],
+      blurs: [], words: [{ text: "Hello", start: 1.5, end: 1.8 }],
+      format: "vertical", framing: "fit", exportQuality: "fast", split,
+      scenes: [{ start: 0, end: 2, mode: "speaker", split }, { start: 2, end: 3, mode: "split", split }],
+    });
+    assert.equal(result.hasAudio, true);
+    assert.equal(result.width, 720);
+    assert.equal(result.height, 1280);
+    assert.ok(Math.abs(result.duration - 1.8) < 0.1);
+    for (const [at, isScreen] of [[0.2, false], [1.5, true]] as const) {
+      const image = join(dir, `${at}.png`);
+      await exec("ffmpeg", ["-v", "error", "-ss", String(at), "-i", output, "-frames:v", "1", image]);
+      const pixel = await sharp(image).extract({ left: 360, top: 200, width: 1, height: 1 }).removeAlpha().raw().toBuffer();
+      assert.ok(isScreen ? pixel[0] > 200 && pixel[2] < 30 : pixel[2] > 200 && pixel[0] < 30);
+    }
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});
+
 test("small timed privacy regions export without invalid chroma radii", async () => {
   const dir = await mkdtemp(join(tmpdir(), "shaun-small-blur-"));
   try {

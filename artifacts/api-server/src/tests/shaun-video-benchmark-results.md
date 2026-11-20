@@ -1,5 +1,27 @@
 # Shaun video cold-path measurement
 
+## Export follow-up — 2026-11-20
+
+These are local render-only measurements, not production download promises.
+Synthetic 3840×2160 H.264 footage, standard 1080×1920 output, 30fps export,
+three speaker/split scenes, and a timed privacy region:
+
+- 48-second 30fps input with a cut and caption: previous graph 16.65s /
+  peak child RSS 605.0 MiB; frame-before-concat graph 16.60s / 585.9 MiB.
+  There is **no meaningful speed improvement** on this pair.
+- 12-second 60fps input: same updated scene graph without early frame-rate
+  normalization 7.665s; with early normalization 6.643s (about 13% faster).
+  This isolates the early-fps change, not all historical export fixes.
+
+Each measurement is one sample and includes local probe/process startup,
+not cloud source retrieval, upload, status polling, or browser transfer.
+The high-frame-rate regression checks trim/cut timing, scene transitions,
+captions, audio presence, dimensions and output duration.
+Do not infer that historical 20-minute waits were all slow encoding:
+interrupted jobs and older published revisions require separate evidence.
+
+## Original cold-path measurement
+
 Measured 2026-11-04 (Asia/Calcutta) against the supplied public Descript share.
 The current source is **76.300771 seconds, 3840×2160, with audio**, not exactly
 the approximately 73 seconds in the original task description. Both fresh

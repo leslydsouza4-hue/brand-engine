@@ -437,6 +437,15 @@ router.get(`${prefix}/jobs/:jobId`, endpoint(async (req, res, owner) => {
   const { owner: _owner, worker: _worker, ...publicRecord } = record;
   res.json({ ...publicRecord, progress: Number.isFinite(record.progress) ? record.progress : 0 });
 }));
+// Direct download link for a finished MP4 (signed, 10 minutes). The client falls
+// back to the proxied /asset route if the direct fetch is blocked.
+router.get(`${prefix}/jobs/:jobId/download-url`, endpoint(async (req, res, owner) => {
+  const jobId = id(req, "jobId");
+  const record = await readRecord<JobRecord>(owner, `jobs/${jobId}.json`);
+  if (record.status !== "succeeded" || record.contentType !== "video/mp4") throw new SessionError(404, "Output not available");
+  const url = await videoStorage.getSignedDownloadURL(privateFile(owner, `jobs/${jobId}/output`));
+  res.set("Cache-Control", "private, no-store").json({ url });
+}));
 router.get(`${prefix}/jobs/:jobId/asset`, endpoint(async (req, res, owner) => {
   const jobId = id(req, "jobId");
   const record = await readRecord<JobRecord>(owner, `jobs/${jobId}.json`);

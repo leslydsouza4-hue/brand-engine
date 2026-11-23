@@ -111,6 +111,12 @@ export class ObjectStorageService {
     return new Response(webStream, { headers });
   }
 
+  /** Short-lived signed GET so browsers download large files directly from storage,
+   * not streamed through the API server (much faster on the published app). */
+  async getSignedDownloadURL(file: File, ttlSec = 600): Promise<string> {
+    return signObjectURL({ bucketName: file.bucket.name, objectName: file.name, method: 'GET', ttlSec });
+  }
+
   async getObjectEntityUploadURL(): Promise<string> {
     const privateObjectDir = this.getPrivateObjectDir();
     if (!privateObjectDir) {

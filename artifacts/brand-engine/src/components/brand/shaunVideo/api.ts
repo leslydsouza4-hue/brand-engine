@@ -134,8 +134,29 @@ export async function uploadVideo(file: File, onProgress: (p: number) => void, s
 }
 
 /** Authenticated fetch of a finished render as a verified MP4 blob. */
+/** Fast path: fetch the MP4 directly from storage with a short-lived signed link,
+ * bypassing the API server. Returns null on any failure so callers fall back. */
+async function fetchJobMp4Direct(jobId: string, signal?: AbortSignal, maxBytes?: number,
+  onProgress?: (loaded: number, total?: number) => void): Promise<Blob | null> {
+  try {
+    const link = await fetch(`${SHAUN_VIDEO_API}/jobs/${encodeURIComponent(jobId)}/download-url`, { credentials: "include", cache: "no-store", signal });
+    if (!link.ok) return null;
+    const { url } = await link.json() as { url?: string };
+    if (!url || !/^https:\/\//.test(url)) return null;
+    const res = await fetch(url, { mode: "cors", credentials: "omit", cache: "no-store", signal });
+    if (!res.ok || !(res.headers.get("content-type") || "").toLowerCase().startsWith("video/mp4")) return null;
+    return await readDownloadBody(res, { signal, maxBytes, onProgress });
+  } catch (err) {
+    if (isAbort(err) && signal?.aborted) throw err;
+    if (err instanceof ShaunVideoError && err.status === 413) throw err;
+    return null;
+  }
+}
+
 export async function fetchJobMp4(jobId: string, signal?: AbortSignal, maxBytes?: number,
   onProgress?: (loaded: number, total?: number) => void): Promise<Blob> {
+  const direct = await fetchJobMp4Direct(jobId, signal, maxBytes, onProgress);
+  if (direct) return direct;
   let res: Response;
   const controller = new AbortController();
   const abort = () => controller.abort();

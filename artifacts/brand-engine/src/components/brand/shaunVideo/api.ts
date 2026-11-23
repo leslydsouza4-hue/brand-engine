@@ -43,7 +43,8 @@ async function request<T>(path: string, method = "GET", body?: unknown, signal?:
   }
   if (!res.ok) {
     const data = await res.json().catch(() => null) as { error?: string; code?: string } | null;
-    const fallback = res.status === 401 ? "Sign in to use video tools." : res.status === 429 ? "Two video jobs are already running. Wait for one to finish." : `Request failed (${res.status})`;
+    const fallback = res.status === 401 ? "Sign in to use video tools." : res.status === 429 ? "Two video jobs are already running. Wait for one to finish." :
+      [502, 503, 504].includes(res.status) ? "The video server is temporarily unavailable or restarting. Wait a moment, then try again." : `Request failed (${res.status})`;
     throw new ShaunVideoError(data?.error || fallback, res.status, data?.code);
   }
   return res.json() as Promise<T>;

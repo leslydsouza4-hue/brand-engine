@@ -16,7 +16,7 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-await verifyVideoRuntime();
+await verifyVideoRuntime({ onRetry: tool => logger.warn({ tool }, "Video runtime check timed out during startup; retrying within startup budget") });
 logger.info("Video runtime verified: ffmpeg, ffprobe, caption and blur filters available");
 
 app.listen(port, (err) => {

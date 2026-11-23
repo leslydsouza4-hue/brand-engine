@@ -86,9 +86,27 @@ async function run(command: string, args: string[], timeout: number, onLine?: (l
 }
 
 /** Fail startup before a publish is declared healthy without required video tools. */
-export async function verifyVideoRuntime() {
-  await run("ffprobe", ["-version"], 10000);
-  const filters = await run("ffmpeg", ["-hide_banner", "-filters"], 10000);
+export async function verifyVideoRuntime(options: {
+  runTool?: (command: string, args: string[], timeout: number) => Promise<string>;
+  onRetry?: (command: string) => void;
+} = {}) {
+  const execute = options.runTool ?? run;
+  // Cold workspace starts can take longer than a warmed media binary. Retry
+  // timeouts only, within one startup budget; missing tools still fail closed.
+  const deadline = Date.now() + 45_000;
+  const check = async (command: string, args: string[]) => {
+    for (let attempt = 0; ; attempt++) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) throw Object.assign(new Error("Video runtime startup check timed out"), { code: "MEDIA_TOOL_TIMEOUT", tool: command });
+      try { return await execute(command, args, Math.min(20_000, remaining)); }
+      catch (error) {
+        if (attempt >= 1 || (error as { code?: string }).code !== "MEDIA_TOOL_TIMEOUT" || Date.now() >= deadline) throw error;
+        options.onRetry?.(command);
+      }
+    }
+  };
+  await check("ffprobe", ["-version"]);
+  const filters = await check("ffmpeg", ["-hide_banner", "-filters"]);
   for (const filter of ["ass", "scale", "boxblur", "drawbox"]) {
     if (!new RegExp(`^\\s*\\S+\\s+${filter}\\s`, "m").test(filters))
       throw new Error(`Video runtime is missing the ${filter} filter. Install ffmpeg-full.`);

@@ -41,6 +41,12 @@ Development can expose FFmpeg through an injected runtime path even when it is n
 
 **How to apply:** Explicitly declare the full FFmpeg package and verify ffprobe plus caption/blur filters before the server reports healthy. Keep safe background-job failure diagnostics.
 
+A Descript import 502 can occur before Descript is contacted: a startup video-tool verification timeout has left the entire development API stopped.
+
+**Why:** The failed workflow showed `ffprobe -version` exceeding its startup limit, rather than an import-handler failure.
+
+**How to apply:** Inspect server startup first. Allow a bounded retry for transient startup tool timeouts, but do not report healthy when tools or required filters are genuinely missing.
+
 GCS read streams emit `response` before constructing their internal pipeline. Destroying a stream immediately on an early browser disconnect can crash the server outside the stream error handler.
 
 **Why:** Preview cancellation produced `ERR_STREAM_UNABLE_TO_PIPE` in the storage SDK.

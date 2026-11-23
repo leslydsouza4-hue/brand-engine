@@ -41,7 +41,7 @@ test("vertical split renders screen above speaker without changing horizontal", 
     await promisify(execFile)("ffmpeg", ["-v", "error", "-f", "lavfi", "-i",
       "color=c=red:s=640x360:r=24,drawbox=x=320:y=0:w=320:h=360:color=blue:t=fill",
       "-t", "1", "-c:v", "libx264", "-threads", "2", source]);
-    const split = { screen: { x: 0, y: 0, width: 0.5, height: 1 }, speaker: { x: 0.5, y: 0, width: 0.5, height: 1 }, screenScale: 0.5, speakerScale: 1, speakerPan: { x: 0.25, y: 0 } };
+    const split = { screen: { x: 0, y: 0, width: 0.5, height: 1 }, speaker: { x: 0.5, y: 0, width: 0.5, height: 1 }, screenScale: 0.5, speakerScale: 1, speakerPan: { x: 0.5, y: 0 } };
     const config: VideoEdits = { trimStart: 0, trimEnd: 1, cuts: [], blurs: [], words: [], format: "vertical", framing: "fit", split };
     await renderVideo(source, output, config);
     await promisify(execFile)("ffmpeg", ["-v", "error", "-i", output, "-frames:v", "1", frame]);
@@ -54,7 +54,7 @@ test("vertical split renders screen above speaker without changing horizontal", 
     const lowerEdge = await pixel(540, 1000);
     assert.ok(lowerEdge[2] > 200, "speaker scaling remains independent");
     const pannedEdge = await pixel(50, 1440);
-    assert.ok(pannedEdge[2]>200 && pannedEdge[0]<30, "dragging is bounded so the speaker cannot expose empty space");
+    assert.ok(Math.max(...pannedEdge)<50, "manual speaker movement can expose space instead of silently zooming");
     assert.equal(videoEditsSchema.safeParse({ ...config, split: { ...split, screenScale: 3 } }).success, false);
     await renderVideo(source, output, { ...config, split: { ...split, screenScale: 1 } });
     await promisify(execFile)("ffmpeg", ["-v", "error", "-y", "-i", output, "-frames:v", "1", frame]);
@@ -70,7 +70,40 @@ test("vertical split renders screen above speaker without changing horizontal", 
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
-test("circular camera borders stay out of full and split exports, including manual drags", async () => {
+test("manual speaker translation preserves exported size, and scaling can zoom out", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "shaun-manual-camera-"));
+  try {
+    const source=join(dir,"source.mp4");
+    await promisify(execFile)("ffmpeg",["-v","error","-f","lavfi","-i",
+      "color=c=blue:s=800x800:r=24,drawbox=x=350:y=350:w=100:h=100:color=white:t=fill",
+      "-t","0.3","-c:v","libx264","-threads","2",source]);
+    const boxes: Array<{x:number;width:number;height:number}> = [];
+    for (const [i, [scale, x]] of [[0.5,0],[0.5,0.15],[0.75,0.15]].entries()) {
+      const output=join(dir,`${i}.mp4`), frame=join(dir,`${i}.png`);
+      const split={speaker:{x:0,y:0,width:1,height:1},screen:{x:0,y:0,width:1,height:1},
+        speakerShape:"rectangle" as const,speakerScale:scale,speakerPan:{x,y:0}};
+      await renderVideo(source,output,{trimStart:0,trimEnd:0.25,cuts:[],blurs:[],words:[],
+        format:"vertical",framing:"fit",exportQuality:"fast",split,scenes:[{start:0,end:0.25,mode:"speaker",split}]});
+      await promisify(execFile)("ffmpeg",["-v","error","-y","-i",output,"-frames:v","1",frame]);
+      const {data,info}=await sharp(frame).removeAlpha().raw().toBuffer({resolveWithObject:true});
+      let left=info.width,right=0,top=info.height,bottom=0;
+      for(let y=0;y<info.height;y++) for(let x=0;x<info.width;x++){
+        const p=(y*info.width+x)*info.channels;
+        if(data[p]>220 && data[p+1]>220 && data[p+2]>220){
+          left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);
+        }
+      }
+      boxes.push({x:left,width:right-left+1,height:bottom-top+1});
+    }
+    assert.ok(Math.abs(boxes[1].x-boxes[0].x-108)<=2,"drag moves right by 15% of output width");
+    assert.ok(Math.abs(boxes[1].width-boxes[0].width)<=2,"drag leaves speaker width unchanged");
+    assert.ok(Math.abs(boxes[1].height-boxes[0].height)<=2,"drag leaves speaker height unchanged");
+    assert.ok(boxes[0].height>=78 && boxes[0].height<=82,"50% scale is genuinely applied");
+    assert.ok(boxes[2].height>boxes[1].height*1.4,"only the scale control enlarges the image");
+  } finally { await rm(dir,{recursive:true,force:true}); }
+});
+
+test("automatic circular camera defaults hide borders in full and split exports", async () => {
   const dir = await mkdtemp(join(tmpdir(), "shaun-circle-border-"));
   try {
     const image = join(dir, "circle.png"), source = join(dir, "circle.mp4");
@@ -82,8 +115,7 @@ test("circular camera borders stay out of full and split exports, including manu
       const split = { speaker: { x: 0, y: 0, width: 1, height: 1 },
         screen: { x: 0, y: 0, width: 1, height: 1 }, speakerShape: "circle" as const,
         speakerHead: { x: 0.3, y: 0.03, width: 0.4, height: 0.5 },
-        speakerPan: mode === "split" ? { x: 0.35, y: -0.2 } : undefined,
-        speakerScale: 0.68 };
+        speakerScale: 1 };
       await renderVideo(source, output, { trimStart: 0, trimEnd: 0.3, cuts: [], words: [],
         blurs: [], format: "vertical", framing: "fit", exportQuality: "fast", split,
         scenes: [{ start: 0, end: 0.3, mode, split }] });

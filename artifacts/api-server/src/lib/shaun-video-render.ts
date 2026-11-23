@@ -5,7 +5,7 @@ import { resolve, join } from "node:path";
 import { z } from "zod";
 import { excludeWebcam } from "./shaun-screen-crop";
 import { ffmpegProgress } from "./shaun-job-progress";
-import { speakerFramingPan, speakerFramingZoom } from "./shaun-speaker-framing";
+import { speakerFramingPan } from "./shaun-speaker-framing";
 import { captionWordBoxes, roundedCaptionBox } from "./shaun-caption-box";
 
 const seconds = z.number().finite().min(0).max(600);
@@ -287,15 +287,14 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
         const aspect=cw/ch, relative=(width/panelHeight)/aspect;
         const circular=b===split.speaker && (split.speakerShape==="circle" || (!split.speakerShape && aspect>=0.85 && aspect<=1.15));
         const autoZoom=circular?Math.sqrt(1+Math.min(relative,1/relative)**2)*1.04:1;
-        if (circular) scale = Math.max(1, scale);
-        const effectiveZoom = b === split.speaker ? speakerFramingZoom(b, info.width, info.height,
-          width, panelHeight, scale * autoZoom, pan, split.speakerShape) : scale * autoZoom;
+        const effectiveZoom = scale * autoZoom;
         const ratio=(mode==="contain"?Math.min:Math.max)(width/cw,panelHeight/ch)*effectiveZoom;
         const w=Math.max(2,Math.round(cw*ratio/2)*2), h=Math.max(2,Math.round(ch*ratio/2)*2);
         const positioned = b === split.speaker ? speakerFramingPan(b, split.speakerHead, info.width, info.height,
-          width, panelHeight, effectiveZoom, pan, split.speakerShape) : pan;
-        const dx=Math.max(-Math.abs(w-width)/2,Math.min(Math.abs(w-width)/2,positioned.x*width));
-        const dy=Math.max(-Math.abs(h-panelHeight)/2,Math.min(Math.abs(h-panelHeight)/2,positioned.y*panelHeight));
+          width, panelHeight, effectiveZoom, split.speakerPan, split.speakerShape) : pan;
+        const manualSpeaker = b === split.speaker && split.speakerPan !== undefined;
+        const dx=manualSpeaker ? positioned.x*width : Math.max(-Math.abs(w-width)/2,Math.min(Math.abs(w-width)/2,positioned.x*width));
+        const dy=manualSpeaker ? positioned.y*panelHeight : Math.max(-Math.abs(h-panelHeight)/2,Math.min(Math.abs(h-panelHeight)/2,positioned.y*panelHeight));
         const padW=Math.max(w,width)+Math.ceil(Math.abs(dx))*2, padH=Math.max(h,panelHeight)+Math.ceil(Math.abs(dy))*2;
         return `crop=${cw}:${ch}:${x}:${y},scale=${w}:${h},pad=${padW}:${padH}:(ow-iw)/2:(oh-ih)/2:color=0x0b1220,crop=${width}:${panelHeight}:${Math.round((padW-width)/2-dx)}:${Math.round((padH-panelHeight)/2-dy)},setsar=1`;
       };

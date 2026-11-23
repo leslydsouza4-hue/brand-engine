@@ -259,7 +259,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
 
   const duration = source?.duration || edits?.trimEnd || 0;
   const validation = useMemo(() => edits ? validateEdits(edits, duration) : [], [edits, duration]);
-  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#camera-drag-v5" + (autoCaptions ? "" : "#nocaptions") : "";
+  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#manual-camera-v6" + (autoCaptions ? "" : "#nocaptions") : "";
   const renderStale = !!render && render.key !== currentKey;
 
   const handleRender = async () => {

@@ -58,23 +58,10 @@ export interface Pan { x: number; y: number }
 /** screenPan/speakerPan: destination offsets in -1..1 of output width / half height, applied after fit + scale. */
 export interface SplitLayout { speaker: Rect; screen: Rect; speakerScale?: number; screenScale?: number; screenPan?: Pan; speakerPan?: Pan; speakerShape?: "circle" | "rectangle"; speakerAutoFramed?: boolean; speakerHead?: Rect }
 
-/** Match the renderer: allow dragging while automatically keeping circular edges out. */
-export function speakerFramingZoom(crop: Rect, sourceWidth: number, sourceHeight: number,
-  panelWidth: number, panelHeight: number, zoom: number, pan?: Pan, shape?: "circle" | "rectangle"): number {
-  const sw = crop.width * sourceWidth, sh = crop.height * sourceHeight;
-  const circular = shape === "circle" || (!shape && sw / sh >= 0.85 && sw / sh <= 1.15);
-  if (!circular || !pan || (!pan.x && !pan.y)) return zoom;
-  const cover = Math.max(panelWidth / sw, panelHeight / sh);
-  const required = Math.hypot(
-    (panelWidth + 2 * Math.abs(pan.x * panelWidth)) / (sw * cover),
-    (panelHeight + 2 * Math.abs(pan.y * panelHeight)) / (sh * cover),
-  ) / 0.975;
-  return Math.max(zoom, required);
-}
-
 /** Keep in sync with the renderer's speakerFramingPan, including circular edge safety. */
 export function speakerFramingPan(crop: Rect, head: Rect | undefined, sourceWidth: number, sourceHeight: number,
   panelWidth: number, panelHeight: number, zoom: number, pan?: Pan, shape?: "circle" | "rectangle"): Pan {
+  if (pan) return pan;
   const sw = crop.width * sourceWidth, sh = crop.height * sourceHeight;
   const k = Math.max(panelWidth / sw, panelHeight / sh) * zoom;
   const w = sw * k, h = sh * k;
@@ -95,7 +82,6 @@ export function speakerFramingPan(crop: Rect, head: Rect | undefined, sourceWidt
     }
     return { x: desired.x * lo, y: desired.y * lo };
   };
-  if (pan && (pan.x !== 0 || pan.y !== 0)) return safePan(pan);
   if (!head || head.x < crop.x || head.y < crop.y ||
       head.x + head.width > crop.x + crop.width || head.y + head.height > crop.y + crop.height)
     return safePan({ x: 0, y: Math.max(0, h - panelHeight) * 0.375 / panelHeight });
@@ -321,12 +307,13 @@ export interface Placement { dx: number; dy: number; dw: number; dh: number; off
  * base = contain/cover scale, then user scale, then pan (normalized of panel size) clamped to +/- maxPanOffset.
  * The caller clips to the panel. Render (FFmpeg) must use the same math.
  */
-export function panelPlacement(sw: number, sh: number, pw: number, ph: number, mode: FitMode, scale = 1, pan?: Pan): Placement {
+export function panelPlacement(sw: number, sh: number, pw: number, ph: number, mode: FitMode, scale = 1, pan?: Pan, manual = false): Placement {
   const base = mode === "cover" ? Math.max(pw / sw, ph / sh) : Math.min(pw / sw, ph / sh);
   const k = base * (scale > 0 && Number.isFinite(scale) ? scale : 1);
   const dw = sw * k, dh = sh * k;
   const mx = maxPanOffset(dw, pw), my = maxPanOffset(dh, ph);
-  const offsetX = clamp((pan?.x ?? 0) * pw, -mx, mx), offsetY = clamp((pan?.y ?? 0) * ph, -my, my);
+  const offsetX = manual ? (pan?.x ?? 0)*pw : clamp((pan?.x ?? 0) * pw, -mx, mx);
+  const offsetY = manual ? (pan?.y ?? 0)*ph : clamp((pan?.y ?? 0) * ph, -my, my);
   return { dx: (pw - dw) / 2 + offsetX, dy: (ph - dh) / 2 + offsetY, dw, dh, offsetX, offsetY };
 }
 

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { speakerFramingPan, speakerFramingZoom } from "../lib/shaun-speaker-framing";
+import { speakerFramingPan } from "../lib/shaun-speaker-framing";
 
 test("headroom brings clipped hair back into a full portrait camera view", () => {
   const crop = { x: 0, y: 0, width: 1, height: 1 };
@@ -21,14 +21,14 @@ test("legacy bounds prefer headroom, but manual drags are preserved", () => {
   assert.deepEqual(speakerFramingPan(crop, undefined, 800, 800, 1080, 1920, 1.19, manual, "rectangle"), manual);
 });
 
-test("automatic and manual positioning never reveal a circular camera edge", () => {
+test("automatic positioning keeps the circular camera edge hidden", () => {
   const crop = { x: 0, y: 0, width: 1, height: 1 };
   const head = { x: 0.3, y: 0.03, width: 0.4, height: 0.5 };
   for (const height of [1280, 896]) {
     const width = 720;
     const zoom = Math.sqrt(1 + (width / height) ** 2) * 1.04;
     const rendered = height * zoom;
-    for (const manual of [undefined, { x: 0.4, y: 0.3 }, { x: -0.4, y: -0.3 }]) {
+    for (const manual of [undefined]) {
       const pan = speakerFramingPan(crop, head, 800, 800, width, height, zoom, manual, "circle");
       const furthest = ((width / 2 + Math.abs(pan.x * width)) / (rendered / 2)) ** 2 +
         ((height / 2 + Math.abs(pan.y * height)) / (rendered / 2)) ** 2;
@@ -37,21 +37,14 @@ test("automatic and manual positioning never reveal a circular camera edge", () 
   }
 });
 
-test("dragging a circular camera preserves movement instead of pinning it at the border", () => {
+test("manual circular camera movement wins at every zoom, including zooming out and zero position", () => {
   const crop = { x: 0, y: 0, width: 1, height: 1 };
   for (const height of [1280, 896]) {
-    const base = Math.sqrt(1 + (720 / height) ** 2) * 1.04;
-    for (const requested of [{ x: 0.18, y: 0.12 }, { x: -0.25, y: -0.2 }, { x: 0.4, y: 0.3 }]) {
-      const zoom = speakerFramingZoom(crop, 800, 800, 720, height, base, requested, "circle");
-      assert.ok(zoom > base, "additional zoom makes room for the drag");
+    for (const requested of [{ x: 0.18, y: 0.12 }, { x: -0.25, y: -0.2 }, { x: 0, y: 0 }]) {
+      for (const zoom of [0.5, 1, 2]) {
       const actual = speakerFramingPan(crop, undefined, 800, 800, 720, height, zoom, requested, "circle");
       assert.deepEqual(actual, requested, "requested movement is preserved");
-      const radius = height * zoom / 2;
-      assert.ok(((360 + Math.abs(actual.x * 720)) / radius) ** 2 +
-        ((height / 2 + Math.abs(actual.y * height)) / radius) ** 2 < 0.98 ** 2);
+      }
     }
-    assert.equal(speakerFramingZoom(crop, 800, 800, 720, height, base, {x:0,y:0}, "circle"), base,
-      "reset removes automatic drag zoom");
-    assert.equal(speakerFramingZoom(crop, 800, 800, 720, height, 1, {x:0.2,y:0.1}, "rectangle"), 1);
   }
 });

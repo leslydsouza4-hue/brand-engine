@@ -43,7 +43,7 @@ export function SplitPanels({ split, onChange }: { split: SplitLayout; onChange:
   const [advanced, setAdvanced] = useState(false);
   const scaleControl = (panel: "screen" | "speaker") => {
     const key = panel === "screen" ? "screenScale" : "speakerScale";
-    const minimum = panel === "speaker" && split.speakerShape === "circle" ? 100 : 50;
+    const minimum = 50;
     const value = Math.max(minimum, Math.round((split[key] ?? 1) * 100));
     const title = panel === "screen" ? "Screen" : "Speaker";
     return <label className="block text-[11px] text-[#94A3B8]">
@@ -65,7 +65,7 @@ export function SplitPanels({ split, onChange }: { split: SplitLayout; onChange:
   };
   return (
     <div className="flex flex-col gap-[10px] p-[10px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)]">
-      <p className="text-[10px] text-[#94A3B8] leading-[1.45] m-0">Drag the screen or speaker in the preview to move it. Use the sliders to zoom. Circular cameras zoom in as needed while dragging to hide their edges.</p>
+      <p className="text-[10px] text-[#94A3B8] leading-[1.45] m-0">Drag to move. Use the sliders to zoom in or out. Speaker position and scale are independent; manual framing may reveal camera edges or empty space.</p>
       {scaleControl("screen")}
       <div className="flex justify-end -mt-[6px]">{posReset("screen")}</div>
       {scaleControl("speaker")}

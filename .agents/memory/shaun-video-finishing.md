@@ -99,7 +99,7 @@ Only Shaun and his actual camera background belong in the presenter panel; curve
 
 **Why:** The user repeated the no-camera-circle requirement after a headroom correction revealed the original curved edge at the top-right.
 
-**How to apply:** Circular camera crops need corner-in-ellipse safety, not just rectangular crop bounds. Do not enforce that by pinning drag movement: the user reported that protection made the speaker impossible to move. Expand the effective crop zoom as needed for manual movement, explain the zoom behavior, and keep preview/export identical.
+**How to apply:** Keep camera-edge protection in automatic defaults only. Manual dragging must ONLY translate, never change zoom or block movement. Speaker scale must allow zooming out below 100%. The user explicitly rejected drag-linked zoom and wants independent manual controls; this overrides automatic edge hiding during manual adjustments. Preview/export must agree, including any edges or empty space exposed by manual framing.
 
 The user approved the filled rectangular Shaun framing and edge-to-edge UI panel. Preserve it. The preferred workflow is one Download action, not separate render/download steps; secondary editing controls should stay collapsed to keep the sidebar clean. Video filenames should use the Descript title plus the thumbnail-style date.
 

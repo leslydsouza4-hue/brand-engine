@@ -327,7 +327,7 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
       progress(value);
     };
     phase("Checking saved video", 0.01);
-    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("manual-camera-v6:" + JSON.stringify(edits)).digest("hex")}.json`;
+    const cacheKey = `videos/${video.videoId}/renders/${createHash("sha256").update("visible-camera-v7:" + JSON.stringify(edits)).digest("hex")}.json`;
     try {
       const cached = await readRecord<{ jobId: string }>(owner, cacheKey);
       const file = privateFile(owner, `jobs/${cached.jobId}/output`);

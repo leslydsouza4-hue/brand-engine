@@ -11,6 +11,16 @@ test("automatic headroom matches the renderer and keeps manual positioning", () 
   assert.deepEqual(speakerFramingPan(crop, head, 800, 800, 1080, 1920, 1.19, manual, "rectangle"), manual);
 });
 
+test("first-frame recovery ignores only offsets that hide the entire head", () => {
+  const crop={x:0,y:0,width:1,height:1}, head={x:0.35,y:0.2,width:0.3,height:0.4};
+  for(const zoom of [0.5,1,1.5]){
+    const auto=speakerFramingPan(crop,head,800,800,720,1280,zoom,undefined,"rectangle");
+    assert.deepEqual(speakerFramingPan(crop,head,800,800,720,1280,zoom,{x:1,y:1},"rectangle"),auto);
+    const manual={x:0.1,y:0.05};
+    assert.deepEqual(speakerFramingPan(crop,head,800,800,720,1280,zoom,manual,"rectangle"),manual);
+  }
+});
+
 test("circular speaker positioning keeps the camera border outside the preview", () => {
   const crop = { x: 0, y: 0, width: 1, height: 1 };
   const zoom = Math.sqrt(1 + (720 / 1280) ** 2) * 1.04;

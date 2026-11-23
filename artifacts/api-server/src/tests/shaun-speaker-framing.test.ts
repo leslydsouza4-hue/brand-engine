@@ -2,6 +2,24 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { speakerFramingPan } from "../lib/shaun-speaker-framing";
 
+test("offscreen saved offsets recover the speaker without changing scale", () => {
+  const crop = { x: 0, y: 0, width: 1, height: 1 };
+  const head = { x: 0.35, y: 0.2, width: 0.3, height: 0.4 };
+  for (const height of [1280,896]) {
+    for (const zoom of [0.5,1,1.5]) {
+      const auto = speakerFramingPan(crop,head,800,800,720,height,zoom,undefined,"rectangle");
+      const recovered = speakerFramingPan(crop,head,800,800,720,height,zoom,{x:1,y:1},"rectangle");
+      assert.deepEqual(recovered, auto);
+      const w=height*zoom, h=height*zoom;
+      const x=(720-w)/2+head.x*w+recovered.x*720;
+      const y=(height-h)/2+head.y*h+recovered.y*height;
+      assert.ok(x<720 && x+head.width*w>0 && y<height && y+head.height*h>0);
+      const manual={x:0.1,y:0.05};
+      assert.deepEqual(speakerFramingPan(crop,head,800,800,720,height,zoom,manual,"rectangle"),manual);
+    }
+  }
+});
+
 test("headroom brings clipped hair back into a full portrait camera view", () => {
   const crop = { x: 0, y: 0, width: 1, height: 1 };
   const head = { x: 0.3, y: 0.04, width: 0.4, height: 0.45 };

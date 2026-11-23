@@ -78,10 +78,11 @@ test("manual speaker translation preserves exported size, and scaling can zoom o
       "color=c=blue:s=800x800:r=24,drawbox=x=350:y=350:w=100:h=100:color=white:t=fill",
       "-t","0.3","-c:v","libx264","-threads","2",source]);
     const boxes: Array<{x:number;width:number;height:number}> = [];
-    for (const [i, [scale, x]] of [[0.5,0],[0.5,0.15],[0.75,0.15]].entries()) {
+    for (const [i, [scale, x]] of [[0.5,0],[0.5,0.15],[0.75,0.15],[0.5,1]].entries()) {
       const output=join(dir,`${i}.mp4`), frame=join(dir,`${i}.png`);
       const split={speaker:{x:0,y:0,width:1,height:1},screen:{x:0,y:0,width:1,height:1},
-        speakerShape:"rectangle" as const,speakerScale:scale,speakerPan:{x,y:0}};
+        speakerShape:"rectangle" as const,speakerScale:scale,speakerPan:{x,y:0},
+        speakerHead:{x:350/800,y:350/800,width:100/800,height:100/800}};
       await renderVideo(source,output,{trimStart:0,trimEnd:0.25,cuts:[],blurs:[],words:[],
         format:"vertical",framing:"fit",exportQuality:"fast",split,scenes:[{start:0,end:0.25,mode:"speaker",split}]});
       await promisify(execFile)("ffmpeg",["-v","error","-y","-i",output,"-frames:v","1",frame]);
@@ -100,6 +101,9 @@ test("manual speaker translation preserves exported size, and scaling can zoom o
     assert.ok(Math.abs(boxes[1].height-boxes[0].height)<=2,"drag leaves speaker height unchanged");
     assert.ok(boxes[0].height>=78 && boxes[0].height<=82,"50% scale is genuinely applied");
     assert.ok(boxes[2].height>boxes[1].height*1.4,"only the scale control enlarges the image");
+    assert.ok(boxes[3].x>=0 && boxes[3].x+boxes[3].width<=720,"offscreen saved offset recovers presenter in the first exported frame");
+    assert.ok(Math.abs(boxes[3].width-boxes[0].width)<=2 && Math.abs(boxes[3].height-boxes[0].height)<=2,
+      "first-frame recovery does not change the selected scale");
   } finally { await rm(dir,{recursive:true,force:true}); }
 });
 

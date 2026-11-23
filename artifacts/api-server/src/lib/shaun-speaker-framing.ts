@@ -3,13 +3,24 @@ type Pan = { x: number; y: number };
 /** Match the preview: protect hair and constrain circular cameras to their inner area. */
 export function speakerFramingPan(crop: Rect, head: Rect | undefined, sourceWidth: number, sourceHeight: number,
   panelWidth: number, panelHeight: number, zoom: number, pan?: Pan, shape?: "circle" | "rectangle"): Pan {
-  // Automatic defaults may protect edges; explicit manual placement always wins.
-  if (pan) return pan;
   const sw = crop.width * sourceWidth, sh = crop.height * sourceHeight;
   const k = Math.max(panelWidth / sw, panelHeight / sh) * zoom;
   const w = sw * k, h = sh * k;
   const mx = Math.abs(w - panelWidth) / 2, my = Math.abs(h - panelHeight) / 2;
   const clamp = (n: number, max: number) => Math.max(-max, Math.min(max, n));
+  if (pan) {
+    // Keep manual size/position unless it places the entire detected head off
+    // canvas. Old saved offsets were created with a different automatic zoom.
+    const validHead = head && head.x >= crop.x && head.y >= crop.y &&
+      head.x + head.width <= crop.x + crop.width && head.y + head.height <= crop.y + crop.height;
+    const region = validHead ? head : crop;
+    const left = (panelWidth - w) / 2 + (region.x - crop.x) / crop.width * w + pan.x * panelWidth;
+    const top = (panelHeight - h) / 2 + (region.y - crop.y) / crop.height * h + pan.y * panelHeight;
+    const rw = region.width / crop.width * w, rh = region.height / crop.height * h;
+    if (left < panelWidth && left + rw > 0 && top < panelHeight && top + rh > 0) return pan;
+    // Only recover invisible framing; this does not change zoom or stored edits.
+    return speakerFramingPan(crop, head, sourceWidth, sourceHeight, panelWidth, panelHeight, zoom, undefined, shape);
+  }
   const safePan = (desired: Pan): Pan => {
     const circular = shape === "circle" || (!shape && sw / sh >= 0.85 && sw / sh <= 1.15);
     if (!circular) return desired;

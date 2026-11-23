@@ -36,13 +36,12 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [render, setRender] = useSessionState<RenderRef | null>("shaun.video.render", null);
   const [pendingRender, setPendingRender] = useSessionState<PendingRender | null>("shaun.video.pendingRender", null);
 
-  // Replace one-off zoom corrections from the old circle-fit layout once.
-  // Later manual adjustments remain untouched.
+  // Mark layouts initialized without overwriting saved manual position/scale.
   useEffect(() => {
     const needs = (s: SplitLayout | undefined) => !!s && !s.speakerAutoFramed;
     if (!edits || (!needs(edits.split) && !edits.scenes?.some(s => needs(s.split)))) return;
     const upgrade = (s: SplitLayout): SplitLayout => s.speakerAutoFramed ? s : {
-      ...s, speakerScale: 1, speakerPan: { x: 0, y: 0 }, speakerAutoFramed: true,
+      ...s, speakerAutoFramed: true,
     };
     setEdits(e => e && ({ ...e, split: e.split ? upgrade(e.split) : undefined,
       scenes: e.scenes?.map(s => ({ ...s, split: upgrade(s.split) })) }));
@@ -259,7 +258,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
 
   const duration = source?.duration || edits?.trimEnd || 0;
   const validation = useMemo(() => edits ? validateEdits(edits, duration) : [], [edits, duration]);
-  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#manual-camera-v6" + (autoCaptions ? "" : "#nocaptions") : "";
+  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#visible-camera-v7" + (autoCaptions ? "" : "#nocaptions") : "";
   const renderStale = !!render && render.key !== currentKey;
 
   const handleRender = async () => {

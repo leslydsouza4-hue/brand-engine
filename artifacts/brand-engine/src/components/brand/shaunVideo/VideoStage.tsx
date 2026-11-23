@@ -200,7 +200,7 @@ export function VideoStage(p: Props) {
             onPause={() => { setPlaying(false); p.onPlaying(false); }}
             onSeeked={e => { p.onTime(e.currentTarget.currentTime); if (e.currentTarget.paused) snapshot(); draw(); }}
             onLoadedData={() => { p.onError(null); snapshot(); draw(); }}
-            onCanPlay={() => p.onError(null)}
+            onCanPlay={() => { p.onError(null); draw(); }}
             onTimeUpdate={e => {
               const v = e.currentTarget;
               enforce(v);

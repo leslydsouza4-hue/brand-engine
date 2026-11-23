@@ -101,6 +101,12 @@ Only Shaun and his actual camera background belong in the presenter panel; curve
 
 **How to apply:** Keep camera-edge protection in automatic defaults only. Manual dragging must ONLY translate, never change zoom or block movement. Speaker scale must allow zooming out below 100%. The user explicitly rejected drag-linked zoom and wants independent manual controls; this overrides automatic edge hiding during manual adjustments. Preview/export must agree, including any edges or empty space exposed by manual framing.
 
+Saved framing from earlier automatic-zoom behavior can become invisible when zoom-on-drag is removed. Recover completely offscreen presenter placement without changing the selected scale or overwriting saved manual edits.
+
+**Why:** The user reported Shaun missing from the first frame after the manual-control correction.
+
+**How to apply:** Use detected head visibility when available, otherwise camera-panel visibility; keep visible manual offsets unchanged and use automatic head framing only when the presenter is entirely outside the output.
+
 The user approved the filled rectangular Shaun framing and edge-to-edge UI panel. Preserve it. The preferred workflow is one Download action, not separate render/download steps; secondary editing controls should stay collapsed to keep the sidebar clean. Video filenames should use the Descript title plus the thumbnail-style date.
 
 **Why:** The user explicitly confirmed the visuals looked good and asked to simplify the finishing workflow rather than redesign the framing again.

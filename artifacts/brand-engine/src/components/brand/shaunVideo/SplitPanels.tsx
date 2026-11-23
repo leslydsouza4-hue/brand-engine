@@ -60,7 +60,7 @@ export function SplitPanels({ split, onChange }: { split: SplitLayout; onChange:
     const p = split[key];
     const moved = !!p && (Math.abs(p.x) > 0.001 || Math.abs(p.y) > 0.001);
     return <button type="button" data-testid={`button-reset-${panel}-position`} disabled={!moved}
-      onClick={() => onChange({ ...split, [key]: { x: 0, y: 0 } })}
+      onClick={() => onChange({ ...split, [key]: panel === "speaker" ? undefined : { x: 0, y: 0 } })}
       className="text-[10px] text-[#00B2A9] disabled:text-[#475569] disabled:cursor-default">Reset position</button>;
   };
   return (

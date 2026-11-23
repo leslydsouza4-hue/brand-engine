@@ -278,7 +278,7 @@ router.get(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner)
 }));
 router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
-  const key = `videos/${video.videoId}/layout-greeting-detect-v7.json`;
+  const key = `videos/${video.videoId}/layout-motion-snap-v8.json`;
   if ((await privateFile(owner, key).exists())[0]) { res.json(await readRecord(owner, key)); return; }
   const lock = `layout/${video.videoId}`;
   if (locked.has(lock)) throw new SessionError(429, "Locating this video's panels. Please wait.");

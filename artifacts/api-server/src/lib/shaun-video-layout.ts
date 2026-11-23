@@ -6,6 +6,8 @@ import { layoutFrame, splitSchema, cropBoxSchema } from "./shaun-video-render";
 import { SessionError } from "./session-validation";
 import { greetingScenes } from "./shaun-greeting-scenes";
 import { excludeWebcam } from "./shaun-screen-crop";
+import { presenterMotion, snapSpeakerToMotion } from "./shaun-camera-refine";
+import sharp from "sharp";
 
 async function frames(input: string, dir: string, times: number[]) {
   const parts: Array<{text: string} | {inlineData: {data:string; mimeType:string}}> = [];
@@ -83,6 +85,17 @@ export async function detectVideoLayout(input:string, dir:string, duration:numbe
   const count=times.length;
   const result=z.object({frames:z.array(z.object({mode:z.enum(["speaker","split"]),split:splitSchema})).length(count)}).parse(await inspect(await frames(input,dir,times),
     `Return EXACTLY ${count} entries in frames, one per image, using normalized FULL SOURCE coordinates. Each entry has mode (speaker or split), split.speaker, split.screen, split.speakerHead and split.speakerShape (circle or rectangle). Identify the live presenter region, not identity. mode speaker means the camera footage of the presenter fills most of the frame (greetings, endings); mode split means a screen recording/product UI is the main content, usually with a small webcam. speaker MUST enclose the ENTIRE available camera panel, hair, shoulders and chest, NOT a face crop, and MUST contain the presenter's face. speakerHead encloses ALL hair/top of head, face and chin, with a small safety margin; exclude hands from head bounds. Explicitly distinguish rectangular camera footage from an embedded circular webcam; do not guess circle merely because a panel is square. Never invent missing footage. For split scenes, screen must target ONLY the main demonstrated application/white product UI. EXCLUDE surrounding Slack messages, Slack navigation, chat threads, browser/devtools panels, desktop borders, and every presenter/webcam overlay. If Slack contains a screenshot or shared application, select that inner application, NOT the surrounding Slack window. Do not select a white rectangle just because it is white: it must be the demonstrated product. Prefer the largest useful application rectangle that excludes the small webcam; cropping some peripheral UI is preferable to showing a duplicate presenter. Output fills 30% screen and 70% presenter; framing uses head bounds to preserve hair and headroom. Do not confuse app avatars with the presenter. No prose.`));
+  // Small webcam overlays: the model box is approximate (seen shifted onto the UI).
+  // Snap it to where the presenter actually moves in the pixels.
+  if(result.frames.some(f=>area(f.split.speaker)<0.2)) {
+    const meta=await sharp(join(dir,"analysis-0.jpg")).metadata().catch(()=>null);
+    const motion=meta?.width && meta.height ? await presenterMotion(input,times,meta.width,meta.height).catch(()=>null) : null;
+    if(motion?.samples) for(const f of result.frames) {
+      if(area(f.split.speaker)>=0.2) continue;
+      const snapped=snapSpeakerToMotion(f.split.speaker,motion);
+      if(snapped) { f.split.speaker=snapped.speaker; f.split.speakerHead=snapped.head; }
+    }
+  }
   // Drop frames whose bounds cannot show Shaun; neighbours cover their time.
   const valid=result.frames.map((f,i)=>({time:times[i],frame:sanitizeLayoutFrame(f)})).filter((v):v is {time:number;frame:DetectedFrame}=>v.frame!==null);
   if(!valid.length) throw new SessionError(422,"The screen and camera could not be separated. Select their bounds manually.");

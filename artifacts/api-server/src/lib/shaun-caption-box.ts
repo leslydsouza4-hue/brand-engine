@@ -14,10 +14,16 @@ function captionFont(): Font {
 }
 
 /** Actual shaped font advances, not character-count estimates. libass sizes
- * fonts by ascender/descender height rather than CSS em units. */
+ * fonts by OS/2 usWinAscent+usWinDescent (falling back to hhea), not CSS em units.
+ * Poppins: win 1135+627=1762 vs hhea 1400 — using hhea made highlight boxes 26% too wide. */
+export function captionUnitsPerSize(f: Font = captionFont()) {
+  const os2 = (f as unknown as { "OS/2"?: { winAscent?: number; winDescent?: number } })["OS/2"];
+  const win = (os2?.winAscent ?? 0) + (os2?.winDescent ?? 0);
+  return win > 0 ? win : f.ascent - f.descent;
+}
 export function captionWordBoxes(words: string[], size: number, width: number) {
   const f = captionFont();
-  const unit = size / (f.ascent - f.descent);
+  const unit = size / captionUnitsPerSize(f);
   const advance = (text: string) => f.layout(text).advanceWidth * unit;
   const left = (width - advance(words.join(" "))) / 2;
   return words.map((word, i) => {

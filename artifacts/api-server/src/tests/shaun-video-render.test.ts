@@ -250,7 +250,13 @@ test("ASS active word has a filled rounded cyan box, and SRT segments never high
       assert.ok(!isCyan(x, y), `Expected rounded inset at ${x},${y}`);
     assert.ok(isCyan(Math.round((minX+maxX)/2), minY+2));
     assert.ok(isCyan(minX+2, Math.round((minY+maxY)/2)));
-    assert.ok(count / ((maxX - minX + 1) * (maxY - minY + 1)) > 0.6);
+    // Filled: inside the box every pixel is cyan or the word drawn over it (not the black frame).
+    let filled = 0;
+    for (let y = minY; y <= maxY; y++) for (let x = minX; x <= maxX; x++) {
+      const p = (y * info.width + x) * info.channels;
+      if (data[p] + data[p + 1] + data[p + 2] > 60) filled++;
+    }
+    assert.ok(filled / ((maxX - minX + 1) * (maxY - minY + 1)) > 0.85);
     let whiteMinX = info.width, whiteMaxX = 0, whiteMinY = info.height, whiteMaxY = 0;
     for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
       const p = (y*info.width+x)*info.channels;
@@ -261,6 +267,9 @@ test("ASS active word has a filled rounded cyan box, and SRT segments never high
     }
     assert.ok(whiteMinX > minX && whiteMaxX < maxX, "rounded background encloses the shaped word horizontally");
     assert.ok(whiteMinY > minY && whiteMaxY < maxY, "rounded background encloses the word vertically");
+    // Snug and centred on the word (libass sizes by OS/2 win metrics; hhea made boxes 26% too wide).
+    const leftGap = whiteMinX - minX, rightGap = maxX - whiteMaxX;
+    assert.ok(leftGap < 30 && rightGap < 30 && Math.abs(leftGap - rightGap) < 10, `box hugs word: gaps ${leftGap}/${rightGap}`);
     const segment = makeCaptions({ ...e, captionTiming: "segment" }, retainedSegments(e, 2), 1920, 1080);
     assert.doesNotMatch(segment.split("[Events]")[1], /\\p1/);
     const cue = makeCaptions({ ...e, words: [{ text: "A whole SRT cue", start: 0, end: 1 }] }, retainedSegments(e, 2), 1920, 1080);

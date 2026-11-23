@@ -10,6 +10,7 @@ import {
   defaultEdits, editsKey, fmtTime, layoutAt, MAX_BLURS, renderEdits, round3, validateEdits,
   type BlurBox, type Scene, type SplitLayout, type TimedText, type TranscriptState, type VideoEdits,
 } from "./shaunVideo/edits";
+import { clearPrepared, preparedBlob, prepareRender } from "./shaunVideo/preparedDownload";
 import { VideoStage } from "./shaunVideo/VideoStage";
 import { videoDownloadName } from "./shaunVideo/downloadName";
 import { SplitPanels } from "./shaunVideo/SplitPanels";
@@ -258,8 +259,44 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
 
   const duration = source?.duration || edits?.trimEnd || 0;
   const validation = useMemo(() => edits ? validateEdits(edits, duration) : [], [edits, duration]);
-  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#visible-camera-v7" + (autoCaptions ? "" : "#nocaptions") : "";
+  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#caption-win-metrics-v8" + (autoCaptions ? "" : "#nocaptions") : "";
   const renderStale = !!render && render.key !== currentKey;
+
+  // Background export: once captions are in and edits have been idle for a few
+  // seconds, render on the server and prefetch the MP4 so Download saves instantly.
+  // One job at a time; a later edit simply starts the next one when this finishes.
+  const prerenderKey = useRef<string | null>(null);
+  const prerenderAbort = useRef<AbortController | null>(null);
+  const [prerenderTick, setPrerenderTick] = useState(0);
+  const [readyJob, setReadyJob] = useState<string | null>(null);
+  useEffect(() => () => { prerenderAbort.current?.abort(); clearPrepared(); }, []);
+  useEffect(() => {
+    if (!source || !edits || validation.length || busy || !previewReady || errors.render) return;
+    if (autoCaptions && !hasCaptions) return;
+    if (edits.format === "vertical" && !edits.split) return;
+    if (render && !renderStale) { const id = render.jobId; prepareRender(id).then(() => setReadyJob(id), () => {}); return; }
+    if (prerenderKey.current) return;
+    const timer = setTimeout(() => {
+      const key = currentKey, videoId = source.videoId, format = edits.format;
+      const full = renderEdits(edits, transcript);
+      const payload = autoCaptions ? full : { ...full, words: [] };
+      const ac = new AbortController();
+      prerenderKey.current = key; prerenderAbort.current = ac;
+      void (async () => {
+        try {
+          let jobId = pendingRender?.key === key && pendingRender.videoId === videoId ? pendingRender.jobId : undefined;
+          if (!jobId) { ({ jobId } = await startRender(videoId, payload)); setPendingRender({ jobId, key, videoId }); }
+          const r = await pollJob<OutputResult>(jobId, () => {}, ac.signal);
+          if (ac.signal.aborted) return;
+          setRender({ jobId, assetUrl: r.assetUrl, key, format, quality: payload.exportQuality, renderedAt: new Date().toISOString() });
+          setPendingRender(p => p?.jobId === jobId ? null : p);
+          prepareRender(jobId).catch(() => {});
+        } catch { /* silent: Download falls back to the normal path and shows any error */ }
+        finally { if (prerenderKey.current === key) { prerenderKey.current = null; prerenderAbort.current = null; setPrerenderTick(n => n + 1); } }
+      })();
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [currentKey, source?.videoId, validation.length, busy, previewReady, autoCaptions, hasCaptions, render?.jobId, renderStale, errors.render, prerenderTick]);
 
   const handleRender = async () => {
     if (!source || !edits || validation.length) return;
@@ -286,6 +323,8 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
         setRender({ jobId, assetUrl: r.assetUrl, key, format: edits.format, quality: payload.exportQuality, renderedAt: new Date().toISOString() });
         setPendingRender(p => p?.jobId === jobId ? null : p);
       }
+      const ready = preparedBlob(jobId);
+      if (ready) { saveBlob(ready, videoDownloadName(source.name)); return; }
       progress(0.9, "Downloading MP4");
       const blob = await fetchJobMp4(jobId, signal, undefined, (loaded, total) =>
         progress(total ? 0.9 + 0.1 * loaded / total : 0.9,
@@ -556,6 +595,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                 {busyFor("render") ? <Loader2 className="w-[14px] h-[14px] animate-spin" /> : <Download className="w-[14px] h-[14px]" />}
                 {busyFor("render") ? "Preparing download…" : "Download MP4"}
               </button>
+              {!busyFor("render") && render && !renderStale && readyJob === render.jobId && <div data-testid="text-download-ready" className="mt-[5px] text-[10px] text-[#00B2A9]">Ready · downloads instantly</div>}
               {busyFor("render") && busy && <><ProgressBar value={busy.progress} label={busy.phase || busy.label} />{cancelBtn}</>}
               {errors.render && <ErrorNote message={errors.render} onRetry={() => void handleRender()} />}
               <div className="mt-[6px] text-[10px] text-[#64748B] break-all">{videoDownloadName(source.name)}</div>

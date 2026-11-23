@@ -22,6 +22,8 @@ export function prepareRender(jobId: string): Promise<Blob> {
   entry = e;
   return e.promise;
 }
+/** The prefetched MP4 for jobId, if its bytes are already in memory. */
+export function preparedBlob(jobId: string): Blob | undefined { return entry?.jobId === jobId ? entry.blob : undefined; }
 export function clearPrepared(jobId?: string) { if (!jobId || entry?.jobId === jobId) drop(); }
 
 export type PreparedStatus = "idle" | "preparing" | "ready" | "saving" | "error" | "deferred";

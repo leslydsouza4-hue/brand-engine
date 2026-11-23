@@ -4,7 +4,7 @@ import { SessionError } from "./session-validation";
 
 export type TranscriptResult = {
   text: string; words: Array<{ text: string; start: number; end: number }>;
-  segments: []; timing: "word"; timestampMethod: "whisper-cross-attention-dtw";
+  segments: []; timing: "word"; timestampMethod: "whisper-cross-attention-dtw" | "deepgram-nova-3";
   model: string; language: "en"; duration: number; omittedUncertainWords: number; groupedUncertainWords?: number;
 };
 let child: ChildProcess | undefined;

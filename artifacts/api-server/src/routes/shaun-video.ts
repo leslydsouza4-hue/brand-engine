@@ -9,6 +9,7 @@ import type { File } from "@google-cloud/storage";
 import { assertSessionMutationOrigin, idSchema, SessionError } from "../lib/session-validation";
 import { createPreview, extractAudio, extractFrame, probeVideo, renderVideo, videoEditsSchema, retainedSegments } from "../lib/shaun-video-render";
 import { transcribeQueued, type TranscriptResult } from "../lib/shaun-video-transcribe";
+import { deepgramConfigured, transcribeDeepgram } from "../lib/shaun-video-deepgram";
 import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
 import { detectVideoLayout, detectPrivateDetails, privacyRequestSchema } from "../lib/shaun-video-layout";
 import { videoSourceCache } from "../lib/shaun-video-cache";
@@ -150,9 +151,11 @@ async function serve(req: Request, res: Response, file: File, contentType: strin
 
 router.get(`${prefix}/capabilities`, endpoint(async (_req, res) => {
   res.json({ maxUploadBytes: MAX_VIDEO_BYTES, maxDuration: MAX_DURATION, formats: ["video/mp4", "video/quicktime"],
-    wordTimestamps: true, segmentTimestamps: false, transcriptionModel: "Xenova/whisper-tiny.en",
-    timestampMethod: "whisper-cross-attention-dtw", transcriptionLanguage: "en",
-    transcriptionNote: "Local CPU Whisper; first transcription downloads the public Apache-2.0 ONNX model. Review generated words before export." });
+    wordTimestamps: true, segmentTimestamps: false,
+    transcriptionModel: deepgramConfigured() ? "deepgram/nova-3" : "Xenova/whisper-tiny.en",
+    timestampMethod: deepgramConfigured() ? "deepgram-nova-3" : "whisper-cross-attention-dtw", transcriptionLanguage: "en",
+    transcriptionNote: deepgramConfigured() ? "Cloud captions (Deepgram), local Whisper as backup. Review generated words before export."
+      : "Local CPU Whisper; first transcription downloads the public Apache-2.0 ONNX model. Review generated words before export." });
 }));
 router.post(`${prefix}/uploads`, endpoint(async (req, res, owner) => {
   const body = uploads.parse(req.body);
@@ -400,7 +403,16 @@ function ensureTranscript(owner: string, video: VideoRecord, onProgress?: (value
           throw new SessionError(503, "The server could not prepare this video's audio. Your original and edits are safe. Please retry.", "AUDIO_PREPARATION_FAILED");
         }
       }
-      const result = await transcribeQueued(audio, (value, phase) => emit(0.1 + value * 0.88, phase));
+      let result: TranscriptResult | undefined;
+      if (deepgramConfigured()) {
+        emit(0.2, "Transcribing speech (cloud)");
+        const duration = (video.probe as { duration: number }).duration;
+        result = await transcribeDeepgram(audio, duration).catch(error => {
+          logger.warn({ videoId: video.videoId, code: (error as { code?: string }).code, status: (error as { status?: number }).status }, "Cloud captions failed; using local Whisper");
+          return undefined;
+        });
+      }
+      result ??= await transcribeQueued(audio, (value, phase) => emit(0.1 + value * 0.88, phase));
       await saveRecord(owner, TRANSCRIPT_KEY(video.videoId), result).catch(() => undefined);
       return result;
     } finally { await rm(dir, { recursive: true, force: true }).catch(() => undefined); }

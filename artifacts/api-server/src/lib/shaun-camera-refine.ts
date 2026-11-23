@@ -1,15 +1,17 @@
 import { execFile } from "node:child_process";
+import { setPriority } from "node:os";
 
 type Rect = { x: number; y: number; width: number; height: number };
 const MW = 480; // motion-analysis width (px)
 
 /** Grey frames t, t+0.2, t+0.4 s. */
 async function burst(input: string, time: number, mh: number): Promise<Uint8Array[]> {
-  const buf = await new Promise<Buffer>((resolve, reject) => execFile("ffmpeg",
+  const buf = await new Promise<Buffer>((resolve, reject) => { const child = execFile("ffmpeg",
     ["-v", "error", "-ss", String(time), "-i", input, "-vf", `fps=5,scale=${MW}:${mh},format=gray`,
       "-frames:v", "3", "-f", "rawvideo", "pipe:1"],
     { encoding: "buffer", maxBuffer: 64 * 1024 * 1024, timeout: 30_000 },
-    (error, stdout) => error ? reject(error) : resolve(stdout)));
+    (error, stdout) => error ? reject(error) : resolve(stdout));
+    if (child.pid) try { setPriority(child.pid, 10); } catch { /* keep default */ } });
   const size = MW * mh, frames: Uint8Array[] = [];
   for (let i = 0; i + size <= buf.length; i += size) frames.push(buf.subarray(i, i + size));
   return frames;

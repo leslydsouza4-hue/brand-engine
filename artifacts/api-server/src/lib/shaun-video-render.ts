@@ -7,7 +7,8 @@ import { excludeWebcam } from "./shaun-screen-crop";
 import { ffmpegProgress } from "./shaun-job-progress";
 import { speakerFramingPan } from "./shaun-speaker-framing";
 import { captionWordBoxes, roundedCaptionBox } from "./shaun-caption-box";
-import { availableParallelism } from "node:os";
+import { availableParallelism, setPriority } from "node:os";
+import { readFileSync } from "node:fs";
 
 const seconds = z.number().finite().min(0).max(600);
 export const cropBoxSchema = z.object({
@@ -57,6 +58,8 @@ const RENDER_TIMEOUT = 12 * 60 * 1000;
 async function run(command: string, args: string[], timeout: number, onLine?: (line: string) => void, onStderr?: (text: string) => void) {
   return new Promise<string>((fulfil, reject) => {
     const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
+    // Video tools yield CPU to caption transcription and the API process (nice 10).
+    if (child.pid) try { setPriority(child.pid, 10); } catch { /* not permitted: keep default */ }
     let stdout = "", stderr = "", pending = "", settled = false;
     let timedOut = false;
     const timer = setTimeout(() => { timedOut = true; child.kill("SIGKILL"); }, timeout);
@@ -123,7 +126,22 @@ async function localInput(path: string) {
 const inputArgs = (path: string) => ["-protocol_whitelist", "file,pipe", "-i", path];
 // Use the server's cores (was fixed at 2): decode, filters and x264 scale with vCPUs.
 // Capped so a large machine does not multiply 4K frame buffers without benefit.
-const CPU_THREADS = String(Math.max(2, Math.min(8, availableParallelism())));
+// availableParallelism() reports the HOST's cores; containers (Replit) are limited by a
+// cgroup CPU quota. Oversubscribing a 1-2 vCPU quota slows everything, captions included.
+export function containerCpus(): number {
+  const host = availableParallelism();
+  try {
+    const [quota, period] = readFileSync("/sys/fs/cgroup/cpu.max", "utf8").trim().split(/\s+/);
+    if (quota !== "max" && Number(quota) > 0 && Number(period) > 0) return Math.max(1, Math.min(host, Number(quota) / Number(period)));
+  } catch { /* not cgroup v2 */ }
+  try {
+    const quota = Number(readFileSync("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", "utf8"));
+    const period = Number(readFileSync("/sys/fs/cgroup/cpu/cpu.cfs_period_us", "utf8"));
+    if (quota > 0 && period > 0) return Math.max(1, Math.min(host, quota / period));
+  } catch { /* not cgroup v1 */ }
+  return host;
+}
+const CPU_THREADS = String(Math.max(1, Math.min(8, Math.ceil(containerCpus()))));
 const baseArgs = ["-hide_banner", "-nostdin", "-y", "-threads", CPU_THREADS, "-filter_complex_threads", CPU_THREADS];
 
 export async function probeVideo(path: string, allowPreview = false): Promise<VideoProbe> {

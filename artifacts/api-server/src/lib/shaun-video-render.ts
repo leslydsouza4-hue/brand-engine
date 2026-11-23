@@ -400,6 +400,26 @@ export async function createPreview(input: string, output: string) {
   } catch (error) { await rm(target, { force: true }); throw error; }
 }
 
+/**
+ * ONE sequential decode pass for every analysis still. Seeking per frame re-decoded
+ * up to a whole GOP (2.2 s = 66 frames of 4K) for each of ~70 stills: 11.6 s locally
+ * vs ~2.5 s for one pass. Frames land on a 5 fps grid; returns one JPEG path per
+ * requested time (960 px, same as layoutFrame).
+ */
+export const FRAME_GRID_FPS = 5;
+export async function extractGridFrames(input: string, dir: string, times: number[], duration: number): Promise<string[]> {
+  const source = await localInput(input);
+  const last = Math.max(0, Math.floor((duration - 0.05) * FRAME_GRID_FPS));
+  const index = (t: number) => Math.max(0, Math.min(last, Math.round(t * FRAME_GRID_FPS)));
+  const wanted = [...new Set(times.map(index))].sort((a, b) => a - b);
+  const select = wanted.map(n => `eq(n\\,${n})`).join("+");
+  await run("ffmpeg", [...baseArgs, ...inputArgs(source), "-map", "0:v:0", "-an",
+    "-vf", `fps=${FRAME_GRID_FPS},select='${select}',scale=960:960:force_original_aspect_ratio=decrease`,
+    "-fps_mode", "passthrough", "-q:v", "3", join(dir, "grid-%04d.jpg")], RENDER_TIMEOUT);
+  const fileFor = new Map(wanted.map((n, i) => [n, join(dir, `grid-${String(i + 1).padStart(4, "0")}.jpg`)]));
+  return times.map(t => fileFor.get(index(t))!);
+}
+
 export async function layoutFrame(input: string, output: string, time: number) {
   const source = await localInput(input);
   await run("ffmpeg", [...baseArgs, "-ss", String(time), ...inputArgs(source), "-frames:v", "1",

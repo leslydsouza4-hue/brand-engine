@@ -1,5 +1,6 @@
 import { execFile } from "node:child_process";
 import { setPriority } from "node:os";
+import sharp from "sharp";
 
 type Rect = { x: number; y: number; width: number; height: number };
 const MW = 480; // motion-analysis width (px)
@@ -23,6 +24,37 @@ async function burst(input: string, time: number, mh: number): Promise<Uint8Arra
  * A pixel counts when it changes in at least `minShare` of the sampled bursts, so
  * occasional slide/page changes in the UI do not register.
  */
+/** Same as presenterMotion, but from stills already extracted in one pass:
+ * groups[i] = consecutive frames 0.2 s apart for sample i. */
+export async function presenterMotionFromStills(groups: string[][], sourceWidth: number, sourceHeight: number, minShare = 0.34) {
+  const mh = Math.max(2, Math.round(MW * sourceHeight / sourceWidth / 2) * 2);
+  const load = async (file: string) => new Uint8Array(await sharp(file).resize(MW, mh, { fit: "fill" }).greyscale().raw().toBuffer());
+  const bursts = await Promise.all(groups.map(g => Promise.all(g.map(load)).catch(() => [] as Uint8Array[])));
+  return motionFromBursts(bursts, mh, minShare);
+}
+function motionFromBursts(bursts: Uint8Array[][], mh: number, minShare: number) {
+  const count = new Uint16Array(MW * mh);
+  let used = 0;
+  for (const frames of bursts) {
+    if (frames.length < 2) continue;
+    const moved = new Uint8Array(MW * mh);
+    let changed = 0;
+    for (let f = 1; f < frames.length; f++)
+      for (let p = 0; p < moved.length; p++) if (Math.abs(frames[f][p] - frames[f - 1][p]) > 6) moved[p] = 1;
+    for (let p = 0; p < moved.length; p++) changed += moved[p];
+    if (changed > moved.length * 0.5) continue; // full-frame transition: no information
+    for (let p = 0; p < moved.length; p++) count[p] += moved[p];
+    used++;
+  }
+  const need = Math.max(1, Math.ceil(used * minShare));
+  const mask = new Uint8Array(MW * mh);
+  for (let y = 1; y < mh - 1; y++) for (let x = 1; x < MW - 1; x++) {
+    let n = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (count[(y + dy) * MW + x + dx] >= need) n++;
+    if (n >= 5) mask[y * MW + x] = 1;
+  }
+  return { mask, width: MW, height: mh, samples: used };
+}
 export async function presenterMotion(input: string, times: number[], sourceWidth: number, sourceHeight: number, minShare = 0.34) {
   const mh = Math.max(2, Math.round(MW * sourceHeight / sourceWidth / 2) * 2);
   const count = new Uint16Array(MW * mh);

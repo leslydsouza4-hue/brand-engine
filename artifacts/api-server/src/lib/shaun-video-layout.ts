@@ -42,19 +42,53 @@ async function inspect(parts: Awaited<ReturnType<typeof frames>>, text: string, 
   // Some model responses use the requested frames as the root array.
   return Array.isArray(parsed) ? {frames:parsed} : parsed;
 }
+type Box={x:number;y:number;width:number;height:number};
+const area=(b:Box)=>b.width*b.height;
+const centreInside=(inner:Box,outer:Box)=>{
+  const cx=inner.x+inner.width/2, cy=inner.y+inner.height/2;
+  return cx>=outer.x && cx<=outer.x+outer.width && cy>=outer.y && cy<=outer.y+outer.height;
+};
+/** Dense samples where Descript videos switch layout (greeting, outro), sparse through the demo.
+ * Avoid t≈0: fades/black first frames produce garbage presenter bounds. */
+export function layoutSampleTimes(duration:number):number[] {
+  const last=Math.max(0,duration-0.25);
+  const clamp=(t:number)=>Math.max(0,Math.min(last,t));
+  let times:number[];
+  if(duration<24) {
+    const count=Math.min(10,Math.max(3,Math.ceil(duration/2)));
+    times=Array.from({length:count},(_,i)=>clamp(Math.min(1,duration*0.05)+i*(last-Math.min(1,duration*0.05))/(count-1)));
+  } else {
+    const opening=[1,2.5,4,5.5,7,9,12];
+    const closing=[duration-8,duration-5,duration-3,duration-1];
+    const middle=Array.from({length:6},(_,i)=>12+(i+1)*(duration-20)/7);
+    times=[...opening,...middle,...closing].map(clamp);
+  }
+  return [...new Set(times.map(t=>Math.round(t*1000)/1000))].sort((a,b)=>a-b);
+}
+type DetectedFrame={mode:"speaker"|"split";split:z.infer<typeof splitSchema>};
+/** Reject presenter bounds that cannot contain Shaun, and relabel a small webcam called "speaker". */
+export function sanitizeLayoutFrame(f:DetectedFrame):DetectedFrame|null {
+  const s=f.split;
+  if(s.speakerHead && !centreInside(s.speakerHead,s.speaker)) return null;
+  if(f.mode==="speaker") {
+    if(area(s.speaker)>=0.2) return f;
+    const screen=excludeWebcam(s.screen,s.speaker);
+    return screen && area(screen)>=0.1 ? {mode:"split",split:{...s,screen}} : null;
+  }
+  const screen=excludeWebcam(s.screen,s.speaker);
+  return screen ? {mode:"split",split:{...s,screen}} : null;
+}
 export async function detectVideoLayout(input:string, dir:string, duration:number) {
-  const count=Math.min(8,Math.max(3,Math.ceil(duration/3)));
-  const times=Array.from({length:count},(_,i)=>Math.max(0,Math.min(duration-0.25,i*duration/(count-1)+0.01)));
-  const boundaries=[0,...times.slice(1).map((time,i)=>(time+times[i])/2),duration];
+  const times=layoutSampleTimes(duration);
+  const count=times.length;
   const result=z.object({frames:z.array(z.object({mode:z.enum(["speaker","split"]),split:splitSchema})).length(count)}).parse(await inspect(await frames(input,dir,times),
-    `Return EXACTLY ${count} entries in frames, one per image, using normalized FULL SOURCE coordinates. Each entry has mode (speaker or split), split.speaker, split.screen, split.speakerHead and split.speakerShape (circle or rectangle). Identify the live presenter region, not identity. Speaker-only greetings/endings use mode speaker. speaker MUST enclose the ENTIRE available camera panel, hair, shoulders and chest, NOT a face crop. speakerHead encloses ALL hair/top of head, face and chin, with a small safety margin; exclude hands from head bounds. Explicitly distinguish rectangular camera footage from an embedded circular webcam; do not guess circle merely because a panel is square. Never invent missing footage. For split scenes, screen must target ONLY the main demonstrated application/white product UI. EXCLUDE surrounding Slack messages, Slack navigation, chat threads, browser/devtools panels, desktop borders, and every presenter/webcam overlay. If Slack contains a screenshot or shared application, select that inner application, NOT the surrounding Slack window. Do not select a white rectangle just because it is white: it must be the demonstrated product. Prefer the largest useful application rectangle that excludes the small webcam; cropping some peripheral UI is preferable to showing a duplicate presenter. Output fills 30% screen and 70% presenter; framing uses head bounds to preserve hair and headroom. Do not confuse app avatars with the presenter. No prose.`));
+    `Return EXACTLY ${count} entries in frames, one per image, using normalized FULL SOURCE coordinates. Each entry has mode (speaker or split), split.speaker, split.screen, split.speakerHead and split.speakerShape (circle or rectangle). Identify the live presenter region, not identity. mode speaker means the camera footage of the presenter fills most of the frame (greetings, endings); mode split means a screen recording/product UI is the main content, usually with a small webcam. speaker MUST enclose the ENTIRE available camera panel, hair, shoulders and chest, NOT a face crop, and MUST contain the presenter's face. speakerHead encloses ALL hair/top of head, face and chin, with a small safety margin; exclude hands from head bounds. Explicitly distinguish rectangular camera footage from an embedded circular webcam; do not guess circle merely because a panel is square. Never invent missing footage. For split scenes, screen must target ONLY the main demonstrated application/white product UI. EXCLUDE surrounding Slack messages, Slack navigation, chat threads, browser/devtools panels, desktop borders, and every presenter/webcam overlay. If Slack contains a screenshot or shared application, select that inner application, NOT the surrounding Slack window. Do not select a white rectangle just because it is white: it must be the demonstrated product. Prefer the largest useful application rectangle that excludes the small webcam; cropping some peripheral UI is preferable to showing a duplicate presenter. Output fills 30% screen and 70% presenter; framing uses head bounds to preserve hair and headroom. Do not confuse app avatars with the presenter. No prose.`));
+  // Drop frames whose bounds cannot show Shaun; neighbours cover their time.
+  const valid=result.frames.map((f,i)=>({time:times[i],frame:sanitizeLayoutFrame(f)})).filter((v):v is {time:number;frame:DetectedFrame}=>v.frame!==null);
+  if(!valid.length) throw new SessionError(422,"The screen and camera could not be separated. Select their bounds manually.");
+  const boundaries=[0,...valid.slice(1).map((v,i)=>(v.time+valid[i].time)/2),duration];
   const scenes: Array<{start:number;end:number;mode:"speaker"|"split";split:z.infer<typeof splitSchema>}>=[];
-  result.frames.forEach((f,i)=>{
-    if(f.mode==="split") {
-      const clean=excludeWebcam(f.split.screen,f.split.speaker);
-      if(!clean) throw new SessionError(422,"The screen and camera could not be separated. Select their bounds manually.");
-      f.split.screen=clean;
-    }
+  valid.forEach(({frame:f},i)=>{
     const previous=scenes.at(-1);
     const sameHead=previous?.split.speakerHead && f.split.speakerHead &&
       (["x","y","width","height"] as const).every(key =>
@@ -67,7 +101,7 @@ export async function detectVideoLayout(input:string, dir:string, duration:numbe
     else scenes.push({start:boundaries[i],end:boundaries[i+1],...f});
   });
   return {split:scenes.find(s=>s.mode==="split")?.split ?? scenes[0].split,scenes:greetingScenes(scenes,duration),
-    note:`Sampled ${count} frames for the camera, full head and main product UI. Framing protects headroom but is not continuous head tracking. Full-screen greeting defaults to the first 6 seconds and closing to the last 4 seconds (shorter for short clips). These are editable timing defaults, not speech detection. Review crops and boundaries.`};
+    note:`Sampled ${count} frames (dense at the start and end) for the camera, full head and main product UI. Full-screen greeting and closing follow the detected camera-only footage; when none is detected they default to the first 6 and last 4 seconds. Framing protects headroom but is not continuous head tracking. Review crops and boundaries.`};
 }
 export const privacyRequestSchema=z.object({start:z.number().min(0),end:z.number().max(600),target:z.enum(["screen","speaker"]),crop:cropBoxSchema}).strict().refine(v=>v.end>v.start);
 export async function detectPrivateDetails(input:string,dir:string,request:z.infer<typeof privacyRequestSchema>) {

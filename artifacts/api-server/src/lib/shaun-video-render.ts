@@ -7,6 +7,7 @@ import { excludeWebcam } from "./shaun-screen-crop";
 import { ffmpegProgress } from "./shaun-job-progress";
 import { speakerFramingPan } from "./shaun-speaker-framing";
 import { captionWordBoxes, roundedCaptionBox } from "./shaun-caption-box";
+import { availableParallelism } from "node:os";
 
 const seconds = z.number().finite().min(0).max(600);
 export const cropBoxSchema = z.object({
@@ -120,7 +121,10 @@ async function localInput(path: string) {
   return file;
 }
 const inputArgs = (path: string) => ["-protocol_whitelist", "file,pipe", "-i", path];
-const baseArgs = ["-hide_banner", "-nostdin", "-y", "-threads", "2", "-filter_complex_threads", "1"];
+// Use the server's cores (was fixed at 2): decode, filters and x264 scale with vCPUs.
+// Capped so a large machine does not multiply 4K frame buffers without benefit.
+const CPU_THREADS = String(Math.max(2, Math.min(8, availableParallelism())));
+const baseArgs = ["-hide_banner", "-nostdin", "-y", "-threads", CPU_THREADS, "-filter_complex_threads", CPU_THREADS];
 
 export async function probeVideo(path: string, allowPreview = false): Promise<VideoProbe> {
   const file = await localInput(path);
@@ -330,7 +334,7 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
     progress(0);
     await run("ffmpeg", [...baseArgs, "-ss", String(e.trimStart), "-t", String(e.trimEnd-e.trimStart), ...inputArgs(source), "-filter_complex_script", graph,
       "-map", e.words.length ? "[captioned]" : "[framed]", ...(info.hasAudio ? ["-map", "[audio]", "-c:a", "aac", "-b:a", "192k"] : ["-an"]),
-      "-c:v", "libx264", "-preset", e.exportQuality === "fast" ? "ultrafast" : "superfast", "-crf", "21", "-threads", "2", "-r", "30", "-pix_fmt", "yuv420p",
+      "-c:v", "libx264", "-preset", e.exportQuality === "fast" ? "ultrafast" : "superfast", "-crf", "21", "-threads", CPU_THREADS, "-r", "30", "-pix_fmt", "yuv420p",
       "-t", String(total), "-movflags", "+faststart", "-progress", "pipe:1", "-f", "mp4", target], RENDER_TIMEOUT, line => {
       const value = ffmpegProgress(line, total);
       if (value !== undefined) progress(value);

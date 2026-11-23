@@ -8,7 +8,7 @@ import { z } from "zod";
 import type { File } from "@google-cloud/storage";
 import { assertSessionMutationOrigin, idSchema, SessionError } from "../lib/session-validation";
 import { createPreview, extractAudio, extractFrame, probeVideo, renderVideo, videoEditsSchema, retainedSegments } from "../lib/shaun-video-render";
-import { transcribeLocalAudio, isTranscriptionBusy } from "../lib/shaun-video-transcribe";
+import { transcribeQueued, type TranscriptResult } from "../lib/shaun-video-transcribe";
 import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
 import { detectVideoLayout, detectPrivateDetails, privacyRequestSchema } from "../lib/shaun-video-layout";
 import { videoSourceCache } from "../lib/shaun-video-cache";
@@ -22,7 +22,6 @@ const worker = randomUUID();
 const active = new Map<string, number>();
 const locked = new Set<string>();
 let running = 0;
-let transcriptionQueued = false;
 const prefix = "/shaun-video";
 const mime = z.enum(["video/mp4", "video/quicktime"]);
 const uploads = z.object({
@@ -102,7 +101,6 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
         : "Video processing failed. Check that the file is a valid MP4, at most 10 minutes and 4096 pixels per edge.";
     } finally {
       if (heartbeat) clearInterval(heartbeat);
-      if (kind === "transcribe") transcriptionQueued = false;
       await persist().catch(() => undefined);
       if (dir) await rm(dir, { recursive: true, force: true }).catch(() => undefined);
       release(owner);
@@ -202,6 +200,7 @@ router.post(`${prefix}/videos/:videoId/complete`, endpoint(async (req, res, owne
       await retainLocal(owner, videoId, local);
       await staging.delete().catch(() => undefined);
     } catch (error) { await target.delete().catch(() => undefined); throw error; }
+    prepareCaptionsEarly(owner, video);
     res.json(videoResponse(video));
   } finally {
     if (dir) await rm(dir, { recursive: true, force: true }).catch(() => undefined);
@@ -243,6 +242,7 @@ router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
     await saveRecord(owner, cacheKey, { videoId, at: Date.now() });
     await retainLocal(owner, videoId, local);
     record.videoId = videoId;
+    prepareCaptionsEarly(owner, video);
     return videoResponse(video);
   }));
 }));
@@ -364,42 +364,65 @@ router.post(`${prefix}/videos/:videoId/frames`, endpoint(async (req, res, owner)
     return { assetUrl: `/api/shaun-video/jobs/${record.jobId}/asset`, contentType: record.contentType };
   }));
 }));
+/**
+ * Captions are prepared on the server as soon as a video is uploaded/imported and
+ * cached per video, so the editor usually finds them ready. Concurrent requests for
+ * the same video share one run; different videos queue for the single CPU worker.
+ */
+const TRANSCRIPT_KEY = (videoId: string) => `videos/${videoId}/transcript-auto-v1.json`;
+const transcripts = new Map<string, { promise: Promise<TranscriptResult>; listeners: Set<(value: number, phase: string) => void> }>();
+function ensureTranscript(owner: string, video: VideoRecord, onProgress?: (value: number, phase: string) => void): Promise<TranscriptResult> {
+  const running = transcripts.get(video.videoId);
+  if (running) { if (onProgress) running.listeners.add(onProgress); return running.promise; }
+  const listeners = new Set<(value: number, phase: string) => void>(onProgress ? [onProgress] : []);
+  const emit = (value: number, phase: string) => { for (const l of listeners) l(value, phase); };
+  const promise = (async () => {
+    try { return await readRecord<TranscriptResult>(owner, TRANSCRIPT_KEY(video.videoId)); }
+    catch (error) { if (!(error instanceof SessionError && error.status === 404)) throw error; }
+    const dir = await mkdtemp(join(tmpdir(), "shaun-captions-"));
+    try {
+      const input = join(dir, "source.mp4"), audio = join(dir, "speech.wav");
+      try {
+        emit(0.02, "Loading source for captions");
+        await downloadLocal(owner, video.videoId, input);
+        emit(0.05, "Extracting source audio");
+        await extractAudio(input, audio);
+      } catch (error) {
+        console.warn("Caption preparation retry", { code: (error as NodeJS.ErrnoException).code ?? "PROCESSING_FAILED" });
+        emit(0.04, "Recovering audio from prepared preview");
+        const proxy = join(dir, "preview.webm");
+        try {
+          await privateFile(owner, `videos/${video.videoId}/preview-v1.webm`).download({ destination: proxy });
+          await rm(audio, { force: true });
+          await extractAudio(proxy, audio, true);
+        } catch (retryError) {
+          console.warn("Caption audio recovery failed", { code: (retryError as NodeJS.ErrnoException).code ?? "PROCESSING_FAILED" });
+          throw new SessionError(503, "The server could not prepare this video's audio. Your original and edits are safe. Please retry.", "AUDIO_PREPARATION_FAILED");
+        }
+      }
+      const result = await transcribeQueued(audio, (value, phase) => emit(0.1 + value * 0.88, phase));
+      await saveRecord(owner, TRANSCRIPT_KEY(video.videoId), result).catch(() => undefined);
+      return result;
+    } finally { await rm(dir, { recursive: true, force: true }).catch(() => undefined); }
+  })();
+  transcripts.set(video.videoId, { promise, listeners });
+  promise.then(() => transcripts.delete(video.videoId), () => transcripts.delete(video.videoId));
+  return promise;
+}
+/** Fire-and-forget at upload/import: captions start while the editor is still loading. */
+function prepareCaptionsEarly(owner: string, video: VideoRecord) {
+  if (!(video.probe as { hasAudio?: boolean } | undefined)?.hasAudio) return;
+  ensureTranscript(owner, video).catch(error =>
+    logger.warn({ videoId: video.videoId, code: (error as { code?: string }).code }, "Early caption preparation failed; the editor will retry"));
+}
 router.post(`${prefix}/videos/:videoId/transcribe`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
   if (!(video.probe as { hasAudio: boolean }).hasAudio) throw new SessionError(422, "This video has no audio track");
-  if (transcriptionQueued || isTranscriptionBusy()) throw new SessionError(429, "A speech transcription is already running. Please wait.", "TRANSCRIPTION_BUSY");
-  transcriptionQueued = true;
-  try {
-    res.status(202).json(await job(owner, "transcribe", video.videoId, async (dir, record, progress) => {
-      try {
-        const input = join(dir, "source.mp4"), audio = join(dir, "speech.wav");
-        record.phase = "Preparing source audio"; progress(0.02);
-        try {
-          record.phase = "Loading source for captions";
-          await downloadLocal(owner, video.videoId, input);
-          record.phase = "Extracting source audio";
-          await extractAudio(input, audio);
-        } catch (error) {
-          console.warn("Caption preparation retry", { phase: record.phase, code: (error as NodeJS.ErrnoException).code ?? "PROCESSING_FAILED" });
-          record.phase = "Recovering audio from prepared preview"; progress(0.04);
-          const proxy = join(dir, "preview.webm");
-          try {
-            await privateFile(owner, `videos/${video.videoId}/preview-v1.webm`).download({ destination: proxy });
-            await rm(audio, { force: true });
-            await extractAudio(proxy, audio, true);
-          } catch (retryError) {
-            console.warn("Caption audio recovery failed", { code: (retryError as NodeJS.ErrnoException).code ?? "PROCESSING_FAILED" });
-            throw new SessionError(503, "The server could not prepare this video's audio. Your original and edits are safe. Please retry.", "AUDIO_PREPARATION_FAILED");
-          }
-        }
-        const result = await transcribeLocalAudio(audio, (value, phase) => {
-          record.phase = phase; progress(0.1 + value * 0.88);
-        });
-        record.phase = "Completed";
-        return result;
-      } finally { transcriptionQueued = false; }
-    }));
-  } catch (error) { transcriptionQueued = false; throw error; }
+  res.status(202).json(await job(owner, "transcribe", video.videoId, async (_dir, record, progress) => {
+    const result = await ensureTranscript(owner, video, (value, phase) => { record.phase = phase; progress(value); });
+    record.phase = "Completed";
+    return result;
+  }));
 }));
 router.get(`${prefix}/jobs/:jobId`, endpoint(async (req, res, owner) => {
   const jobId = id(req, "jobId");

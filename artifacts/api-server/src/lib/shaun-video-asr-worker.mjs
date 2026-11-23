@@ -35,6 +35,16 @@ function pcm16(bytes) {
   return Float32Array.from({ length: audio.length / 2 }, (_, i) => audio.readInt16LE(i * 2) / 32768);
 }
 process.on("message", async message => {
+  if (message?.type === "warm") {
+    // Preload model files so the first real caption job does not pay the download.
+    if (!recognizer && !busy) {
+      busy = true;
+      try { recognizer = await pipeline("automatic-speech-recognition", "Xenova/whisper-tiny.en", { device: "cpu", dtype: "q8", session_options: { intraOpNumThreads: 2, interOpNumThreads: 1 } }); }
+      catch { /* the transcribe path retries and reports */ }
+      finally { busy = false; scheduleExit(); }
+    }
+    return;
+  }
   if (message?.type !== "transcribe" || busy) return;
   busy = true; clearTimeout(idle);
   try {

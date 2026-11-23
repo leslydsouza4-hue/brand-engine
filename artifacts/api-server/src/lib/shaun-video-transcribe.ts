@@ -18,17 +18,36 @@ export function disposeLocalTranscriber() {
 /** One reusable CPU model process, killed on deadline/abort and idled out after
  * five minutes. A separate process makes the timeout enforceable during ONNX
  * execution and isolates model memory from the HTTP server. */
+function spawnWorker() {
+  if (!child?.connected) {
+    child = fork(fileURLToPath(new URL("./shaun-video-asr-worker.mjs", import.meta.url)), [], {
+      stdio: ["ignore", "ignore", "ignore", "ipc"], execArgv: [],
+    });
+    child.on("error", () => undefined);
+  }
+  return child;
+}
+/** Start the model worker and load Whisper in the background (server startup). */
+export function warmTranscriber() {
+  if (busy) return;
+  try { spawnWorker().send({ type: "warm" }, () => undefined); } catch { /* best effort */ }
+}
+let queue: Promise<unknown> = Promise.resolve();
+let waiting = 0;
+/** Multi-user: one CPU worker, so jobs wait their turn instead of being refused. */
+export function transcribeQueued(path: string, progress: (value: number, phase: string) => void, signal?: AbortSignal): Promise<TranscriptResult> {
+  waiting++;
+  if (waiting > 1) progress(0, `Waiting for ${waiting - 1} caption job${waiting > 2 ? "s" : ""} ahead`);
+  const run = queue.catch(() => undefined).then(() => { waiting--; return transcribeLocalAudio(path, progress, signal); });
+  queue = run.catch(() => undefined);
+  return run;
+}
 export async function transcribeLocalAudio(path: string, progress: (value: number, phase: string) => void, signal?: AbortSignal): Promise<TranscriptResult> {
   if (busy) throw new SessionError(429, "A speech transcription is already running. Please wait.", "TRANSCRIPTION_BUSY");
   if (signal?.aborted) throw new SessionError(409, "Speech transcription was cancelled");
   busy = true;
   return new Promise((resolve, reject) => {
-    if (!child?.connected) {
-      child = fork(fileURLToPath(new URL("./shaun-video-asr-worker.mjs", import.meta.url)), [], {
-        stdio: ["ignore", "ignore", "ignore", "ipc"], execArgv: [],
-      });
-    }
-    const process = child;
+    const process = spawnWorker();
     let settled = false;
     const finish = (error?: Error, result?: TranscriptResult) => {
       if (settled) return;

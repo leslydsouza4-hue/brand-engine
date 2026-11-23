@@ -251,7 +251,8 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const previewReady = !!source && preview?.videoId === source.videoId;
   const hasCaptions = !!transcript || captionUnits.length > 0;
   useEffect(() => {
-    if (!autoCaptions || !source || !previewReady || hasCaptions || busy || errors.video || errors.transcribe) return;
+    // No longer waits for the browser preview: the server started captions at upload/import.
+    if (!autoCaptions || !source || hasCaptions || busy || errors.video || errors.transcribe) return;
     if (autoTriedRef.current.has(source.videoId)) return;
     autoTriedRef.current.add(source.videoId);
     void handleTranscribe(true);

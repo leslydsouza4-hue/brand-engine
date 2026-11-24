@@ -95,7 +95,10 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
         try {
           const r = await requestLayout(videoId, ac.signal, (_p, phase) => { if (!ac.signal.aborted) setLayout(l => l && l.videoId === videoId ? { ...l, phase } : l); });
           if (ac.signal.aborted || currentVideoRef.current !== videoId) return;
-          setEdits(e => e && !e.split ? { ...e, split: r.split, scenes: r.scenes } : e);
+          // Shaun must always be on screen: apply the detected trim unless the user already trimmed.
+          setEdits(e => e && !e.split ? { ...e, split: r.split, scenes: r.scenes,
+            ...(r.trim && e.trimStart < 0.05 && e.trimEnd >= r.trim.end - 0.05 ? { trimStart: round3(r.trim.start), trimEnd: round3(r.trim.end) } : {}) } : e);
+          if (r.trim && videoRef.current && videoRef.current.currentTime < r.trim.start) videoRef.current.currentTime = r.trim.start;
           setLayout({ videoId, status: "done", note: r.note });
           // Fresh layout → scan the screen for personal details once and blur them automatically.
           setPrivacyAuto({ videoId, status: "scanning" });
@@ -675,7 +678,8 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                 {playing ? <Pause className="w-[15px] h-[15px] text-white" /> : <Play className="w-[15px] h-[15px] text-white ml-[2px]" />}
               </button>
               <div className="flex-1 min-w-0">
-                <Timeline duration={duration} time={time} edits={edits} selectedBlur={selectedBlur} onSeek={seek} onSelectBlur={setSelectedBlur} />
+                <Timeline duration={duration} time={time} edits={edits} selectedBlur={selectedBlur} onSeek={seek} onSelectBlur={setSelectedBlur}
+                  onTrim={(start, end) => { patch({ trimStart: round3(start), trimEnd: round3(end) }); seek(start !== edits.trimStart ? start : end); }} />
               </div>
             </div>
           </div>

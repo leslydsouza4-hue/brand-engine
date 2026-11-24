@@ -103,7 +103,7 @@ export const startImport = (url: string, refresh = false) => requestJob<{ jobId:
 export const startTranscribe = (id: string) => requestJob<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/transcribe`, {}) as Promise<{ jobId: string }>;
 export const startRender = (id: string, edits: VideoEdits) => requestJob<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/render`, edits) as Promise<{ jobId: string }>;
 export const startFrame = (id: string, time: number) => requestJob<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/frames`, { time }) as Promise<{ jobId: string }>;
-export interface LayoutResult { split: SplitLayout; scenes: Scene[]; note?: string }
+export interface LayoutResult { split: SplitLayout; scenes: Scene[]; note?: string; trim?: { start: number; end: number } }
 export interface PrivacyRequest { start: number; end: number; target: "screen" | "speaker"; crop: Rect }
 export interface PrivacyResult { blurs: BlurBox[]; note: string; sampledFrames: number }
 /** Sampled AI detection of personal details. Results are suggestions only; blurs are in full SOURCE coords. */
@@ -122,10 +122,11 @@ export async function requestPrivacyAuto(id: string, body: { split: SplitLayout;
 }
 /** Locate speaker + screen panels. Server caches per source; may answer 200 directly or 202 with a job. */
 export async function requestLayout(id: string, signal: AbortSignal, onProgress?: (p: number, phase?: string) => void): Promise<LayoutResult> {
-  const r = await requestJob<{ jobId?: string; split?: SplitLayout; scenes?: Scene[]; note?: string }>(`/videos/${encodeURIComponent(id)}/layout`, {}, signal) as { jobId?: string; split?: SplitLayout; scenes?: Scene[]; note?: string };
+  const r = await requestJob<{ jobId?: string } & Partial<LayoutResult>>(`/videos/${encodeURIComponent(id)}/layout`, {}, signal) as { jobId?: string } & Partial<LayoutResult>;
   const out = r.split ? r : r.jobId ? await pollJob<Partial<LayoutResult>>(r.jobId, (p, _s, phase) => onProgress?.(p, phase), signal) : null;
   if (!out?.split) throw new ShaunVideoError("Layout detection returned no result.");
-  return { split: out.split, scenes: Array.isArray(out.scenes) ? out.scenes : [], note: out.note };
+  const trim = out.trim && Number.isFinite(out.trim.start) && Number.isFinite(out.trim.end) && out.trim.end > out.trim.start ? out.trim : undefined;
+  return { split: out.split, scenes: Array.isArray(out.scenes) ? out.scenes : [], note: out.note, trim };
 }
 export const getJob = <R,>(jobId: string, signal?: AbortSignal) => request<Job<R>>(`/jobs/${encodeURIComponent(jobId)}`, "GET", undefined, signal);
 export const jobAssetUrl = (jobId: string) => `${SHAUN_VIDEO_API}/jobs/${encodeURIComponent(jobId)}/asset`;

@@ -227,11 +227,14 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     }
   }
   const events: string[] = [];
-  for (const words of groups) {
+  for (const [g, words] of groups.entries()) {
     const chars = words.map(w => w.text).join(" ").length;
     const size = Math.min(fontSize, Math.floor((width - 150*resolutionScale) / Math.max(1, chars) / 0.7));
     const boxes = segmentTiming ? [] : captionWordBoxes(words.map(w => w.text), size, width);
-    const lineEnd = words.at(-1)!.end + (segmentTiming ? 0 : 0.15);
+    // Never overlap the next line: libass would stack both lines and the fixed-position
+    // highlight box would sit under the wrong word.
+    const nextStart = groups[g + 1]?.[0]?.start ?? Infinity;
+    const lineEnd = Math.max(words.at(-1)!.end, Math.min(words.at(-1)!.end + (segmentTiming ? 0 : 0.15), nextStart));
     const boundaries = [...new Set([words[0].start, ...words.flatMap(w => [w.start, w.end]), lineEnd])].sort((a, b) => a - b);
     for (let i = 0; i < boundaries.length - 1; i++) for (const segment of segments) {
       const start = Math.max(boundaries[i], segment.start), end = Math.min(boundaries[i + 1], segment.end);
@@ -246,7 +249,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             box.left - pad, height - margin - size * 0.86 - pad, box.width + pad * 2,
             size * 0.74 + pad * 2, 10 * resolutionScale)}`);
         }
-        events.push(`Dialogue: 1,${assTime(a)},${assTime(b)},Caption,,0,0,0,,{\\fs${size}}${line}`);
+        events.push(`Dialogue: 1,${assTime(a)},${assTime(b)},Caption,,0,0,0,,{\\an2\\pos(${(width / 2).toFixed(1)},${height - margin})\\fs${size}}${line}`);
       }
     }
   }

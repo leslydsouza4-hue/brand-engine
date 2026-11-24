@@ -30,7 +30,7 @@ async function frames(input: string, dir: string, times: number[]) {
 const boxJson={type:"object",properties:Object.fromEntries(["x","y","width","height"].map(k=>[k,{type:"number",minimum:0,maximum:1,description:"Normalized fraction of FULL image, between 0 and 1. NOT pixels or percentages."}])),required:["x","y","width","height"],additionalProperties:false};
 async function inspect(parts: Awaited<ReturnType<typeof frames>>, text: string, privacy=false) {
   const entry=privacy ? {type:"object",properties:{boxes:{type:"array",items:boxJson}},required:["boxes"]} :
-    {type:"object",properties:{mode:{type:"string",enum:["speaker","split"]},split:{type:"object",properties:{speaker:boxJson,screen:boxJson,speakerHead:boxJson,speakerShape:{type:"string",enum:["circle","rectangle"]}},required:["speaker","screen","speakerShape","speakerHead"]}},required:["mode","split"]};
+    {type:"object",properties:{mode:{type:"string",enum:["speaker","split"]},split:{type:"object",properties:{speaker:boxJson,screen:boxJson,speakerHead:boxJson,speakerShape:{type:"string",enum:["circle","rectangle"]}},required:["speaker","screen","speakerShape","speakerHead"]},presenterVisible:{type:"boolean",description:"true only when the presenter's real face/camera footage is actually visible in THIS image"}},required:["mode","split","presenterVisible"]};
   const response=await ai.models.generateContent({model:"gemini-3.8-flash",config:{thinkingConfig:{thinkingBudget:0},responseMimeType:"application/json",responseJsonSchema:{type:"object",properties:{frames:{type:"array",items:entry}},required:["frames"]},httpOptions:{timeout:45000}},contents:[{role:"user",parts:[...parts,{text}]}]});
   const parsed=JSON.parse(response.text || "{}");
   // Clip valid normalized rectangles to the image edge. Do not reinterpret pixels.
@@ -85,6 +85,25 @@ export function sanitizeLayoutFrame(f:DetectedFrame):DetectedFrame|null {
   const screen=excludeWebcam(s.screen,s.speaker);
   return screen ? {mode:"split",split:{...s,screen}} : null;
 }
+/** Dense presence check between an absent and a present sample (or vice versa).
+ * Returns the first (or last) source time where the presenter's camera is visible. */
+async function presenterEdge(input:string,dir:string,duration:number,speaker:Box,a:number,b:number,edge:"first"|"last"){
+  const lo=edge==="first"?Math.max(0,a):a, hi=edge==="first"?b:Math.min(duration-0.05,b);
+  const step=Math.max(0.2,(hi-lo)/24);
+  const times=Array.from({length:Math.max(2,Math.floor((hi-lo)/step)+1)},(_,i)=>Math.min(hi,lo+i*step));
+  const stills=await extractGridFrames(input,dir,times,duration,960,`edge-${edge}`);
+  const pad=0.03;const crop={x:Math.max(0,speaker.x-pad),y:Math.max(0,speaker.y-pad)};
+  const cw=Math.min(1-crop.x,speaker.width+pad*2),ch=Math.min(1-crop.y,speaker.height+pad*2);
+  const parts=(await Promise.all(times.map(async(t,i)=>{const img=sharp(stills[i]);const {width=1,height=1}=await img.metadata();
+    const box={left:Math.floor(crop.x*width),top:Math.floor(crop.y*height),width:Math.max(8,Math.min(width-Math.floor(crop.x*width),Math.floor(cw*width))),height:Math.max(8,Math.min(height-Math.floor(crop.y*height),Math.floor(ch*height)))};
+    return [{text:`Image ${i+1}, source time ${t.toFixed(2)} s`},{inlineData:{data:(await img.extract(box).jpeg({quality:80}).toBuffer()).toString("base64"),mimeType:"image/jpeg"}}];}))).flat();
+  const response=await ai.models.generateContent({model:"gemini-3.8-flash",config:{thinkingConfig:{thinkingBudget:0},responseMimeType:"application/json",
+    responseJsonSchema:{type:"object",properties:{visible:{type:"array",items:{type:"boolean"}}},required:["visible"]},httpOptions:{timeout:45000}},
+    contents:[{role:"user",parts:[...parts,{text:`These ${times.length} images are the same webcam corner of a screen recording over time. For EACH image in order, is a real person's face visible (live camera footage)? App icons, avatars, UI and empty screen are false. Return {"visible":[...]} with exactly ${times.length} booleans.`}]}]});
+  const seen=z.object({visible:z.array(z.boolean()).length(times.length)}).parse(JSON.parse(response.text||"{}")).visible;
+  if(edge==="first"){const i=seen.indexOf(true);return i<0?b:Math.max(0,times[i]-0.1);}
+  const i=seen.lastIndexOf(true);return i<0?a:Math.min(duration,times[i]+0.2);
+}
 export async function detectVideoLayout(input:string, dir:string, duration:number) {
   // Snap sample times to the 5 fps grid so each still is also frame 0 of its motion burst.
   const times=[...new Set(layoutSampleTimes(duration).map(t=>Math.round(t*FRAME_GRID_FPS)/FRAME_GRID_FPS))];
@@ -92,8 +111,8 @@ export async function detectVideoLayout(input:string, dir:string, duration:numbe
   const burstTimes=times.flatMap(t=>[t,t+1/FRAME_GRID_FPS,t+2/FRAME_GRID_FPS]);
   const stills=await extractGridFrames(input,dir,burstTimes,duration);
   const layoutStills=times.map((_,i)=>stills[i*3]);
-  const result=z.object({frames:z.array(z.object({mode:z.enum(["speaker","split"]),split:splitSchema})).length(count)}).parse(await inspect(await partsFromStills(times,layoutStills),
-    `Return EXACTLY ${count} entries in frames, one per image, using normalized FULL SOURCE coordinates. Each entry has mode (speaker or split), split.speaker, split.screen, split.speakerHead and split.speakerShape (circle or rectangle). Identify the live presenter region, not identity. mode speaker means the camera footage of the presenter fills most of the frame (greetings, endings); mode split means a screen recording/product UI is the main content, usually with a small webcam. speaker MUST enclose the ENTIRE available camera panel, hair, shoulders and chest, NOT a face crop, and MUST contain the presenter's face. speakerHead encloses ALL hair/top of head, face and chin, with a small safety margin; exclude hands from head bounds. Explicitly distinguish rectangular camera footage from an embedded circular webcam; do not guess circle merely because a panel is square. Never invent missing footage. For split scenes, screen must target ONLY the main demonstrated application/white product UI. EXCLUDE surrounding Slack messages, Slack navigation, chat threads, browser/devtools panels, desktop borders, and every presenter/webcam overlay. If Slack contains a screenshot or shared application, select that inner application, NOT the surrounding Slack window. Do not select a white rectangle just because it is white: it must be the demonstrated product. Prefer the largest useful application rectangle that excludes the small webcam; cropping some peripheral UI is preferable to showing a duplicate presenter. Output fills 30% screen and 70% presenter; framing uses head bounds to preserve hair and headroom. Do not confuse app avatars with the presenter. No prose.`));
+  const result=z.object({frames:z.array(z.object({mode:z.enum(["speaker","split"]),split:splitSchema,presenterVisible:z.boolean().optional()})).length(count)}).parse(await inspect(await partsFromStills(times,layoutStills),
+    `Return EXACTLY ${count} entries in frames, one per image, using normalized FULL SOURCE coordinates. Each entry has mode (speaker or split), split.speaker, split.screen, split.speakerHead and split.speakerShape (circle or rectangle). Identify the live presenter region, not identity. mode speaker means the camera footage of the presenter fills most of the frame (greetings, endings); mode split means a screen recording/product UI is the main content, usually with a small webcam. speaker MUST enclose the ENTIRE available camera panel, hair, shoulders and chest, NOT a face crop, and MUST contain the presenter's face. speakerHead encloses ALL hair/top of head, face and chin, with a small safety margin; exclude hands from head bounds. Explicitly distinguish rectangular camera footage from an embedded circular webcam; do not guess circle merely because a panel is square. Never invent missing footage. For split scenes, screen must target ONLY the main demonstrated application/white product UI. EXCLUDE surrounding Slack messages, Slack navigation, chat threads, browser/devtools panels, desktop borders, and every presenter/webcam overlay. If Slack contains a screenshot or shared application, select that inner application, NOT the surrounding Slack window. Do not select a white rectangle just because it is white: it must be the demonstrated product. Prefer the largest useful application rectangle that excludes the small webcam; cropping some peripheral UI is preferable to showing a duplicate presenter. Output fills 30% screen and 70% presenter; framing uses head bounds to preserve hair and headroom. Do not confuse app avatars with the presenter. presenterVisible is false when no presenter camera/webcam footage is in the image at all (e.g. the opening seconds of a screen recording before the webcam appears); then still return your best guess boxes. No prose.`));
   // Small webcam overlays: the model box is approximate (seen shifted onto the UI).
   // Snap it to where the presenter actually moves in the pixels.
   if(result.frames.some(f=>area(f.split.speaker)<0.2)) {
@@ -105,8 +124,19 @@ export async function detectVideoLayout(input:string, dir:string, duration:numbe
       if(snapped) { f.split.speaker=snapped.speaker; f.split.speakerHead=snapped.head; }
     }
   }
+  // Shaun must always be on screen: find footage at the start/end with no presenter and
+  // suggest trimming it, refined to ~0.2 s with a dense pass over the speaker crop.
+  const visible=result.frames.map(f=>f.presenterVisible!==false);
+  const firstSeen=visible.indexOf(true), lastSeen=visible.lastIndexOf(true);
+  let trimStart=0, trimEnd=duration;
+  if(firstSeen>=0) {
+    const speaker=result.frames[firstSeen].split.speaker;
+    if(firstSeen>0) trimStart=await presenterEdge(input,dir,duration,speaker,times[firstSeen-1],times[firstSeen],"first").catch(()=>times[firstSeen]);
+    if(lastSeen<count-1) trimEnd=await presenterEdge(input,dir,duration,result.frames[lastSeen].split.speaker,times[lastSeen],times[lastSeen+1],"last").catch(()=>times[lastSeen]);
+    if(trimEnd-trimStart<Math.min(3,duration*0.5)) { trimStart=0; trimEnd=duration; }
+  }
   // Drop frames whose bounds cannot show Shaun; neighbours cover their time.
-  const valid=result.frames.map((f,i)=>({time:times[i],frame:sanitizeLayoutFrame(f)})).filter((v):v is {time:number;frame:DetectedFrame}=>v.frame!==null);
+  const valid=result.frames.map((f,i)=>({time:times[i],frame:visible[i]?sanitizeLayoutFrame(f):null})).filter((v):v is {time:number;frame:DetectedFrame}=>v.frame!==null);
   if(!valid.length) throw new SessionError(422,"The screen and camera could not be separated. Select their bounds manually.");
   const boundaries=[0,...valid.slice(1).map((v,i)=>(v.time+valid[i].time)/2),duration];
   const scenes: Array<{start:number;end:number;mode:"speaker"|"split";split:z.infer<typeof splitSchema>}>=[];
@@ -122,8 +152,10 @@ export async function detectVideoLayout(input:string, dir:string, duration:numbe
     if(similar) previous.end=boundaries[i+1];
     else scenes.push({start:boundaries[i],end:boundaries[i+1],...f});
   });
-  return {split:scenes.find(s=>s.mode==="split")?.split ?? scenes[0].split,scenes:greetingScenes(scenes,duration),
-    note:`Sampled ${count} frames (dense at the start and end) for the camera, full head and main product UI. Full-screen greeting and closing follow the detected camera-only footage; when none is detected they default to the first 6 and last 4 seconds. Framing protects headroom but is not continuous head tracking. Review crops and boundaries.`};
+  const trimmed=trimStart>0.05 || trimEnd<duration-0.05;
+  return {split:scenes.find(s=>s.mode==="split")?.split ?? scenes[0].split,scenes:greetingScenes(scenes,duration,trimStart,trimEnd),
+    ...(trimmed?{trim:{start:Math.round(trimStart*1000)/1000,end:Math.round(trimEnd*1000)/1000}}:{}),
+    note:`${trimmed?`Shaun is not on camera before ${trimStart.toFixed(1)} s${trimEnd<duration-0.05?` or after ${trimEnd.toFixed(1)} s`:""}, so that footage is trimmed. Drag the trim handles to change it. `:""}Sampled ${count} frames (dense at the start and end) for the camera, full head and main product UI. Full-screen greeting and closing follow the detected camera-only footage; when none is detected they default to the first 6 and last 4 seconds. Framing protects headroom but is not continuous head tracking. Review crops and boundaries.`};
 }
 export const privacyRequestSchema=z.object({start:z.number().min(0),end:z.number().max(600),target:z.enum(["screen","speaker"]),crop:cropBoxSchema}).strict().refine(v=>v.end>v.start);
 export async function detectPrivateDetails(input:string,dir:string,request:z.infer<typeof privacyRequestSchema>) {

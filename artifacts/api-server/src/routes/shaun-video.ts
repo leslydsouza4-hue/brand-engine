@@ -65,16 +65,17 @@ function publicJob(record: JobRecord) {
 }
 type JobTask = (dir: string, record: JobRecord, progress: (n: number) => void) => Promise<unknown>;
 async function startJob(req: Request, res: Response, owner: string, kind: JobRecord["kind"], videoId: string | undefined, task: JobTask) {
-  if (req.get("x-shaun-stream") !== "1") { res.status(202).json(await job(owner, kind, videoId, task)); return; }
+  if (req.get("x-shaun-stream") !== "1") { res.status(202).json({ jobId: (await job(owner, kind, videoId, task)).jobId }); return; }
   let record: JobRecord | undefined;
-  let last = 0, closed = false;
-  const write = (value: unknown) => { if (!closed && !res.writableEnded) res.write(JSON.stringify(value) + "\n"); };
+  let last = 0, closed = false, opened = false;
+  const write = (value: unknown) => { if (opened && !closed && !res.writableEnded) res.write(JSON.stringify(value) + "\n"); };
   const started = await job(owner, kind, videoId, task, r => {
     record = r;
     if (Date.now() - last > 500 || ["succeeded", "failed"].includes(r.status)) { last = Date.now(); write({ job: publicJob(r) }); }
   });
   res.status(200).set({ "Content-Type": "application/x-ndjson; charset=utf-8", "X-Accel-Buffering": "no" });
   res.flushHeaders();
+  opened = true;
   write({ jobId: started.jobId });
   const ping = setInterval(() => write({ ping: Date.now() }), 10_000);
   req.on("close", () => { closed = true; });

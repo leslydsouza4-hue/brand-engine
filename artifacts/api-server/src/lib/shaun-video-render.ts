@@ -362,7 +362,7 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
       const value = ffmpegProgress(line, total);
       if (value !== undefined) progress(value);
     }, text => { if (/fontselect: \(Poppins, 700, 0\) -> [^\n]*Poppins/i.test(text)) poppinsLoaded = true; });
-    if (e.words.some(w => segments.some(s => w.end > s.start && w.start < s.end)) && !poppinsLoaded)
+    if (burnCaptions && e.words.some(w => segments.some(s => w.end > s.start && w.start < s.end)) && !poppinsLoaded)
       throw new Error("FFmpeg did not load Poppins Bold for captions; render cancelled");
     const rendered = await probeVideo(target);
     if (rendered.width !== width || rendered.height !== height || rendered.hasAudio !== info.hasAudio || Math.abs(rendered.duration - total) > 0.15)

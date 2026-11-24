@@ -338,7 +338,9 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
     for (let i=begin;i<filters.length;i++) filters[i]=filters[i].replace(/\[([a-zA-Z]+)\]/g, (_, label) => `[${label}${index}]`);
     }
     filters.push(`${pieces.map((_,i)=>`[framed${i}]`).join("")}concat=n=${pieces.length}:v=1:a=0[framed]`);
-    if (e.words.length) {
+    // Horizontal goes to YouTube, which adds its own captions: burn captions into vertical only.
+    const burnCaptions = e.words.length > 0 && e.format === "vertical";
+    if (burnCaptions) {
       let fonts = "";
       for (const candidate of ["artifacts/brand-engine/src/assets/fonts", "../brand-engine/src/assets/fonts"]) {
         const path = resolve(candidate);
@@ -354,7 +356,7 @@ export async function renderVideo(input: string, output: string, edits: VideoEdi
     let poppinsLoaded = false;
     progress(0);
     await run("ffmpeg", [...baseArgs, "-ss", String(e.trimStart), "-t", String(e.trimEnd-e.trimStart), ...inputArgs(source), "-filter_complex_script", graph,
-      "-map", e.words.length ? "[captioned]" : "[framed]", ...(info.hasAudio ? ["-map", "[audio]", "-c:a", "aac", "-b:a", "192k"] : ["-an"]),
+      "-map", burnCaptions ? "[captioned]" : "[framed]", ...(info.hasAudio ? ["-map", "[audio]", "-c:a", "aac", "-b:a", "192k"] : ["-an"]),
       "-c:v", "libx264", "-preset", e.exportQuality === "fast" ? "ultrafast" : "superfast", "-crf", "21", "-threads", CPU_THREADS, "-r", "30", "-pix_fmt", "yuv420p",
       "-t", String(total), "-movflags", "+faststart", "-progress", "pipe:1", "-f", "mp4", target], RENDER_TIMEOUT, line => {
       const value = ffmpegProgress(line, total);

@@ -334,7 +334,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
 
   const duration = source?.duration || edits?.trimEnd || 0;
   const validation = useMemo(() => edits ? validateEdits(edits, duration) : [], [edits, duration]);
-  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#caption-win-metrics-v8" + (autoCaptions ? "" : "#nocaptions") : "";
+  const currentKey = edits ? editsKey(edits, transcript?.timing ?? "word", transcript?.segments ?? []) + "#caption-win-metrics-v9" + (autoCaptions ? "" : "#nocaptions") : "";
   const renderStale = !!render && render.key !== currentKey;
 
   // Background export: once captions are in and edits have been idle for a few
@@ -571,7 +571,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
               <div className="flex items-center justify-between gap-[10px] p-[10px] mb-[8px] rounded-[10px] bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.06)]">
                 <div className="min-w-0">
                   <div className="flex items-center gap-[6px] text-[12px] font-semibold text-[#E2E8F0]"><Captions className="w-[12px] h-[12px] text-[#00B2A9]" />Auto captions</div>
-                  <div className="text-[10px] text-[#64748B] leading-[1.45]">{autoCaptions ? "Transcribes new videos automatically." : "Off. Captions hidden in preview and export; edits are kept."}</div>
+                  <div className="text-[10px] text-[#64748B] leading-[1.45]">{autoCaptions ? (edits.format === "horizontal" ? "Vertical only. Horizontal exports skip captions since YouTube adds its own." : "Transcribes new videos automatically.") : "Off. Captions hidden in preview and export; edits are kept."}</div>
                 </div>
                 <button type="button" role="switch" aria-checked={autoCaptions} aria-label="Auto captions" data-testid="switch-auto-captions" onClick={() => setAutoCaptions(!autoCaptions)}
                   className={`relative w-[34px] h-[20px] rounded-full border-none cursor-pointer shrink-0 transition-colors ${autoCaptions ? "bg-[#00B2A9]" : "bg-[rgba(255,255,255,0.12)]"}`}>
@@ -703,7 +703,7 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                   <span className="text-xs">Your original stays untouched. Captions and exports use the full-quality source.</span>
                 </div>
               ) : <VideoStage
-                src={preview.url} videoRef={videoRef} edits={edits} captions={autoCaptions ? captionUnits : []} timing={transcript?.timing ?? "word"}
+                src={preview.url} videoRef={videoRef} edits={edits} captions={autoCaptions && edits.format === "vertical" ? captionUnits : []} timing={transcript?.timing ?? "word"}
                 time={time} sourceSize={source.width ? { width: source.width, height: source.height } : null}
                 layoutStatus={layoutHere?.status === "error" ? "Panels not found. Retry detection or set bounds manually in the Format panel." : "Locating speaker and screen panels. Export unlocks once they are set."}
                 onTime={setTime} onPlaying={setPlaying}

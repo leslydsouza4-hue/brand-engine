@@ -146,3 +146,65 @@ export async function detectPrivateDetails(input:string,dir:string,request:z.inf
   if(blurs.length>64) throw new SessionError(422,"Too many details found. Scan a shorter time range.");
   return {blurs,sampledFrames:count,note:"Review every suggested region and time range before exporting. Sampled detection can miss details or movement between frames; it is not guaranteed anonymization."};
 }
+
+/** Whole-video automatic scan of the visible screen panel for personal details.
+ * Samples only where the screen is on screen (split scenes), crops the screen at
+ * high resolution so small text is legible, then merges hits across neighbouring
+ * samples into one time span per detail. Results are suggestions the editor applies
+ * as removable blurs; sampling can miss details, so the UI asks for review. */
+export const privacyAutoSchema=z.object({split:splitSchema,scenes:z.array(z.object({start:z.number().min(0).max(600),end:z.number().min(0).max(600),mode:z.enum(["speaker","split"]),split:splitSchema}).passthrough()).max(32).optional()}).passthrough();
+type Span={x:number;y:number;width:number;height:number;start:number;end:number};
+const iou=(a:Box,b:Box)=>{const w=Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x),h=Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y);if(w<=0||h<=0)return 0;const i=w*h;return i/(area(a)+area(b)-i)};
+export function mergePrivacyHits(hits:{time:number;boxes:Box[]}[],step:number,duration:number,limit=64):Span[]{
+  type Open=Span&{last:number};const open:Open[]=[],done:Open[]=[];
+  for(const {time,boxes} of [...hits].sort((a,b)=>a.time-b.time)){
+    for(const o of open.splice(0).filter(o=>{if(time-o.last>step*1.6){done.push(o);return false}return true})) open.push(o);
+    for(const b of boxes){
+      const m=open.find(o=>iou(o,b)>=0.3);
+      if(m){const r=Math.max(m.x+m.width,b.x+b.width),bt=Math.max(m.y+m.height,b.y+b.height);m.x=Math.min(m.x,b.x);m.y=Math.min(m.y,b.y);m.width=r-m.x;m.height=bt-m.y;m.last=time;m.end=time+step/2}
+      else open.push({...b,start:time-step/2,end:time+step/2,last:time});
+    }
+  }
+  done.push(...open);
+  const spans=done.map(({last:_l,...s})=>({...s,start:Math.max(0,+s.start.toFixed(3)),end:Math.min(duration,+s.end.toFixed(3))})).filter(s=>s.end-s.start>0.05);
+  return spans.sort((a,b)=>(b.end-b.start)*area(b)-(a.end-a.start)*area(a)).slice(0,limit).sort((a,b)=>a.start-b.start);
+}
+export async function detectPrivateDetailsAuto(input:string,dir:string,duration:number,request:z.infer<typeof privacyAutoSchema>,progress:(n:number)=>void=()=>{}){
+  const windows=(request.scenes?.length?request.scenes.filter(s=>s.mode==="split").map(s=>({start:s.start,end:Math.min(duration,s.end),screen:s.split.screen})):[{start:0,end:duration,screen:request.split.screen}]).filter(w=>w.end-w.start>0.2);
+  const total=windows.reduce((t,w)=>t+w.end-w.start,0);
+  if(!total) return {blurs:[],sampledFrames:0,note:"No screen footage to scan."};
+  const step=Math.max(1.5,total/96);
+  const samples=windows.flatMap(w=>{const n=Math.max(1,Math.round((w.end-w.start)/step));const st=(w.end-w.start)/n;return Array.from({length:n},(_,i)=>({time:w.start+st*(i+0.5),screen:w.screen}))});
+  const stills=await extractGridFrames(input,dir,samples.map(s=>s.time),duration,1920,"privacy");
+  progress(0.15);
+  // Crop each still to its screen panel (plus a small margin) so text stays legible.
+  const crops=await Promise.all(samples.map(async(s,i)=>{
+    const img=sharp(stills[i]);const {width=1,height=1}=await img.metadata();
+    const c={x:Math.max(0,s.screen.x-0.01),y:Math.max(0,s.screen.y-0.01)};const w=Math.min(1-c.x,s.screen.width+0.02),h=Math.min(1-c.y,s.screen.height+0.02);
+    const box={left:Math.floor(c.x*width),top:Math.floor(c.y*height),width:Math.max(16,Math.floor(w*width)),height:Math.max(16,Math.floor(h*height))};
+    box.width=Math.min(box.width,width-box.left);box.height=Math.min(box.height,height-box.top);
+    const data=(await img.extract(box).jpeg({quality:85}).toBuffer()).toString("base64");
+    return {time:s.time,crop:{x:box.left/width,y:box.top/height,width:box.width/width,height:box.height/height},data};
+  }));
+  const textBox=z.object({x:z.number().min(0).max(1),y:z.number().min(0).max(1),width:z.number().positive().max(1),height:z.number().positive().max(1)});
+  const batches:typeof crops[]=[];for(let i=0;i<crops.length;i+=8)batches.push(crops.slice(i,i+8));
+  const hits:{time:number;boxes:Box[]}[]=[];let finished=0;
+  const runBatch=async(batch:typeof crops)=>{
+    const parts=batch.flatMap(c=>[{text:`Source time ${c.time.toFixed(3)} seconds`},{inlineData:{data:c.data,mimeType:"image/jpeg"}}]);
+    const prompt=`These are screenshots of a software screen recording. In EACH image find visible personal/private details: email addresses, personal phone numbers, street addresses, payment card/bank/account numbers, passwords, API keys/tokens, and real people's names in contact lists, inboxes, CRM records or customer tables. Ignore: product names, company/brand names, software labels, menu items, buttons, headings, sample placeholders, the presenter's face, and dates. Return {"frames":[{"boxes":[{"x":0,"y":0,"width":0.1,"height":0.1}]}]} with EXACTLY ${batch.length} entries in image order. Boxes are normalized to THAT image, tight padded rectangles around each detail (one box per text line). Do not transcribe the text. Empty boxes when none.`;
+    let parsed;
+    for(let attempt=0;;attempt++){
+      try{parsed=z.object({frames:z.array(z.object({boxes:z.array(textBox).max(12)})).length(batch.length)}).parse(await inspect(parts,prompt,true));break}
+      catch(error){if(attempt>=1)throw error}
+    }
+    parsed.frames.forEach((f,i)=>{const c=batch[i].crop;hits.push({time:batch[i].time,boxes:f.boxes.map(b=>{
+      const x=c.x+Math.max(0,b.x-0.006)*c.width,y=c.y+Math.max(0,b.y-0.008)*c.height;
+      const r=Math.min(c.x+c.width,c.x+Math.min(1,b.x+b.width+0.006)*c.width),bt=Math.min(c.y+c.height,c.y+Math.min(1,b.y+b.height+0.008)*c.height);
+      return {x,y,width:Math.max(0.01,r-x),height:Math.max(0.01,bt-y)};
+    }).filter(b=>b.x+b.width<=1.000001&&b.y+b.height<=1.000001&&b.width*b.height<0.25)})});
+    progress(0.15+0.8*(++finished/batches.length));
+  };
+  for(let i=0;i<batches.length;i+=3) await Promise.all(batches.slice(i,i+3).map(runBatch));
+  const blurs=mergePrivacyHits(hits,step,duration);
+  return {blurs,sampledFrames:samples.length,note:`Scanned ${samples.length} screen frames (every ${step.toFixed(1)} s). ${blurs.length?`Blurred ${blurs.length} personal detail${blurs.length>1?"s":""} automatically.`:"No personal details found."} Sampling can miss details: scrub through before exporting.`};
+}

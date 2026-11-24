@@ -113,6 +113,13 @@ export async function requestPrivacy(id: string, body: PrivacyRequest, signal: A
   if (!r) throw new ShaunVideoError("Privacy detection returned no result.");
   return { blurs: Array.isArray(r?.blurs) ? r.blurs : [], note: r?.note ?? "", sampledFrames: r?.sampledFrames ?? 0 };
 }
+/** Whole-video automatic scan of the screen panel. 200 with a cached result or a streamed job. */
+export async function requestPrivacyAuto(id: string, body: { split: SplitLayout; scenes?: Scene[] }, signal: AbortSignal, onProgress?: (p: number, phase?: string) => void): Promise<PrivacyResult> {
+  const first = await requestJob<Partial<PrivacyResult> & { jobId?: string }>(`/videos/${encodeURIComponent(id)}/privacy-auto`, body, signal) as Partial<PrivacyResult> & { jobId?: string };
+  const r = Array.isArray(first.blurs) ? first : first.jobId ? await pollJob<Partial<PrivacyResult>>(first.jobId, (p, _s, phase) => onProgress?.(p, phase), signal) : null;
+  if (!r) throw new ShaunVideoError("Personal-details scan returned no result.");
+  return { blurs: Array.isArray(r.blurs) ? r.blurs : [], note: r.note ?? "", sampledFrames: r.sampledFrames ?? 0 };
+}
 /** Locate speaker + screen panels. Server caches per source; may answer 200 directly or 202 with a job. */
 export async function requestLayout(id: string, signal: AbortSignal, onProgress?: (p: number, phase?: string) => void): Promise<LayoutResult> {
   const r = await requestJob<{ jobId?: string; split?: SplitLayout; scenes?: Scene[]; note?: string }>(`/videos/${encodeURIComponent(id)}/layout`, {}, signal) as { jobId?: string; split?: SplitLayout; scenes?: Scene[]; note?: string };

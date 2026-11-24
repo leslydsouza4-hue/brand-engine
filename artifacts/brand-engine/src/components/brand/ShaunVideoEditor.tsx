@@ -3,7 +3,7 @@ import { ScanSearch, UploadCloud, Link2, Loader2, Play, Pause, Scissors, Monitor
 import { LivePreview } from "./LivePreview";
 import { useSessionState } from "./sessions/useSessionState";
 import {
-  fetchAsDataUrl, fetchJobMp4, saveBlob, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
+  fetchAsDataUrl, fetchJobMp4, saveBlob, getCapabilities, getVideo, isAbort, pollJob, preparePreview, probeInfo, requestLayout, requestPrivacyAuto, ShaunVideoError, startFrame, startImport, startRender, startTranscribe, uploadVideo,
   type Capabilities, type OutputResult, type TranscriptResult, type VideoMeta,
 } from "./shaunVideo/api";
 import {
@@ -71,6 +71,9 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
   const [privacyTarget, setPrivacyTarget] = useState<"screen" | "speaker" | null>(null);
   const [layout, setLayout] = useState<{ videoId: string; status: "analyzing" | "error" | "done"; note?: string; phase?: string } | null>(null);
   const [layoutRetry, setLayoutRetry] = useState(0);
+  const [privacyAuto, setPrivacyAuto] = useState<{ videoId: string; status: "scanning" | "done" | "error"; progress?: number; phase?: string; count?: number; note?: string } | null>(null);
+  const privacyAcRef = useRef<AbortController | null>(null);
+  useEffect(() => () => privacyAcRef.current?.abort(), []);
   const layoutTriedRef = useRef<Set<string>>(new Set());
   const currentVideoRef = useRef<string | undefined>(undefined);
   currentVideoRef.current = source?.videoId;
@@ -83,6 +86,9 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     if (layoutTriedRef.current.has(tag)) return;
     layoutTriedRef.current.add(tag);
     const ac = new AbortController();
+    privacyAcRef.current?.abort();
+    const privacyAc = new AbortController();
+    privacyAcRef.current = privacyAc;
     setLayout({ videoId, status: "analyzing" });
     (async () => {
       for (let attempt = 0; ; attempt++) {
@@ -91,6 +97,24 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
           if (ac.signal.aborted || currentVideoRef.current !== videoId) return;
           setEdits(e => e && !e.split ? { ...e, split: r.split, scenes: r.scenes } : e);
           setLayout({ videoId, status: "done", note: r.note });
+          // Fresh layout → scan the screen for personal details once and blur them automatically.
+          setPrivacyAuto({ videoId, status: "scanning" });
+          requestPrivacyAuto(videoId, { split: r.split, scenes: r.scenes }, privacyAc.signal, (p, phase) => {
+            if (currentVideoRef.current === videoId) setPrivacyAuto({ videoId, status: "scanning", progress: p, phase });
+          }).then(found => {
+            if (currentVideoRef.current !== videoId) return;
+            const blurs = found.blurs.map(b => ({ x: round3(b.x), y: round3(b.y), width: round3(Math.min(1 - round3(b.x), b.width)), height: round3(Math.min(1 - round3(b.y), b.height)), start: round3(b.start), end: round3(b.end) }))
+              .filter(b => b.width >= 0.01 && b.height >= 0.01 && b.end > b.start);
+            setEdits(e => {
+              if (!e) return e;
+              const key = (b: BlurBox) => [b.x, b.y, b.width, b.height, b.start, b.end].join();
+              const have = new Set(e.blurs.map(key));
+              return { ...e, blurs: [...e.blurs, ...blurs.filter(b => !have.has(key(b)))].slice(0, MAX_BLURS) };
+            });
+            setPrivacyAuto({ videoId, status: "done", count: blurs.length, note: found.note });
+          }).catch(err => {
+            if (!isAbort(err) && currentVideoRef.current === videoId) setPrivacyAuto({ videoId, status: "error", note: (err as Error).message });
+          });
           return;
         } catch (err) {
           if (isAbort(err) || ac.signal.aborted || currentVideoRef.current !== videoId) return;
@@ -558,6 +582,13 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
                 <button type="button" data-testid="button-blur-speaker" disabled={edits.blurs.length >= MAX_BLURS} onClick={() => { videoRef.current?.pause(); setPrivacyTarget("speaker"); }} className={`${ghostBtn} flex-1`}><User className="w-[11px] h-[11px]" />Speaker</button>
               </div>
               <div className="text-[10px] text-[#475569] mt-[5px] leading-[1.45]">Opens a paused frame of that panel to draw boxes or auto blur personal details. Blurs are applied in the export only; the live preview stays clean.</div>
+              {privacyAuto && privacyAuto.videoId === source?.videoId && (
+                <div data-testid="privacy-auto-status" className="text-[10px] mt-[5px] leading-[1.45]">
+                  {privacyAuto.status === "scanning" && <span className="flex items-center gap-[6px] text-[#94A3B8]"><Loader2 className="w-[11px] h-[11px] animate-spin text-[#2896FB] shrink-0" />{privacyAuto.phase || "Scanning the screen for personal details"}{privacyAuto.progress ? ` ${Math.round(privacyAuto.progress * 100)}%` : ""}</span>}
+                  {privacyAuto.status === "done" && <span className={privacyAuto.count ? "text-[#FBBF24]" : "text-[#64748B]"}>{privacyAuto.count ? `Auto-blurred ${privacyAuto.count} personal detail${privacyAuto.count > 1 ? "s" : ""} on the screen. Check them below and delete any you want visible.` : "Auto scan found no personal details on the screen."} Sampling can miss things, so scrub through before exporting.</span>}
+                  {privacyAuto.status === "error" && <span className="text-[#F87171]">Automatic personal-details scan failed: {privacyAuto.note} Use Screen above to scan manually.</span>}
+                </div>
+              )}
               <div className="text-[10px] text-[#64748B] mt-[3px] tabular-nums">{edits.blurs.length} of {MAX_BLURS} regions used</div>
               {edits.blurs.length > 0 && (
                 <div className="flex flex-wrap gap-[4px] mt-[8px]">

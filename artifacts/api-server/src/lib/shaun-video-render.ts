@@ -407,16 +407,16 @@ export async function createPreview(input: string, output: string) {
  * requested time (960 px, same as layoutFrame).
  */
 export const FRAME_GRID_FPS = 5;
-export async function extractGridFrames(input: string, dir: string, times: number[], duration: number): Promise<string[]> {
+export async function extractGridFrames(input: string, dir: string, times: number[], duration: number, size = 960, prefix = "grid"): Promise<string[]> {
   const source = await localInput(input);
   const last = Math.max(0, Math.floor((duration - 0.05) * FRAME_GRID_FPS));
   const index = (t: number) => Math.max(0, Math.min(last, Math.round(t * FRAME_GRID_FPS)));
   const wanted = [...new Set(times.map(index))].sort((a, b) => a - b);
   const select = wanted.map(n => `eq(n\\,${n})`).join("+");
   await run("ffmpeg", [...baseArgs, ...inputArgs(source), "-map", "0:v:0", "-an",
-    "-vf", `fps=${FRAME_GRID_FPS},select='${select}',scale=960:960:force_original_aspect_ratio=decrease`,
-    "-fps_mode", "passthrough", "-q:v", "3", join(dir, "grid-%04d.jpg")], RENDER_TIMEOUT);
-  const fileFor = new Map(wanted.map((n, i) => [n, join(dir, `grid-${String(i + 1).padStart(4, "0")}.jpg`)]));
+    "-vf", `fps=${FRAME_GRID_FPS},select='${select}',scale=${size}:${size}:force_original_aspect_ratio=decrease`,
+    "-fps_mode", "passthrough", "-q:v", "3", join(dir, `${prefix}-%04d.jpg`)], RENDER_TIMEOUT);
+  const fileFor = new Map(wanted.map((n, i) => [n, join(dir, `${prefix}-${String(i + 1).padStart(4, "0")}.jpg`)]));
   return times.map(t => fileFor.get(index(t))!);
 }
 

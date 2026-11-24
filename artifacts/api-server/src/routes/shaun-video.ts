@@ -11,7 +11,7 @@ import { createPreview, extractAudio, extractFrame, probeVideo, renderVideo, vid
 import { transcribeQueued, type TranscriptResult } from "../lib/shaun-video-transcribe";
 import { deepgramConfigured, transcribeDeepgram } from "../lib/shaun-video-deepgram";
 import { importDescript, validateDescriptShareUrl } from "../lib/shaun-video-import";
-import { detectVideoLayout, detectPrivateDetails, privacyRequestSchema } from "../lib/shaun-video-layout";
+import { detectVideoLayout, detectPrivateDetails, detectPrivateDetailsAuto, privacyAutoSchema, privacyRequestSchema } from "../lib/shaun-video-layout";
 import { videoSourceCache } from "../lib/shaun-video-cache";
 import { pipeStorageResponse } from "../lib/shaun-storage-stream";
 import { finiteProgress, jobHeartbeatExpired } from "../lib/shaun-job-progress";
@@ -345,6 +345,28 @@ router.post(`${prefix}/videos/:videoId/privacy`, endpoint(async (req,res,owner)=
     await saveRecord(owner,key,result);
     return result;
   });
+}));
+router.post(`${prefix}/videos/:videoId/privacy-auto`, endpoint(async (req, res, owner) => {
+  const video = await getVideo(owner, id(req, "videoId"));
+  const request = privacyAutoSchema.parse(req.body);
+  const screens = { screen: request.split.screen, scenes: (request.scenes ?? []).map(s => ({ start: s.start, end: s.end, mode: s.mode, screen: s.split.screen })) };
+  const key = `videos/${video.videoId}/privacy-auto-v1/${createHash("sha256").update(JSON.stringify(screens)).digest("hex")}.json`;
+  if ((await privateFile(owner, key).exists())[0]) { res.json(await readRecord(owner, key)); return; }
+  const lock = `privacy-auto/${video.videoId}`;
+  if (locked.has(lock)) throw new SessionError(429, "Scanning this video for personal details. Please wait.");
+  locked.add(lock);
+  try {
+    await startJob(req, res, owner, "layout", video.videoId, async (dir, record, progress) => {
+      try {
+        record.phase = "Scanning screen for personal details";
+        const input = join(dir, "source.mp4");
+        await downloadLocal(owner, video.videoId, input);
+        const result = await detectPrivateDetailsAuto(input, dir, (video.probe as { duration: number }).duration, request, progress);
+        await saveRecord(owner, key, result);
+        return result;
+      } finally { locked.delete(lock); }
+    });
+  } catch (error) { locked.delete(lock); throw error; }
 }));
 router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));

@@ -350,7 +350,7 @@ router.post(`${prefix}/videos/:videoId/privacy-auto`, endpoint(async (req, res, 
   const video = await getVideo(owner, id(req, "videoId"));
   const request = privacyAutoSchema.parse(req.body);
   const screens = { screen: request.split.screen, scenes: (request.scenes ?? []).map(s => ({ start: s.start, end: s.end, mode: s.mode, screen: s.split.screen })) };
-  const key = `videos/${video.videoId}/privacy-auto-v1/${createHash("sha256").update(JSON.stringify(screens)).digest("hex")}.json`;
+  const key = `videos/${video.videoId}/privacy-auto-v2/${createHash("sha256").update(JSON.stringify(screens)).digest("hex")}.json`;
   if ((await privateFile(owner, key).exists())[0]) { res.json(await readRecord(owner, key)); return; }
   const lock = `privacy-auto/${video.videoId}`;
   if (locked.has(lock)) throw new SessionError(429, "Scanning this video for personal details. Please wait.");

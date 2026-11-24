@@ -187,12 +187,28 @@ export async function detectPrivateDetails(input:string,dir:string,request:z.inf
 export const privacyAutoSchema=z.object({split:splitSchema,scenes:z.array(z.object({start:z.number().min(0).max(600),end:z.number().min(0).max(600),mode:z.enum(["speaker","split"]),split:splitSchema}).passthrough()).max(32).optional()}).passthrough();
 type Span={x:number;y:number;width:number;height:number;start:number;end:number};
 const iou=(a:Box,b:Box)=>{const w=Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x),h=Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y);if(w<=0||h<=0)return 0;const i=w*h;return i/(area(a)+area(b)-i)};
+const unionBox=(a:Box,b:Box):Box=>{const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y);return {x,y,width:Math.max(a.x+a.width,b.x+b.width)-x,height:Math.max(a.y+a.height,b.y+b.height)-y}};
+const xOverlap=(a:Box,b:Box)=>Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x))/Math.max(1e-6,Math.min(a.width,b.width));
+const vGap=(a:Box,b:Box)=>Math.max(0,Math.max(a.y,b.y)-Math.min(a.y+a.height,b.y+b.height));
+const hGap=(a:Box,b:Box)=>Math.max(0,Math.max(a.x,b.x)-Math.min(a.x+a.width,b.x+b.width));
+/** Joins detections on neighbouring lines of one frame (e.g. a block of @mentions) into one region, so gaps between lines never leak a name. */
+export function clusterPrivacyBoxes(boxes:Box[]):Box[]{
+  const out=boxes.map(b=>({...b}));
+  for(let merged=true;merged;){merged=false;
+    for(let i=0;i<out.length&&!merged;i++)for(let j=i+1;j<out.length;j++){
+      const a=out[i],b=out[j],u=unionBox(a,b);
+      if(vGap(a,b)<=0.022&&hGap(a,b)<=0.03&&u.height<=0.45&&u.width<=0.5){out[i]=u;out.splice(j,1);merged=true;break}
+    }
+  }
+  return out;
+}
 export function mergePrivacyHits(hits:{time:number;boxes:Box[]}[],step:number,duration:number,limit=64):Span[]{
   type Open=Span&{last:number};const open:Open[]=[],done:Open[]=[];
   for(const {time,boxes} of [...hits].sort((a,b)=>a.time-b.time)){
     for(const o of open.splice(0).filter(o=>{if(time-o.last>step*1.6){done.push(o);return false}return true})) open.push(o);
-    for(const b of boxes){
-      const m=open.find(o=>iou(o,b)>=0.3);
+    for(const b of clusterPrivacyBoxes(boxes)){
+      // Same column moving a little between samples = scrolling text: grow the region along the scroll path.
+      const m=open.find(o=>iou(o,b)>=0.3)??open.find(o=>xOverlap(o,b)>=0.5&&vGap(o,b)<=0.12&&unionBox(o,b).height<=0.6);
       if(m){const r=Math.max(m.x+m.width,b.x+b.width),bt=Math.max(m.y+m.height,b.y+b.height);m.x=Math.min(m.x,b.x);m.y=Math.min(m.y,b.y);m.width=r-m.x;m.height=bt-m.y;m.last=time;m.end=time+step/2}
       else open.push({...b,start:time-step/2,end:time+step/2,last:time});
     }
@@ -205,7 +221,8 @@ export async function detectPrivateDetailsAuto(input:string,dir:string,duration:
   const windows=(request.scenes?.length?request.scenes.filter(s=>s.mode==="split").map(s=>({start:s.start,end:Math.min(duration,s.end),screen:s.split.screen})):[{start:0,end:duration,screen:request.split.screen}]).filter(w=>w.end-w.start>0.2);
   const total=windows.reduce((t,w)=>t+w.end-w.start,0);
   if(!total) return {blurs:[],sampledFrames:0,note:"No screen footage to scan."};
-  const step=Math.max(1.5,total/96);
+  // Dense enough to follow a scrolling panel (each sample also holds its box until the next).
+  const step=Math.max(0.75,total/160);
   const samples=windows.flatMap(w=>{const n=Math.max(1,Math.round((w.end-w.start)/step));const st=(w.end-w.start)/n;return Array.from({length:n},(_,i)=>({time:w.start+st*(i+0.5),screen:w.screen}))});
   const stills=await extractGridFrames(input,dir,samples.map(s=>s.time),duration,1920,"privacy");
   progress(0.15);
@@ -223,15 +240,15 @@ export async function detectPrivateDetailsAuto(input:string,dir:string,duration:
   const hits:{time:number;boxes:Box[]}[]=[];let finished=0;
   const runBatch=async(batch:typeof crops)=>{
     const parts=batch.flatMap(c=>[{text:`Source time ${c.time.toFixed(3)} seconds`},{inlineData:{data:c.data,mimeType:"image/jpeg"}}]);
-    const prompt=`These are screenshots of a software screen recording. In EACH image find visible personal/private details: email addresses, personal phone numbers, street addresses, payment card/bank/account numbers, passwords, API keys/tokens, and real people's names in contact lists, inboxes, CRM records or customer tables. Ignore: product names, company/brand names, software labels, menu items, buttons, headings, sample placeholders, the presenter's face, and dates. Return {"frames":[{"boxes":[{"x":0,"y":0,"width":0.1,"height":0.1}]}]} with EXACTLY ${batch.length} entries in image order. Boxes are normalized to THAT image, tight padded rectangles around each detail (one box per text line). Do not transcribe the text. Empty boxes when none.`;
+    const prompt=`These are screenshots of a software screen recording. In EACH image find visible personal/private details: email addresses, personal phone numbers, street addresses, payment card/bank/account numbers, passwords, API keys/tokens, and real people's names in contact lists, inboxes, CRM records or customer tables, and ANY person's name or @mention/username in chat apps (Slack/Teams threads, comments, side panels), owner/assignee/author fields and sign-offs. Cover the WHOLE name including the @ and any suffix like \"(HighLevel)\", and every name in a list of mentions. Ignore: product names, company/brand names, software labels, menu items, buttons, headings, sample placeholders, the presenter's face, and dates. Return {"frames":[{"boxes":[{"x":0,"y":0,"width":0.1,"height":0.1}]}]} with EXACTLY ${batch.length} entries in image order. Boxes are normalized to THAT image, tight padded rectangles around each detail (one box per text line). Do not transcribe the text. Empty boxes when none.`;
     let parsed;
     for(let attempt=0;;attempt++){
       try{parsed=z.object({frames:z.array(z.object({boxes:z.array(textBox).max(12)})).length(batch.length)}).parse(await inspect(parts,prompt,true));break}
       catch(error){if(attempt>=1)throw error}
     }
     parsed.frames.forEach((f,i)=>{const c=batch[i].crop;hits.push({time:batch[i].time,boxes:f.boxes.map(b=>{
-      const x=c.x+Math.max(0,b.x-0.006)*c.width,y=c.y+Math.max(0,b.y-0.008)*c.height;
-      const r=Math.min(c.x+c.width,c.x+Math.min(1,b.x+b.width+0.006)*c.width),bt=Math.min(c.y+c.height,c.y+Math.min(1,b.y+b.height+0.008)*c.height);
+      const x=c.x+Math.max(0,b.x-0.012)*c.width,y=c.y+Math.max(0,b.y-0.012)*c.height;
+      const r=Math.min(c.x+c.width,c.x+Math.min(1,b.x+b.width+0.012)*c.width),bt=Math.min(c.y+c.height,c.y+Math.min(1,b.y+b.height+0.012)*c.height);
       return {x,y,width:Math.max(0.01,r-x),height:Math.max(0.01,bt-y)};
     }).filter(b=>b.x+b.width<=1.000001&&b.y+b.height<=1.000001&&b.width*b.height<0.25)})});
     progress(0.15+0.8*(++finished/batches.length));

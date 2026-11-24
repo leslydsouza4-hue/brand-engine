@@ -55,14 +55,43 @@ function release(owner: string) {
   running--; const n = (active.get(owner) || 1) - 1;
   if (n) active.set(owner, n); else active.delete(owner);
 }
+/** Replit Autoscale only gives an instance CPU while a request is open (and may route
+ * polls to another copy), so clients that send X-Shaun-Stream: 1 keep the start request
+ * open: NDJSON lines {jobId} → progress → final public record. Work then runs inside the
+ * request on the same instance. Other clients get the classic 202 {jobId} + polling. */
+function publicJob(record: JobRecord) {
+  const { owner: _owner, worker: _worker, ...rest } = record;
+  return { ...rest, progress: Number.isFinite(record.progress) ? record.progress : 0 };
+}
+type JobTask = (dir: string, record: JobRecord, progress: (n: number) => void) => Promise<unknown>;
+async function startJob(req: Request, res: Response, owner: string, kind: JobRecord["kind"], videoId: string | undefined, task: JobTask) {
+  if (req.get("x-shaun-stream") !== "1") { res.status(202).json(await job(owner, kind, videoId, task)); return; }
+  let record: JobRecord | undefined;
+  let last = 0, closed = false;
+  const write = (value: unknown) => { if (!closed && !res.writableEnded) res.write(JSON.stringify(value) + "\n"); };
+  const started = await job(owner, kind, videoId, task, r => {
+    record = r;
+    if (Date.now() - last > 500 || ["succeeded", "failed"].includes(r.status)) { last = Date.now(); write({ job: publicJob(r) }); }
+  });
+  res.status(200).set({ "Content-Type": "application/x-ndjson; charset=utf-8", "X-Accel-Buffering": "no" });
+  res.flushHeaders();
+  write({ jobId: started.jobId });
+  const ping = setInterval(() => write({ ping: Date.now() }), 10_000);
+  req.on("close", () => { closed = true; });
+  try { await started.done; } finally {
+    clearInterval(ping);
+    if (record) write({ job: publicJob(record) });
+    if (!res.writableEnded) res.end();
+  }
+}
 async function job(owner: string, kind: JobRecord["kind"], videoId: string | undefined,
-  task: (dir: string, record: JobRecord, progress: (n: number) => void) => Promise<unknown>) {
+  task: JobTask, onUpdate?: (record: JobRecord) => void) {
   reserve(owner);
   const now = new Date().toISOString();
   const record: JobRecord = { jobId: randomUUID(), owner, worker, kind, videoId, status: "queued", progress: 0, createdAt: now, updatedAt: now };
   const key = `jobs/${record.jobId}.json`;
   try { await saveRecord(owner, key, record); } catch (error) { release(owner); throw error; }
-  void (async () => {
+  const done = (async () => {
     const startedAt = Date.now();
     let dir: string | undefined;
     let pending: Promise<void> = Promise.resolve();
@@ -72,6 +101,7 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
       record.updatedAt = new Date().toISOString();
       // Snapshot now so a slow write cannot serialize a later mutation.
       const snapshot = JSON.parse(JSON.stringify(record));
+      try { onUpdate?.(snapshot); } catch { /* stream closed */ }
       pending = pending.catch(() => undefined).then(() => saveRecord(owner, key, snapshot));
       return pending;
     };
@@ -82,6 +112,7 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
       record.result = await task(dir, record, n => {
         record.progress = finiteProgress(record.progress, n);
         if (Date.now() - lastProgress > 2000) { lastProgress = Date.now(); void persist().catch(() => undefined); }
+        else try { onUpdate?.(JSON.parse(JSON.stringify(record))); } catch { /* stream closed */ }
       });
       record.status = "succeeded"; record.progress = 1;
       logger.info({ jobId: record.jobId, kind, elapsedMs: Date.now() - startedAt }, "Video job completed");
@@ -107,7 +138,7 @@ async function job(owner: string, kind: JobRecord["kind"], videoId: string | und
       release(owner);
     }
   })();
-  return { jobId: record.jobId };
+  return { jobId: record.jobId, done };
 }
 async function uploadLocal(owner: string, key: string, local: string, contentType: string) {
   const info = await stat(local);
@@ -220,7 +251,7 @@ router.get(`${prefix}/videos/:videoId/asset`, endpoint(async (req, res, owner) =
 router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
   const { url, refresh } = z.object({ url: z.string().max(2048), refresh: z.boolean().optional() }).strict().parse(req.body);
   validateDescriptShareUrl(url);
-  res.status(202).json(await job(owner, "import", undefined, async (dir, record) => {
+  await startJob(req, res, owner, "import", undefined, async (dir, record) => {
     const canonical = new URL(url); canonical.search = ""; canonical.hash = "";
     const cacheKey = `imports/${createHash("sha256").update("named-v2:" + canonical.href).digest("hex")}.json`;
     try {
@@ -247,7 +278,7 @@ router.post(`${prefix}/imports`, endpoint(async (req, res, owner) => {
     record.videoId = videoId;
     prepareCaptionsEarly(owner, video);
     return videoResponse(video);
-  }));
+  });
 }));
 // Cached derivative: existing sessions automatically gain a playable preview.
 router.post(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner) => {
@@ -261,7 +292,7 @@ router.post(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner
   if (locked.has(lock)) throw new SessionError(429, "Preparing this video preview. Please wait.");
   locked.add(lock);
   try {
-    res.status(202).json(await job(owner, "preview", video.videoId, async (dir, record) => {
+    await startJob(req, res, owner, "preview", video.videoId, async (dir, record) => {
       try {
         record.phase = "Preparing browser-friendly preview";
         const input = join(dir, "source.mp4"), output = join(dir, "preview.webm");
@@ -270,7 +301,7 @@ router.post(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner
         await uploadLocal(owner, key, output, "video/webm");
         return { assetUrl };
       } finally { locked.delete(lock); }
-    }));
+    });
   } catch (error) { locked.delete(lock); throw error; }
 }));
 router.get(`${prefix}/videos/:videoId/preview`, endpoint(async (req, res, owner) => {
@@ -287,7 +318,7 @@ router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner)
   if (locked.has(lock)) throw new SessionError(429, "Locating this video's panels. Please wait.");
   locked.add(lock);
   try {
-    res.status(202).json(await job(owner, "layout", video.videoId, async (dir, record) => {
+    await startJob(req, res, owner, "layout", video.videoId, async (dir, record) => {
       try {
         record.phase = "Locating speaker and screen";
         const input = join(dir, "source.mp4");
@@ -296,7 +327,7 @@ router.post(`${prefix}/videos/:videoId/layout`, endpoint(async (req, res, owner)
         await saveRecord(owner, key, result);
         return result;
       } finally { locked.delete(lock); }
-    }));
+    });
   } catch (error) { locked.delete(lock); throw error; }
 }));
 router.post(`${prefix}/videos/:videoId/privacy`, endpoint(async (req,res,owner)=>{
@@ -305,14 +336,14 @@ router.post(`${prefix}/videos/:videoId/privacy`, endpoint(async (req,res,owner)=
   if(request.end>(video.probe as {duration:number}).duration) throw new SessionError(400,"Scan exceeds source duration");
   const key=`videos/${video.videoId}/privacy/${createHash("sha256").update(JSON.stringify(request)).digest("hex")}.json`;
   if((await privateFile(owner,key).exists())[0]) {res.json(await readRecord(owner,key));return;}
-  res.status(202).json(await job(owner,"layout",video.videoId,async(dir,record)=>{
+  await startJob(req, res, owner,"layout",video.videoId,async(dir,record)=>{
     record.phase="Finding personal details";
     const input=join(dir,"source.mp4");
     await downloadLocal(owner,video.videoId,input);
     const result=await detectPrivateDetails(input,dir,request);
     await saveRecord(owner,key,result);
     return result;
-  }));
+  });
 }));
 router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
@@ -320,7 +351,7 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
   if (edits.format === "vertical" && !edits.split) throw new SessionError(400, "Locate the speaker and screen crops before exporting vertical video.");
   try { retainedSegments(edits, (video.probe as { duration: number }).duration); }
   catch (error) { throw new SessionError(400, (error as Error).message); }
-  res.status(202).json(await job(owner, "render", video.videoId, async (dir, record, progress) => {
+  await startJob(req, res, owner, "render", video.videoId, async (dir, record, progress) => {
     let phaseStartedAt = Date.now();
     const phase = (name: string, value: number) => {
       if (record.phase) logger.info({ jobId: record.jobId, phase: record.phase,
@@ -352,20 +383,20 @@ router.post(`${prefix}/videos/:videoId/render`, endpoint(async (req, res, owner)
     record.contentType = "video/mp4";
     await saveRecord(owner, cacheKey, { jobId: record.jobId });
     return { assetUrl: `/api/shaun-video/jobs/${record.jobId}/asset`, contentType: record.contentType };
-  }));
+  });
 }));
 router.post(`${prefix}/videos/:videoId/frames`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
   const { time } = z.object({ time: z.number().finite().min(0) }).strict().parse(req.body);
   if (time >= (video.probe as { duration: number }).duration) throw new SessionError(400, "Frame time must be inside source duration");
-  res.status(202).json(await job(owner, "frame", video.videoId, async (dir, record) => {
+  await startJob(req, res, owner, "frame", video.videoId, async (dir, record) => {
     const input = join(dir, "source.mp4"), output = join(dir, "frame.png");
     await downloadLocal(owner, video.videoId, input);
     await extractFrame(input, output, time);
     await uploadLocal(owner, `jobs/${record.jobId}/output`, output, "image/png");
     record.contentType = "image/png";
     return { assetUrl: `/api/shaun-video/jobs/${record.jobId}/asset`, contentType: record.contentType };
-  }));
+  });
 }));
 /**
  * Captions are prepared on the server as soon as a video is uploaded/imported and
@@ -430,11 +461,11 @@ function prepareCaptionsEarly(owner: string, video: VideoRecord) {
 router.post(`${prefix}/videos/:videoId/transcribe`, endpoint(async (req, res, owner) => {
   const video = await getVideo(owner, id(req, "videoId"));
   if (!(video.probe as { hasAudio: boolean }).hasAudio) throw new SessionError(422, "This video has no audio track");
-  res.status(202).json(await job(owner, "transcribe", video.videoId, async (_dir, record, progress) => {
+  await startJob(req, res, owner, "transcribe", video.videoId, async (_dir, record, progress) => {
     const result = await ensureTranscript(owner, video, (value, phase) => { record.phase = phase; progress(value); });
     record.phase = "Completed";
     return result;
-  }));
+  });
 }));
 router.get(`${prefix}/jobs/:jobId`, endpoint(async (req, res, owner) => {
   const jobId = id(req, "jobId");

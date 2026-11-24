@@ -50,25 +50,72 @@ async function request<T>(path: string, method = "GET", body?: unknown, signal?:
   return res.json() as Promise<T>;
 }
 
+/** Live NDJSON job streams (see startJob on the server). Keeping the start request open
+ * is what gives Replit Autoscale CPU for the work, so pollJob reads these first. */
+interface LiveJob { job?: Job<unknown>; ended: boolean; wake: Set<() => void> }
+const liveJobs = new Map<string, LiveJob>();
+async function requestJob<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T | { jobId: string }> {
+  let res: Response;
+  try {
+    res = await fetch(`${SHAUN_VIDEO_API}${path}`, {
+      method: "POST", credentials: "include", cache: "no-store",
+      headers: { "Content-Type": "application/json", "X-Shaun-Stream": "1" }, body: JSON.stringify(body),
+    });
+  } catch { throw new ShaunVideoError("Network error. Check your connection and try again."); }
+  if (signal?.aborted) { void res.body?.cancel().catch(() => undefined); throw new DOMException("Aborted", "AbortError"); }
+  if (!res.ok || !(res.headers.get("content-type") || "").includes("ndjson") || !res.body) {
+    if (!res.ok) {
+      const data = await res.json().catch(() => null) as { error?: string; code?: string } | null;
+      const fallback = res.status === 429 ? "Two video jobs are already running. Wait for one to finish." :
+        [502, 503, 504].includes(res.status) ? "The video server is temporarily unavailable or restarting. Wait a moment, then try again." : `Request failed (${res.status})`;
+      throw new ShaunVideoError(data?.error || fallback, res.status, data?.code);
+    }
+    return res.json() as Promise<T>;
+  }
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "", jobId: string | undefined;
+  const lines = async function* () {
+    for (;;) {
+      let nl: number;
+      while ((nl = buffer.indexOf("\n")) >= 0) { const line = buffer.slice(0, nl); buffer = buffer.slice(nl + 1); if (line.trim()) yield JSON.parse(line) as { jobId?: string; job?: Job<unknown> }; }
+      const { value, done } = await reader.read();
+      if (done) return;
+      buffer += value;
+    }
+  }();
+  for await (const line of lines) if (line.jobId) { jobId = line.jobId; break; }
+  if (!jobId) throw new ShaunVideoError("The video server closed the job before it started. Please retry.");
+  const live: LiveJob = { ended: false, wake: new Set() };
+  liveJobs.set(jobId, live);
+  const notify = () => { for (const w of live.wake) w(); live.wake.clear(); };
+  void (async () => {
+    try { for await (const line of lines) if (line.job) { live.job = line.job; notify(); } }
+    catch { /* stream dropped: pollJob falls back to GET */ }
+    finally { live.ended = true; notify(); setTimeout(() => liveJobs.delete(jobId!), 60_000); }
+  })();
+  return { jobId };
+}
+const terminal = (job?: Job<unknown>) => job?.status === "succeeded" || job?.status === "failed";
+
 export const getCapabilities = (signal?: AbortSignal) => request<Capabilities>("/capabilities", "GET", undefined, signal);
 export const getVideo = (id: string, signal?: AbortSignal) => request<VideoMeta>(`/videos/${encodeURIComponent(id)}`, "GET", undefined, signal);
-export const startImport = (url: string, refresh = false) => request<{ jobId: string }>("/imports", "POST", refresh ? { url, refresh: true } : { url });
-export const startTranscribe = (id: string) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/transcribe`, "POST", {});
-export const startRender = (id: string, edits: VideoEdits) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/render`, "POST", edits);
-export const startFrame = (id: string, time: number) => request<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/frames`, "POST", { time });
+export const startImport = (url: string, refresh = false) => requestJob<{ jobId: string }>("/imports", refresh ? { url, refresh: true } : { url }) as Promise<{ jobId: string }>;
+export const startTranscribe = (id: string) => requestJob<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/transcribe`, {}) as Promise<{ jobId: string }>;
+export const startRender = (id: string, edits: VideoEdits) => requestJob<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/render`, edits) as Promise<{ jobId: string }>;
+export const startFrame = (id: string, time: number) => requestJob<{ jobId: string }>(`/videos/${encodeURIComponent(id)}/frames`, { time }) as Promise<{ jobId: string }>;
 export interface LayoutResult { split: SplitLayout; scenes: Scene[]; note?: string }
 export interface PrivacyRequest { start: number; end: number; target: "screen" | "speaker"; crop: Rect }
 export interface PrivacyResult { blurs: BlurBox[]; note: string; sampledFrames: number }
 /** Sampled AI detection of personal details. Results are suggestions only; blurs are in full SOURCE coords. */
 export async function requestPrivacy(id: string, body: PrivacyRequest, signal: AbortSignal, onProgress?: (p: number, phase?: string) => void): Promise<PrivacyResult> {
-  const first = await request<Partial<PrivacyResult> & { jobId?: string }>(`/videos/${encodeURIComponent(id)}/privacy`, "POST", body, signal);
+  const first = await requestJob<Partial<PrivacyResult> & { jobId?: string }>(`/videos/${encodeURIComponent(id)}/privacy`, body, signal) as Partial<PrivacyResult> & { jobId?: string };
   const r = Array.isArray(first.blurs) ? first : first.jobId ? await pollJob<Partial<PrivacyResult>>(first.jobId, (p, _s, phase) => onProgress?.(p, phase), signal) : null;
   if (!r) throw new ShaunVideoError("Privacy detection returned no result.");
   return { blurs: Array.isArray(r?.blurs) ? r.blurs : [], note: r?.note ?? "", sampledFrames: r?.sampledFrames ?? 0 };
 }
 /** Locate speaker + screen panels. Server caches per source; may answer 200 directly or 202 with a job. */
 export async function requestLayout(id: string, signal: AbortSignal, onProgress?: (p: number, phase?: string) => void): Promise<LayoutResult> {
-  const r = await request<{ jobId?: string; split?: SplitLayout; scenes?: Scene[]; note?: string }>(`/videos/${encodeURIComponent(id)}/layout`, "POST", {}, signal);
+  const r = await requestJob<{ jobId?: string; split?: SplitLayout; scenes?: Scene[]; note?: string }>(`/videos/${encodeURIComponent(id)}/layout`, {}, signal) as { jobId?: string; split?: SplitLayout; scenes?: Scene[]; note?: string };
   const out = r.split ? r : r.jobId ? await pollJob<Partial<LayoutResult>>(r.jobId, (p, _s, phase) => onProgress?.(p, phase), signal) : null;
   if (!out?.split) throw new ShaunVideoError("Layout detection returned no result.");
   return { split: out.split, scenes: Array.isArray(out.scenes) ? out.scenes : [], note: out.note };
@@ -80,7 +127,7 @@ export async function preparePreview(videoId: string, signal: AbortSignal): Prom
   for (;;) {
     if (signal.aborted) throw new DOMException("Aborted", "AbortError");
     try {
-      const result = await request<{ jobId?: string; assetUrl?: string }>(`/videos/${encodeURIComponent(videoId)}/preview`, "POST", {}, signal);
+      const result = await requestJob<{ jobId?: string; assetUrl?: string }>(`/videos/${encodeURIComponent(videoId)}/preview`, {}, signal) as { jobId?: string; assetUrl?: string };
       if (result.jobId) await pollJob(result.jobId, () => undefined, signal);
       return `${SHAUN_VIDEO_API}/videos/${encodeURIComponent(videoId)}/preview`;
     } catch (error) {
@@ -100,7 +147,19 @@ const sleep = (ms: number, signal?: AbortSignal) => new Promise<void>((resolve, 
 /** Polls every ~1.5s until terminal. Aborting stops watching only; the server job keeps running. */
 export async function pollJob<R>(jobId: string, onProgress: (p: number, status: JobStatus, phase?: string) => void, signal?: AbortSignal): Promise<R> {
   for (;;) {
-    const job = await getJob<R>(jobId, signal);
+    const live = liveJobs.get(jobId);
+    if (live && !live.ended && !terminal(live.job)) {
+      await new Promise<void>((resolve, reject) => {
+        if (signal?.aborted) return reject(new DOMException("Aborted", "AbortError"));
+        const t = setTimeout(done, 15_000);
+        function done() { clearTimeout(t); live!.wake.delete(done); signal?.removeEventListener("abort", abort); resolve(); }
+        function abort() { done(); reject(new DOMException("Aborted", "AbortError")); }
+        live!.wake.add(done); signal?.addEventListener("abort", abort, { once: true });
+      });
+      if (live.job) onProgress(Number.isFinite(live.job.progress) ? live.job.progress : 0, live.job.status, live.job.phase);
+      if (!terminal(live.job)) continue;
+    }
+    const job = (live && terminal(live.job) ? live.job : await getJob<R>(jobId, signal)) as Job<R>;
     onProgress(Number.isFinite(job.progress) ? job.progress : 0, job.status, job.phase);
     if (job.status === "succeeded") {
       if (job.result === undefined) throw new ShaunVideoError("Job finished without a result.");

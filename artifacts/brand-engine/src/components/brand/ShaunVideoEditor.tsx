@@ -137,6 +137,53 @@ export function ShaunVideoEditor({ modeSwitch, onUseFrame }: Props) {
     })();
     return () => { ac.abort(); layoutTriedRef.current.delete(tag); };
   }, [source?.videoId, wantsLayout, layoutRetry]);
+  // Horizontal shows the WHOLE source frame (not just the vertical screen crop, and also
+  // speaker-only stretches), so scan the full frame once per video when 16:9 is chosen.
+  const fullScanRef = useRef<Set<string>>(new Set());
+  const wantsFullScan = !!source && edits?.format === "horizontal";
+  useEffect(() => {
+    if (!source || !wantsFullScan || fullScanRef.current.has(source.videoId)) return;
+    const videoId = source.videoId;
+    fullScanRef.current.add(videoId);
+    privacyAcRef.current?.abort();
+    const ac = new AbortController();
+    privacyAcRef.current = ac;
+    const full = { x: 0, y: 0, width: 1, height: 1 };
+    setPrivacyAuto({ videoId, status: "scanning", phase: "Scanning the full frame for personal details" });
+    // A vertical scan of the same video may still hold the server lock (429): wait and retry.
+    const scan = async () => {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          return await requestPrivacyAuto(videoId, { split: { screen: { ...full }, speaker: { ...full } } }, ac.signal, (p, phase) => {
+            if (currentVideoRef.current === videoId) setPrivacyAuto({ videoId, status: "scanning", progress: p, phase });
+          });
+        } catch (err) {
+          if (!(err instanceof ShaunVideoError && err.status === 429) || attempt >= 20 || ac.signal.aborted) throw err;
+          await new Promise(r => setTimeout(r, 3000));
+        }
+      }
+    };
+    scan().then(found => {
+      if (currentVideoRef.current !== videoId) return;
+      const blurs = found.blurs.map(b => ({ x: round3(b.x), y: round3(b.y), width: round3(Math.min(1 - round3(b.x), b.width)), height: round3(Math.min(1 - round3(b.y), b.height)), start: round3(b.start), end: round3(b.end) }))
+        .filter(b => b.width >= 0.01 && b.height >= 0.01 && b.end > b.start);
+      // Skip boxes already covered by an existing blur (e.g. from the vertical scan).
+      const covered = (b: BlurBox, o: BlurBox) => {
+        const ix = Math.max(0, Math.min(b.x + b.width, o.x + o.width) - Math.max(b.x, o.x));
+        const iy = Math.max(0, Math.min(b.y + b.height, o.y + o.height) - Math.max(b.y, o.y));
+        return ix * iy >= 0.6 * b.width * b.height && o.start <= b.start + 0.5 && o.end >= b.end - 0.5;
+      };
+      setEdits(e => {
+        if (!e) return e;
+        const fresh = blurs.filter(b => !e.blurs.some(o => covered(b, o)));
+        return { ...e, blurs: [...e.blurs, ...fresh].slice(0, MAX_BLURS) };
+      });
+      setPrivacyAuto({ videoId, status: "done", count: blurs.length, note: found.note });
+    }).catch(err => {
+      if (isAbort(err)) { fullScanRef.current.delete(videoId); return; }
+      if (currentVideoRef.current === videoId) setPrivacyAuto({ videoId, status: "error", note: (err as Error).message });
+    });
+  }, [source?.videoId, wantsFullScan]);
   const layoutHere = layout && layout.videoId === source?.videoId ? layout : null;
   const manualSplit = () => {
     const full = { x: 0, y: 0, width: 1, height: 1 };
